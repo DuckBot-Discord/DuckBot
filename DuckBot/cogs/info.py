@@ -32,13 +32,13 @@ class help(commands.Cog):
         # give users a link to invite this bot to their server
         embed.add_field(name='Invite', value='Invite me to your server [here](https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot)', inline=True)
 
-        embed.add_field(name='Source code', value="[Here](https://gist.github.com/LeoCx1000/1cce359b1fcf1b94efb770efb3cd1519)'s my sourcecode", inline=True)
+        embed.add_field(name='Source code', value="[Here](https://github.com/LeoCx1000/discord-bots)'s my sourcecode", inline=True)
 
-        embed.add_field(name='Support server', value="[Here](https://gist.github.com/LeoCx1000/1cce359b1fcf1b94efb770efb3cd1519)'s my support server", inline=True)
+        embed.add_field(name='Support server', value="There's no support server anymore. DM DuckBot for help", inline=True)
 
         embed.add_field(name='_ _', value='_ _', inline=False)
 
-        embed.add_field(name='Bug report and support:', value= """To give a suggestion and report a bug, typo, issue or anything else DM the bot""", inline=False)
+        embed.add_field(name='Bug report and support:', value= """To give a suggestion and report a bug, typo, issue or anything else DM DuckBot""", inline=False)
 
         await ctx.send(embed=embed)
 
