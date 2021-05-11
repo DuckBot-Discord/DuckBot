@@ -6,4 +6,4 @@ Here are all the links for DuckBot:
 > ###### The support server has been removed. To report any issues DM DuckBot :)
 ### Created by `LeoCx1000#9999`
 ----------------------------------------
-[![LeoCx1000's GitHub Stats](https://github-readme-stats.vercel.app/api?username=LeoCx1000&count_private=true&show_icons=true&theme=dark)](https://github.com/LeoCx1000)
+[![My github stats:](https://github-readme-stats.vercel.app/api?username=LeoCx1000&count_private=true&show_icons=true&theme=dark)](https://github.com/LeoCx1000)
