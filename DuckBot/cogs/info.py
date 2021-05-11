@@ -1,7 +1,7 @@
 import json, random, typing, discord, asyncio
 from discord.ext import commands
 
-class help(commands.Cog):
+class info(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -205,4 +205,4 @@ For further help, DM the bot or join the support server found in the `.info` com
         await ctx.send(embed=embed)
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(info(bot))

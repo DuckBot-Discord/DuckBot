@@ -2,7 +2,7 @@ import typing, discord, asyncio, random, datetime
 from discord.ext import commands, tasks, timers
 import datetime
 
-class help(commands.Cog):
+class test(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -41,4 +41,4 @@ class help(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(test(bot))

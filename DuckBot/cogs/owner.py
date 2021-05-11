@@ -1,7 +1,7 @@
 import typing, discord, asyncio, json
 from discord.ext import commands
 
-class help(commands.Cog):
+class owner_only_commands(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -134,16 +134,6 @@ class help(commands.Cog):
                 textchannel = self.bot.get_user(349373972103561218)
                 await textchannel.send(f'<:incomingarrow:797567338320887858> {member.name} **left** __{before.channel.name}__ in __{before.channel.guild.name}__!')
 
-    @commands.command()
-    async def notifoff(self, ctx):
-        if ctx.message.author.id == 349373972103561218:
-            await ctx.send('🛑 Disabled notifications')
-
-    @commands.command()
-    async def notifon(self, ctx):
-        if ctx.message.author.id == 349373972103561218:
-            await ctx.send('✅ Enabled notifications')
-
 """    @commands.Cog.listener()
     @commands.bot_has_permissions(manage_messages=True)
     async def on_message(self, message):
@@ -194,4 +184,4 @@ class help(commands.Cog):
             await ctx.message.add_reaction('🟢')"""
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(owner_only_commands(bot))

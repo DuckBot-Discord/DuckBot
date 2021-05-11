@@ -17,7 +17,5 @@ class nopog(commands.Cog):
             await message.add_reaction('<:nopog:838102336944603186>')
             await message.add_reaction('😡')
 
-
-
 def setup(bot):
     bot.add_cog(nopog(bot))

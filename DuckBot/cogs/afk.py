@@ -2,7 +2,7 @@ import typing, discord, asyncio
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
-class help(commands.Cog):
+class afk(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -46,4 +46,4 @@ class help(commands.Cog):
             await ctx.message.delete()
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(afk(bot))

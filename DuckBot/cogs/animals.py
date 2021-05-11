@@ -4,7 +4,7 @@ from random import randint
 from discord.ext import commands
 
 
-class help(commands.Cog):
+class animals(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -130,4 +130,4 @@ class help(commands.Cog):
         await ctx.send("https://tryitands.ee/")
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(animals(bot))

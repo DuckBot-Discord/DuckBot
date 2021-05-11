@@ -1,7 +1,7 @@
 import discord, asyncio, typing
 from discord.ext import commands
 
-class help(commands.Cog):
+class modmail(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -151,4 +151,4 @@ Remove the image/file and resend your message""")
 
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(modmail(bot))

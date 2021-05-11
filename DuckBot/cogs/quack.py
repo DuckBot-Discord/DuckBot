@@ -2,7 +2,7 @@ import discord, random
 from discord.ext import commands, tasks
 from random import randint
 
-class quack(commands.Cog):
+class auto_quack(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -16,4 +16,4 @@ class quack(commands.Cog):
             await channel.send("quack")
 
 def setup(bot):
-    bot.add_cog(quack(bot))
+    bot.add_cog(auto_quack(bot))

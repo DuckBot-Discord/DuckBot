@@ -2,7 +2,7 @@
 import  discord
 from discord.ext import commands
 
-class help(commands.Cog):
+class handler(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -15,4 +15,4 @@ class help(commands.Cog):
         raise error
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(handler(bot))
