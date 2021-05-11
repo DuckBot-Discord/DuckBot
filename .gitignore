@@ -5,4 +5,4 @@ DuckBot/.env
 *.json
 *.pyc
 test-stuff/*
-*informatica.py
+ozbot/files/*
