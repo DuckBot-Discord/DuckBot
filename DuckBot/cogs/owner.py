@@ -126,13 +126,17 @@ class owner_only_commands(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         if before.channel is None and after.channel is not None:
-            if after.channel.id == 788853811590594572 or after.channel.id == 816312598542024745:
-                textchannel = self.bot.get_user(349373972103561218)
-                await textchannel.send(f'<:outgoingarrow:797567337976430632> {member.name} **joined** __{after.channel.name}__ in __{after.channel.guild.name}__!')
+            if after.channel.guild.id == 841298004929806336:
+                textchannel = self.bot.get_channel(841298004929806340)
+                await textchannel.send(f'<:outgoingarrow:797567337976430632> {member.name} **joined** __{after.channel.name}__!')
+        if before.channel is not None and after.channel is not None:
+            if before.channel.guild.id == 841298004929806336 and before.channel.id != after.channel.id:
+                textchannel = self.bot.get_channel(841298004929806340)
+                await textchannel.send(f'<:moved:841711063535976509> {member.name} **has been moved to** __{after.channel.name}__!')
         if before.channel is not None and after.channel is None:
-            if before.channel.id == 788853811590594572 or before.channel.id == 816312598542024745:
-                textchannel = self.bot.get_user(349373972103561218)
-                await textchannel.send(f'<:incomingarrow:797567338320887858> {member.name} **left** __{before.channel.name}__ in __{before.channel.guild.name}__!')
+            if before.channel.guild.id == 841298004929806336:
+                textchannel = self.bot.get_channel(841298004929806340)
+                await textchannel.send(f'<:incomingarrow:797567338320887858> {member.name} **left** __{before.channel.name}__!')
 
 """    @commands.Cog.listener()
     @commands.bot_has_permissions(manage_messages=True)

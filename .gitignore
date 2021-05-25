@@ -6,3 +6,4 @@ DuckBot/.env
 *.pyc
 test-stuff/*
 ozbot/files/*
+.secret.py
