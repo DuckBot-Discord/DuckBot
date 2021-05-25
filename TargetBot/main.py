@@ -5,7 +5,7 @@ from discord.ext import commands
 intents = discord.Intents.default() # Enable all intents except for members and presences
 intents.members = True  # Subscribe to the privileged members intent.
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('!', 't!'), case_insensitive=True, intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('!', 't!', '! ', 't! '), case_insensitive=True, intents=intents)
 
 
 bot.remove_command("help")
@@ -19,7 +19,8 @@ async def on_ready():
     print("======[ BOT ONLINE! ]======")
     print ("Logged in as " + bot.user.name)
     await bot.wait_until_ready()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='.help'))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='!guide'))
+    bot.load_extension("cogs.autohelp")
 
 @bot.command()
 async def load(ctx, extension):
@@ -144,7 +145,8 @@ async def reload_error(ctx, error):
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):
         try:
-            bot.load_extension("cogs.{}".format(filename[:-3]))
+            if filename[:-3] != 'autohelp':
+                bot.load_extension("cogs.{}".format(filename[:-3]))
         except:
             print("========[ WARNING ]========")
             print(f"An error occurred while loading '{filename}'""")
