@@ -290,5 +290,52 @@ class moderation(commands.Cog):
         except:
             await self.error_message(ctx, 'something went wrong...')
 
+#---------------------------------------------------------------#
+#------------------------ LOCKDOWN -----------------------------#
+#---------------------------------------------------------------#
+
+    @commands.command(aliases=['unlock'])
+    @commands.has_permissions(manage_channels=True)
+    async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel] = None, *, reason = None):
+        if not any(role in self.staff_roles for role in ctx.author.roles):
+            await self.perms_error(ctx)
+            return
+
+        if not textchannel:
+            await ctx.message.delete()
+            textchannel = ctx.channel
+        else:
+            await ctx.message.add_reaction('✅')
+
+        await textchannel.set_permissions(ctx.guild.default_role,send_messages=False)
+        if reason:
+            embed=discord.Embed(description=f"""{ctx.author.mention} has locked down {textchannel.mention}
+```reason: {reason}```""", color=ctx.me.color)
+        else:
+            embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention}", color=ctx.me.color)
+        await textchannel.send(embed=embed)
+
+    @commands.command(aliases=['lock'])
+    @commands.has_permissions(manage_channels=True)
+    async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
+
+        if not any(role in self.staff_roles for role in ctx.author.roles):
+            await self.perms_error(ctx)
+            return
+
+        if not textchannel:
+            await ctx.message.delete()
+            textchannel = ctx.channel
+        else:
+            await ctx.message.add_reaction('✅')
+
+        await textchannel.set_permissions(ctx.guild.default_role, send_messages=True)
+        if reason:
+            embed=discord.Embed(description=f"""{ctx.author.mention} has unlocked {textchannel.mention}
+```reason: {reason}```""", color=ctx.me.color)
+        else:
+            embed=discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention}", color=ctx.me.color)
+        await textchannel.send(embed=embed)
+
 def setup(bot):
     bot.add_cog(moderation(bot))
