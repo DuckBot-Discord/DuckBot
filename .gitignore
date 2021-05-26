@@ -7,3 +7,5 @@ DuckBot/.env
 test-stuff/*
 ozbot/files/*
 .secret.py
+*.yml
+*.yaml
