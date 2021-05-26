@@ -8,7 +8,7 @@ class automod(commands.Cog):
         self.bot = bot
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
-            exempt_ids = full_yaml['ignored_roles']
+            exempt_ids = full_yaml['IgnoredRoles']
             exempt_roles = []
             for roleid in exempt_ids:
                 exempt_roles.append(self.bot.get_guild(717140270789033984).get_role(roleid))

@@ -75,5 +75,11 @@ There seems to be some conversion tools out there that can change a texture pack
 Another way is, if you have the time, changing it manually to the old file structure.""", color=ctx.me.color)
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def test(self, ctx):
+        embed=discord.Embed(title="", description=f"You've been muted! reason: `{reason}`", color=ctx.me.color)
+        embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
+        await ctx.send(embed=embed)
+
 def setup(bot):
     bot.add_cog(info(bot))

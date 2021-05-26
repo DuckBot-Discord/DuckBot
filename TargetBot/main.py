@@ -14,6 +14,13 @@ bot.load_extension('jishaku')
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
+async def error_msg(self, ctx):
+    await ctx.message.add_reaction('🚫')
+    await asyncio.sleep(5)
+    try: await ctx.message.delete()
+    except: return
+    return
+
 @bot.event
 async def on_ready():
     print("======[ BOT ONLINE! ]======")
@@ -40,14 +47,7 @@ async def load(ctx, extension):
         except discord.Forbidden:
             return
         return
-    else:
-        await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
-        return
+    else: await self.error_msg(ctx)
 
 @load.error
 async def load_error(ctx, error):
@@ -76,14 +76,7 @@ async def unload(ctx, extension):
         except discord.Forbidden:
             return
         return
-    else:
-        await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
-        return
+    else: await self.error_msg(ctx)
 
 @unload.error
 async def unload_error(ctx, error):
@@ -92,10 +85,8 @@ async def unload_error(ctx, error):
         await ctx.send(f"""```⚠ {error}
 [ℹ] for more information check the console```""")
         await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
+        try: await ctx.message.delete()
+        except discord.Forbidden: return
         return
 
 @bot.command()
@@ -115,19 +106,10 @@ async def reload(ctx, extension):
         except discord.ext.commands.NoEntryPointError:
             await ctx.send("Cog doesn't have a setup function!", delete_after=5)
         await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
+        try: await ctx.message.delete()
+        except discord.Forbidden: return
         return
-    else:
-        await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
-        return
+    else: await self.error_msg(ctx)
 
 @reload.error
 async def reload_error(ctx, error):
@@ -136,10 +118,8 @@ async def reload_error(ctx, error):
         await ctx.send(f"""```⚠ {error}
 [ℹ] for more information check the console```""")
         await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
+        try: await ctx.message.delete()
+        except discord.Forbidden: return
         return
 
 for filename in os.listdir("./cogs"):
