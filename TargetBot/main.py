@@ -5,10 +5,9 @@ from discord.ext import commands
 intents = discord.Intents.default() # Enable all intents except for members and presences
 intents.members = True  # Subscribe to the privileged members intent.
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('!', 't!', '! ', 't! '), case_insensitive=True, intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('!', 't!'), case_insensitive=True, intents=intents)
 
-
-bot.remove_command("help")
+bot.remove_command('help')
 bot.load_extension('jishaku')
 
 load_dotenv()

@@ -294,9 +294,10 @@ class moderation(commands.Cog):
 #------------------------ LOCKDOWN -----------------------------#
 #---------------------------------------------------------------#
 
-    @commands.command(aliases=['unlock'])
+    @commands.command(aliases=['lock'])
     @commands.has_permissions(manage_channels=True)
-    async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel] = None, *, reason = None):
+    async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
+
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -305,17 +306,24 @@ class moderation(commands.Cog):
             await ctx.message.delete()
             textchannel = ctx.channel
         else:
-            await ctx.message.add_reaction('✅')
+            await ctx.message.add_reaction('🔓')
 
-        await textchannel.set_permissions(ctx.guild.default_role,send_messages=False)
+        perms = textchannel.overwrites_for(ctx.guild.default_role)
+        perms.send_messages = False
+
         if reason:
-            embed=discord.Embed(description=f"""{ctx.author.mention} has locked down {textchannel.mention}
-```reason: {reason}```""", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'locked by {ctx.author} - {reason}')
+            embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention} \n```reason: {reason}```", color=ctx.me.color)
         else:
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'locked by {ctx.author}')
             embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention}", color=ctx.me.color)
         await textchannel.send(embed=embed)
 
-    @commands.command(aliases=['lock'])
+    @lockdown.error
+    async def clear_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
+
+    @commands.command(aliases=['unlock'])
     @commands.has_permissions(manage_channels=True)
     async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
 
@@ -327,15 +335,22 @@ class moderation(commands.Cog):
             await ctx.message.delete()
             textchannel = ctx.channel
         else:
-            await ctx.message.add_reaction('✅')
+            await ctx.message.add_reaction('🔓')
 
-        await textchannel.set_permissions(ctx.guild.default_role, send_messages=True)
+        perms = textchannel.overwrites_for(ctx.guild.default_role)
+        perms.send_messages = True
+
         if reason:
-            embed=discord.Embed(description=f"""{ctx.author.mention} has unlocked {textchannel.mention}
-```reason: {reason}```""", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'unlocked by {ctx.author} - {reason}')
+            embed=discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention} \n```reason: {reason}```", color=ctx.me.color)
         else:
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'unlocked by {ctx.author}')
             embed=discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention}", color=ctx.me.color)
         await textchannel.send(embed=embed)
+
+    @unlockdown.error
+    async def clear_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
 
 def setup(bot):
     bot.add_cog(moderation(bot))

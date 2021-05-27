@@ -1,12 +1,22 @@
-import json, random, typing, discord, asyncio
+import json, random, typing, discord, asyncio, yaml
 from discord.ext import commands
 
 class info(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        #------------- YAML STUFF -------------#
+        with open(r'files/config.yaml') as file:
+            full_yaml = yaml.full_load(file)
+            self.staff_roles = []
+            for roleid in full_yaml['StaffRoles']:
+                self.staff_roles.append(self.bot.get_guild(717140270789033984).get_role(roleid))
+        self.console = self.bot.get_channel(full_yaml['ConsoleCommandsChannel'])
+        self.yaml_data = full_yaml
 
-    @commands.command(aliases = ['help'])
+
+
+    @commands.command()
     async def guide(self, ctx):
         embed=discord.Embed(title="Please follow the guide!", description="To make sure that your resource pack is set up correctly, please follow [this guide](https://www.stylizedresourcepack.com/guide). Make sure to enable POM (parallax occlusion mapping) to get the 3D effect", color=ctx.me.color)
         embed.add_field(name="Which shaders does the guide cover?", value="The goes in depth into settings for [BSL shaders](https://bitslablab.com/bslshaders/#download) and [SEUS renewed](https://sonicether.com/shaders/download/renewed-v1-0-1/) shaders.", inline=False)
@@ -31,6 +41,7 @@ class info(commands.Cog):
     @commands.command()
     async def seus(self, ctx):
         embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)**", color=ctx.me.color)
+        embed.set_footer(text='May not work well with AMD graphics!')
         await ctx.send(embed=embed)
 
     @commands.command(aliases = ['of'])
@@ -67,12 +78,32 @@ Also, starting with 21.2.3, some packs will refuse to load, such as Chocapic V9,
         embed.set_author(name="Copied straight from optifine's support channel", icon_url="https://i.imgur.com/uZsxgEf.png")
         await ctx.send(embed=embed)
 
-    @commands.command(aliases = ['oldversions', '1.12'])
+    @commands.command(aliases = ['oldversions', '1.12', '1.8', '1.8.9'])
     async def unsupported(self, ctx):
         embed=discord.Embed(title="Can i use this pack with an older version of minecraft?", description="""You technically can, but this pack is only made for versions that are 1.13 and higher.
 Older versions of minecraft use a different file structure for their resource packs and/or different names for some of the textures.
 There seems to be some conversion tools out there that can change a texture pack to work in one of these older versions of the game but this is not supported by us, and you will not recieve the same support that you would get using a newer version of minecraft.
 Another way is, if you have the time, changing it manually to the old file structure.""", color=ctx.me.color)
+        await ctx.send(embed=embed)
+
+    @commands.command(aliases = ['communication', 'translate', 'translator'])
+    async def translation(self, ctx):
+        embed=discord.Embed(title="Is english not your main language?", description=
+"""
+You can use <@471542070817849355> to translate your messages!
+To translate to english just do:
+```?en <message>```
+""", color=ctx.me.color)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def help(self, ctx, arg = None):
+        if not any(role in self.staff_roles for role in ctx.author.roles):
+            embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['HelpMessage'], color=ctx.me.color)
+        elif arg == "normal":
+            embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['HelpMessage'], color=ctx.me.color)
+        else:
+            embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['StaffHelpMessage'], color=ctx.me.color)
         await ctx.send(embed=embed)
 
 def setup(bot):
