@@ -5,7 +5,7 @@ DuckBot/.env
 *.json
 *.pyc
 test-stuff/*
-ozbot/files/*
-.secret.py
+*/files/*
+*.secret.py
 *.yml
 *.yaml
