@@ -1,7 +1,7 @@
 import typing, discord, asyncio, yaml, aiohttp
 from discord.ext import commands
 
-class moderation(commands.Cog):
+class smp(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -85,9 +85,5 @@ class moderation(commands.Cog):
         else:
             await self.error_message(ctx, 'That username is invalid!')
 
-
-
-
-
 def setup(bot):
-    bot.add_cog(moderation(bot))
+    bot.add_cog(smp(bot))

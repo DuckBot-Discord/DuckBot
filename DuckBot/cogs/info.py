@@ -6,6 +6,8 @@ class info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        self.bot.remove_command("help")
+
     @commands.command()
     async def ping(self, ctx):
         embed = discord.Embed(title='', description="🏓 pong!", color=ctx.me.color)
@@ -40,6 +42,11 @@ class info(commands.Cog):
 
         embed.add_field(name='Bug report and support:', value= """To give a suggestion and report a bug, typo, issue or anything else DM DuckBot""", inline=False)
 
+        await ctx.send(embed=embed)
+
+    @commands.command(aliases = ['source', 'code'])
+    async def sourcecode(self, ctx):
+        embed=discord.Embed(title="", description="**[Here's my source code](https://github.com/LeoCx1000/discord-bots)**", color=ctx.me.color)
         await ctx.send(embed=embed)
 
     @commands.command()

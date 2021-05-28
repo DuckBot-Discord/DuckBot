@@ -149,4 +149,5 @@ for filename in os.listdir("./cogs"):
             print(f"\033[91mAn error occurred while loading '{filename}'""")
             print('\033[0m')
 print('\033[0m')
+
 bot.run(TOKEN, reconnect=True)
