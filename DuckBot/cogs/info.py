@@ -20,7 +20,6 @@ class info(commands.Cog):
         embed = discord.Embed(title='', description=f'**{round (self.bot.latency * 1000)} ms**', color=ctx.me.color)
         await message.edit(embed=embed)
 
-
     @commands.command()
     async def info(self, ctx):
         embed = discord.Embed(title='DuckBot info', description="Here's information about my bot:", color=ctx.me.color)

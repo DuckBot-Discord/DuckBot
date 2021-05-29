@@ -19,7 +19,9 @@ class moderation(commands.Cog):
     async def perms_error(self, ctx):
         await ctx.message.add_reaction('🚫')
         await asyncio.sleep(self.yaml_data['ReactionTimeout'])
-        try: await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+            return
         except: return
 
     async def error_message(self, ctx, message):
@@ -27,8 +29,10 @@ class moderation(commands.Cog):
         embed.set_author(name=message, icon_url='https://i.imgur.com/OAmzSGF.png')
         await ctx.send(embed=embed, delete_after=self.yaml_data['ErrorMessageTimeout'])
         await asyncio.sleep(self.yaml_data['ErrorMessageTimeout'])
-        await ctx.message.delete()
-        return
+        try:
+            await ctx.message.delete()
+            return
+        except: return
 
 #------------------------------------------------------------#
 #------------------------ KICK ------------------------------#

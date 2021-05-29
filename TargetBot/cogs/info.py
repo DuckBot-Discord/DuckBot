@@ -23,6 +23,16 @@ class info(commands.Cog):
         embed.add_field(name="Help! I have square artifacts on my blocks.", value="For SEUS renewed, make sure to set the parallax resolution correctly to avoid the blocks having artifacts that look like a grid.", inline=False)
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=['mods'])
+    async def modded(self, ctx):
+        embed=discord.Embed(title="Texture packs and mods don't go along well.", description="""
+First off, remember that this texture pack is **1.13 and up only**, so if you're using a 1.12 modpack you'll need to convert the pack. do `!1.12` for more info.
+Second, We don't assure this texture pack will go along well with mods, there might be compatibility issues and other conflicts with some mod's textures, and especially when using POM(3D stuff)
+```as a troubleshooting step, remove all your mods and try the texture pack with vanilla. If it works, then it's a compatibility issue with mods. If that doesn't fix it re-install the pack from #downloads, and also check "!guide"```
+""", color=ctx.me.color)
+        await ctx.send(embed=embed)
+
+
     @commands.command(aliases = ['jvm', 'moreram'])
     async def ram(self, ctx):
         embed=discord.Embed(title="", description="**[How to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** (keep it between 6-8GB)", color=ctx.me.color)
@@ -106,75 +116,87 @@ To translate to english just do:
             embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['StaffHelpMessage'], color=ctx.me.color)
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def links(self, ctx):
+# ------------------------------------------------------------------------------
+# ---- 2.0 stuff that will be available when d.py gets a stable 2.0 release ----
+# ------------------------------------------------------------------------------
 
-        class View(discord.ui.View):
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Guide", emoji="<:info:847682027892768768>")
-            async def Guide(self, button, interaction):
-                embed=discord.Embed(title="Please follow the guide!", description="To make sure that your resource pack is set up correctly, please follow [this guide](https://www.stylizedresourcepack.com/guide). Make sure to enable POM (parallax occlusion mapping) to get the 3D effect", color=ctx.me.color)
-                embed.add_field(name="Which shaders does the guide cover?", value="The goes in depth into settings for [BSL shaders](https://bitslablab.com/bslshaders/#download) and [SEUS renewed](https://sonicether.com/shaders/download/renewed-v1-0-1/) shaders.", inline=False)
-                embed.add_field(name="Help! I have square artifacts on my blocks.", value="For SEUS renewed, make sure to set the parallax resolution correctly to avoid the blocks having artifacts that look like a grid.", inline=False)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Optifine", emoji="<:download:847682027435327498>")
-            async def Optifine(self, button, interaction):
-                embed=discord.Embed(title="", description="**[download optifine](https://optifine.net/downloads)** \n **[optifine's discord](https://optifine.net/discord)**", color=ctx.me.color)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="BSL", emoji="<:download:847682027435327498>")
-            async def DownloadBsl(self, button, interaction):
-                embed=discord.Embed(title="", description="**[download BSL shaders](https://bitslablab.com/bslshaders/#download)** \n **[BitsLab discord server](https://discord.com/invite/ZJd7jjA)**", color=ctx.me.color)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="SEUS renewed", emoji="<:download:847682027435327498>")
-            async def DownloadSeus(self, button, interaction):
-                embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)**", color=ctx.me.color)
-                embed.set_footer(text='May not work well with AMD graphics!')
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Allocate more RAM", emoji="<:info:847682027892768768>")
-            async def MoreRam(self, button, interaction):
-                embed=discord.Embed(title="", description="**[How to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** (keep it between 6-8GB)", color=ctx.me.color)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-        view = View()
-
-
-        embed=discord.Embed(title="Here are some useful links you might need", description="**Click on the buttons to see them**", color=ctx.me.color)
-        embed.set_footer(text="this !message expires in 1 minute")
-        await ctx.send(embed=embed, view = view, delete_after = 60)
-        await asyncio.sleep(60)
-        await ctx.message.delete()
-
-    @commands.command(aliases=['info'])
-    async def buttons(self, ctx):
-
-        class View(discord.ui.View):
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Guide", emoji="<:info:847682027892768768>")
-            async def Guide(self, button, interaction):
-                embed=discord.Embed(title="Please follow the guide!", description="To make sure that your resource pack is set up correctly, please follow [this guide](https://www.stylizedresourcepack.com/guide). Make sure to enable POM (parallax occlusion mapping) to get the 3D effect", color=ctx.me.color)
-                embed.add_field(name="Which shaders does the guide cover?", value="The goes in depth into settings for [BSL shaders](https://bitslablab.com/bslshaders/#download) and [SEUS renewed](https://sonicether.com/shaders/download/renewed-v1-0-1/) shaders.", inline=False)
-                embed.add_field(name="Help! I have square artifacts on my blocks.", value="For SEUS renewed, make sure to set the parallax resolution correctly to avoid the blocks having artifacts that look like a grid.", inline=False)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Allocate more RAM", emoji="<:info:847682027892768768>")
-            async def MoreRam(self, button, interaction):
-                embed=discord.Embed(title="", description="**[How to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** (keep it between 6-8GB)", color=ctx.me.color)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Optifine", emoji="<:download:847682027435327498>")
-            async def Optifine(self, button, interaction):
-                embed=discord.Embed(title="", description="**[download optifine](https://optifine.net/downloads)** \n **[optifine's discord](https://optifine.net/discord)**", color=ctx.me.color)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="BSL", emoji="<:download:847682027435327498>")
-            async def DownloadBsl(self, button, interaction):
-                embed=discord.Embed(title="", description="**[download BSL shaders](https://bitslablab.com/bslshaders/#download)** \n **[BitsLab discord server](https://discord.com/invite/ZJd7jjA)**", color=ctx.me.color)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            @discord.ui.button(style=discord.ButtonStyle.secondary, label="SEUS renewed", emoji="<:download:847682027435327498>")
-            async def DownloadSeus(self, button, interaction):
-                embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)**", color=ctx.me.color)
-                embed.set_footer(text='May not work well with AMD graphics!')
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-        view = View()
-
-
-        await ctx.send("<:Discord:847690431227494401> Buttons! _these will disappear in 1 minute_", view = view, delete_after = 60)
-        await asyncio.sleep(60)
-        await ctx.message.delete()
+#    @commands.command()
+#    async def links(self, ctx):
+#
+#        class View(discord.ui.View):
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Guide", emoji="<:info:847682027892768768>")
+#            async def Guide(self, button, interaction):
+#                embed=discord.Embed(title="Please follow the guide!", description="To make sure that your resource pack is set up correctly, please follow [this guide](https://www.stylizedresourcepack.com/guide). Make sure to enable POM (parallax occlusion mapping) to get the 3D effect", color=ctx.me.color)
+#                embed.add_field(name="Which shaders does the guide cover?", value="The goes in depth into settings for [BSL shaders](https://bitslablab.com/bslshaders/#download) and [SEUS renewed](https://sonicether.com/shaders/download/renewed-v1-0-1/) shaders.", inline=False)
+#                embed.add_field(name="Help! I have square artifacts on my blocks.", value="For SEUS renewed, make sure to set the parallax resolution correctly to avoid the blocks having artifacts that look like a grid.", inline=False)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Optifine", emoji="<:download:847682027435327498>")
+#            async def Optifine(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[download optifine](https://optifine.net/downloads)** \n **[optifine's discord](https://optifine.net/discord)**", color=ctx.me.color)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="BSL", emoji="<:download:847682027435327498>")
+#            async def DownloadBsl(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[download BSL shaders](https://bitslablab.com/bslshaders/#download)** \n **[BitsLab discord server](https://discord.com/invite/ZJd7jjA)**", color=ctx.me.color)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="SEUS renewed", emoji="<:download:847682027435327498>")
+#            async def DownloadSeus(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)**", color=ctx.me.color)
+#                embed.set_footer(text='May not work well with AMD graphics!')
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Allocate more RAM", emoji="<:info:847682027892768768>")
+#            async def MoreRam(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[How to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** (keep it between 6-8GB)", color=ctx.me.color)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#        view = View()
+#
+#        embed=discord.Embed(title="Here are some useful links you might need", description="**Click on the buttons to see them**", color=ctx.me.color)
+#        embed.set_footer(text="this !message expires in 1 minute")
+#        await ctx.send(embed=embed, view = view, delete_after = 60)
+#        await asyncio.sleep(60)
+#        await ctx.message.delete()
+#
+#
+#    @commands.command(aliases=['info'])
+#    async def buttons(self, ctx):
+#
+#        class View(discord.ui.View):
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Guide", emoji="<:info:847682027892768768>")
+#            async def Guide(self, button, interaction):
+#                embed=discord.Embed(title="Please follow the guide!", description="To make sure that your resource pack is set up correctly, please follow [this guide](https://www.stylizedresourcepack.com/guide). Make sure to enable POM (parallax occlusion mapping) to get the 3D effect", color=ctx.me.color)
+#                embed.add_field(name="Which shaders does the guide cover?", value="The goes in depth into settings for [BSL shaders](https://bitslablab.com/bslshaders/#download) and [SEUS renewed](https://sonicether.com/shaders/download/renewed-v1-0-1/) shaders.", inline=False)
+#                embed.add_field(name="Help! I have square artifacts on my blocks.", value="For SEUS renewed, make sure to set the parallax resolution correctly to avoid the blocks having artifacts that look like a grid.", inline=False)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Allocate more RAM", emoji="<:info:847682027892768768>")
+#            async def MoreRam(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[How to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** (keep it between 6-8GB)", color=ctx.me.color)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="Optifine", emoji="<:download:847682027435327498>")
+#            async def Optifine(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[download optifine](https://optifine.net/downloads)** \n **[optifine's discord](https://optifine.net/discord)**", color=ctx.me.color)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="BSL", emoji="<:download:847682027435327498>")
+#            async def DownloadBsl(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[download BSL shaders](https://bitslablab.com/bslshaders/#download)** \n **[BitsLab discord server](https://discord.com/invite/ZJd7jjA)**", color=ctx.me.color)
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#            @discord.ui.button(style=discord.ButtonStyle.secondary, label="SEUS renewed", emoji="<:download:847682027435327498>")
+#            async def DownloadSeus(self, button, interaction):
+#                embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)**", color=ctx.me.color)
+#                embed.set_footer(text='May not work well with AMD graphics!')
+#                await interaction.response.send_message(embed=embed, ephemeral=True)
+#        view = View()
+#
+#
+#        await ctx.send("<:Discord:847690431227494401> Buttons! _these will disappear in 1 minute_", view = view, delete_after = 60)
+#        await asyncio.sleep(60)
+#        await ctx.message.delete()
+#
+#
+#    @commands.command()
+#    async def guideTest(self, ctx):
+#        view = discord.ui.View
+#        view.add_item(self, item=discord.ui.Button(style=discord.ButtonStyle.primary, label="Guide", url = "https://www.stylizedresourcepack.com/guide"))
+#        embed=discord.Embed(description="test", color=ctx.me.color)
+#        await ctx.send(embed=embed, view = view)
 
 
 def setup(bot):

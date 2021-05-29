@@ -7,6 +7,7 @@ intents.members = True  # Subscribe to the privileged members intent.
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '*****'), case_insensitive=True, intents=intents)
 
+bot.remove_command('help')
 bot.load_extension('jishaku')
 
 load_dotenv()
