@@ -1,4 +1,4 @@
-import discord, asyncio, typing, re
+import discord, asyncio, typing, re, yaml
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
@@ -42,7 +42,7 @@ Remove the image/file and resend your message""")
             return
         else:
             embed = discord.Embed(color=0xD7342A)
-            embed.add_field(name=f'<:incomingarrow:797567338320887858> **{message.author}**', value=f'{message.content}')
+            embed.add_field(name=f'<:incomingarrow:848312881070080001> **{message.author}**', value=f'{message.content}')
             embed.set_footer(text=f'.dm {message.author.id}')
             await channel.send(embed=embed)
         await message.add_reaction('📬')
@@ -54,12 +54,12 @@ Remove the image/file and resend your message""")
     async def on_member_join(self, member):
         if member.guild.id != 706624339595886683: return
         await self.bot.get_channel(706624465378738217).send(f"""{member.mention}, Welcome to {member.guild.name}! Make sure to read and agree to the <#706825075516768297> to get access to the rest of {member.guild.name}.""")
-        await self.bot.get_channel(708316690638700607).send(f"""<:incomingarrow:800218133225930763> **{member.name}#{member.discriminator}** joined **{member.guild.name}**!""")
+        await self.bot.get_channel(708316690638700607).send(f"""<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}** joined **{member.guild.name}**!""")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         if member.guild.id != 706624339595886683: return
-        await self.bot.get_channel(708316690638700607).send(f"""<:outgoingarrow:800218133364867073> **{member.name}#{member.discriminator}** left **{member.guild.name}**!""")
+        await self.bot.get_channel(708316690638700607).send(f"""<:incomingarrow:848312881070080001> **{member.name}#{member.discriminator}** left **{member.guild.name}**!""")
 
     @commands.command(aliases=['pm', 'md', 'message', 'direct'])
     @commands.has_permissions(manage_messages=True)
@@ -80,13 +80,13 @@ Remove the image/file and resend your message""")
                 myfile = await file.to_file()
                 await member.send(message, file=myfile)
                 embed = discord.Embed(color=0x47B781)
-                embed.add_field(name=f'<:outgoingarrow:797567337976430632> **{member.name}#{member.discriminator}**', value=message)
+                embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value=message)
                 embed.set_footer(text=f'.dm {member.id}')
                 await channel.send(embed=embed, file=myfile)
             else:
                 await member.send(message)
                 embed = discord.Embed(color=0x47B781)
-                embed.add_field(name=f'<:outgoingarrow:797567337976430632> **{member.name}#{member.discriminator}**', value=message)
+                embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value=message)
                 embed.set_footer(text=f'.dm {member.id}')
                 await channel.send(embed=embed)
         except discord.Forbidden:

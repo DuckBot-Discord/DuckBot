@@ -106,10 +106,6 @@ class moderation(commands.Cog):
         elif member.top_role >= ctx.me.top_role:
             await self.error_message(ctx, 'I\'m not high enough in role hierarchy to ban that member!')
             return
-        if send:
-            await ctx.send(embed=embed, delete_after=5)
-            await self.perms_error(ctx)
-            return
         if member.top_role <= ctx.author.top_role:
             if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
                 try:
@@ -242,7 +238,7 @@ class moderation(commands.Cog):
         if member == None:
             await self.error_message(ctx, 'You must specify a member to mute')
             return
-        muterole = ctx.guild.get_role(self.yaml_data['MuteRole'])
+        muterole = self.bot.get_guild(717140270789033984).get_role(self.yaml_data['MuteRole'])
         if muterole in member.roles:
             await self.error_message(ctx, f'{member} is already muted')
             return
@@ -290,6 +286,69 @@ class moderation(commands.Cog):
 ```reason: {reason}```""", color=ctx.me.color)
             else:
                 embed=discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}""", color=ctx.me.color)
+            await ctx.send(embed=embed)
+        except:
+            await self.error_message(ctx, 'something went wrong...')
+
+
+#-----------------------------------------------------------------#
+#------------------------ DENYMEDIA ------------------------------#
+#-----------------------------------------------------------------#
+
+    @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md'])
+    async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+        if not any(role in self.staff_roles for role in ctx.author.roles):
+            await self.perms_error(ctx)
+            return
+        if member == None:
+            await self.error_message(ctx, 'You must specify a member to deny media to')
+            return
+        muterole = self.bot.get_guild(717140270789033984).get_role(self.yaml_data['noMediaRole'])
+        if muterole in member.roles:
+            await self.error_message(ctx, f'{member} is already in deny media')
+            return
+        try:
+            await member.add_roles(muterole)
+            mem_embed=discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been denied permissions to send media by {ctx.author}", icon_url='https://i.imgur.com/hKNGsMb.png')
+            if reason: mem_embed.set_footer(text=f'reason: {reason}')
+            await member.send(embed=mem_embed)
+            if reason:
+                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pems to {member.mention}
+```reason: {reason}```""", color=ctx.me.color)
+            else:
+                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pems to {member.mention}""", color=ctx.me.color)
+            await ctx.send(embed=embed)
+        except:
+            await self.error_message(ctx, 'something went wrong...')
+
+#-----------------------------------------------------------------#
+#------------------------ ALLOWMEDIA -----------------------------#
+#-----------------------------------------------------------------#
+
+    @commands.command(aliases=['yesmedia', 'yesimages', 'allowimages', 'yesimg', 'ma'])
+    async def allowmedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+        if not any(role in self.staff_roles for role in ctx.author.roles):
+            await self.perms_error(ctx)
+            return
+        if member == None:
+            await self.error_message(ctx, 'You must specify a member deny media to')
+            return
+        muterole = ctx.guild.get_role(self.yaml_data['noMediaRole'])
+        if muterole not in member.roles:
+            await self.error_message(ctx, f'{member} is not in deny media')
+            return
+        try:
+            await member.remove_roles(muterole)
+            mem_embed=discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been allowed permissions to send media by {ctx.author}", icon_url='https://i.imgur.com/m1MtOVS.png')
+            if reason: mem_embed.set_footer(text=f'reason: {reason}')
+            await member.send(embed=mem_embed)
+            if reason:
+                embed=discord.Embed(description=f"""{ctx.author.mention} allowed media pems to {member.mention}
+```reason: {reason}```""", color=ctx.me.color)
+            else:
+                embed=discord.Embed(description=f"""{ctx.author.mention} allowed media pems to {member.mention}""", color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')

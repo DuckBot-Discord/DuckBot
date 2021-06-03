@@ -45,12 +45,12 @@ Second, We don't assure this texture pack will go along well with mods, there mi
 
     @commands.command()
     async def bsl(self, ctx):
-        embed=discord.Embed(title="", description="**[download BSL shaders](https://bitslablab.com/bslshaders/#download)** \n **[BitsLab discord server](https://discord.com/invite/ZJd7jjA)**", color=ctx.me.color)
+        embed=discord.Embed(title="", description="**[download BSL shaders](https://bitslablab.com/bslshaders/#download)** \n**[BitsLab discord server](https://discord.com/invite/ZJd7jjA)** \n**[alternative download](https://drive.google.com/file/d/1DFMQE5JIIFrBATLVnPHsHVOKysEr24xx/view?usp=sharing)**", color=ctx.me.color)
         await ctx.send(embed=embed)
 
     @commands.command()
     async def seus(self, ctx):
-        embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)**", color=ctx.me.color)
+        embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)** \n**[SEUS alternative download link](https://drive.google.com/file/d/1Z35kGKzKa14ifLeW3QaSFjOzMueaKCH1/view?usp=sharing)**", color=ctx.me.color)
         embed.set_footer(text='May not work well with AMD graphics!')
         await ctx.send(embed=embed)
 
@@ -110,10 +110,15 @@ To translate to english just do:
     async def help(self, ctx, arg = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['HelpMessage'], color=ctx.me.color)
-        elif arg == "normal":
+        elif arg.lower() == "n":
             embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['HelpMessage'], color=ctx.me.color)
         else:
             embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['StaffHelpMessage'], color=ctx.me.color)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def rank(self, ctx):
+        embed=discord.Embed(description="Nah... 😂", color=ctx.me.color)
         await ctx.send(embed=embed)
 
 # ------------------------------------------------------------------------------

@@ -9,15 +9,15 @@ class automod(commands.Cog):
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
             exempt_ids = full_yaml['IgnoredRoles']
+            yaml_data = full_yaml
             exempt_roles = []
             for roleid in exempt_ids:
-                exempt_roles.append(self.bot.get_guild(717140270789033984).get_role(roleid))
+                exempt_roles.append(self.bot.get_guild(yaml_data['guildID']).get_role(roleid))
         self.exempt_roles = exempt_roles
         self.yaml_data = full_yaml
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.channel.id != 846800131269591091: return
         if message.author.bot or message.guild.id != 717140270789033984: return
         if any(item in self.exempt_roles for item in message.author.roles): return
         if "download" in f"{message.content.lower()}":
@@ -31,8 +31,7 @@ If you already purchased a <@&717144765690282015> or higher subscription, check 
 If you don't already have a <@&717144765690282015> or higher subscription, you can get one here: [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=message.guild.me.color)
             embed.set_author(name="Automatic support", icon_url="https://i.imgur.com/GTttbJW.png")
             embed.set_footer(text="this message will delete in 2 minutes")
-            await message.channel.send(embed=embed, delete_after=120)
-            await message.add_reaction('📩')
+            await message.channel.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(automod(bot))

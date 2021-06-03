@@ -85,17 +85,13 @@ class moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if member == None:
-            await self.error_message(ctx, 'You must specify a member to ban')
+            await self.error_message(ctx, 'You must specify a member to kick')
             return
         elif member == ctx.author:
-            await self.error_message(ctx, 'You can\'t ban yourself')
+            await self.error_message(ctx, 'You can\'t kick yourself')
             return
         elif member.top_role >= ctx.me.top_role:
-            await self.error_message(ctx, 'I\'m not high enough in role hierarchy to ban that member!')
-            return
-        if send:
-            await ctx.send(embed=embed, delete_after=5)
-            await self.perms_error(ctx)
+            await self.error_message(ctx, 'I\'m not high enough in role hierarchy to kick that member!')
             return
         if member.top_role <= ctx.author.top_role:
             if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:

@@ -19,14 +19,14 @@ class handler(commands.Cog):
         else:
             await self.bot.get_channel(847943387083440128).send(f"""```{error}```""")
 
+        if ctx.command in ['reload','load','unload']:
+            return
 
-        if ctx.author.id == 349373972103561218:
-            if ctx.command in ['reload','load','unload']: return
-            embed=discord.Embed(description=
-f"""**An error ocurred while handling the command `{ctx.command}`**
-```{error}```
-""", color=ctx.me.color)
-            await ctx.send(embed=embed)
+        embed=discord.Embed(description=
+f"**An error ocurred while handling the command `{ctx.command}`** \n```{error}```", color=ctx.me.color)
+        if ctx.author.id != 349373972103561218:
+            embed.set_footer('This is an error! DM me to report it.')
+        await ctx.send(embed=embed)
         raise error
 def setup(bot):
     bot.add_cog(handler(bot))

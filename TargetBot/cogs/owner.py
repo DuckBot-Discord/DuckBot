@@ -90,102 +90,18 @@ class owner_only_commands(commands.Cog):
             try: await ctx.message.delete()
             except discord.Forbidden: pass
 
-
-
     @commands.command(aliases = ['stop','sd'])
     async def shutdown(self, ctx):
         if ctx.message.author.id == 349373972103561218:
-            guild = self.bot.get_guild(787743716793516062)
-            try:
-                await guild.voice_client.disconnect()
-            except AttributeError:
-                a=1
             await ctx.send("🛑 **__Stopping the bot__**")
+            await self.bot.change_presence(status=discord.Status.offline)
+            await asyncio.sleep(0.5)
             await ctx.bot.logout()
         else:
             await ctx.message.add_reaction('🚫')
             await asyncio.sleep(5)
             try: await ctx.message.delete()
             except discord.Forbidden: pass
-
-    @commands.command()
-    async def todo(self, ctx, *, message = None):
-        if ctx.message.author.id != 349373972103561218:
-            await ctx.message.add_reaction('🚫')
-            return
-        channel = self.bot.get_channel(830992446434312192)
-        if message == None:
-            await ctx.message.add_reaction('⚠')
-            return
-        if ctx.message.channel == channel:
-            await ctx.message.delete()
-        embed = discord.Embed(description=message, color=0x47B781)
-        await channel.send(embed=embed)
-        await ctx.message.add_reaction('✅')
-
-    @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
-        if before.channel is None and after.channel is not None:
-            if after.channel.guild.id == 841298004929806336:
-                textchannel = self.bot.get_channel(841298004929806340)
-                await textchannel.send(f'<:joined:849392863557189633> {member.name} **joined** __{after.channel.name}__!')
-        if before.channel is not None and after.channel is not None:
-            if before.channel.guild.id == 841298004929806336 and before.channel.id != after.channel.id:
-                textchannel = self.bot.get_channel(841298004929806340)
-                await textchannel.send(f'<:moved:848312880666640394> {member.name} **has been moved to** __{after.channel.name}__!')
-        if before.channel is not None and after.channel is None:
-            if before.channel.guild.id == 841298004929806336:
-                textchannel = self.bot.get_channel(841298004929806340)
-                await textchannel.send(f'<:left:849392885785821224> {member.name} **left** __{before.channel.name}__!')
-
-"""    @commands.Cog.listener()
-    @commands.bot_has_permissions(manage_messages=True)
-    async def on_message(self, message):
-        if message.author.id != 349373972103561218: return
-        if message.guild:
-            if self.toggle == 1:
-                try: await message.delete()
-                except: return
-                if message.channel.permissions_for(message.author).mention_everyone:
-                    if message.reference:
-                        reply = message.reference.resolved
-                        await reply.reply(message.content)
-                    else:
-                        await message.channel.send(message.content)
-                else:
-                    if message.reference:
-                        reply = message.reference.resolved
-                        await reply.reply(message.content, allowed_mentions = discord.AllowedMentions(everyone = False))
-                    else:
-                        await message.channel.send(message.content, allowed_mentions = discord.AllowedMentions(everyone = False))
-                return
-            elif message.content.startswith('-'):
-                try: await message.delete()
-                except: return
-                if message.channel.permissions_for(message.author).mention_everyone:
-                    if message.reference:
-                        reply = message.reference.resolved
-                        await reply.reply(message.content[1:])
-                    else:
-                        await message.channel.send(message.content[1:])
-                else:
-                    if message.reference:
-                        reply = message.reference.resolved
-                        await reply.reply(message.content[1:], allowed_mentions = discord.AllowedMentions(everyone = False))
-                    else:
-                        await message.channel.send(message.content[1:], allowed_mentions = discord.AllowedMentions(everyone = False))
-
-    @commands.command()
-    async def ti(self, ctx):
-        if ctx.message.author.id != 349373972103561218:
-            await ctx.message.add_reaction('🚫')
-            return
-        if self.toggle == 1:
-            self.toggle = 0
-            await ctx.message.add_reaction('🔴')
-        if self.toggle == 0:
-            self.toggle = 1
-            await ctx.message.add_reaction('🟢')"""
 
 def setup(bot):
     bot.add_cog(owner_only_commands(bot))

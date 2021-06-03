@@ -31,7 +31,7 @@ async def on_ready():
     print ("Logged in as " + bot.user.name)
     print('\033[0m')
     await bot.wait_until_ready()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='!guide'))
+    await bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Activity(type=discord.ActivityType.listening, name='!guide'))
     print("\033[93m======[ DELAYED LOAD ]======")
     for cog in yaml_data['DelayedLoadCogs']:
         try:
