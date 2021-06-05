@@ -295,7 +295,7 @@ class moderation(commands.Cog):
 #------------------------ DENYMEDIA ------------------------------#
 #-----------------------------------------------------------------#
 
-    @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md'])
+    @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md', 'mediaban', 'nm', 'mb', 'mban'])
     async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -314,10 +314,10 @@ class moderation(commands.Cog):
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pems to {member.mention}
+                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pemrs to {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pems to {member.mention}""", color=ctx.me.color)
+                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pemrs to {member.mention}""", color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
@@ -326,7 +326,7 @@ class moderation(commands.Cog):
 #------------------------ ALLOWMEDIA -----------------------------#
 #-----------------------------------------------------------------#
 
-    @commands.command(aliases=['yesmedia', 'yesimages', 'allowimages', 'yesimg', 'ma'])
+    @commands.command(aliases=['yesmedia', 'yesimages', 'allowimages', 'yesimg', 'ma', 'mediaunban', 'ym', 'mub', 'munban'])
     async def allowmedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -345,10 +345,10 @@ class moderation(commands.Cog):
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} allowed media pems to {member.mention}
+                embed=discord.Embed(description=f"""{ctx.author.mention} returned media pemrs to {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} allowed media pems to {member.mention}""", color=ctx.me.color)
+                embed=discord.Embed(description=f"""{ctx.author.mention} returned media pemrs to {member.mention}""", color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
@@ -357,7 +357,7 @@ class moderation(commands.Cog):
 #------------------------ LOCKDOWN -----------------------------#
 #---------------------------------------------------------------#
 
-    @commands.command(aliases=['lock'])
+    @commands.command(aliases=['lock', 'ld'])
     @commands.has_permissions(manage_channels=True)
     async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
 
@@ -382,11 +382,15 @@ class moderation(commands.Cog):
             embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention}", color=ctx.me.color)
         await textchannel.send(embed=embed)
 
+#-------------------------------------------------------------#
+#------------------------ UNLOCK -----------------------------#
+#-------------------------------------------------------------#
+
     @lockdown.error
     async def clear_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
 
-    @commands.command(aliases=['unlock'])
+    @commands.command(aliases=['unlock', 'uld'])
     @commands.has_permissions(manage_channels=True)
     async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
 

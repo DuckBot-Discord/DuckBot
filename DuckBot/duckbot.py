@@ -21,31 +21,23 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='.help'))
 
 @bot.command()
+@commands.is_owner()
 async def load(ctx, extension):
-    if ctx.message.author.id == 349373972103561218:
-        try:
-            bot.load_extension("cogs.{}".format(extension))
-            await ctx.message.add_reaction("✅")
-        except discord.ext.commands.ExtensionAlreadyLoaded:
-            await ctx.send("Cog already loaded!", delete_after=5)
-        except discord.ext.commands.ExtensionNotFound:
-            await ctx.message.add_reaction("❓")
-        except discord.ext.commands.NoEntryPointError:
-            await ctx.send("Cog doesn't have a setup function!", delete_after=5)
-        await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
+    try:
+        bot.load_extension("cogs.{}".format(extension))
+        await ctx.message.add_reaction("✅")
+    except discord.ext.commands.ExtensionAlreadyLoaded:
+        await ctx.send("Cog already loaded!", delete_after=5)
+    except discord.ext.commands.ExtensionNotFound:
+        await ctx.message.add_reaction("❓")
+    except discord.ext.commands.NoEntryPointError:
+        await ctx.send("Cog doesn't have a setup function!", delete_after=5)
+    await asyncio.sleep(5)
+    try:
+        await ctx.message.delete()
+    except discord.Forbidden:
         return
-    else:
-        await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
-        return
+    return
 
 @load.error
 async def load_error(ctx, error):
@@ -61,27 +53,19 @@ async def load_error(ctx, error):
         return
 
 @bot.command()
+@commands.is_owner()
 async def unload(ctx, extension):
-    if ctx.message.author.id == 349373972103561218:
-        try:
-            bot.unload_extension("cogs.{}".format(extension))
-            await ctx.message.add_reaction("✅")
-        except discord.ext.commands.ExtensionNotLoaded:
-            await ctx.send("Cog wasn't loaded!", delete_after=5)
-        await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
+    try:
+        bot.unload_extension("cogs.{}".format(extension))
+        await ctx.message.add_reaction("✅")
+    except discord.ext.commands.ExtensionNotLoaded:
+        await ctx.send("Cog wasn't loaded!", delete_after=5)
+    await asyncio.sleep(5)
+    try:
+        await ctx.message.delete()
+    except discord.Forbidden:
         return
-    else:
-        await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
-        return
+    return
 
 @unload.error
 async def unload_error(ctx, error):
@@ -97,35 +81,27 @@ async def unload_error(ctx, error):
         return
 
 @bot.command()
+@commands.is_owner()
 async def reload(ctx, extension):
-    if ctx.message.author.id == 349373972103561218:
-        try:
-            bot.unload_extension("cogs.{}".format(extension))
-        except discord.ext.commands.ExtensionNotLoaded:
-            await ctx.send("Cog wasn't loaded, attempting to load", delete_after=5)
-        try:
-            bot.load_extension("cogs.{}".format(extension))
-            await ctx.message.add_reaction("✅")
-        except discord.ext.commands.ExtensionAlreadyLoaded:
-            await ctx.send("Cog already loaded!", delete_after=5)
-        except discord.ext.commands.ExtensionNotFound:
-            await ctx.message.add_reaction("❓")
-        except discord.ext.commands.NoEntryPointError:
-            await ctx.send("Cog doesn't have a setup function!", delete_after=5)
-        await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
+    try:
+        bot.unload_extension("cogs.{}".format(extension))
+    except discord.ext.commands.ExtensionNotLoaded:
+        await ctx.send("Cog wasn't loaded, attempting to load", delete_after=5)
+    try:
+        bot.load_extension("cogs.{}".format(extension))
+        await ctx.message.add_reaction("✅")
+    except discord.ext.commands.ExtensionAlreadyLoaded:
+        await ctx.send("Cog already loaded!", delete_after=5)
+    except discord.ext.commands.ExtensionNotFound:
+        await ctx.message.add_reaction("❓")
+    except discord.ext.commands.NoEntryPointError:
+        await ctx.send("Cog doesn't have a setup function!", delete_after=5)
+    await asyncio.sleep(5)
+    try:
+        await ctx.message.delete()
+    except discord.Forbidden:
         return
-    else:
-        await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(3)
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            return
-        return
+    return
 
 @reload.error
 async def reload_error(ctx, error):
