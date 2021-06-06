@@ -19,11 +19,12 @@ class help(commands.Cog):
             embcol = color
             color = f'{hex(color)}'.replace('0x', '').upper()
             embed = discord.Embed(description=f"Color of the day changed to {color}", color=embcol)
+            embed.set_thumbnail(f"https://singlecolorimage.com/get/{color}/16x16")
             await channel.send(embed=embed)
             await asyncio.sleep(43200)
 
 
-    @commands.command(aliases=["color", "sc"])
+    @commands.command(aliases=["color"])
     @commands.has_permissions(manage_nicknames=True)
     async def cotd(self, ctx, color: typing.Optional[discord.Colour] = discord.Colour.default, tag = "-n"):
         await self.bot.wait_until_ready()
@@ -37,6 +38,9 @@ class help(commands.Cog):
         channel = self.bot.get_channel(799503231989973022)
         if tag == "-r": color = f'{hex(color)}'.replace('0x', '').upper()
         embed = discord.Embed(description=f"Daily color manually changed to {color}", color=embcol)
+        imcolor = f"{color}"
+        imcolor = imcolor.replace("#", "")
+        embed.set_thumbnail(url=f" https://singlecolorimage.com/get/{imcolor}/16x16")
         await channel.send(embed=embed)
 
 
