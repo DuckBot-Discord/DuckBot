@@ -1,4 +1,4 @@
-import json, random, discord, aiohttp, typing, asyncio, cleverbotfreeapi
+import json, random, discord, aiohttp, typing, asyncio, re
 
 from random import randint
 from discord.ext import commands
@@ -15,11 +15,6 @@ class animals(commands.Cog):
             async with cs.get("https://www.affirmations.dev") as r:
                 json_data = json.loads(r.text)
                 await ctx.send(json_data["affirmation"])
-
-    @commands.command()
-    async def duckbot(self, ctx, *, input):
-        response = cleverbotfreeapi.cleverbot(input)
-        await ctx.send(response)
 
     ### CAT ###
     # Sends a pic of a cat

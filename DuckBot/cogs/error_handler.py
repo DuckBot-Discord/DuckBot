@@ -1,5 +1,5 @@
 
-import  discord
+import  discord, asyncio
 from discord.ext import commands
 
 class handler(commands.Cog):
@@ -21,7 +21,11 @@ class handler(commands.Cog):
         if isinstance(error, discord.ext.commands.errors.CheckFailure):
             await self.perms_error(ctx)
             return
-        if isinstance(error, discord.ext.commands.errors.CommandNotFound): return
+        if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+#            await ctx.message.add_reaction('❓')
+#            await asyncio.sleep(2)
+#            await ctx.message.remove_reaction('❓', self.bot.user)
+            return
         if isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
             await ctx.send("command is on cooldown")
 
@@ -37,7 +41,7 @@ class handler(commands.Cog):
         embed=discord.Embed(description=
 f"**An error ocurred while handling the command `{ctx.command}`** \n```{error}```", color=ctx.me.color)
         if ctx.author.id != 349373972103561218:
-            embed.set_footer('This is an error! DM me to report it.')
+            embed.set_footer(text='This is an error! DM me to report it.')
         await ctx.send(embed=embed)
         raise error
 def setup(bot):

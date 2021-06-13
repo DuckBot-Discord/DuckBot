@@ -32,7 +32,7 @@ class help(commands.Cog):
         user = ctx.guild.get_member(799749818062077962)
         if argument == None:
             await ctx.message.delete()
-            await ctx.send("To get whitelisted, run the `.whitelist YourMinecrftName` in the <#706842001135370300> channel. You will be automatically ")
+            await ctx.send("To get whitelisted, run the `!whitelist YourMinecrftName` in the <#706842001135370300> channel. You will be automatically ")
             return
         if ctx.guild.get_role(833843541872214056) in ctx.author.roles:
             await ctx.send("⚠ Sorry but you can't do that! you're already whitelisted.")

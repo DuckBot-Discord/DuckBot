@@ -42,6 +42,7 @@ Here's some extra information about Minecraft usernames, accounts and how to fin
                     embed2.add_field(name="After all of this, try again!", value="Head to the <#706825075516768297> channel and type in your newly found Minecraft username", inline=False)
                     embed2.set_footer(text="This is an automated action, if you are still having trouble whitelisting yourself, contact staff by replying to this Direct Message. An available staff member will respond to you as soon as possible.")
                     await message.author.send(embed=embed2)
+                    await message.channel.send(f"❌ `{argument}` doesn't seem to be a JAVA EDITION account. Just sent you a DM some info on how to find it :smile:", delete_after=20)
 
                 elif cs.status == 400:
                     embed = discord.Embed(color = 0xFF2014)
@@ -57,10 +58,13 @@ Here's some extra information about Minecraft usernames, accounts and how to fin
                     embed2.add_field(name="After confirming that, make sure you have premium/paid Minecraft account.", value="Here is an [article on Minecraft's forum](https://help.minecraft.net/hc/en-us/articles/360034636712-Minecraft-Usernames) that goes into details on Minecraft usernames and how to find yours. You will not be able to accept the rules if you do not own a legit version of Minecraft.", inline=False)
                     embed2.add_field(name="After all of this, try again!", value="Head to the <#706825075516768297> channel and type in your newly found Minecraft username", inline=False)
                     embed2.set_footer(text="This is an automated action, if you are still having trouble whitelisting yourself, contact staff by replying to this Direct Message. An available staff member will respond to you as soon as possible.")
-                    await message.author.send(embed=userembed)
+                    await message.author.send(embed=embed2)
+                    await message.channel.send(f"❌ `{argument}` doesn't seem to be a JAVA EDITION account. Just sent you a DM some info on how to find it :smile:", delete_after=20)
 
                 elif user.status == discord.Status.online:
                     await message.author.add_roles(message.guild.get_role(833843541872214056),message.guild.get_role(798698824738668605))
+                    try: await message.author.remove_roles(message.guild.get_role(851593341409820722))
+                    except: pass
                     res = await cs.json()
                     user = res["name"]
                     uuid = res["id"]

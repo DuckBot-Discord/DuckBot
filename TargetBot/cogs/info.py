@@ -59,6 +59,11 @@ Second, We don't assure this texture pack will go along well with mods, there mi
         embed=discord.Embed(title="", description="**[download optifine](https://optifine.net/downloads)** \n **[optifine's discord](https://optifine.net/discord)**", color=ctx.me.color)
         await ctx.send(embed=embed)
 
+    @commands.command(aliases = ['upgrade', 'cm', 'um', 'pledge'])
+    async def cancel(self, ctx):
+        embed=discord.Embed(title="", description="**[cancel/upgrade your pledge here](https://www.patreon.com/pledges)**", color=ctx.me.color)
+        await ctx.send(embed=embed)
+
     @commands.command(aliases = ['download', 'dchannel'])
     async def downloads(self, ctx):
         embed=discord.Embed(title="", description="""To access the download channel you need to have a role <@&717144765690282015> or higher, and you don't appear to have it.
@@ -107,7 +112,7 @@ To translate to english just do:
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def help(self, ctx, arg = None):
+    async def help(self, ctx, arg = 'b'):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['HelpMessage'], color=ctx.me.color)
         elif arg.lower() == "n":

@@ -1,30 +1,24 @@
-import typing, discord, asyncio, yaml
-from discord.ext import commands
+import discord, random, datetime, asyncio
+from discord.ext import commands, tasks
+from random import randint
 
-class nopog(commands.Cog):
-
+class auto_quack(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    words = ['nothing', 'nothing']
-    with open(r'files/banned-words.yaml') as file:
-        words = yaml.full_load(file)
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot: return
-        banned_words = self.words['pogwords']
-        if any(ele in message.content.lower() for ele in banned_words):
-            await message.add_reaction('<:nopog:838102336944603186>')
-            await message.add_reaction('😡')
+        self.remrole.start()
 
-    with open('files/banned-words.yaml','r') as yamlfile:
-        cur_yaml = yaml.safe_load(yamlfile) # Note the safe_load
-        cur_yaml['bugs_tree'].update(new_yaml_data_dict)
-
-    if cur_yaml:
-        with open('bugs.yaml','w') as yamlfile:
-            yaml.safe_dump(cur_yaml, yamlfile) # Also note the safe_dump
-
+    @tasks.loop(minutes=15)
+    async def remrole(self):
+        role = self.bot.get_guild(706624339595886683).get_role(851498082033205268)
+        for members in role.members:
+            date = members.joined_at
+            now = datetime.datetime.now()
+            diff = now - date
+            hours = diff.total_seconds() / 60 /60
+            if hours >= 336:
+                await members.remove_roles(role)
+            await asyncio.sleep(5)
 
 def setup(bot):
-    bot.add_cog(nopog(bot))
+    bot.add_cog(auto_quack(bot))

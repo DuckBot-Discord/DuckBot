@@ -31,7 +31,7 @@ Remove the image/file and resend your message""")
                 embed.set_footer(text=f'.dm {message.author.id}')
                 await channel.send(embed=embed)
             await message.add_reaction('📬')
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(5)
             await message.remove_reaction('📬', self.bot.user)
 
 ###############################################################################

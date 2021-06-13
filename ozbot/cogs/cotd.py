@@ -19,7 +19,7 @@ class help(commands.Cog):
             embcol = color
             color = f'{hex(color)}'.replace('0x', '').upper()
             embed = discord.Embed(description=f"Color of the day changed to {color}", color=embcol)
-            embed.set_thumbnail(f"https://singlecolorimage.com/get/{color}/16x16")
+            embed.set_thumbnail(url=f"https://singlecolorimage.com/get/{color}/16x16")
             await channel.send(embed=embed)
             await asyncio.sleep(43200)
 
