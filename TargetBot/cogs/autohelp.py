@@ -17,16 +17,29 @@ class automod(commands.Cog):
         self.yaml_data = full_yaml
         self.token = full_yaml['sus_url_token']
 
+
+
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.channel.id != 853437050313113600: return
         if message.author.bot: return
+        if message.guild.id != 717140270789033984: return
+        if self.bot.get_guild(self.yaml_data['guildID']).get_role(self.yaml_data['StaffRole']) in message.author.roles:
+            if not "--test" in message.content.lower():
+                return
         original_message = message.content
         results = re.findall("http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", message.content)
         if results:
             await message.add_reaction('🔃')
             text = message.content
             is_sus = False
+            is_very_sus = False
+            spamming = False
+            malware = False
+            phishing = False
+            adult = False
+            risk_factor = 0
+            sus_links = 0
+
             for link in results:
                 if urllib.parse.urlparse(link).netloc in self.yaml_data['safe_urls']: continue
                 url = urllib.parse.quote(link, safe='')
@@ -34,21 +47,54 @@ class automod(commands.Cog):
                     async with cs.get(yarl.URL(f"https://ipqualityscore.com/api/json/url/{self.token}/{url}",encoded=True)) as r:
                         data = await r.json()
                         if data['risk_score'] >= 15:
-                            text = text.replace(link, "`SUS_LINK`")
+                            text = text.replace(link, "<:sus:853491206550061056>")
                             is_sus = True
+                        if data['risk_score'] >= 55: is_very_sus = True
+                        if data['spamming'] == True: spamming = True
+                        if data['malware'] == True: malware = True
+                        if data['phishing'] == True: phishing=True
+                        if data['adult'] == True: adult=True
+                        risk_factor = risk_factor + data['risk_score']
+                        sus_links = sus_links + 1
+
             if is_sus == True:
                 await message.delete()
                 embed = discord.Embed(description=text, color = 0x2F3136)
                 embed.set_author(name=message.author, icon_url=message.author.avatar_url)
-                await message.channel.send(f"message by {message.author.mention} had a sus link", embed=embed)
+                flagged_with = ""
+                if spamming == True: flagged_with = flagged_with + " spamming,"
+                if malware == True: flagged_with = flagged_with + " malware,"
+                if phishing == True: flagged_with = flagged_with + " phishing,"
+                if adult == True: flagged_with = flagged_with + " nsfw,"
+                if flagged_with.endswith(','): flagged_with[:-2]
+                if flagged_with != "":
+                    embed.set_footer(text=f'Flagged with{flagged_with}')
+                await message.channel.send(f"message by {message.author.mention} had a <:sus:853491206550061056> link", embed=embed)
 
                 regembed = discord.Embed(description=original_message, color = 0x2F3136)
                 regembed.set_author(name=message.author, icon_url=message.author.avatar_url)
-                await self.bot.get_channel(757127270874742827).send(f"message by {message.author.mention} had a sus link",embed=regembed)
+                if is_very_sus == True: regembed.set_footer(text=f"""deemed very sus, user has been muted! | ID: {message.author.id}
+dismiss case:
+!unmute {message.author.id} case dismissed. link was not suspicious""")
+                else: regembed.set_footer(text=f"ID: {message.author.id}")
+                await self.bot.get_channel(757127270874742827).send(f"message by {message.author.mention} had a <:sus:853491206550061056> link",embed=regembed)
+                if is_very_sus == True:
+                    muterole = message.guild.get_role(self.yaml_data['MuteRole'])
+                    if not muterole in message.author.roles:
+                        await message.author.add_roles(muterole)
+                        mem_embed=discord.Embed(color=message.guild.me.color)
+                        mem_embed.set_author(name=f"You've been muted by our automated URL scanning systems", icon_url='https://i.imgur.com/hKNGsMb.png')
+                        mem_embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
+                        mem_embed.set_footer(text=f'reason: our systems have detected that you have sent a suspicious link - human moderators will check your case soon and take further actions')
+                        await message.author.send(embed=mem_embed)
                 return
+
             else:
                 await message.remove_reaction('🔃', self.bot.user)
                 await message.add_reaction('✅')
+                await asyncio.sleep(5)
+                await message.remove_reaction('✅', self.bot.user)
+
 
         if any(item in self.exempt_roles for item in message.author.roles): return
         if "download" in f"{message.content.lower()}":
