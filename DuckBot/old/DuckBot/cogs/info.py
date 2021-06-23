@@ -1,4 +1,4 @@
-import json, random, typing, discord, asyncio, time
+import json, random, typing, discord, asyncio
 from discord.ext import commands
 
 class info(commands.Cog):
@@ -11,12 +11,13 @@ class info(commands.Cog):
     @commands.command()
     async def ping(self, ctx):
         embed = discord.Embed(title='', description="🏓 pong!", color=ctx.me.color)
-        start = time.perf_counter()
         message = await ctx.send(embed=embed)
-        end = time.perf_counter()
-        await asyncio.sleep(0.7)
-        duration = (end - start) * 1000
-        embed = discord.Embed(title='', description=f'**websocket:** `{(self.bot.latency * 1000):.2f}ms` \n**message:** `{duration:.2f}ms`', color=ctx.me.color)
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        await asyncio.sleep(0.6)
+        embed = discord.Embed(title='', description=f'**{round (self.bot.latency * 1000)} ms**', color=ctx.me.color)
         await message.edit(embed=embed)
 
     @commands.command()
@@ -33,6 +34,8 @@ class info(commands.Cog):
         embed.add_field(name='Invite', value='Invite me to your server [here](https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot)', inline=True)
 
         embed.add_field(name='Source code', value="[Here](https://github.com/LeoCx1000/discord-bots)'s my sourcecode", inline=True)
+
+        embed.add_field(name='Support server', value="There's no support server anymore. DM DuckBot for help", inline=True)
 
         embed.add_field(name='_ _', value='_ _', inline=False)
 
@@ -53,16 +56,18 @@ class info(commands.Cog):
         if (argument == "None"):
 
             embed = discord.Embed(title='DuckBot help', description=("""Hey {}, Here is a list of commands:
-> **fields:** `<obligatory>` `[optional]`
-""".format(ctx.message.author.mention)), color = ctx.me.color)
+fields: `<obligatory>` `[optional]`""".format(ctx.message.author.mention)), color = ctx.me.color)
+            embed.add_field(name='_ _', value='_ _', inline=False)
             embed.add_field(name=botprefix + 'help commands', value='Show normal commands', inline=True)
             embed.add_field(name=(botprefix + 'help testing'), value='shows testing/beta commands.', inline=True)
             embed.add_field(name=(botprefix + 'help moderation'), value='shows moderation commands.', inline=True)
             embed.add_field(name=(botprefix + 'info'), value='Gives info about the bot, and how to get support.', inline=True)
-            embed.add_field(name=(botprefix + 'log'), value='Gives an update log', inline=True)
             embed.add_field(name=(botprefix + 'help [argument] [page]'), value='Gives this message or the other sub-categories.', inline=True)
-            embed.add_field(name='_ _', value="For issues, DM the bot ", inline=False)
-            embed.set_footer(text=f'Bot by {self.bot.get_user(self.bot.owner_id)}', icon_url=f'{self.bot.get_user(self.bot.owner_id).avatar_url}')
+            embed.add_field(name=(botprefix + 'log'), value='Gives an update log', inline=True)
+            embed.add_field(name='_ _', value="""ℹ some commands are having issues. i'm currently working on debugging them. if you run a command and it doesn't work, DM the bot with the command (use `code format` because it will not send actual commands trough the modmail!)
+
+For further help, DM the bot or join the support server found in the `.info` command""", inline=False)
+            embed.set_footer(text='Bot by LeoCx1000#9999', icon_url='https://i.imgur.com/DTLCaur.gif')
             await ctx.send(embed=embed)
             try:
                 await ctx.message.delete()
@@ -78,15 +83,15 @@ class info(commands.Cog):
                 embed.add_field(name=(botprefix + 'dog'), value='Gets a random picture of a dog', inline=False)
                 embed.add_field(name=(botprefix + 'cat'), value='Gets a random picture of a cat', inline=False)
                 embed.add_field(name=(botprefix + 'duck'), value='Gets a random picture of a duck', inline=False)
-                embed.add_field(name=(botprefix + 'help [arg] [page]'), value='Gives a list of arguments', inline=False)
+                embed.add_field(name=(botprefix + 'motivateme'), value='Sends an affirmation', inline=False)
                 embed.add_field(name=(botprefix + 'inspireme'), value='Returns an AI generated image from Inspirobot.me', inline=False)
 
             if number == 2:
 
                 embed.add_field(name=(botprefix + 'ping'), value="Shwos the bot's ping to the server", inline=False)
-                embed.add_field(name=(botprefix + 'motivateme'), value='Sends a mad motivational quote', inline=False)
+                embed.add_field(name=(botprefix + 'help [arg] [page]'), value='Gives a list of arguments', inline=False)
                 embed.add_field(name=(botprefix + 'afk'), value='Sets/unsets you as AFK. (adds `[AFK]` to your nickname)', inline=False)
-                embed.add_field(name=(botprefix + 'say <string>'), value="Makes the bot speak for you:sparkles: (needs manage message perms)", inline=False)
+                embed.add_field(name=(botprefix + 'say <string>'), value="Makes the bot speak for you:sparkles:", inline=False)
                 embed.add_field(name=(botprefix + 'uuid <player>'), value='[MINECRAFT] Gives the UUID of a given player', inline=False)
 
             if number == 3:
@@ -200,8 +205,6 @@ class info(commands.Cog):
         embed.add_field(name='**`13-01-2021`**', value='Edited DM command, so it no longer needs to be executed in the same guild as the bot, allowing for responses to the DMS of the bot', inline=False)
 
         embed.add_field(name='**`14-01-2021`**', value='New arguments added to `.cat` command, check `.cat help` commands for more', inline=False)
-
-        embed.add_field(name='**`20-06-2021`**', value='re-wrote a lot of the bot to make the code cleaner', inline=False)
 
         embed.add_field(name='Suggest an update/feature:', value='Just DM me (the bot) to do that ;)', inline=False)
 

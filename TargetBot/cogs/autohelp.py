@@ -17,6 +17,21 @@ class automod(commands.Cog):
         self.yaml_data = full_yaml
         self.token = full_yaml['sus_url_token']
 
+    @commands.command()
+    async def urltest(self, ctx, *, url):
+        results = re.findall("http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", url)
+        if not results:
+            await ctx.send('no results found')
+            return
+        await ctx.message.add_reaction('🔃')
+        for link in results:
+            url = urllib.parse.quote(link, safe='')
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(yarl.URL(f"https://ipqualityscore.com/api/json/url/{self.token}/{url}",encoded=True)) as r:
+                    text = await r.json()
+                    await ctx.send(text)
+
+        await ctx.message.remove_reaction('🔃', self.bot.user)
 
 
     @commands.Cog.listener()
@@ -46,10 +61,10 @@ class automod(commands.Cog):
                 async with aiohttp.ClientSession() as cs:
                     async with cs.get(yarl.URL(f"https://ipqualityscore.com/api/json/url/{self.token}/{url}",encoded=True)) as r:
                         data = await r.json()
-                        if data['risk_score'] >= 15:
+                        if data['risk_score'] >= 35:
                             text = text.replace(link, "<:sus:853491206550061056>")
                             is_sus = True
-                        if data['risk_score'] >= 55: is_very_sus = True
+                        if data['risk_score'] >= 90: is_very_sus = True
                         if data['spamming'] == True: spamming = True
                         if data['malware'] == True: malware = True
                         if data['phishing'] == True: phishing=True
@@ -112,6 +127,52 @@ If your account is already linked, unlink and relink it. [[more info]](https://s
 If you don't already have a <@&717144765690282015> or higher subscription, you can get one at [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=message.guild.me.color)
             embed.set_author(name="Automatic support", icon_url="https://i.imgur.com/GTttbJW.png")
             await message.channel.send(embed=embed)
+
+    @commands.command(aliases = ['count'])
+    async def countvotes(self, ctx):
+        message = await self.bot.get_channel(756677534627659826).fetch_message(857051549346824202)
+        r1 = []
+        async for user in message.reactions[0].users():
+            r1.append(user.name)
+        r1e = message.reactions[0].emoji
+        r2 = []
+        async for user in message.reactions[1].users():
+            r2.append(user.name)
+        r2e = message.reactions[1].emoji
+
+        rtb = []
+        rts = []
+        rti = []
+
+        if len(r1) >= len(r2):
+            rcb = r1
+            rcbe = r1e
+            rcs = r2
+            reb = r2e
+        else:
+            rcb = r2
+            reb = r2e
+            rcs = r1
+            res = r1e
+
+        for user in rcb:
+            if not user in rcs:
+                rtb.append(user)
+            elif user in rcs:
+                rti.append(user)
+
+        for user in rcs:
+            if not user in rcb:
+                rts.append(user)
+
+        embed = discord.Embed(description = f"""
+**people who voted for {res} :** {len(rts)}
+**people who voted for {reb} :** {len(rtb)}
+**invalid (voted both) :** {len(rti)}
+""", color = ctx.me.color)
+        await ctx.send(embed = embed)
+        return
+
 
 def setup(bot):
     bot.add_cog(automod(bot))

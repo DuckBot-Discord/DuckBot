@@ -11,7 +11,7 @@ class help(commands.Cog):
             full_yaml = yaml.full_load(file)
             staff_roles = []
             for roleid in full_yaml['StaffRoles']:
-                staff_roles.append(self.bot.get_guild(full_yaml['guildID']).get_role(roleid))
+                staff_roles.append(self.bot.get_guild(717140270789033984).get_role(roleid))
         self.staff_roles = staff_roles
         self.yaml_data = full_yaml
 
@@ -34,6 +34,8 @@ class help(commands.Cog):
             await ctx.message.delete()
             return
         except: return
+
+
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -159,17 +161,6 @@ It should look like this: https://i.imgur.com/2py4Csc.png
             await ctx.message.add_reaction('🚫')
             await asyncio.sleep (5)
             await ctx.message.delete()
-
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        if member.guild.id != 706624339595886683: return
-        await self.bot.get_channel(706624465378738217).send(f"""{member.mention}, Welcome to {member.guild.name}! Make sure to read and agree to the <#706825075516768297> to get access to the rest of {member.guild.name}.""")
-        await self.bot.get_channel(708316690638700607).send(f"""<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}** joined **{member.guild.name}**!""")
-
-        @commands.Cog.listener()
-        async def on_member_remove(self, member):
-            if member.guild.id != 706624339595886683: return
-            await self.bot.get_channel(708316690638700607).send(f"""<:incomingarrow:848312881070080001> **{member.name}#{member.discriminator}** left **{member.guild.name}**!""")
 
 def setup(bot):
     bot.add_cog(help(bot))
