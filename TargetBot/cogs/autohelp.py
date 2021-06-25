@@ -17,7 +17,7 @@ class automod(commands.Cog):
         self.yaml_data = full_yaml
         self.token = full_yaml['sus_url_token']
 
-    @commands.command()
+    @commands.command(aliases=['test'])
     async def urltest(self, ctx, *, url):
         results = re.findall("http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", url)
         if not results:

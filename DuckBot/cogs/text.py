@@ -42,9 +42,16 @@ class text_commands(commands.Cog):
     # resends the message as the bot
 
     @commands.command(aliases=['say', 'send'])
-    @commands.has_permissions(manage_messages=True)
-    async def s(self, ctx, *, message):
-        msg=message
+    async def s(self, ctx, *, msg):
+
+        results = re.findall("http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) # HTTP/HTTPS URL regex
+        results2 = re.findall("(?:https?:\/\/)?discord(?:app)?\.(?:com\/invite|gg)\/[a-zA-Z0-9]+\/?", msg) # Discord invite regex
+        if results or results2:
+            await ctx.send("Can't send URLs or invites in `.say`", delete_after=5)
+            try: await ctx.message.delete(delay=5)
+            except: return
+            return
+
         try:
             await ctx.message.delete()
         except discord.Forbidden:
@@ -105,11 +112,15 @@ class text_commands(commands.Cog):
     #### .jumbo <Emoji> ####
     # makes emoji go big
 
-    @commands.command(aliases=['jumbo'])
-    async def emoji(self, ctx, emoji: discord.PartialEmoji):
-        embed = discord.Embed(color=ctx.me.color)
-        embed.set_image(url = emoji.url)
-        await ctx.send(embed=embed)
+    @commands.command(aliases=['jumbo', 'bigemoji', 'ei', 'emojiinfo', 'emojinfo', 'be'])
+    async def emoji(self, ctx, emoji: typing.Optional[discord.PartialEmoji]):
+        if emoji == None: await ctx.send(embed = discord.Embed(description="Please specify a valid Custom Emoji", color=ctx.me.color))
+        else:
+            if emoji.animated: emojiformat = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
+            else: emojiformat = f"*`<`*`:{emoji.name}:{emoji.id}>`"
+            embed = discord.Embed(description=f"{emojiformat}",color=ctx.me.color)
+            embed.set_image(url = emoji.url)
+            await ctx.send(embed=embed)
 
     #### .uinfo {user} ####
     # gives user info

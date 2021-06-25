@@ -11,6 +11,7 @@ bot = commands.Bot(command_prefix=commands.when_mentioned_or('.', 'duck.', 'duck
 bot.load_extension('jishaku')
 
 bot.maintenance = False
+bot.noprefix  = False
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -24,15 +25,20 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    prefixes = ('.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********', 'duckbot ')
     if bot.maintenance == True:
         if message.author.id == bot.owner_id:
             await bot.process_commands(message)
             return
-        prefixes = await bot.get_prefix(message)
-        if message.content.startswith(tuple(prefixes)):
+        if message.content.startswith(prefixes):
             await message.add_reaction('<:bot_under_maintenance:857690568368717844>')
         return
-    await bot.process_commands(message)
+    if not message.content.startswith(prefixes) and message.author.id == bot.owner_id and bot.noprefix == True:
+        edited_message = message
+        edited_message.content = f"duckbot.{message.content}"
+        await bot.process_commands(edited_message)
+    else:
+        await bot.process_commands(message)
 
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):

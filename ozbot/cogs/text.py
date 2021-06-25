@@ -17,7 +17,7 @@ class help(commands.Cog):
         if message.author.bot: return
         banned_words = self.words['pogwords']
         if any(ele in message.content.lower() for ele in banned_words):
-            await message.add_reaction('<:nopog:838102336944603186>')
+            await message.add_reaction('<:nopog:848312880516562945>')
             await message.add_reaction('😡')
 
     ##### .s command ####

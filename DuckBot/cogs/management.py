@@ -10,9 +10,8 @@ class management(commands.Cog):
 
     @commands.command(aliases = ['setstatus', 'ss', 'activity'])
     @commands.is_owner()
-    async def status(self, ctx, thetype: typing.Optional[str] = None,* , argument: typing.Optional[str] = None):
+    async def status(self, ctx, type: typing.Optional[str] = None,* , argument: typing.Optional[str] = None):
         botprefix = 'db.'
-        type = thetype.lower()
 
         if type == None:
             embed = discord.Embed(title= "`ERROR` NO STATUS GIVEN!", description="Here is a list of available types:", color = ctx.me.color)
@@ -23,6 +22,9 @@ class management(commands.Cog):
             await asyncio.sleep(45)
             try: await ctx.message.delete()
             except discord.Forbidden: pass
+            return
+
+        type = type.lower()
 
         if type == "playing":
             if argument !=  None:
@@ -99,18 +101,35 @@ class management(commands.Cog):
     @commands.is_owner()
     async def maintenance(self, ctx, state: typing.Optional[str] = None):
         if state == 'on':
-            await ctx.send('maintenance on')
+            await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
             self.bot.maintenance = True
         elif state == 'off':
-            await ctx.send('maintenance off')
+            await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
             self.bot.maintenance = False
         else:
             if self.bot.maintenance == False:
-                await ctx.send('maintenance on')
+                await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
                 self.bot.maintenance = True
             elif self.bot.maintenance == True:
-                await ctx.send('maintenance off')
+                await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
                 self.bot.maintenance = False
+
+    @commands.command(aliases = ['np','invisprefix', 'sp'])
+    @commands.is_owner()
+    async def noprefix(self, ctx, state: typing.Optional[str] = None):
+        if state == 'on':
+            await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
+            self.bot.noprefix = True
+        elif state == 'off':
+            await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
+            self.bot.noprefix = False
+        else:
+            if self.bot.noprefix == False:
+                await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
+                self.bot.noprefix = True
+            elif self.bot.noprefix == True:
+                await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
+                self.bot.noprefix = False
 
 #----------------------------------------------------------------------------#
 #------------------------ EXTENSION MANAGEMENT ------------------------------#
