@@ -6,10 +6,11 @@ from helpers.helper import failed
 intents = discord.Intents.default() # Enable all intents except for members and presences
 intents.members = True  # Subscribe to the privileged members intent.
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********'), case_insensitive=True, intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********', 'duckbot '), case_insensitive=True, intents=intents, owner_id=349373972103561218, help_command=None)
 
-bot.remove_command('help')
 bot.load_extension('jishaku')
+
+bot.maintenance = False
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -21,6 +22,17 @@ async def on_ready():
     await bot.wait_until_ready()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='.help'))
 
+@bot.event
+async def on_message(message):
+    if bot.maintenance == True:
+        if message.author.id == bot.owner_id:
+            await bot.process_commands(message)
+            return
+        prefixes = await bot.get_prefix(message)
+        if message.content.startswith(tuple(prefixes)):
+            await message.add_reaction('<:bot_under_maintenance:857690568368717844>')
+        return
+    await bot.process_commands(message)
 
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):

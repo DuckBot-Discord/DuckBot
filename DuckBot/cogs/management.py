@@ -95,6 +95,23 @@ class management(commands.Cog):
                 textchannel = self.bot.get_channel(841298004929806340)
                 await textchannel.send(f'<:left:849392885785821224> {member.name} **left** __{before.channel.name}__!')
 
+    @commands.command(aliases = ['mm','maintenancemode'])
+    @commands.is_owner()
+    async def maintenance(self, ctx, state: typing.Optional[str] = None):
+        if state == 'on':
+            await ctx.send('maintenance on')
+            self.bot.maintenance = True
+        elif state == 'off':
+            await ctx.send('maintenance off')
+            self.bot.maintenance = False
+        else:
+            if self.bot.maintenance == False:
+                await ctx.send('maintenance on')
+                self.bot.maintenance = True
+            elif self.bot.maintenance == True:
+                await ctx.send('maintenance off')
+                self.bot.maintenance = False
+
 #----------------------------------------------------------------------------#
 #------------------------ EXTENSION MANAGEMENT ------------------------------#
 #----------------------------------------------------------------------------#

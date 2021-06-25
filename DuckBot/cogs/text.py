@@ -83,7 +83,7 @@ class text_commands(commands.Cog):
             await channel.send(msg, allowed_mentions = discord.AllowedMentions(everyone = False))
 
     @commands.command(aliases=['e'])
-    @commands.is_owner()
+    @commands.has_permissions(manage_messages=True)
     async def edit(self, ctx, *, new_message : typing.Optional[str] = '--d'):
         new = new_message
         if ctx.message.reference:
@@ -114,7 +114,7 @@ class text_commands(commands.Cog):
     #### .uinfo {user} ####
     # gives user info
 
-    @commands.command(aliases = ['userinfo'])
+    @commands.command(aliases = ['userinfo', 'ui'])
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         if not user: user = ctx.author
         # BADGES
@@ -147,6 +147,14 @@ class text_commands(commands.Cog):
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
             boost = f"\n<:booster4:585764446178246657>**Boosting since:** `{date} UTC`"
         else: boost = ""
+
+        # Join Order
+        order = f"\n<:moved:848312880666640394>**Join position:** `{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
+
+        if user.premium_since:
+            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
+            boost = f"\n<:booster4:585764446178246657>**Boosting since:** `{date} UTC`"
+        else: boost = ""
         # ROLES
         roles = ""
         for role in user.roles:
@@ -155,7 +163,7 @@ class text_commands(commands.Cog):
         if roles != "":
             roles = f"\n<:role:808826577785716756>**roles:** {roles}"
         # EMBED
-        embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{boost}{roles}""")
+        embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
         embed.set_author(name=user, icon_url=user.avatar_url)
         embed.set_thumbnail(url=user.avatar_url)
         await ctx.send(embed=embed)
@@ -204,7 +212,7 @@ class text_commands(commands.Cog):
     async def motivate(self, ctx):
         async with aiohttp.ClientSession() as cs:
             async with cs.get("https://www.affirmations.dev") as r:
-                json_data = await r.json()  
+                json_data = await r.json()
                 await ctx.send(json_data["affirmation"])
 
     @commands.command()

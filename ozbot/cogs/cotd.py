@@ -6,6 +6,8 @@ class help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         var = 1
+
+"""
         self.change_color.start()
 
     @tasks.loop(minutes=60.0)
@@ -43,6 +45,7 @@ class help(commands.Cog):
         embed.set_thumbnail(url=f" https://singlecolorimage.com/get/{imcolor}/16x16")
         await channel.send(embed=embed)
 
+"""
 
 def setup(bot):
     bot.add_cog(help(bot))

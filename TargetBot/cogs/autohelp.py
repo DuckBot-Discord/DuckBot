@@ -128,51 +128,6 @@ If you don't already have a <@&717144765690282015> or higher subscription, you c
             embed.set_author(name="Automatic support", icon_url="https://i.imgur.com/GTttbJW.png")
             await message.channel.send(embed=embed)
 
-    @commands.command(aliases = ['count'])
-    async def countvotes(self, ctx):
-        message = await self.bot.get_channel(756677534627659826).fetch_message(857051549346824202)
-        r1 = []
-        async for user in message.reactions[0].users():
-            r1.append(user.name)
-        r1e = message.reactions[0].emoji
-        r2 = []
-        async for user in message.reactions[1].users():
-            r2.append(user.name)
-        r2e = message.reactions[1].emoji
-
-        rtb = []
-        rts = []
-        rti = []
-
-        if len(r1) >= len(r2):
-            rcb = r1
-            rcbe = r1e
-            rcs = r2
-            reb = r2e
-        else:
-            rcb = r2
-            reb = r2e
-            rcs = r1
-            res = r1e
-
-        for user in rcb:
-            if not user in rcs:
-                rtb.append(user)
-            elif user in rcs:
-                rti.append(user)
-
-        for user in rcs:
-            if not user in rcb:
-                rts.append(user)
-
-        embed = discord.Embed(description = f"""
-**people who voted for {res} :** {len(rts)}
-**people who voted for {reb} :** {len(rtb)}
-**invalid (voted both) :** {len(rti)}
-""", color = ctx.me.color)
-        await ctx.send(embed = embed)
-        return
-
 
 def setup(bot):
     bot.add_cog(automod(bot))

@@ -207,5 +207,14 @@ class info(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def privacy(self, ctx):
+        embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
+We don't store any user data _yet_ :wink:
+
+Privacy concerns, DM the bot.""", color=ctx.me.color)
+        await ctx.send(embed=embed)
+
+
 def setup(bot):
     bot.add_cog(info(bot))
