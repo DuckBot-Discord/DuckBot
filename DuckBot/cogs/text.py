@@ -73,7 +73,7 @@ class text_commands(commands.Cog):
     #sends the message in a channel
 
     @commands.command(aliases=['a', 'an'])
-    @commands.has_permissions(manage_messages=True)
+    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     async def announce(self, ctx, channel: typing.Optional[discord.TextChannel] = None, *, msg = "no content"):
         if channel == None:
             await ctx.send("""You must specify a channel
@@ -90,7 +90,7 @@ class text_commands(commands.Cog):
             await channel.send(msg, allowed_mentions = discord.AllowedMentions(everyone = False))
 
     @commands.command(aliases=['e'])
-    @commands.has_permissions(manage_messages=True)
+    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     async def edit(self, ctx, *, new_message : typing.Optional[str] = '--d'):
         new = new_message
         if ctx.message.reference:

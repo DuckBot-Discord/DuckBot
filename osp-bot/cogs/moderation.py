@@ -10,7 +10,7 @@ class moderation(commands.Cog):
             full_yaml = yaml.full_load(file)
             staff_roles = []
             for roleid in full_yaml['StaffRoles']:
-                staff_roles.append(self.bot.get_guild(717140270789033984).get_role(roleid))
+                staff_roles.append(self.bot.get_guild(full_yaml['guildID']).get_role(roleid))
         self.staff_roles = staff_roles
         self.yaml_data = full_yaml
 
@@ -325,7 +325,7 @@ class moderation(commands.Cog):
         if member == None:
             await self.error_message(ctx, 'You must specify a member to mute')
             return
-        muterole = self.bot.get_guild(717140270789033984).get_role(self.yaml_data['MuteRole'])
+        muterole = self.bot.get_guild(self.yaml_data['guildID']).get_role(self.yaml_data['MuteRole'])
         if muterole in member.roles:
             await self.error_message(ctx, f'{member} is already muted')
             return
@@ -390,7 +390,7 @@ class moderation(commands.Cog):
         if member == None:
             await self.error_message(ctx, 'You must specify a member to deny media to')
             return
-        muterole = self.bot.get_guild(717140270789033984).get_role(self.yaml_data['noMediaRole'])
+        muterole = self.bot.get_guild(self.yaml_data['guildID']).get_role(self.yaml_data['noMediaRole'])
         if muterole in member.roles:
             await self.error_message(ctx, f'{member} is already in deny media')
             return
@@ -583,6 +583,8 @@ class moderation(commands.Cog):
 
         await webhook.delete()
         await ctx.send(f'moved {amount} messages to {channel.mention}')
+
+
 
 def setup(bot):
     bot.add_cog(moderation(bot))

@@ -11,8 +11,7 @@ class info(commands.Cog):
         message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
         print('event add triggered')
         if message.content.lower().endswith('closed!'):
-            member = self.bot.get_guild(payload.guild_id).get_member(payload.user_id)
-            await message.remove_reaction(payload.emoji, member)
+            await message.remove_reaction(payload.emoji, payload.member)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):

@@ -10,21 +10,14 @@ class moderation(commands.Cog):
 
     async def perms_error(self, ctx):
         await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-            return
-        except: return
+        await ctx.message.delete(delay=5)
+        return
 
     async def error_message(self, ctx, message):
         embed = discord.Embed(color=ctx.me.color)
         embed.set_author(name=message, icon_url='https://i.imgur.com/OAmzSGF.png')
         await ctx.send(embed=embed, delete_after=5)
-        await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-            return
-        except: return
+        await ctx.message.delete(delay=5)
 
 
 #------------------------------------------------------------#
@@ -199,15 +192,16 @@ class moderation(commands.Cog):
         amount = argument
         if amount != "noimput":
             if amount <= 1000:
-                await ctx.message.delete()
+                try: await ctx.message.delete()
+                except: pass
                 await ctx.channel.purge(limit=amount)
                 await ctx.send("🗑 Purge completed!", delete_after = 5)
             else:
-                await ctx.message.delete()
+                try: await ctx.message.delete()
+                except: pass
                 await ctx.channel.purge(limit=1000)
                 await ctx.send("🗑 Completed! Applied limited of 1000 messages")
         else:
-            await ctx.message.delete()
             await self.error_message(ctx, "Please specify amount of messages to purge!")
 
     @clear.error

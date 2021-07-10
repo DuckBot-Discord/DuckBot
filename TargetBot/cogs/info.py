@@ -35,7 +35,9 @@ Second, We don't assure this texture pack will go along well with mods, there mi
 
     @commands.command(aliases = ['jvm', 'moreram'])
     async def ram(self, ctx):
-        embed=discord.Embed(title="", description="**[How to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** (keep it between 6-8GB)", color=ctx.me.color)
+        embed=discord.Embed(title="", description="""**[Guide on how to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** 
+(Keep it between 2-4GB, 6 at most. the default amount of ram is 2GB for a reason)
+For more info read [this message](https://ptb.discord.com/channels/717140270789033984/732911954116739143/741047980542525451) and [the follow-up mesage](https://ptb.discord.com/channels/717140270789033984/732911954116739143/859835012983554089) in <#732911954116739143>""", color=ctx.me.color)
         await ctx.send(embed=embed)
 
     @commands.command()

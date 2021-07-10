@@ -9,7 +9,7 @@ intents.members = True  # Subscribe to the privileged members intent.
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********', 'duckbot '), case_insensitive=True, intents=intents, owner_id=349373972103561218, help_command=None)
 
 bot.load_extension('jishaku')
-
+os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 bot.maintenance = False
 bot.noprefix  = False
 
@@ -21,7 +21,7 @@ async def on_ready():
     print("======[ BOT ONLINE! ]======")
     print ("Logged in as " + bot.user.name)
     await bot.wait_until_ready()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='.help'))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'))
 
 @bot.event
 async def on_message(message):

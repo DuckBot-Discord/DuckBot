@@ -63,15 +63,17 @@ class help(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         textchannel = self.bot.get_channel(851314198654484521)
-        if not member.nick: nickname = member.name
-        else: nickname = member.nick
         if after.channel is not None:
             if after.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]:
                 if before.channel is not None:
                     if before.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]: return
                 await textchannel.send("""
 !c tellraw @a ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"%s","color":"gold"},{"text":" joined VC","color":"yellow"}]
-"""%(nickname))
+"""%(member.display_name))
+                channel = self.bot.get_channel(799483071069945866)
+                hooks = await channel.webhooks()
+                hook = hooks[0]
+                await hook.send(username = "VC bot", content=f"<:incomingarrow:800218133225930763> **{member.display_name}** joined VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
 
         if before.channel is not None:
             if before.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]:
@@ -79,7 +81,11 @@ class help(commands.Cog):
                     if after.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]: return
                 await textchannel.send("""
 !c tellraw @a ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"%s","color":"gold"},{"text":" left VC","color":"yellow"}]
-"""%(nickname))
+"""%(member.display_name))
+                channel = self.bot.get_channel(799483071069945866)
+                hooks = await channel.webhooks()
+                hook = hooks[0]
+                await hook.send(username = "VC bot", content=f"<:outgoingarrow:800218133364867073> **{member.display_name}** left VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
 
 
 def setup(bot):

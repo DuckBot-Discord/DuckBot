@@ -8,7 +8,7 @@ class auto_quack(commands.Cog):
 
         self.duck.start()
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=15)
     async def duck(self):
         value = randint(0, 100)
         if value == 1:

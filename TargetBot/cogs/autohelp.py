@@ -16,6 +16,7 @@ class automod(commands.Cog):
         self.exempt_roles = exempt_roles
         self.yaml_data = full_yaml
         self.token = full_yaml['sus_url_token']
+        self.urlBanRole = self.bot.get_guild(yaml_data['guildID']).get_role(yaml_data['urlBanRole'])
 
     @commands.command(aliases=['test'])
     async def urltest(self, ctx, *, url):
@@ -57,6 +58,11 @@ class automod(commands.Cog):
 
             for link in results:
                 if urllib.parse.urlparse(link).netloc in self.yaml_data['safe_urls']: continue
+                if self.urlBanRole in message.author.roles:
+                    await message.delete()
+                    await message.author.send('You''re not allowed to send URLs that aren''t whitelisted!')
+                    await self.bot.get_channel(757127270874742827).send(f"User {message.author.mention} is in <@&859841694169432124> and sent `{link}`, which is not whitelisted.")
+                    return
                 url = urllib.parse.quote(link, safe='')
                 async with aiohttp.ClientSession() as cs:
                     async with cs.get(yarl.URL(f"https://ipqualityscore.com/api/json/url/{self.token}/{url}",encoded=True)) as r:

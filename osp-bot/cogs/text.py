@@ -8,17 +8,6 @@ class help(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-    words = ['nothing', 'nothing']
-    with open(r'files/banned-words.yaml') as file:
-        words = yaml.full_load(file)
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot: return
-        banned_words = self.words['pogwords']
-        if any(ele in message.content.lower() for ele in banned_words):
-            await message.add_reaction('<:nopog:848312880516562945>')
-            await message.add_reaction('😡')
 
     ##### .s command ####
     # resends the message as the bot
