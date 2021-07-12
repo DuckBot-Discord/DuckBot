@@ -6,8 +6,6 @@ class info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.bot.remove_command("help")
-
     @commands.command()
     async def ping(self, ctx):
         embed = discord.Embed(title='', description="🏓 pong!", color=ctx.me.color)
@@ -46,15 +44,15 @@ class info(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def help(self, ctx, argument: typing.Optional[str] = "None", number: typing.Optional[int] = 1):
+    async def ohelp(self, ctx, argument: typing.Optional[str] = "None", number: typing.Optional[int] = 1):
 
-        botprefix = '.'
+        botprefix = ctx.prefix
 
         if (argument == "None"):
 
-            embed = discord.Embed(title='DuckBot help', description=("""Hey {}, Here is a list of commands:
+            embed = discord.Embed(description=f"""Hey {ctx.author.mention}, Here is a list of commands:
 > **fields:** `<obligatory>` `[optional]`
-""".format(ctx.message.author.mention)), color = ctx.me.color)
+""", color = ctx.me.color)
             embed.add_field(name=botprefix + 'help commands', value='Show normal commands', inline=True)
             embed.add_field(name=(botprefix + 'help testing'), value='shows testing/beta commands.', inline=True)
             embed.add_field(name=(botprefix + 'help moderation'), value='shows moderation commands.', inline=True)

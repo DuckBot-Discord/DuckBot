@@ -24,7 +24,7 @@ class moderation(commands.Cog):
 #------------------------ KICK ------------------------------#
 #------------------------------------------------------------#
 
-    @commands.command()
+    @commands.command(description="Kicks a member from the server", hidden=False)
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if member == None:

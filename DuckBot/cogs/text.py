@@ -2,7 +2,7 @@ import typing, discord, asyncio, random, datetime, json, aiohttp, re
 from discord.ext import commands, tasks, timers
 from random import randint
 
-class text_commands(commands.Cog):
+class fun(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -353,4 +353,4 @@ class text_commands(commands.Cog):
                 await ctx.send(embed=embed)
 
 def setup(bot):
-    bot.add_cog(text_commands(bot))
+    bot.add_cog(fun(bot))

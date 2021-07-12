@@ -11,7 +11,7 @@ class help(commands.Cog):
 embed = discord.Embed(color = 0x0066ff, description=
 """
 Command Usage:
-.rules [rule_number]
+.rule [rule_number]
 (example: .rule 4)
 """)
 )

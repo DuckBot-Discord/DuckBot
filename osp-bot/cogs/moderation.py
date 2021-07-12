@@ -116,7 +116,7 @@ class moderation(commands.Cog):
             roles = f"\n<:role:860644904048132137>**roles:** {roles}"
         # EMBED
         embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
-        embed.set_author(name=user, icon_url=user.avatar_url)
+        embed.set_author(name=user, icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
         embed.set_thumbnail(url=user.avatar_url)
         await ctx.send(embed=embed)
 

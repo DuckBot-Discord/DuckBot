@@ -1,7 +1,7 @@
 
 import  discord, asyncio
 from discord.ext import commands
-from discord.ext.commands import BucketType 
+from discord.ext.commands import BucketType
 
 class handler(commands.Cog):
 
@@ -39,7 +39,7 @@ class handler(commands.Cog):
             if error.cooldown.type == BucketType.category: per = "per category"
             if error.cooldown.type == BucketType.role: per = "per role"
 
-            embed.set_footer(text=f"{error.cooldown.rate} per {error.cooldown.per}s {per}")
+            embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             await ctx.send(embed=embed)
             return
 
