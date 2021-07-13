@@ -1,23 +1,47 @@
 import os, discord, asyncio, traceback, json, typing
 from dotenv import load_dotenv
-from discord.ext import commands
-from helpers.helper import failed
+from discord.ext import commands, menus
 
-class management(commands.Cog):
+class Confirm(menus.Menu):
+    """Management-only stuff"""
+    def __init__(self, msg):
+        super().__init__(timeout=30.0, delete_message_after=True)
+        self.msg = msg
+        self.result = None
+
+    async def send_initial_message(self, ctx, channel):
+        return await channel.send(self.msg)
+
+    @menus.button('\N{WHITE HEAVY CHECK MARK}')
+    async def do_confirm(self, payload):
+        self.result = True
+        self.stop()
+
+    @menus.button('\N{CROSS MARK}')
+    async def do_deny(self, payload):
+        self.result = False
+        self.stop()
+
+    async def prompt(self, ctx):
+        await self.start(ctx, wait=True)
+        return self.result
+
+class bot_management(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases = ['setstatus', 'ss', 'activity'])
+
+    @commands.command(aliases = ['setstatus', 'ss', 'activity'], usage="<playing|listening|watching|competing|clear> [text]")
     @commands.is_owner()
     async def status(self, ctx, type: typing.Optional[str] = None,* , argument: typing.Optional[str] = None):
-        botprefix = 'db.'
 
         if type == None:
             embed = discord.Embed(title= "`ERROR` NO STATUS GIVEN!", description="Here is a list of available types:", color = ctx.me.color)
-            embed.add_field(name=(botprefix + 'status Playing <status>'), value='Sets the status to Playing.', inline=False)
-            embed.add_field(name=(botprefix + 'status Listening <status>'), value='Sets the status to Listening.', inline=False)
-            embed.add_field(name=(botprefix + 'status Watching <status>'), value='Sets the status to Watching.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Playing <status>'), value='Sets the status to Playing.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Listening <status>'), value='Sets the status to Listening.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Watching <status>'), value='Sets the status to Watching.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Competing <status>'), value='Sets the status to `Competing in`.', inline=False)
             await ctx.send(embed=embed, delete_after=45)
             await asyncio.sleep(45)
             try: await ctx.message.delete()
@@ -33,13 +57,13 @@ class management(commands.Cog):
                 await ctx.message.add_reaction('✅')
                 await ctx.send(f"Activity changed to `Playing {argument}` ")
 
-        if type == "listening":
+        elif type == "listening":
             if argument !=  None:
                 # Setting `Listening ` status
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f'{argument}'))
                 await ctx.send(f"Activity changed to `Listening to {argument}` ")
 
-        if type == "watching":
+        elif type == "watching":
             if argument !=  None:
                 #Setting `Watching ` status
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f'{argument}'))
@@ -48,28 +72,28 @@ class management(commands.Cog):
                 try: await ctx.message.delete()
                 except discord.Forbidden: pass
 
-        if type == "competing":
+        elif type == "competing":
             if argument !=  None:
                 #Setting `other ` status
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name=f'{argument}'))
                 await ctx.send(f"Activity changed to `Competing in {argument}` ")
 
-        if type == "clear":
+        elif type == "clear":
             await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.custom, name='cleared'))
             await ctx.send(f"Activity cleared")
 
-        if type != "watching" and type != "listening" and type != "playing" and type != "competing" and type != "clear" and type != None:
+        else:
             embed = discord.Embed(title= "`ERROR` INVALID TYPE!", description="Here is a list of available types:", color = ctx.me.color)
-            embed.add_field(name=(botprefix + 'status Playing <status>'), value='Sets the status to Playing.', inline=False)
-            embed.add_field(name=(botprefix + 'status Listening <status>'), value='Sets the status to `Listening to`.', inline=False)
-            embed.add_field(name=(botprefix + 'status Watching <status>'), value='Sets the status to `Watching`.', inline=False)
-            embed.add_field(name=(botprefix + 'status Competing <status>'), value='Sets the status to `Competing in`.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Playing <status>'), value='Sets the status to Playing.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Listening <status>'), value='Sets the status to `Listening to`.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Watching <status>'), value='Sets the status to `Watching`.', inline=False)
+            embed.add_field(name=(f'{ctx.prefix}{ctx.command} Competing <status>'), value='Sets the status to `Competing in`.', inline=False)
             await ctx.send(embed=embed, delete_after=45)
             await asyncio.sleep(45)
             try: await ctx.message.delete()
             except discord.Forbidden: pass
 
-    @commands.command()
+    @commands.command(help = "Adds something to de to-do list", usage="<text>")
     @commands.is_owner()
     async def todo(self, ctx, *, message = None):
         channel = self.bot.get_channel(830992446434312192)
@@ -97,7 +121,7 @@ class management(commands.Cog):
                 textchannel = self.bot.get_channel(841298004929806340)
                 await textchannel.send(f'<:left:849392885785821224> {member.name} **left** __{before.channel.name}__!')
 
-    @commands.command(aliases = ['mm','maintenancemode'])
+    @commands.command(aliases = ['mm','maintenancemode'], help="puts the bot under maintenance", usage="[on|off]")
     @commands.is_owner()
     async def maintenance(self, ctx, state: typing.Optional[str] = None):
         if state == 'on':
@@ -114,9 +138,9 @@ class management(commands.Cog):
                 await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
                 self.bot.maintenance = False
 
-    @commands.command(aliases = ['np','invisprefix', 'sp'])
+    @commands.command(aliases = ['np','invisprefix', 'sp', 'noprefix'], help="toggles no-prefix mode on or off", usage="[on|off]")
     @commands.is_owner()
-    async def noprefix(self, ctx, state: typing.Optional[str] = None):
+    async def silentprefix(self, ctx, state: typing.Optional[str] = None):
         if state == 'on':
             await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
             self.bot.noprefix = True
@@ -131,11 +155,12 @@ class management(commands.Cog):
                 await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
                 self.bot.noprefix = False
 
+
 #----------------------------------------------------------------------------#
 #------------------------ EXTENSION MANAGEMENT ------------------------------#
 #----------------------------------------------------------------------------#
 
-    @commands.command(aliases=['le', 'lc', 'loadcog'])
+    @commands.command(help="Loads an extension", aliases=['le', 'lc', 'loadcog'], usage="<extension>")
     @commands.is_owner()
     async def load(self, ctx, extension = ""):
         embed = discord.Embed(color=ctx.me.color, description = f"⬆ {extension}")
@@ -172,7 +197,7 @@ class management(commands.Cog):
                 await message.edit()
             raise e
 
-    @commands.command(aliases=['unl', 'ue', 'uc'])
+    @commands.command(help="Unloads an extension", aliases=['unl', 'ue', 'uc'], usage="<extension>")
     @commands.is_owner()
     async def unload(self, ctx, extension = ""):
         embed = discord.Embed(color=ctx.me.color, description = f"⬇ {extension}")
@@ -193,7 +218,7 @@ class management(commands.Cog):
             embed = discord.Embed(color=ctx.me.color, description = f"❌ Extension not loaded")
             await message.edit(embed=embed)
 
-    @commands.command(aliases=['rel', 're', 'rc'])
+    @commands.command(help="Reloads an extension", aliases=['rel', 're', 'rc'])
     @commands.is_owner()
     async def reload(self, ctx, extension = ""):
         embed = discord.Embed(color=ctx.me.color, description = f"🔃 {extension}")
@@ -228,16 +253,16 @@ class management(commands.Cog):
                 await message.edit()
             raise e
 
-    @commands.command(aliases=['reloadall', 'rall', 'rae', 'rac'])
+    @commands.command(help="Reloads all extensions", aliases=['relall', 'rall'], usage="[silent|channel]")
     @commands.is_owner()
-    async def relall(self, ctx, arg = None):
+    async def reloadall(self, ctx, argument: typing.Optional[str]):
         list = ""
         desc = ""
         err = False
         rerel = []
-        if arg == 'silent' or arg == 's': silent = True
+        if argument == 'silent' or argument == 's': silent = True
         else: silent = False
-        if arg == 'channel' or arg == 'channel': channel = True
+        if argument == 'channel' or argument == 'c': channel = True
         else: channel = False
 
         for filename in os.listdir("./cogs"):
@@ -262,13 +287,10 @@ class management(commands.Cog):
 
             except discord.ext.commands.ExtensionNotLoaded:
                 desc = f"{desc} \n❌ {filename[:-3]} - Not loaded"
-                err = True
             except discord.ext.commands.ExtensionNotFound:
                 desc = f"{desc} \n❌ {filename[:-3]} - Not found"
-                err = True
             except discord.ext.commands.NoEntryPointError:
                 desc = f"{desc} \n❌ {filename[:-3]} - No setup func"
-                err = True
             except discord.ext.commands.ExtensionFailed as e:
                 traceback_string = "".join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))
                 desc = f"{desc} \n❌ {filename[:-3]} - Execution error"
@@ -278,11 +300,11 @@ class management(commands.Cog):
                     else: await ctx.send(embed=embederr)
                 err = True
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.4)
         if err == True:
             if silent == False:
                 if channel == False: desc = f"{desc} \n\n📬 {ctx.author.mention}, I sent you all the tracebacks."
-                else: desc = f"{desc} \n\n📬 Sent all tracebacks to {ctx.channel.mention}."
+                else: desc = f"{desc} \n\n📬 Sent all tracebacks here."
             if silent == True: desc = f"{desc} \n\n📭 silent, no tracebacks sent."
             embed = discord.Embed(color=ctx.me.color, description = desc, title = 'Reloaded some extensions')
             await message.edit(embed=embed)
@@ -290,11 +312,135 @@ class management(commands.Cog):
             embed = discord.Embed(title = 'Reloaded all extensions', color=ctx.me.color, description = desc)
             await message.edit(embed=embed)
 
-    @commands.command(aliases = ['stop','sd'])
+    @commands.command(help="Shuts down the bot", aliases = ['stop','sd'])
     @commands.is_owner()
     async def shutdown(self, ctx):
-        await ctx.send("🛑 **__Stopping the bot__**")
-        await ctx.bot.logout()
+        confirm = await Confirm(f'⚠**__are you sure?__**').prompt(ctx)
+        if confirm:
+            await ctx.send("🛑 **__Stopping the bot__**")
+            await ctx.bot.logout()
+
+###############################################################################
+###############################################################################
+
+    @commands.command(help="Dms a user from any guild", aliases=['md', 'pm', 'id-dm'], usage="[ID]")
+    @commands.is_owner()
+    async def dm(self, ctx, id: typing.Optional[int], *, message = ""):
+        if id == None:
+            await ctx.message.add_reaction('🔢')
+            await asyncio.sleep(3)
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                return
+            return
+        if len(f'{id}') != 18:
+            await ctx.message.add_reaction('#️⃣')
+            await asyncio.sleep(3)
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                return
+            return
+
+        member = self.bot.get_user(id)
+
+        if member == None:
+            await ctx.message.add_reaction('⁉')
+            await asyncio.sleep(3)
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                return
+            return
+
+        channel = self.bot.get_channel(830991980850446366)
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        try:
+            if ctx.message.attachments:
+                file = ctx.message.attachments[0]
+                myfile = await file.to_file()
+                embed = discord.Embed(color=0x47B781)
+                if message:
+                    embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value=message)
+                    await member.send(message, file=myfile)
+                else:
+                    embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value='_ _')
+                    await member.send(file=myfile)
+                if ctx.message.attachments:
+                    file = ctx.message.attachments[0]
+                    spoiler = file.is_spoiler()
+                    if not spoiler and file.url.lower().endswith(('png', 'jpeg', 'jpg', 'gif', 'webp')):
+                        embed.set_image(url=file.url)
+                    elif spoiler:
+                        embed.add_field(name='Attachment', value=f'||[{file.filename}]({file.url})||', inline=False)
+                    else:
+                        embed.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
+                embed.set_footer(text=f'.dm {member.id}')
+                await channel.send(embed=embed)
+            else:
+                await member.send(message)
+                embed = discord.Embed(color=0x47B781)
+                embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value=message)
+                embed.set_footer(text=f'.dm {member.id}')
+                await channel.send(embed=embed)
+        except discord.Forbidden:
+            await ctx.send(f"{member}'s DMs are closed.")
+
+###############################################################################
+###############################################################################
+
+    @commands.command(help="Dms a member from the guild",aliases=['mmd', 'mpm', 'mention-dm'], usage="[@member|ID]")
+    @commands.is_owner()
+    async def mdm(self, ctx, member: typing.Optional[discord.Member], *, message = ""):
+        if ctx.message.author.id != 349373972103561218:
+            await ctx.message.add_reaction('🚫')
+            await asyncio.sleep (5)
+            await ctx.message.delete()
+            return
+        if member == None:
+            await ctx.message.add_reaction('⁉')
+            await asyncio.sleep(5)
+            await ctx.message.delete()
+            return
+        channel = self.bot.get_channel(830991980850446366)
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        try:
+            if ctx.message.attachments:
+                file = ctx.message.attachments[0]
+                myfile = await file.to_file()
+                embed = discord.Embed(color=0x47B781)
+                if message:
+                    embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value=message)
+                    await member.send(message, file=myfile)
+                else:
+                    embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value='_ _')
+                    await member.send(file=myfile)
+                if ctx.message.attachments:
+                    file = ctx.message.attachments[0]
+                    spoiler = file.is_spoiler()
+                    if not spoiler and file.url.lower().endswith(('png', 'jpeg', 'jpg', 'gif', 'webp')):
+                        embed.set_image(url=file.url)
+                    elif spoiler:
+                        embed.add_field(name='Attachment', value=f'||[{file.filename}]({file.url})||', inline=False)
+                    else:
+                        embed.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
+                embed.set_footer(text=f'.dm {member.id}')
+                await channel.send(embed=embed)
+            else:
+                await member.send(message)
+                embed = discord.Embed(color=0x47B781)
+                embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value=message)
+                embed.set_footer(text=f'.dm {member.id}')
+                await channel.send(embed=embed)
+        except discord.Forbidden:
+            await ctx.send(f"{member}'s DMs are closed.")
 
 def setup(bot):
-    bot.add_cog(management(bot))
+    bot.add_cog(bot_management(bot))

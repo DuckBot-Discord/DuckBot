@@ -1,12 +1,12 @@
 import json, random, typing, discord, asyncio, time
 from discord.ext import commands
 
-class info(commands.Cog):
-
+class about(commands.Cog):
+    """Some information about me."""
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(  help="Checks the bot's ping to Discord")
     async def ping(self, ctx):
         embed = discord.Embed(title='', description="🏓 pong!", color=ctx.me.color)
         start = time.perf_counter()
@@ -17,7 +17,7 @@ class info(commands.Cog):
         embed = discord.Embed(title='', description=f'**websocket:** `{(self.bot.latency * 1000):.2f}ms` \n**message:** `{duration:.2f}ms`', color=ctx.me.color)
         await message.edit(embed=embed)
 
-    @commands.command()
+    @commands.command(help="Shows info about the bot")
     async def info(self, ctx):
         embed = discord.Embed(title='DuckBot info', description="Here's information about my bot:", color=ctx.me.color)
 
@@ -38,174 +38,48 @@ class info(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(aliases = ['source', 'code'])
-    async def sourcecode(self, ctx):
-        embed=discord.Embed(title="", description="**[Here's my source code](https://github.com/LeoCx1000/discord-bots)**", color=ctx.me.color)
-        await ctx.send(embed=embed)
-
+    @commands.command(help="Links to the bot's code",aliases = ['sourcecode', 'code'])
     @commands.command()
-    async def ohelp(self, ctx, argument: typing.Optional[str] = "None", number: typing.Optional[int] = 1):
+    async def source(self, ctx, *, command: str = None):
+        """Displays my full source code or for a specific command.
+        To display the source code of a subcommand you can separate it by
+        periods, e.g. tag.create for the create subcommand of the tag command
+        or by spaces.
+        """
+        source_url = 'https://github.com/Rapptz/RoboDanny'
+        branch = 'rewrite'
+        if command is None:
+            return await ctx.send(source_url)
 
-        botprefix = ctx.prefix
+        if command == 'help':
+            src = type(self.bot.help_command)
+            module = src.__module__
+            filename = inspect.getsourcefile(src)
+        else:
+            obj = self.bot.get_command(command.replace('.', ' '))
+            if obj is None:
+                return await ctx.send('Could not find command.')
 
-        if (argument == "None"):
+            # since we found the command we're looking for, presumably anyway, let's
+            # try to access the code itself
+            src = obj.callback.__code__
+            module = obj.callback.__module__
+            filename = src.co_filename
 
-            embed = discord.Embed(description=f"""Hey {ctx.author.mention}, Here is a list of commands:
-> **fields:** `<obligatory>` `[optional]`
-""", color = ctx.me.color)
-            embed.add_field(name=botprefix + 'help commands', value='Show normal commands', inline=True)
-            embed.add_field(name=(botprefix + 'help testing'), value='shows testing/beta commands.', inline=True)
-            embed.add_field(name=(botprefix + 'help moderation'), value='shows moderation commands.', inline=True)
-            embed.add_field(name=(botprefix + 'info'), value='Gives info about the bot, and how to get support.', inline=True)
-            embed.add_field(name=(botprefix + 'log'), value='Gives an update log', inline=True)
-            embed.add_field(name=(botprefix + 'help [argument] [page]'), value='Gives this message or the other sub-categories.', inline=True)
-            embed.add_field(name='_ _', value="For issues, DM the bot ", inline=False)
-            embed.set_footer(text=f'Bot by {self.bot.get_user(self.bot.owner_id)}', icon_url=f'{self.bot.get_user(self.bot.owner_id).avatar_url}')
-            await ctx.send(embed=embed)
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                return
-            return
+        lines, firstlineno = inspect.getsourcelines(src)
+        if not module.startswith('discord'):
+            # not a built-in command
+            location = os.path.relpath(filename).replace('\\', '/')
+        else:
+            location = module.replace('.', '/') + '.py'
+            source_url = 'https://github.com/Rapptz/discord.py'
+            branch = 'master'
 
-        if (argument == "commands"):
+        final_url = f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>'
+        embed=discord.embed(color=ctx.me.color, description=f"**[Here's my surce code]({final_url})")
+        await ctx.send(final_url)
 
-            embed = discord.Embed(title='DuckBot help', description=("Hey {}, Here is a list normal/fun commands.".format(ctx.message.author.mention)), color = ctx.me.color)
-            if number == 1:
-
-                embed.add_field(name=(botprefix + 'dog'), value='Gets a random picture of a dog', inline=False)
-                embed.add_field(name=(botprefix + 'cat'), value='Gets a random picture of a cat', inline=False)
-                embed.add_field(name=(botprefix + 'duck'), value='Gets a random picture of a duck', inline=False)
-                embed.add_field(name=(botprefix + 'help [arg] [page]'), value='Gives a list of arguments', inline=False)
-                embed.add_field(name=(botprefix + 'inspireme'), value='Returns an AI generated image from Inspirobot.me', inline=False)
-
-            if number == 2:
-
-                embed.add_field(name=(botprefix + 'ping'), value="Shwos the bot's ping to the server", inline=False)
-                embed.add_field(name=(botprefix + 'motivateme'), value='Sends a mad motivational quote', inline=False)
-                embed.add_field(name=(botprefix + 'afk'), value='Sets/unsets you as AFK. (adds `[AFK]` to your nickname)', inline=False)
-                embed.add_field(name=(botprefix + 'say <string>'), value="Makes the bot speak for you:sparkles: (needs manage message perms)", inline=False)
-                embed.add_field(name=(botprefix + 'uuid <player>'), value='[MINECRAFT] Gives the UUID of a given player', inline=False)
-
-            if number == 3:
-
-                embed.add_field(name=(botprefix + 'info'), value="Shwos info about the bot", inline=False)
-                embed.add_field(name=(botprefix + 'log'), value="an update log", inline=False)
-                embed.add_field(name=(botprefix + f'nick <@user> [NewNick]'), value="changes your nickname", inline=False)
-
-            embed.add_field(name='_ _', value=f'Help commands | page `{number}/3`', inline=False)
-            await ctx.send(embed=embed)
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                return
-            return
-
-        if (argument == "testing"):
-
-            embed = discord.Embed(title='DuckBot help', description=("Hey {}, Here is a list of beta/testing commands. These might not work.".format(ctx.message.author.mention)), color = ctx.me.color)
-            embed.add_field(name='_ _', value='_ _', inline=False)
-
-
-            embed.add_field(name='_ _', value='_ _', inline=False)
-            embed.add_field(name='_ _', value=f'Help commands | page `{number}/1`', inline=False)
-            await ctx.send(embed=embed)
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                return
-            return
-
-        if (argument == "moderation"):
-
-            if number == 1:
-                embed = discord.Embed(title='DuckBot help', description=("Hey {}, Here is a list of beta/testing commands. These might not work.".format(ctx.message.author.mention)), color = ctx.me.color)
-                embed.add_field(name='_ _', value='_ _', inline=False)
-                embed.add_field(name=(botprefix + 'purge <amount>'), value='Purges messages in a channel. Limit: 1000 messages.', inline=False)
-                embed.add_field(name=(botprefix + 'kick <member> [reason]'), value='kicks a member.', inline=False)
-                embed.add_field(name=(botprefix + 'ban <member> [reason]'), value='bans a member.', inline=False)
-                embed.add_field(name=(botprefix + 'nick <member> [NewNick]'), value="changes a member's nickname", inline=False)
-
-            embed.add_field(name='_ _', value=f'Help commands | page `{number}/1`', inline=False)
-            await ctx.send(embed=embed)
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                return
-            return
-
-        if (argument == "owner"):
-            if ctx.message.author.id == 349373972103561218:
-                embed = discord.Embed(title='BOT MANAGEMENT COMMANDS', description=("Hey {}, Here are administration commands.".format(ctx.message.author.mention)), color = ctx.me.color)
-                embed.add_field(name='_ _', value='_ _', inline=False)
-                embed.add_field(name=(botprefix + 'load <cog>'), value='Loads a cog.', inline=False)
-                embed.add_field(name=(botprefix + 'unload <cog>'), value='Unloads a cog.', inline=False)
-                embed.add_field(name=(botprefix + 'reload <cog>'), value='Reloads a cog.', inline=False)
-                embed.add_field(name=(botprefix + 'setstatus'), value='Sets the status of the bot.', inline=False)
-                embed.add_field(name=(botprefix + 'dm'), value='Sends a DM.', inline=False)
-                embed.add_field(name=(botprefix + 'shutdown'), value='Shuts down the bot.', inline=False)
-                embed.add_field(name=(botprefix + 'edit <msgID> <new message> <tag>'), value="""Edits a bot't message
-**tags:** `--s` removes embed. `--d` deletes content.""", inline=False)
-                await ctx.send(embed=embed)
-                try:
-                    await ctx.message.delete()
-                except discord.Forbidden:
-                    return
-                return
-            else:
-                embed = discord.Embed(title='DuckBot error', description=("Hey {}, You are not allowed to run this command!".format(ctx.message.author.mention)), color = ctx.me.color)
-                await ctx.message.delete()
-                await ctx.send(embed=embed)
-
-        if (argument != "None" and argument != "testing" and argument != "commands" and argument != "moderation" and argument != "owner"):
-
-            embed = discord.Embed(title='DuckBot help', description='Incorrect argument. type `.help` for a list of available arguments', color = ctx.me.color)
-            await ctx.send(embed=embed)
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                return
-            return
-
-
-    @commands.command()
-    async def log(self, ctx):
-
-        embed = discord.Embed(title='DuckBot update log', description="Latest updates of the bot:", color=ctx.me.color)
-
-        embed.add_field(name='**`01-01-2021`**', value='Fixed issue that sent 2 un-afk messages when a message was sent', inline=False)
-
-        embed.add_field(name='**`01-01-2021`**', value='Temporarily disabled automatic un-afk feature due to error.', inline=False)
-
-        embed.add_field(name='**`01-01-2021`**', value='Began adding UUID command, under Testing category. Preparing to switch to async requests', inline=False)
-
-        embed.add_field(name='**`02-01-2021`**', value=':sparkles: new support server added to help commands', inline=False)
-
-        embed.add_field(name='**`04-01-2021`**', value='fixed support server invite', inline=False)
-
-        embed.add_field(name='**`04-01-2021`**', value='fixed .say command to supress @everyone and @here', inline=False)
-
-        embed.add_field(name='**`05-01-2021`**', value='UUID command passed beta testing', inline=False)
-
-        embed.add_field(name='**`08-01-2021`**', value='edited .edit command from ID to REPLY', inline=False)
-
-        embed.add_field(name='**`08-01-2021`**', value='added reply/quote support for .say command', inline=False)
-
-        embed.add_field(name='**`08-01-2021`**', value='switched from requests to AioHTTP', inline=False)
-
-        embed.add_field(name='**`11-01-2021`**', value='Fixed issue in .edit command', inline=False)
-
-        embed.add_field(name='**`13-01-2021`**', value='Edited DM command, so it no longer needs to be executed in the same guild as the bot, allowing for responses to the DMS of the bot', inline=False)
-
-        embed.add_field(name='**`14-01-2021`**', value='New arguments added to `.cat` command, check `.cat help` commands for more', inline=False)
-
-        embed.add_field(name='**`20-06-2021`**', value='re-wrote a lot of the bot to make the code cleaner', inline=False)
-
-        embed.add_field(name='Suggest an update/feature:', value='Just DM me (the bot) to do that ;)', inline=False)
-
-        await ctx.send(embed=embed)
-
-    @commands.command()
+    @commands.command(help="Shows duckbot's privacy policies")
     async def privacy(self, ctx):
         embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
 We don't store any user data _yet_ :wink:
@@ -214,5 +88,6 @@ Privacy concerns, DM the bot.""", color=ctx.me.color)
         await ctx.send(embed=embed)
 
 
+
 def setup(bot):
-    bot.add_cog(info(bot))
+    bot.add_cog(about(bot))

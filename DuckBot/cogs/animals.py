@@ -1,24 +1,16 @@
-import json, random, discord, aiohttp, typing, asyncio, re
-
+import typing, discord, asyncio, random, datetime, json, aiohttp, re
+from discord.ext import commands, tasks, timers
 from random import randint
-from discord.ext import commands
 
-
-class animals(commands.Cog):
-
+class fun(commands.Cog):
+    """Fun commands!"""
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=['inspirequote', 'quote', 'inspire', 'motivateme'])
-    async def motivate(self, ctx):
-        async with aiohttp.ClientSession() as cs:
-            async with cs.get("https://www.affirmations.dev") as r:
-                json_data = json.loads(r.text)
-                await ctx.send(json_data["affirmation"])
-
     ### CAT ###
     # Sends a pic of a cat
-    @commands.command(aliases=['meow', 'kitty', 'getcat'])
+    @commands.command(  help="Sends a random cat image\nIf specified, can also send a random or specific picture of Manchas or Rory",
+                        usage="[rory|manchas] [specific ID]")
     async def cat(self, ctx, cat: typing.Optional[str], id:typing.Optional[int]):
         async with aiohttp.ClientSession() as cs:
             if cat == None:
@@ -88,8 +80,8 @@ class animals(commands.Cog):
                     embed.set_footer(text='by random.cat', icon_url='https://purr.objects-us-east-1.dream.io/static/img/random.cat-logo.png')
                     await ctx.send(embed=embed)
 
-    @commands.command(aliases=['dog', 'pup', 'getdog'])
-    async def doggo(self, ctx):
+    @commands.command(help="Sends a random dog image")
+    async def dog(self, ctx):
         async with aiohttp.ClientSession() as cs:
             async with cs.get('https://dog.ceo/api/breeds/image/random') as r:
                 res = await r.json()  # returns dict
@@ -98,7 +90,7 @@ class animals(commands.Cog):
                 embed.set_footer(text='by dog.ceo', icon_url='https://i.imgur.com/wJSeh2G.png')
                 await ctx.send(embed=embed)
 
-    @commands.command(aliases=['getduck', 'quack', 'randomduck'])
+    @commands.command(help="Sends a random duck image")
     async def duck(self, ctx):
         async with aiohttp.ClientSession() as cs:
             async with cs.get('https://random-d.uk/api/random?format=json') as r:
@@ -108,7 +100,13 @@ class animals(commands.Cog):
                 embed.set_footer(text='by random-d.uk', icon_url='https://avatars2.githubusercontent.com/u/38426912')
                 await ctx.send(embed=embed)
 
-    @commands.command(aliases=['inspirobot', 'imageinspire', 'inspirame'])
+    @commands.command(help="Try it and see...")
+    async def tias(self, ctx):
+        try: await ctx.message.delete()
+        except: pass
+        await ctx.send("https://tryitands.ee/")
+
+    @commands.command(help="shows a funny \"inspirational\" image")
     async def inspireme(self, ctx):
         async with aiohttp.ClientSession() as cs:
             async with cs.get('http://inspirobot.me/api?generate=true') as r:
@@ -118,11 +116,5 @@ class animals(commands.Cog):
                 embed.set_footer(text='by inspirobot.me', icon_url='https://inspirobot.me/website/images/inspirobot-dark-green.png')
                 await ctx.send(embed=embed)
 
-    @commands.command()
-    async def tias(self, ctx):
-        try: await ctx.message.delete()
-        except: pass
-        await ctx.send("https://tryitands.ee/")
-
 def setup(bot):
-    bot.add_cog(animals(bot))
+    bot.add_cog(fun(bot))

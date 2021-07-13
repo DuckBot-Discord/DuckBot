@@ -86,7 +86,7 @@ You might want to follow up on this.
                 self.STLbefore = before
                 return
 
-            if overaged in before.roles and underaged not in before.roles and underaged in after.roles and overaged not in after.roles:
+            elif overaged in before.roles and underaged not in before.roles and underaged in after.roles and overaged not in after.roles:
                 await channel.send(before.guild.owner.mention, embed=discord.Embed(
                 color = 0xFF0000,
                 description=f"""
@@ -98,17 +98,62 @@ You might want to follow up on this.
                 self.STLbefore = before
                 return
 
+            elif overaged in before.roles and underaged not in before.roles and underaged not in after.roles and overaged not in after.roles:
+                self.STLbefore = before
+                return
+
+            elif overaged in before.roles and underaged not in before.roles and underaged not in after.roles and overaged not in after.roles:
+                self.STLbefore = before
+                return
+
+            elif not self.STLbefore:
+                self.STLbefore = before
+                return
+
+            if self.STLbefore.id != before.id:
+                print('not the same person')
+                self.STLbefore = before
+                return
+
+
+            if underaged in self.STLbefore.roles and overaged not in self.STLbefore.roles and overaged in after.roles and underaged not in after.roles:
+                await channel.send(before.guild.owner.mention, embed=discord.Embed(
+                color = 0xFF0000,
+                description=f"""
+<:suswell2:863246942853922836> **SUSPICIOUS MEMBER ACTIVITY NOTICED** <:maxwellsus2:863246342250692620>
+*{before.mention} has changed their age status from {underaged.mention} to {overaged.mention}*
+You might want to follow up on this.
+"""
+                ))
+                self.STLbefore = before
+                return
+
+            if overaged in self.STLbefore.roles and underaged not in self.STLbefore.roles and underaged in after.roles and overaged not in after.roles:
+                await channel.send(before.guild.owner.mention, embed=discord.Embed(
+                color = 0xFF0000,
+                description=f"""
+<:suswell2:863246942853922836> **SUSPICIOUS MEMBER ACTIVITY NOTICED** <:maxwellsus2:863246342250692620>
+*{before.mention} has changed their age status from {overaged.mention} to {underaged.mention}*
+You might want to follow up on this.
+"""
+))
+                self.STLbefore = before
+                return
+            print('nothing triggered lmao')
+
+################################################################################
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot: return
         if message.channel.id in self.yaml_data['blackholes']:
             await message.delete()
             return
-
         ###DEPRESSION AND SUICIDAL EMBED DEFINITION###
 
         suicide_text = f"Hi, {message.author.mention}. If you need to talk to someone, please DM me and an admin will talk to you. Or, use a resource below. We all are here for you.:heart:"
         suicide_embed=discord.Embed(title="DEPRESSION AND SUICIDAL INTENTIONS", description="", color=0x0066ff)
+        suicide_embed.add_field(name="National Suicide Prevention Lifeline", value="1-800-273-TALK (8255)", inline=False)
         suicide_embed.add_field(name="American Association of Suicidology", value="The [American Association of Suicidology](http://www.suicidology.org/) (AAS) promotes research, public awareness programs, public education and training for professionals and volunteers. AAS also serves as a national clearinghouse for information on suicide.", inline=False)
         suicide_embed.add_field(name="Depression Screening", value="The [Depression Screening](http://www.depression-screening.org/) website is sponsored by Mental Health America as part of the Campaign for America’s Mental Health. The mission of this website is to educate people about clinical depression, offer a confidential way for people to get screened for symptoms of depression and guide people toward appropriate professional help if necessary.", inline=False)
         suicide_embed.add_field(name="MoodGYM", value="[MoodGYM](http://www.moodgym.anu.edu.au/) has been evaluated in a scientific trial and found to be effective in relieving depression symptoms if people work through it systematically. This website uses cognitive behavioral therapy (CBT) methods to teach people to use ways of thinking that can help prevent depression.", inline=False)
