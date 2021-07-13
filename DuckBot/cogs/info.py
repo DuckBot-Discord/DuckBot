@@ -38,16 +38,11 @@ class about(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(help="Links to the bot's code",aliases = ['sourcecode', 'code'])
+    @commands.command(help="Links to the bot's code, or a specific command's",aliases = ['sourcecode', 'code'], usage="[command|command.subcommand]")
     @commands.command()
     async def source(self, ctx, *, command: str = None):
-        """Displays my full source code or for a specific command.
-        To display the source code of a subcommand you can separate it by
-        periods, e.g. tag.create for the create subcommand of the tag command
-        or by spaces.
-        """
-        source_url = 'https://github.com/Rapptz/RoboDanny'
-        branch = 'rewrite'
+        source_url = 'https://github.com/LeoCx1000/discord-bots'
+        branch = 'master/DuckBot'
         if command is None:
             return await ctx.send(source_url)
 
