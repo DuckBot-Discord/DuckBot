@@ -1,4 +1,4 @@
-import json, random, typing, discord, asyncio, time
+import json, random, typing, discord, asyncio, time, os, inspect, itertools
 from discord.ext import commands
 
 class about(commands.Cog):
@@ -39,12 +39,12 @@ class about(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(help="Links to the bot's code, or a specific command's",aliases = ['sourcecode', 'code'], usage="[command|command.subcommand]")
-    @commands.command()
     async def source(self, ctx, *, command: str = None):
         source_url = 'https://github.com/LeoCx1000/discord-bots'
         branch = 'master/DuckBot'
         if command is None:
-            return await ctx.send(source_url)
+            embed=discord.Embed(color=ctx.me.color, description=f"**[Here's my surce code]({source_url})**")
+            return await ctx.send(embed=embed)
 
         if command == 'help':
             src = type(self.bot.help_command)
@@ -71,8 +71,12 @@ class about(commands.Cog):
             branch = 'master'
 
         final_url = f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>'
-        embed=discord.embed(color=ctx.me.color, description=f"**[Here's my surce code]({final_url})")
-        await ctx.send(final_url)
+        embed=discord.Embed(color=ctx.me.color,
+                            description=f"**[source for {command}]({final_url})**")
+        embed.set_footer(   text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
+        await ctx.send(embed=embed)
+
+
 
     @commands.command(help="Shows duckbot's privacy policies")
     async def privacy(self, ctx):
