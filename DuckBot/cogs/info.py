@@ -53,10 +53,9 @@ class about(commands.Cog):
         else:
             obj = self.bot.get_command(command.replace('.', ' '))
             if obj is None:
-                return await ctx.send('Could not find command.')
+                embed=discord.Embed(color=ctx.me.color, description=f"**[Here's my surce code]({source_url})**", title="command not found")
+                return await ctx.send(embed=embed)
 
-            # since we found the command we're looking for, presumably anyway, let's
-            # try to access the code itself
             src = obj.callback.__code__
             module = obj.callback.__module__
             filename = src.co_filename
@@ -72,7 +71,7 @@ class about(commands.Cog):
 
         final_url = f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>'
         embed=discord.Embed(color=ctx.me.color,
-                            description=f"**[source for {command}]({final_url})**")
+                            description=f"**[source for `{command}`]({final_url})**")
         embed.set_footer(   text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
         await ctx.send(embed=embed)
 

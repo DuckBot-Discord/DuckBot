@@ -201,18 +201,15 @@ You might want to follow up on this.
 
                 ##  HELP COMMAND\/  ##
 
-    @commands.command(name = "help", aliases=["aliase"])
-    async def  commandName(self, ctx:commands.Context):
-        await ctx.send("Here's my help guide! ```Note: only the messages that start with \".\" are actual commands. Others are response triggers.``` /n DM me if you have questions!")
+    @commands.command()
+    async def help(self, ctx:commands.Context):
         embed=discord.Embed(title="Help", description="my prefix is \".\"", color=0xff0000)
         embed.add_field(name="DM me", value="DM me to get in contact with the OSP Admin Team!", inline=False)
         embed.add_field(name=".Rule [rule number]", value="Gives you more information of a specific rule. E.G.: **.Rule 3** would give you more information about Rule number 3.", inline=False)
         embed.add_field(name="Message that mentions me with no other content", value="A randomized message will appear!", inline=False)
         embed.add_field(name="Message that mentions me with other content", value="A randomized response reccomending a DM will appear!", inline=False)
         embed.add_field(name="Says specific trigger word", value="We will send over respective help resources. If there is a missing trigger word you find, message me and we will add it to our database!", inline=False)
-        embed.add_field(name=".Rule [rule number]", value="Gives you more information of a specific rule. E.G.: **.Rule 3** would give you more information about Rule number 3.", inline=False)
-
-        await ctx.send(embed=embed)
+        await ctx.send("Here's my help guide! ```Note: only the messages that start with \".\" are actual commands. Others are response triggers.```DM me if you have questions!", embed=embed)
 
 def setup(bot):
     bot.add_cog(info(bot))

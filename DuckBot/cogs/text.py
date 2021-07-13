@@ -11,22 +11,22 @@ class general(commands.Cog):
     ##### .s <text> #####
     # resends the message as the bot
 
-    @commands.command(aliases=['s', 'send'])
-    async def say(self, ctx, *, message: typing.Optional[str], usage="<text>"):
+    @commands.command(aliases=['s', 'send'], usage="<text>", help="Speak as if you were me. # URLs/Invites not allowed!")
+    async def say(self, ctx, *, msg: typing.Optional[str]):
         if msg==None:
             await ctx.send(f"Error! empty. do: `{ctx.prefix}{ctx.command} <text>`")
 
         results = re.findall("http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", msg) # HTTP/HTTPS URL regex
         results2 = re.findall("(?:https?:\/\/)?discord(?:app)?\.(?:com\/invite|gg)\/[a-zA-Z0-9]+\/?", msg) # Discord invite regex
         if results or results2:
-            await ctx.send("Can't send URLs or invites in `.say`", delete_after=5)
+            await ctx.send(f"`{ctx.prefix}{ctx.command}` can't be used to send invites or URLs, as it could bypass spam filters!", delete_after=5)
             try: await ctx.message.delete(delay=5)
             except: return
             return
 
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
+        except:
             pass
         if ctx.channel.permissions_for(ctx.author).mention_everyone:
             if ctx.message.reference:
