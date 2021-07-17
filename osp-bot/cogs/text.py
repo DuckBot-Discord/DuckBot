@@ -1,7 +1,7 @@
 import discord, asyncio, typing, aiohttp, random, json, yaml
 from discord.ext import commands
 
-class help(commands.Cog):
+class text(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -121,5 +121,44 @@ class help(commands.Cog):
 
                 await ctx.send(embed=embed)
 
+    @commands.command()
+    async def sendembed(self, ctx, *, data):
+        try:
+            dictionary = json.loads(data)
+        except:
+            await ctx.send("json data malformed")
+            return
+        embed = discord.Embed().from_dict(dictionary)
+        try:
+            await ctx.send(embed=embed)
+        except:
+            await ctx.send("json data malformed")
+            return
+        await ctx.message.delete()
+
+    @commands.command()
+    async def addemb(self, ctx, *, data):
+        if ctx.message.reference:
+            msg = ctx.message.reference.resolved
+            try:
+                dictionary = json.loads(data)
+            except:
+                await ctx.send("json data malformed", delete_after=3)
+                return
+            embed = discord.Embed().from_dict(dictionary)
+            try:
+                await msg.edit(content = msg.content, embed=embed)
+            except:
+                await ctx.send("json data malformed", delete_after=3)
+                return
+            await ctx.message.delete()
+        else:
+            await ctx.message.add_reaction('⚠')
+            await asyncio.sleep(3)
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                return
+
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(text(bot))

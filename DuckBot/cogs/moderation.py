@@ -162,7 +162,7 @@ class moderation(commands.Cog):
             await self.error_message(ctx, 'I\'m not high enough in role hierarchy to kick that member!')
             return
         if member.top_role <= ctx.author.top_role:
-            if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
+            if member.guild_permissions.ban_members == False and member.guild_permissions.kick_members == False and member.guild_permissions.manage_messages == False:
                 try:
                     mem_embed=discord.Embed(description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**", color=ctx.me.color)
                     if reason: mem_embed.set_footer(text=f'reason: {reason}')
@@ -212,7 +212,7 @@ class moderation(commands.Cog):
             await self.error_message(ctx, 'I\'m not high enough in role hierarchy to kick that member!')
             return
         if member.top_role <= ctx.author.top_role:
-            if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
+            if member.guild_permissions.ban_members == False and member.guild_permissions.kick_members == False and member.guild_permissions.manage_messages == False:
                 try:
                     mem_embed=discord.Embed(description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**", color=ctx.me.color)
                     if reason: mem_embed.set_footer(text=f'reason: {reason}')

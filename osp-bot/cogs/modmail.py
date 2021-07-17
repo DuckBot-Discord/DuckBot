@@ -2,7 +2,7 @@ import discord, asyncio, typing, re, yaml, datetime
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
-class help(commands.Cog):
+class modmail(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -159,4 +159,4 @@ class help(commands.Cog):
             await asyncio.sleep(1.5)
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(modmail(bot))

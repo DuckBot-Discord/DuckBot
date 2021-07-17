@@ -1,7 +1,7 @@
 import discord, asyncio, typing, re, yaml, datetime, json, aiohttp
 from discord.ext import commands
 
-class help(commands.Cog):
+class rules(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
@@ -242,7 +242,7 @@ Rule {number} not found. Please only use numbers 1-15.
                         await ctx.send(embed=embed)
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(rules(bot))
 
 
 # TEMPLATE WITH IMAGE(REMOVE # SIGNS)

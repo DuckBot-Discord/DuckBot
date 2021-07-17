@@ -63,6 +63,14 @@ class help(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         textchannel = self.bot.get_channel(851314198654484521)
+
+
+
+
+
+
+
+
         if after.channel is not None:
             if after.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]:
                 if before.channel is not None:

@@ -1,7 +1,7 @@
 import json, random, typing, discord, asyncio, yaml, datetime, random
 from discord.ext import commands
 
-class info(commands.Cog):
+class events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -14,35 +14,225 @@ class info(commands.Cog):
         self.verified = mguild.get_role(full_yaml['RulesVerRole'])
         self.unverified = mguild.get_role(full_yaml['RulesUnvRole'])
         self.STLbefore = None
+        self.ticket_staff = mguild.get_role(self.yaml_data['TicketStaffRole'])
+        self.ticket_log = self.bot.get_channel(full_yaml['TicketLogChannel'])
 
         with open(r'files/triggers.yaml') as triggers:
             trigger_words = yaml.full_load(triggers)
         self.trigger_words = trigger_words
 
+    async def get_webhook(self, channel):
+        hookslist = await channel.webhooks()
+        if hookslist:
+            for hook in hookslist:
+                if hook.token:
+                    return hook
+                else: continue
+        hook = await channel.create_webhook(name="OSP-Bot ticket logging")
+        return hook
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.channel_id != self.mguild.rules_channel.id: return
-        message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
-        mem = payload.member.id
-        own = self.bot.get_guild(self.yaml_data['guildID']).owner_id
+        if payload.member.bot: return
+        if payload.channel_id == self.mguild.rules_channel.id:
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+            mem = payload.member.id
+            own = self.bot.get_guild(self.yaml_data['guildID']).owner_id
 
-        if self.verified in payload.member.roles and mem != own and self.unverified not in payload.member.roles:
-            await message.remove_reaction(payload.emoji, payload.member)
-            return
-        if mem != own:
-            try: await message.remove_reaction(payload.emoji, payload.member)
-            except: pass
-            try: await payload.member.add_roles(self.verified)
-            except:
-                pass
-            try: await payload.member.remove_roles(self.unverified)
-            except:
-                pass
+            if self.verified in payload.member.roles and mem != own and self.unverified not in payload.member.roles:
+                await message.remove_reaction(payload.emoji, payload.member)
+                return
+            if mem != own:
+                try: await message.remove_reaction(payload.emoji, payload.member)
+                except: pass
+                try: await payload.member.add_roles(self.verified)
+                except:
+                    pass
+                try: await payload.member.remove_roles(self.unverified)
+                except:
+                    pass
+            else:
+                try: await payload.member.add_roles(self.verified)
+                except: pass
+                try: await payload.member.remove_roles(self.unverified)
+                except: pass
+
+        elif str(payload.emoji) == "🚪":
+            category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+            chids = []
+            if category.text_channels:
+                for channel in category.text_channels:
+                    chids.append(channel.id)
+            if payload.channel_id in chids:
+                message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+                if not message.author.bot or "opened a ticket" not in message.content: return
+
+                embed=discord.Embed(color=0x47B781,
+                                    description=f"""__Hey {payload.member.mention}, we see you're leaving this ticket.__
+Want to tell us why?
+
+You have 5 minutes to do so.""")
+
+                embed.set_author(name=f"{payload.member} is leaving the ticket", icon_url=payload.member.avatar_url)
+                embed.set_footer(text="Send \"no\" if you don't want to")
+                lmsg = await message.channel.send(payload.member.mention, embed=embed)
+
+                def check(m: discord.Message):  # m = discord.Message.
+                    return m.author.id == payload.member.id and m.channel.id == message.channel.id
+
+                try:
+                    #                             event = on_message without on_
+                    msg = await self.bot.wait_for(event = 'message', check = check, timeout = 300.0)
+                    # msg = discord.Message
+                except asyncio.TimeoutError:
+                    # at this point, the check didn't become True, let's handle it.
+                    err=discord.Embed(color=0xD7342A, description=f"**{payload.member} left the ticket.**")
+                    await lmsg.edit(content=payload.member.mention, embed=err)
+                else:
+                    if msg.content.lower() == "no":
+                        try: await msg.delete()
+                        except: pass
+                        err=discord.Embed(color=0xD7342A, description=f"**{payload.member} left the ticket.**")
+                        await lmsg.edit(content=payload.member.mention, embed=err)
+                        return
+                    else:
+                        try: await msg.delete()
+                        except: pass
+                        embed=discord.Embed(color=0xD7342A,
+                                            description=f"""**{payload.member} left the ticket.**
+**Reason:**
+{msg.content}""")
+                        await lmsg.edit(content=payload.member.mention, embed=embed)
+
+                perms = message.channel.overwrites_for(payload.member)
+                perms.send_messages = False
+                perms.read_messages = False
+                await message.channel.set_permissions(payload.member, overwrite=perms, reason=f"{payload.member.name} left ticket")
+                await message.remove_reaction(payload.emoji, payload.member)
+                TicketLog = await self.get_webhook(self.ticket_log)
+                logemb = discord.Embed(color=0xD7342A, title=f"Left ticket #{message.channel.name}", description= f"""
+{payload.member.mention} Left ticket""")
+                if msg.content and msg.content.lower() != "no":
+                    logemb.add_field(name="Reason:", value=msg.content)
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                await TicketLog.send(embed=logemb)
+
+        elif str(payload.emoji) == "📁" and self.ticket_staff in payload.member.roles:
+            category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+            archive = self.bot.get_channel(self.yaml_data['TicketsArchve'])
+            chids = []
+            if category.text_channels:
+                for channel in category.text_channels:
+                    chids.append(channel.id)
+            if payload.channel_id in chids:
+                message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+                if not message.author.bot or "opened a ticket" not in message.content: return
+
+                embed = message.embeds[0]
+                embed.clear_fields()
+                embed.add_field(name="Actions:", value="Archived! | Delete: 🗑")
+                await message.edit(content=message.content, embed=embed)
+
+
+                archive = self.bot.get_channel(self.yaml_data['TicketsArchve'])
+                overwrites = {
+                    message.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    self.ticket_staff: discord.PermissionOverwrite(read_messages=True, manage_messages=False, send_messages=False)
+                }
+                await message.channel.edit(overwrites=overwrites, category=archive)
+                await message.clear_reaction("📁")
+                await message.channel.send("This ticket is now archived")
+                return
+
+
+        elif str(payload.emoji) == "🔒" and self.ticket_staff in payload.member.roles:
+            category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+            chids = []
+            if category.text_channels:
+                for channel in category.text_channels:
+                    chids.append(channel.id)
+            if payload.channel_id in chids:
+                message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+                if not message.author.bot or "opened a ticket" not in message.content: return
+
+                await message.add_reaction("✅")
+                await message.add_reaction("❌")
+
+
+        elif str(payload.emoji) == "✅" and self.ticket_staff in payload.member.roles:
+            category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+            chids = []
+            if category.text_channels:
+                for channel in category.text_channels:
+                    chids.append(channel.id)
+            if payload.channel_id in chids:
+                message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+                if not message.author.bot or "opened a ticket" not in message.content: return
+
+                embed = message.embeds[0]
+                embed.clear_fields()
+                embed.add_field(name="Actions:", value="Archive: 📁 | Delete: 🗑")
+                await message.edit(content=message.content, embed=embed)
+
+                overwrites = {
+                    message.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    self.ticket_staff: discord.PermissionOverwrite(read_messages=True, manage_messages=True)
+                }
+                await message.channel.edit(overwrites=overwrites)
+                await message.clear_reactions()
+                await message.channel.send("This ticket is now locked")
+                await message.add_reaction("📁")
+                await message.add_reaction("🗑")
+                return
+
+        elif str(payload.emoji) == "❌" and self.ticket_staff in payload.member.roles:
+            category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+            chids = []
+            if category.text_channels:
+                for channel in category.text_channels:
+                    chids.append(channel.id)
+            if payload.channel_id in chids:
+                message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+                if not message.author.bot or "opened a ticket" not in message.content: return
+                await message.clear_reaction("✅")
+                await message.clear_reaction("❌")
+                await message.remove_reaction("🔒", payload.member)
+                return
+
+        elif str(payload.emoji) == "🗑" and self.ticket_staff in payload.member.roles:
+            category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+            archive = self.bot.get_channel(self.yaml_data['TicketsArchve'])
+            chids = []
+            if category.text_channels:
+                for channel in category.text_channels:
+                    chids.append(channel.id)
+            if archive.text_channels:
+                for channel in archive.text_channels:
+                    chids.append(channel.id)
+
+            if payload.channel_id in chids:
+                message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+                if not message.author.bot or "opened a ticket" not in message.content: return
+                await message.channel.delete()
+                return
+
         else:
-            try: await payload.member.add_roles(self.verified)
-            except: pass
-            try: await payload.member.remove_roles(self.unverified)
-            except: pass
+            category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+            chids = []
+            if category.text_channels:
+                for channel in category.text_channels:
+                    chids.append(channel.id)
+            if payload.channel_id in chids:
+                message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+                if not message.author.bot or "opened a ticket" not in message.content: return
+                await message.remove_reaction(payload.emoji, payload.member)
+
 
 
     @commands.Cog.listener()
@@ -184,32 +374,18 @@ You might want to follow up on this.
             await message.channel.send(self_injury_text, embed=self_injury_embed)
 
         # Triggers if the bot is pinged without context OR if the bot is quoted, and the message is less than 22 characters long.
-        elif self.bot.user in message.mentions and message and len(message.content) <= 22:
+        elif self.bot.user in message.mentions and message and len(message.content) <= 22 and not message.content.startswith("."):
             # gets the response from the list no_context_responses in triggers.yaml
             response = random.choice(self.trigger_words['no_context_responses'])
             response = response.replace('%PING_USER%', f'{message.author.mention}')
             await message.channel.send(response)
 
         # Triggers if the bot is pinged with context
-        elif self.bot.user in message.mentions:
+        elif self.bot.user in message.mentions and not message.content.startswith("."):
             # gets the response from the list context_responses in triggers.yaml
             response = random.choice(self.trigger_words['context_responses'])
             response = response.replace('%PING_USER%', f'{message.author.mention}')
             await message.channel.send(response)
 
-
-
-                ##  HELP COMMAND\/  ##
-
-    @commands.command()
-    async def help(self, ctx:commands.Context):
-        embed=discord.Embed(title="Help", description="my prefix is \".\"", color=0xff0000)
-        embed.add_field(name="DM me", value="DM me to get in contact with the OSP Admin Team!", inline=False)
-        embed.add_field(name=".Rule [rule number]", value="Gives you more information of a specific rule. E.G.: **.Rule 3** would give you more information about Rule number 3.", inline=False)
-        embed.add_field(name="Message that mentions me with no other content", value="A randomized message will appear!", inline=False)
-        embed.add_field(name="Message that mentions me with other content", value="A randomized response reccomending a DM will appear!", inline=False)
-        embed.add_field(name="Says specific trigger word", value="We will send over respective help resources. If there is a missing trigger word you find, message me and we will add it to our database!", inline=False)
-        await ctx.send("Here's my help guide! ```Note: only the messages that start with \".\" are actual commands. Others are response triggers.```DM me if you have questions!", embed=embed)
-
 def setup(bot):
-    bot.add_cog(info(bot))
+    bot.add_cog(events(bot))

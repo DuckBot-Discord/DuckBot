@@ -1,4 +1,6 @@
-import discord, asyncio
+import discord, asyncio, json, yaml
+
+
 
 async def success(ctx):
     await ctx.message.add_reaction("✅")
@@ -7,12 +9,16 @@ async def success(ctx):
     except:return
     return
 
-async def failed(ctx, e, message):
-    traceback_string = "".join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))
-    await asyncio.sleep(0.5)
-    embed = discord.Embed(color=ctx.me.color, description = f"❌ Execution error\n```{traceback_string}```")
-    try: await message.edit(embed=embed)
-    except:
-        embed = discord.Embed(color=ctx.me.color, description = f"❌ Execution error ```\n error too long, check the console\n```")
-        await message.edit()
-    raise e
+async def error(ctx, error):
+    embed = discord.Embed(  color=ctx.me.color,
+                            description = f"")
+
+    async def error_message(self, ctx, message):
+        embed = discord.Embed(color=ctx.me.color)
+        embed.set_author(name=message, icon_url='https://i.imgur.com/OAmzSGF.png')
+        await ctx.send(embed=embed, delete_after=self.yaml_data['ErrorMessageTimeout'])
+        await asyncio.sleep(self.yaml_data['ErrorMessageTimeout'])
+        try:
+            await ctx.message.delete()
+            return
+        except: return
