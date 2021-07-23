@@ -27,18 +27,21 @@ class MyHelp(commands.HelpCommand):
 
     def get_command_name(self, command):
         return '%s' % (command.qualified_name)
+
    # !help
     async def send_bot_help(self, mapping):
+        embed = discord.Embed(color=0x5865F2, title=f"Hello! Here are my commands - only displaying commands you can use", description=f"Do `{self.clean_prefix}help [command]` to get information on a command\nDo `{self.clean_prefix}help [category]` to get information on a category\n_ _")
+        ignored_cogs=['level']
+        for cog, commands in mapping.items():
+            if cog is None or cog.qualified_name in ignored_cogs: continue
+            filtered = await self.filter_commands(commands, sort=True)
+            command_signatures = [self.get_command_name(c) for c in filtered]
+            if command_signatures:
+                val = "`, `".join(command_signatures)
+                embed.add_field(name=cog.qualified_name, value=f"{cog.description}\n`{val}`", inline=True)
 
-        embed=discord.Embed(title="Help", description="my prefix is \".\"", color=0x5865F2)
-        embed.add_field(name="DM me", value="DM me to get in contact with the OSP Admin Team!", inline=False)
-        embed.add_field(name=".rule [rule number]", value="Gives you more information of a specific rule. E.G.: **.Rule 3** would give you more information about Rule number 3.", inline=False)
-        embed.add_field(name="Message that mentions me with no other content", value="A randomized message will appear!", inline=False)
-        embed.add_field(name="Message that mentions me with other content", value="A randomized response reccomending a DM will appear!", inline=False)
-        embed.add_field(name="Says specific trigger word", value="We will send over respective help resources. If there is a missing trigger word you find, message me and we will add it to our database!", inline=False)
-        embed.set_footer(text="You can do \".help [command]\" to get more info on a command \nAlso you can do \".help [category]\" to get info on a category")
         channel = self.get_destination()
-        await channel.send("Here's my help guide! ```Note: only the messages that start with \".\" are actual commands. Others are response triggers.```DM me if you have questions!", embed=embed)
+        await channel.send(embed=embed)
 
    # !help <command>
     async def send_command_help(self, command):

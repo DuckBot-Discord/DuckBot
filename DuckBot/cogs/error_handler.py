@@ -18,6 +18,24 @@ class handler(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         error = getattr(error, "original", error)
+        if isinstance(error, commands.MissingPermissions):
+            try:
+                embed = discord.Embed(color=ctx.me.color, description=f"I'm sorry, but you're missing the following permissions: {', '.join(error.missing_perms)}")
+                await ctx.send(embed=embed)
+            except:
+                try: await ctx.send(f"I'm sorry, but you're missing the following permissions: {', '.join(error.missing_perms)}")
+                except: pass
+            return
+
+        if isinstance(error, commands.BotMissingPermissions):
+            try:
+                embed = discord.Embed(color=ctx.me.color, description=f"I'm sorry, but I'm missing the following permissions: {', '.join(error.missing_perms)}")
+                await ctx.send(embed=embed)
+            except:
+                try: await ctx.send(f"I'm sorry, but I'm missing the following permissions: {', '.join(error.missing_perms)}")
+                except: pass
+            return
+
         if isinstance(error, discord.ext.commands.errors.CheckFailure):
             await self.perms_error(ctx)
             return
@@ -42,11 +60,9 @@ class handler(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        if ctx.command:
-            await self.bot.get_channel(847943387083440128).send(f"""```{ctx.command} command raised an error:
+        await self.bot.get_channel(847943387083440128).send(f"""```{ctx.command} command raised an error:
 {error}```""")
-        else:
-            await self.bot.get_channel(847943387083440128).send(f"""```{error}```""")
         raise error
+
 def setup(bot):
     bot.add_cog(handler(bot))

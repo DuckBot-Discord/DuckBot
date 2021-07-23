@@ -34,6 +34,7 @@ class bot_management(commands.Cog):
 
     @commands.command(aliases = ['setstatus', 'ss', 'activity'], usage="<playing|listening|watching|competing|clear> [text]")
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def status(self, ctx, type: typing.Optional[str] = None,* , argument: typing.Optional[str] = None):
 
         if type == None:
@@ -95,6 +96,7 @@ class bot_management(commands.Cog):
 
     @commands.command(help = "Adds something to de to-do list", usage="<text>")
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def todo(self, ctx, *, message = None):
         channel = self.bot.get_channel(830992446434312192)
         if message == None:
@@ -123,6 +125,7 @@ class bot_management(commands.Cog):
 
     @commands.command(aliases = ['mm','maintenancemode'], help="puts the bot under maintenance", usage="[on|off]")
     @commands.is_owner()
+    @commands.bot_has_permissions(add_reactions=True)
     async def maintenance(self, ctx, state: typing.Optional[str] = None):
         if state == 'on':
             await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
@@ -140,6 +143,7 @@ class bot_management(commands.Cog):
 
     @commands.command(aliases = ['np','invisprefix', 'sp', 'noprefix'], help="toggles no-prefix mode on or off", usage="[on|off]")
     @commands.is_owner()
+    @commands.bot_has_permissions(add_reactions=True)
     async def silentprefix(self, ctx, state: typing.Optional[str] = None):
         if state == 'on':
             await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
@@ -162,6 +166,7 @@ class bot_management(commands.Cog):
 
     @commands.command(help="Loads an extension", aliases=['le', 'lc', 'loadcog'], usage="<extension>")
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def load(self, ctx, extension = ""):
         embed = discord.Embed(color=ctx.me.color, description = f"⬆ {extension}")
         message = await ctx.send(embed=embed)
@@ -199,6 +204,7 @@ class bot_management(commands.Cog):
 
     @commands.command(help="Unloads an extension", aliases=['unl', 'ue', 'uc'], usage="<extension>")
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def unload(self, ctx, extension = ""):
         embed = discord.Embed(color=ctx.me.color, description = f"⬇ {extension}")
         message = await ctx.send(embed=embed)
@@ -220,6 +226,7 @@ class bot_management(commands.Cog):
 
     @commands.command(help="Reloads an extension", aliases=['rel', 're', 'rc'])
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reload(self, ctx, extension = ""):
         embed = discord.Embed(color=ctx.me.color, description = f"🔃 {extension}")
         message = await ctx.send(embed=embed)
@@ -255,6 +262,7 @@ class bot_management(commands.Cog):
 
     @commands.command(help="Reloads all extensions", aliases=['relall', 'rall'], usage="[silent|channel]")
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reloadall(self, ctx, argument: typing.Optional[str]):
         list = ""
         desc = ""
@@ -314,6 +322,7 @@ class bot_management(commands.Cog):
 
     @commands.command(help="Shuts down the bot", aliases = ['stop','sd'])
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def shutdown(self, ctx):
         confirm = await Confirm(f'⚠**__are you sure?__**').prompt(ctx)
         if confirm:

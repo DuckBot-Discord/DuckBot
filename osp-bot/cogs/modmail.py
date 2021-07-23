@@ -50,7 +50,7 @@ class modmail(commands.Cog):
             embed.add_field(name=f'<:incomingarrow:848312881070080001> **{message.author}**', value=f'{message.content}')
         else:
             embed.add_field(name=f'<:incomingarrow:848312881070080001> **{message.author}**', value=f'_ _')
-        embed.set_footer(text=f';dm {message.author.id}')
+        embed.set_footer(text=f'.dm {message.author.id}')
         if message.attachments:
             file = message.attachments[0]
             spoiler = file.is_spoiler()
@@ -66,6 +66,7 @@ class modmail(commands.Cog):
         await message.remove_reaction('📬', self.bot.user)
 
     @commands.command(aliases=['pm', 'message', 'direct'])
+    @commands.has_permissions(manage_messages=True)
     async def dm(self, ctx, member: typing.Optional[discord.Member], *, message = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -100,25 +101,19 @@ class modmail(commands.Cog):
                         embed.add_field(name='Attachment', value=f'||[{file.filename}]({file.url})||', inline=False)
                     else:
                         embed.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
-                embed.set_footer(text=f';dm {member.id}')
+                embed.set_footer(text=f'.dm {member.id}')
                 await channel.send(embed=embed)
             else:
                 await member.send(message)
                 embed = discord.Embed(color=0x47B781)
                 embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**', value=message)
-                embed.set_footer(text=f';dm {member.id}')
+                embed.set_footer(text=f'.dm {member.id}')
                 await channel.send(embed=embed)
         except discord.Forbidden:
             await ctx.send(f"{member}'s DMs are closed.")
 
-    @dm.error
-    async def dm_error(self, ctx, error):
-        if isinstance(error, commands.CheckFailure):
-            await ctx.message.add_reaction('🚫')
-            await asyncio.sleep (5)
-            await ctx.message.delete()
-
     @commands.command(aliases=['spm', 'smessage', 'sdirect'])
+    @commands.has_permissions(manage_messages=True)
     async def sdm(self, ctx, member: typing.Optional[discord.Member], *, message = ""):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)

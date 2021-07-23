@@ -15,6 +15,7 @@ class events(commands.Cog):
         self.unverified = mguild.get_role(full_yaml['RulesUnvRole'])
         self.STLbefore = None
         self.ticket_staff = mguild.get_role(self.yaml_data['TicketStaffRole'])
+        self.blackout = mguild.get_role(self.yaml_data['BlackoutRole'])
         self.ticket_log = self.bot.get_channel(full_yaml['TicketLogChannel'])
 
         with open(r'files/triggers.yaml') as triggers:
@@ -32,6 +33,11 @@ class events(commands.Cog):
         return hook
 
     @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel):
+        if channel.guild.id != self.mguild.id: return
+        await channel.set_permissions(self.blackout, view_channel = False, reason=f'automatic Blackout mode')
+
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.member.bot: return
         if payload.channel_id == self.mguild.rules_channel.id:
@@ -45,17 +51,12 @@ class events(commands.Cog):
             if mem != own:
                 try: await message.remove_reaction(payload.emoji, payload.member)
                 except: pass
-                try: await payload.member.add_roles(self.verified)
-                except:
-                    pass
-                try: await payload.member.remove_roles(self.unverified)
-                except:
-                    pass
-            else:
-                try: await payload.member.add_roles(self.verified)
-                except: pass
-                try: await payload.member.remove_roles(self.unverified)
-                except: pass
+            try: await payload.member.add_roles(self.verified)
+            except: pass
+            try: await payload.member.remove_roles(self.unverified)
+            except: pass
+            try: await self.bot.get_channel(860610324020592689).send(payload.member.mention, delete_after=0.1)
+            except: pass
 
         elif str(payload.emoji) == "🚪":
             category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
@@ -67,10 +68,13 @@ class events(commands.Cog):
                 message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
 
                 if not message.author.bot or "opened a ticket" not in message.content: return
+                try: await message.remove_reaction(payload.emoji, payload.member)
+                except: pass
 
                 embed=discord.Embed(color=0x47B781,
                                     description=f"""__Hey {payload.member.mention}, we see you're leaving this ticket.__
-Want to tell us why?
+
+**Want to tell us why?**
 
 You have 5 minutes to do so.""")
 
@@ -95,7 +99,6 @@ You have 5 minutes to do so.""")
                         except: pass
                         err=discord.Embed(color=0xD7342A, description=f"**{payload.member} left the ticket.**")
                         await lmsg.edit(content=payload.member.mention, embed=err)
-                        return
                     else:
                         try: await msg.delete()
                         except: pass
@@ -109,12 +112,13 @@ You have 5 minutes to do so.""")
                 perms.send_messages = False
                 perms.read_messages = False
                 await message.channel.set_permissions(payload.member, overwrite=perms, reason=f"{payload.member.name} left ticket")
-                await message.remove_reaction(payload.emoji, payload.member)
+                #LOG
                 TicketLog = await self.get_webhook(self.ticket_log)
                 logemb = discord.Embed(color=0xD7342A, title=f"Left ticket #{message.channel.name}", description= f"""
-{payload.member.mention} Left ticket""")
-                if msg.content and msg.content.lower() != "no":
-                    logemb.add_field(name="Reason:", value=msg.content)
+{payload.member.mention} left ticket: {message.channel.mention}""")
+                if msg:
+                    if msg.content and msg.content.lower() != "no":
+                        logemb.add_field(name="Reason:", value=msg.content)
                 logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
                 await TicketLog.send(embed=logemb)
 
@@ -132,8 +136,15 @@ You have 5 minutes to do so.""")
 
                 embed = message.embeds[0]
                 embed.clear_fields()
-                embed.add_field(name="Actions:", value="Archived! | Delete: 🗑")
+                embed.add_field(name="Actions:", value="Archived! | 🗑 Delete (staff-only)")
                 await message.edit(content=message.content, embed=embed)
+
+                #LOG
+                TicketLog = await self.get_webhook(self.ticket_log)
+                logemb = discord.Embed(color=0x4286F4, title=f"Ticket #{message.channel.name} archived", description= f"""
+                {payload.member.mention} archived {message.channel.name}""")
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                await TicketLog.send(embed=logemb)
 
 
                 archive = self.bot.get_channel(self.yaml_data['TicketsArchve'])
@@ -143,7 +154,7 @@ You have 5 minutes to do so.""")
                 }
                 await message.channel.edit(overwrites=overwrites, category=archive)
                 await message.clear_reaction("📁")
-                await message.channel.send("This ticket is now archived")
+                await message.channel.send("📁 This ticket is now archived")
                 return
 
 
@@ -174,7 +185,7 @@ You have 5 minutes to do so.""")
 
                 embed = message.embeds[0]
                 embed.clear_fields()
-                embed.add_field(name="Actions:", value="Archive: 📁 | Delete: 🗑")
+                embed.add_field(name="Actions:", value="📁 Archive (staff-only) | 🗑 Delete (staff-only)")
                 await message.edit(content=message.content, embed=embed)
 
                 overwrites = {
@@ -183,9 +194,16 @@ You have 5 minutes to do so.""")
                 }
                 await message.channel.edit(overwrites=overwrites)
                 await message.clear_reactions()
-                await message.channel.send("This ticket is now locked")
+                await message.channel.send("🔐 This ticket is now locked")
                 await message.add_reaction("📁")
                 await message.add_reaction("🗑")
+
+                #LOG
+                TicketLog = await self.get_webhook(self.ticket_log)
+                logemb = discord.Embed(color=0x4286F4, title=f"Ticket #{message.channel.name} closed", description= f"""
+                {payload.member.mention} closed ticket: {message.channel.mention}""")
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                await TicketLog.send(embed=logemb)
                 return
 
         elif str(payload.emoji) == "❌" and self.ticket_staff in payload.member.roles:
@@ -219,6 +237,12 @@ You have 5 minutes to do so.""")
 
                 if not message.author.bot or "opened a ticket" not in message.content: return
                 await message.channel.delete()
+                #LOG
+                TicketLog = await self.get_webhook(self.ticket_log)
+                logemb = discord.Embed(color=0xD7342A, title=f"Ticket #{message.channel.name} deleted", description= f"""
+                {payload.member.mention} deleted ticket {message.channel.mention}""")
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                await TicketLog.send(embed=logemb)
                 return
 
         else:
@@ -232,8 +256,6 @@ You have 5 minutes to do so.""")
 
                 if not message.author.bot or "opened a ticket" not in message.content: return
                 await message.remove_reaction(payload.emoji, payload.member)
-
-
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -292,7 +314,7 @@ You might want to follow up on this.
                 self.STLbefore = before
                 return
 
-            elif overaged in before.roles and underaged not in before.roles and underaged not in after.roles and overaged not in after.roles:
+            elif underaged in before.roles and overaged not in before.roles and overaged not in after.roles and underaged not in after.roles:
                 self.STLbefore = before
                 return
 
@@ -376,16 +398,20 @@ You might want to follow up on this.
         # Triggers if the bot is pinged without context OR if the bot is quoted, and the message is less than 22 characters long.
         elif self.bot.user in message.mentions and message and len(message.content) <= 22 and not message.content.startswith("."):
             # gets the response from the list no_context_responses in triggers.yaml
-            response = random.choice(self.trigger_words['no_context_responses'])
-            response = response.replace('%PING_USER%', f'{message.author.mention}')
-            await message.channel.send(response)
+            num = random.randint(0,100)
+            if num <=30:
+                response = random.choice(self.trigger_words['no_context_responses'])
+                response = response.replace('%PING_USER%', f'{message.author.mention}')
+                await message.channel.send(response)
 
         # Triggers if the bot is pinged with context
         elif self.bot.user in message.mentions and not message.content.startswith("."):
             # gets the response from the list context_responses in triggers.yaml
-            response = random.choice(self.trigger_words['context_responses'])
-            response = response.replace('%PING_USER%', f'{message.author.mention}')
-            await message.channel.send(response)
+            num = random.randint(0,100)
+            if num <=30:
+                response = random.choice(self.trigger_words['context_responses'])
+                response = response.replace('%PING_USER%', f'{message.author.mention}')
+                await message.channel.send(response)
 
 def setup(bot):
     bot.add_cog(events(bot))

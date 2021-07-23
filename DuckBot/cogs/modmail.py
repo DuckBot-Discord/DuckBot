@@ -1,8 +1,8 @@
 import discord, asyncio, typing
 from discord.ext import commands
 
-class modmail(commands.Cog):
-    """Modmail. Nothing useful here."""
+class events(commands.Cog):
+    """Go away! jk. Different events, nothing useful here."""
     def __init__(self, bot):
         self.bot = bot
 
@@ -38,4 +38,4 @@ class modmail(commands.Cog):
         await message.remove_reaction('📬', self.bot.user)
 
 def setup(bot):
-    bot.add_cog(modmail(bot))
+    bot.add_cog(events(bot))

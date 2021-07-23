@@ -1,7 +1,6 @@
 import os, discord, asyncio, traceback
 from dotenv import load_dotenv
 from discord.ext import commands
-from helpers.helper import failed
 
 intents = discord.Intents.default() # Enable all intents except for members and presences
 intents.members = True  # Subscribe to the privileged members intent.

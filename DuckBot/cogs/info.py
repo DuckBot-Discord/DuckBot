@@ -7,6 +7,7 @@ class about(commands.Cog):
         self.bot = bot
 
     @commands.command(  help="Checks the bot's ping to Discord")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def ping(self, ctx):
         embed = discord.Embed(title='', description="🏓 pong!", color=ctx.me.color)
         start = time.perf_counter()
@@ -18,6 +19,7 @@ class about(commands.Cog):
         await message.edit(embed=embed)
 
     @commands.command(help="Shows info about the bot")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def info(self, ctx):
         embed = discord.Embed(title='DuckBot info', description="Here's information about my bot:", color=ctx.me.color)
 
@@ -39,6 +41,7 @@ class about(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(help="Links to the bot's code, or a specific command's",aliases = ['sourcecode', 'code'], usage="[command|command.subcommand]")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def source(self, ctx, *, command: str = None):
         source_url = 'https://github.com/LeoCx1000/discord-bots'
         branch = 'master/DuckBot'
@@ -78,6 +81,7 @@ class about(commands.Cog):
 
 
     @commands.command(help="Shows duckbot's privacy policies")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def privacy(self, ctx):
         embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
 We don't store any user data _yet_ :wink:

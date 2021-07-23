@@ -91,6 +91,7 @@ class moderation(commands.Cog):
         return emoji_flags
 
     @commands.command(help="Shows a user's information", aliases = ['userinfo', 'ui', 'whois', 'whoami'])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         if not user: user = ctx.author
         # BADGES
@@ -151,6 +152,7 @@ class moderation(commands.Cog):
 
     @commands.command(help="Kicks a member from the server", usage="<member>, [reason]")
     @commands.has_permissions(kick_members=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, kick_members=True)
     async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if member == None:
             await self.error_message(ctx, 'You must specify a member to kick')
@@ -191,16 +193,13 @@ class moderation(commands.Cog):
             await self.error_message(ctx, 'Member is higher than you in role hierarchy')
             return
 
-    @kick.error
-    async def kick_error(self, ctx, error):
-        if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
-
 #-----------------------------------------------------------#
 #------------------------ BAN ------------------------------#
 #-----------------------------------------------------------#
 
     @commands.command(help="Bans a member from the server", usage="<member> [reason]")
     @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if member == None:
             await self.error_message(ctx, 'You must specify a member to kick')
@@ -247,6 +246,7 @@ class moderation(commands.Cog):
 #------------------------------------------------------------#
 
     @commands.command(help="Sets yours or someone else's nick # leave empty to remove nick", aliases = ['sn', 'nick'], usage="<member> [new nick]")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
     async def setnick(self, ctx, member : typing.Optional[discord.Member], *, new : typing.Optional[str] = 'None'):
         if member == None:
             if ctx.channel.permissions_for(ctx.author).manage_nicknames:
@@ -307,6 +307,7 @@ class moderation(commands.Cog):
 
     @commands.command(help="Purges messages in a channel", aliases=['clean', 'clear', 'delete'], usage="<amount>")
     @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     async def purge(self, ctx, argument: typing.Optional[int]):
         amount = argument
         if amount:
@@ -329,6 +330,7 @@ class moderation(commands.Cog):
 
     @commands.command(help="unbans a member # run without arguments to get a list of entries", usage="[entry]")
     @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def unban(self, ctx, number: typing.Optional[int]):
         if not ctx.channel.permissions_for(ctx.me).ban_members:
@@ -390,6 +392,7 @@ class moderation(commands.Cog):
 
     @commands.command(help="Gets a list of bans in the server")
     @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def bans(self, ctx):
         try:
@@ -414,6 +417,7 @@ class moderation(commands.Cog):
 
     @commands.command(help="brings info about a ban # run without arguments to get a list of entries", usage="[entry]")
     @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def baninfo(self, ctx, number: typing.Optional[int]):
         if not ctx.channel.permissions_for(ctx.me).ban_members:

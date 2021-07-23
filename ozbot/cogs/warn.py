@@ -64,17 +64,13 @@ class help(commands.Cog):
     async def on_voice_state_update(self, member, before, after):
         textchannel = self.bot.get_channel(851314198654484521)
 
-
-
-
-
-
-
+        chids = [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]
+        staffchat = self.bot.get_channel(805819362467512377)
 
         if after.channel is not None:
-            if after.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]:
+            if after.channel.id in chids:
                 if before.channel is not None:
-                    if before.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]: return
+                    if before.channel.id in chids: return
                 await textchannel.send("""
 !c tellraw @a ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"%s","color":"gold"},{"text":" joined VC","color":"yellow"}]
 """%(member.display_name))
@@ -82,11 +78,13 @@ class help(commands.Cog):
                 hooks = await channel.webhooks()
                 hook = hooks[0]
                 await hook.send(username = "VC bot", content=f"<:incomingarrow:800218133225930763> **{member.display_name}** joined VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
+            elif after.channel == staffchat and before.channel != staffchat:
+                await textchannel.send(f"!c helpop {member.display_name} joined Staff-VC")
 
         if before.channel is not None:
-            if before.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]:
+            if before.channel.id in chids:
                 if after.channel is not None:
-                    if after.channel.id in [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]: return
+                    if after.channel.id in chids: return
                 await textchannel.send("""
 !c tellraw @a ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"%s","color":"gold"},{"text":" left VC","color":"yellow"}]
 """%(member.display_name))
@@ -94,6 +92,10 @@ class help(commands.Cog):
                 hooks = await channel.webhooks()
                 hook = hooks[0]
                 await hook.send(username = "VC bot", content=f"<:outgoingarrow:800218133364867073> **{member.display_name}** left VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
+            elif before.channel == staffchat and after.channel != staffchat:
+                await textchannel.send(f"!c helpop {member.display_name} left Staff-VC")
+
+
 
 
 def setup(bot):

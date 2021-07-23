@@ -234,6 +234,7 @@ class moderation(commands.Cog):
 #------------------------------------------------------------#
 
     @commands.command(aliases = ['sn', 'nick'])
+    @commands.has_permissions(manage_messages=True, change_nickname=True)
     async def setnick(self, ctx, member : typing.Optional[discord.Member], *, new : typing.Optional[str] = 'None'):
         if member == None:
             if ctx.channel.permissions_for(ctx.author).manage_nicknames:
@@ -318,6 +319,7 @@ class moderation(commands.Cog):
 #------------------------------------------------------------#
 
     @commands.command()
+    @commands.has_permissions(manage_messages=True)
     async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -350,6 +352,7 @@ class moderation(commands.Cog):
 #-------------------------------------------------------------#
 
     @commands.command()
+    @commands.has_permissions(manage_messages=True)
     async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -383,6 +386,7 @@ class moderation(commands.Cog):
 #-----------------------------------------------------------------#
 
     @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md', 'mediaban', 'nm', 'mb', 'mban'])
+    @commands.has_permissions(manage_messages=True)
     async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -414,6 +418,7 @@ class moderation(commands.Cog):
 #-----------------------------------------------------------------#
 
     @commands.command(aliases=['yesmedia', 'yesimages', 'allowimages', 'yesimg', 'ma', 'mediaunban', 'ym', 'mub', 'munban'])
+    @commands.has_permissions(manage_messages=True)
     async def allowmedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -445,7 +450,7 @@ class moderation(commands.Cog):
 #---------------------------------------------------------------#
 
     @commands.command(aliases=['lock', 'ld'])
-    @commands.has_permissions(manage_channels=True)
+    @commands.has_permissions(manage_messages=True)
     async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
 
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -478,7 +483,7 @@ class moderation(commands.Cog):
         if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
 
     @commands.command(aliases=['unlock', 'uld'])
-    @commands.has_permissions(manage_channels=True)
+    @commands.has_permissions(manage_messages=True)
     async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
 
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -511,6 +516,7 @@ class moderation(commands.Cog):
 #--------------------------------------------------------------------#
 
     @commands.command()
+    @commands.has_permissions(manage_messages=True)
     async def move(self, ctx, amount: typing.Optional[int], channel: typing.Optional[discord.TextChannel]):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)

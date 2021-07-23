@@ -26,7 +26,7 @@ class Confirm(menus.Menu):
         return self.result
 
 class test(commands.Cog):
-    """Commands that are being currently developed"""
+    """Commands that are under development"""
     def __init__(self, bot):
         self.bot = bot
 
