@@ -3,7 +3,7 @@ from random import randint
 from discord.ext import commands
 
 
-class help(commands.Cog):
+class whitelist(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -91,4 +91,4 @@ _ _
                 await message.channel.send(embed=embed, delete_after=15)
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(whitelist(bot))

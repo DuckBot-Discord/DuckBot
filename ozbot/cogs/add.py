@@ -2,7 +2,7 @@ import discord, random, datetime, asyncio
 from discord.ext import commands, tasks
 from random import randint
 
-class auto_quack(commands.Cog):
+class newcomers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -21,4 +21,4 @@ class auto_quack(commands.Cog):
             await asyncio.sleep(5)
 
 def setup(bot):
-    bot.add_cog(auto_quack(bot))
+    bot.add_cog(newcomers(bot))

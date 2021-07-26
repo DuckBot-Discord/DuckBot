@@ -20,6 +20,8 @@ bot = commands.Bot(command_prefix=commands.when_mentioned_or('.', '**********'),
 
 bot.load_extension('jishaku')
 
+bot.owner_ids = [326147079275675651, 349373972103561218, 438513695354650626]
+
 class MyHelp(commands.HelpCommand):
     # Formatting
     def get_minimal_command_signature(self, command):

@@ -129,7 +129,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
                 first = first.split()[:10]
                 first = "-".join(first)
                 ticketname=f"{ctx.author.name}-{first}"
-                ticketchannel = await category.create_text_channel(ticketname[0:100], overwrites=overwrites, topic = f"{ctx.author.display_name}'s ticket. \n\nDescription:\n{msg.content[0:850]}")
+                ticketchannel = await category.create_text_channel(ticketname[0:100], overwrites=overwrites, topic = f"creating topic...")
 
                 success=discord.Embed(color=0x47B781, description=f"**Ticket created at {ticketchannel.mention}!**")
                 await message.edit(content=ctx.author.mention, embed=success)
@@ -163,7 +163,13 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
                 tickmsg = await ticketchannel.send(content=f"{ctx.author.mention} opened a ticket, {self.ticket_staff.mention}", embed=embed)
                 await tickmsg.add_reaction('🔒')
                 await tickmsg.add_reaction('🚪')
-
+                print("attempting to edit")
+                try:
+                    print("before edit")
+                    await ticketchannel.edit(topic = f"{ctx.author.display_name}'s ticket. \n\nDescription:\n{msg.content[0:850]} ​​​​​​​​​​​​​​​​​​​​{tickmsg.id}")
+                    print("successful edit")
+                except: print("unsuccessful edit.")
+                print("after edit")
                 TicketLog = await self.get_webhook(self.ticket_log)
                 embed = discord.Embed(color=0x47B781, title="Ticket opened", description= f"""
 {ctx.author.mention} opened a ticket: **{ticketchannel.name}** ({ticketchannel.mention})
@@ -180,10 +186,8 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
                 return
 
 
-
-
-
     @commands.command(help="Adds a member to a ticket", usage = "<member>", aliases=["addm", "am"])
+    @commands.guild_only()
     @commands.has_role(864737541726142474)
     async def addmember(self, ctx, member: typing.Optional[discord.Member]):
         if self.ticket_staff not in ctx.author.roles:
@@ -219,6 +223,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
         return
 
     @commands.command(help="Removes a member from a ticket", usage = "<member>", aliases=["rmem"])
+    @commands.guild_only()
     @commands.has_role(864737541726142474)
     async def removemember(self, ctx, member: typing.Optional[discord.Member]):
         category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
@@ -251,6 +256,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
         return
 
     @commands.command(help="Allows a member to leave a ticket", aliases=["leave"])
+    @commands.guild_only()
     async def leaveticket(self, ctx):
         category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
         if ctx.channel.category != category:
@@ -316,6 +322,88 @@ You have 5 minutes to do so.""")
         await TicketLog.send(embed=logemb)
 
 
+    @commands.command(help="Adds a member to a ticket", usage = "<member>", aliases=["addm", "am"])
+    @commands.guild_only()
+    @commands.has_role(864737541726142474)
+    async def addmember(self, ctx, member: typing.Optional[discord.Member]):
+        category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+        if ctx.channel.category != category:
+            await ctx.send(embed=discord.Embed(color=0xD7342A, description="This channel is not a ticket!"), delete_after=5)
+            await ctx.message.delete(delay=5)
+            return
+        if member == None:
+            await ctx.send(embed=discord.Embed(color=0xD7342A, description="Please specify a member to add to this ticket!"), delete_after=5)
+            await ctx.message.delete(delay=5)
+            return
+        if ctx.channel.permissions_for(member).read_messages:
+            await ctx.send(embed=discord.Embed(color=0xD7342A, description=f"{member.mention} can already see this ticket!"), delete_after=5)
+            await ctx.message.delete(delay=5)
+            return
+        perms = ctx.channel.overwrites_for(member)
+        perms.send_messages = True
+        perms.read_messages = True
+        await ctx.channel.set_permissions(member, overwrite=perms, reason=f"{member.name} was added to a ticket")
+        embed=discord.Embed(color=0x47B781, title=f"+ {member} added", description=f"""
+{ctx.author.mention} added {member.mention} to this ticket""")
+        embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+        await ctx.send(f"{member.mention} was added to this ticket", embed=embed)
+        #LOG
+        TicketLog = await self.get_webhook(self.ticket_log)
+        logemb = discord.Embed(color=0x4286F4, title=f"{member} added to #{ctx.channel.name}", description= f"""
+        {ctx.author.mention} added {member.mention} to {ctx.channel.mention}""")
+        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+        await TicketLog.send(embed=logemb)
+        return
+
+
+    @commands.command(aliases=["closeticket"])
+    @commands.guild_only()
+    @commands.has_role(864737541726142474)
+    async def close(self, ctx, *, reason: typing.Optional[str]):
+        category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
+        if ctx.channel.category != category:
+            await ctx.send(embed=discord.Embed(color=0xD7342A, description="This channel is not a ticket!"), delete_after=5)
+            await ctx.message.delete(delay=5)
+            return
+        try: msgid = int(ctx.channel.topic.split(" ​​​​​​​​​​​​​​​​​​​​")[-1])
+        except: return await ctx.send("something went wrong getting the message ID :( use the reaction menu instead.")
+        await ctx.send(msgid)
+
+
+        message = await ctx.channel.fetch_message(msgid)
+        embed = message.embeds[0]
+        embed.clear_fields()
+        embed.add_field(name="Actions:", value="📁 Archive (staff-only) | 🗑 Delete (staff-only)")
+        await message.edit(content=message.content, embed=embed)
+
+        overwrites = {
+            message.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            self.ticket_staff: discord.PermissionOverwrite(read_messages=True, manage_messages=True)
+        }
+        await ctx.channel.edit(overwrites=overwrites)
+        await message.clear_reactions()
+        await ctx.channel.send("🔐 This ticket is now locked")
+        await message.add_reaction("📁")
+        await message.add_reaction("🗑")
+
+        #LOG
+        TicketLog = await self.get_webhook(self.ticket_log)
+        if reason:
+            logemb = discord.Embed(color=0x4286F4, title=f"Ticket #{ctx.channel.name} closed", description= f"""
+            {ctx.author.mention} closed ticket: {ctx.channel.mention}
+
+            **reason:**
+            {reason}""")
+        else:
+            logemb = discord.Embed(color=0x4286F4, title=f"Ticket #{ctx.channel.name} closed", description= f"""
+            {ctx.author.mention} closed ticket: {ctx.channel.mention}""")
+        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+        await TicketLog.send(embed=logemb)
+        return
 
 def setup(bot):
     bot.add_cog(tickets(bot))
+
+"""
+str.split(" ​​​​​​​​​​​​​​​​​​​​")
+"""

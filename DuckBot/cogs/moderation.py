@@ -3,7 +3,6 @@ from discord.ext import commands, tasks, timers, menus
 import datetime
 
 class banembed(menus.ListPageSource):
-    """Commands to moderate a server"""
     def __init__(self, data, per_page=15):
         super().__init__(data, per_page=per_page)
 

@@ -1,7 +1,7 @@
 import discord, asyncio, typing, aiohttp, random, json, yaml
 from discord.ext import commands
 
-class help(commands.Cog):
+class text(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -133,4 +133,4 @@ class help(commands.Cog):
                 await ctx.send(embed=embed)
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(text(bot))

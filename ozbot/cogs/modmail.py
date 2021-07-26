@@ -2,7 +2,7 @@ import discord, asyncio, typing, re, yaml
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
-class help(commands.Cog):
+class modmail(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -172,4 +172,4 @@ It should look like this: https://i.imgur.com/2py4Csc.png
         await self.bot.get_channel(708316690638700607).send(f"""<:incomingarrow:848312881070080001> **{member.name}#{member.discriminator}** left **{member.guild.name}**!""")
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(modmail(bot))

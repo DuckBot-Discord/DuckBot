@@ -14,8 +14,7 @@ async def error_msg(self, ctx):
     except: return
     return
 
-intents = discord.Intents.default() # Enable all intents except for members and presences
-intents.members = True  # Subscribe to the privileged members intent.
+intents = discord.Intents.all() # Enable all intents except for members and presences
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('!', 't!', '**********'), case_insensitive=True, intents=intents)
 

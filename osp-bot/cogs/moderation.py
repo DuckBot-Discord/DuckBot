@@ -196,7 +196,7 @@ class moderation(commands.Cog):
         if member.top_role <= ctx.author.top_role:
             if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
                 try:
-                    mem_embed=discord.Embed(description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**", color=ctx.me.color)
+                    mem_embed=discord.Embed(description=f"A moderator has banned you from **{ctx.guild.name}**", color=ctx.me.color)
                     if reason: mem_embed.set_footer(text=f'reason: {reason}')
                     await member.send(embed=mem_embed)
                     await member.ban(reason=reason)
@@ -238,7 +238,7 @@ class moderation(commands.Cog):
     async def setnick(self, ctx, member : typing.Optional[discord.Member], *, new : typing.Optional[str] = 'None'):
         if member == None:
             if ctx.channel.permissions_for(ctx.author).manage_nicknames:
-                await ctx.send("`!nick [member] (newNick)` - You must specify a member", delete_after=10)
+                await ctx.send("`.nick [member] (newNick)` - You must specify a member", delete_after=10)
                 await asyncio.sleep(10)
                 await ctx.message.delete()
             return
@@ -334,7 +334,7 @@ class moderation(commands.Cog):
         try:
             await member.add_roles(muterole)
             mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been muted by {ctx.author}", icon_url='https://i.imgur.com/hKNGsMb.png')
+            mem_embed.set_author(name=f"You've been muted by a moderator", icon_url='https://i.imgur.com/hKNGsMb.png')
             mem_embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
@@ -367,7 +367,7 @@ class moderation(commands.Cog):
         try:
             await member.remove_roles(muterole)
             mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been unmuted by {ctx.author}", icon_url='https://i.imgur.com/m1MtOVS.png')
+            mem_embed.set_author(name=f"You've been unmuted by a moderator", icon_url='https://i.imgur.com/m1MtOVS.png')
             mem_embed.set_image(url='https://i.imgur.com/23XECtg.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
@@ -401,7 +401,7 @@ class moderation(commands.Cog):
         try:
             await member.add_roles(muterole)
             mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been denied permissions to send media by {ctx.author}", icon_url='https://i.imgur.com/hKNGsMb.png')
+            mem_embed.set_author(name=f"You've been denied permissions to send media by a moderator", icon_url='https://i.imgur.com/hKNGsMb.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
@@ -433,7 +433,7 @@ class moderation(commands.Cog):
         try:
             await member.remove_roles(muterole)
             mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been allowed permissions to send media by {ctx.author}", icon_url='https://i.imgur.com/m1MtOVS.png')
+            mem_embed.set_author(name=f"You've been allowed permissions to send media by a moderator", icon_url='https://i.imgur.com/m1MtOVS.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:

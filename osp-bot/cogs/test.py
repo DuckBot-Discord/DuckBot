@@ -47,11 +47,12 @@ class events(commands.Cog):
 
             underaged = self.mguild.get_role(863187863038459924)
             overaged = self.mguild.get_role(863187815340703755)
+            nsfw = self.mguild.get_role(863241588184317952)
 
             if self.verified in payload.member.roles:
                 try: await payload.member.add_roles(self.blackout)
                 except: pass
-                try: await payload.member.remove_roles(self.verified, underaged, overaged)
+                try: await payload.member.remove_roles(self.verified, underaged, overaged, nsfw)
                 except: pass
             elif self.blackout in payload.member.roles:
                 try: await payload.member.remove_roles(self.blackout)
@@ -68,7 +69,23 @@ class events(commands.Cog):
                         elif str(ages.reactions[0].emoji) == "➕":
                             try: await payload.member.add_roles(overaged, self.verified)
                             except: pass
+                            nsfwmsg = await self.bot.get_channel(860610324020592689).fetch_message(863244033413742615)
+
+                            async for user in nsfwmsg.reactions[0].users():
+                                if payload.member.id == user.id:
+                                    if str(nsfwmsg.reactions[0].emoji) == "👍":
+                                        try: await payload.member.add_roles(nsfw)
+                                        except: pass
+                                        return
+                            async for user in nsfwmsg.reactions[1].users():
+                                if payload.member.id == user.id:
+                                    if str(nsfwmsg.reactions[1].emoji) == "👍":
+                                        try: await payload.member.add_roles(nsfw)
+                                        except: pass
+                                        return
+
                             return
+                async for user in ages.reactions[1].users():
                     if payload.member.id == user.id:
                         if str(ages.reactions[1].emoji) == "➖":
                             try: await payload.member.add_roles(underaged, self.verified)
@@ -77,6 +94,22 @@ class events(commands.Cog):
                         elif str(ages.reactions[1].emoji) == "➕":
                             try: await payload.member.add_roles(overaged, self.verified)
                             except: pass
+
+                            nsfwmsg = await self.bot.get_channel(860610324020592689).fetch_message(863244033413742615)
+
+                            async for user in nsfwmsg.reactions[0].users():
+                                if payload.member.id == user.id:
+                                    if str(nsfwmsg.reactions[0].emoji) == "👍":
+                                        try: await payload.member.add_roles(nsfw)
+                                        except: pass
+                                        return
+                            async for user in nsfwmsg.reactions[1].users():
+                                if payload.member.id == user.id:
+                                    if str(nsfwmsg.reactions[1].emoji) == "👍":
+                                        try:
+                                            await payload.member.add_roles(nsfw)
+                                        except: pass
+                                        return
                             return
 
 def setup(bot):

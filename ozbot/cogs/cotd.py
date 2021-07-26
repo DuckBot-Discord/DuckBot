@@ -1,29 +1,45 @@
 import typing, discord, asyncio, random, datetime
 from discord.ext import commands, tasks
 
-class help(commands.Cog):
+class cotd(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         var = 1
 
-"""
-        self.change_color.start()
+        self.daily_task.start()
 
-    @tasks.loop(minutes=60.0)
-    async def change_color(self):
-        await self.bot.wait_until_ready()
-        if datetime.datetime.now().hour == 5:
-            color = random.randint(0, 0xFFFFFF)
-            await self.bot.get_guild(706624339595886683).get_role(800407956323434556).edit(colour=color)
-            await self.bot.get_guild(706624339595886683).get_role(800295689585819659).edit(colour=color)
-            channel = self.bot.get_channel(799503231989973022)
-            embcol = color
-            color = f'{hex(color)}'.replace('0x', '').upper()
-            embed = discord.Embed(description=f"Color of the day changed to {color}", color=embcol)
-            embed.set_thumbnail(url=f"https://singlecolorimage.com/get/{color}/16x16")
-            await channel.send(embed=embed)
-            await asyncio.sleep(43200)
+
+    @tasks.loop(hours=24)
+    async def daily_task(self):
+        color = random.randint(0, 0xFFFFFF)
+        await self.bot.get_guild(706624339595886683).get_role(800407956323434556).edit(colour=color)
+        await self.bot.get_guild(706624339595886683).get_role(800295689585819659).edit(colour=color)
+        channel = self.bot.get_channel(799503231989973022)
+        embcol = color
+        color = f'{hex(color)}'.replace('0x', '').upper()
+        embed = discord.Embed(description=f"Color of the day changed to {color}", color=embcol)
+        embed.set_thumbnail(url=f"https://singlecolorimage.com/get/{color}/16x16")
+        await channel.send(embed=embed)
+
+    @daily_task.before_loop
+    async def wait_until_7am(self):
+        # this will use the machine's timezone
+        # to use a specific timezone use `.now(timezone)` without `.astimezone()`
+        # timezones can be acquired using any of
+        # `datetime.timezone.utc`
+        # `datetime.timezone(offset_timedelta)`
+        # `pytz.timezone(name)` (third-party package)
+        now = datetime.datetime.now().astimezone()
+        next_run = now.replace(hour=7, minute=0, second=0)
+
+        if next_run < now:
+            next_run += datetime.timedelta(days=1)
+
+        await discord.utils.sleep_until(next_run)
+
+
+
 
 
     @commands.command(aliases=["color"])
@@ -45,7 +61,6 @@ class help(commands.Cog):
         embed.set_thumbnail(url=f" https://singlecolorimage.com/get/{imcolor}/16x16")
         await channel.send(embed=embed)
 
-"""
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(cotd(bot))

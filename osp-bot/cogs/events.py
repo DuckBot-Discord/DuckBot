@@ -323,7 +323,6 @@ You might want to follow up on this.
                 return
 
             if self.STLbefore.id != before.id:
-                print('not the same person')
                 self.STLbefore = before
                 return
 
@@ -351,7 +350,6 @@ You might want to follow up on this.
 ))
                 self.STLbefore = before
                 return
-            print('nothing triggered lmao')
 
 ################################################################################
 

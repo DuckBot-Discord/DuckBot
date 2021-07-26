@@ -96,10 +96,6 @@ class moderation(commands.Cog):
             await self.error_message(ctx, 'Member is higher than you in role hierarchy')
             return
 
-    @kick.error
-    async def kick_error(self, ctx, error):
-        if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
-
 #-----------------------------------------------------------#
 #------------------------ BAN ------------------------------#
 #-----------------------------------------------------------#
@@ -149,11 +145,6 @@ class moderation(commands.Cog):
         else:
             await self.error_message(ctx, 'Member is higher than you in role hierarchy')
             return
-
-    @ban.error
-    async def ban_error(self, ctx, error):
-        if isinstance(error, commands.CheckFailure):
-            await self.perms_error(ctx)
 
 #------------------------------------------------------------#
 #------------------------ NICK ------------------------------#
@@ -258,7 +249,7 @@ class moderation(commands.Cog):
         try:
             await member.add_roles(muterole)
             mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been muted by {ctx.author}", icon_url='https://i.imgur.com/hKNGsMb.png')
+            mem_embed.set_author(name=f"You've been muted by a staff member", icon_url='https://i.imgur.com/hKNGsMb.png')
             mem_embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
@@ -267,6 +258,38 @@ class moderation(commands.Cog):
 ```reason: {reason}```""", color=ctx.me.color)
             else:
                 embed=discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...""", color=ctx.me.color)
+            await ctx.send(embed=embed)
+        except:
+            await self.error_message(ctx, 'something went wrong...')
+
+#-------------------------------------------------------------#
+#------------------------ UNMUTE -----------------------------#
+#-------------------------------------------------------------#
+
+    @commands.command()
+    async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+        if not any(role in self.staff_roles for role in ctx.author.roles):
+            await self.perms_error(ctx)
+            return
+        if member == None:
+            await self.error_message(ctx, 'You must specify a member to unmute')
+            return
+        muterole = ctx.guild.get_role(self.yaml_data['MuteRole'])
+        if muterole not in member.roles:
+            await self.error_message(ctx, f'{member} is not muted')
+            return
+        try:
+            await member.remove_roles(muterole)
+            mem_embed=discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been unmuted by a staff member", icon_url='https://i.imgur.com/m1MtOVS.png')
+            mem_embed.set_image(url='https://i.imgur.com/23XECtg.png')
+            if reason: mem_embed.set_footer(text=f'reason: {reason}')
+            await member.send(embed=mem_embed)
+            if reason:
+                embed=discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}
+```reason: {reason}```""", color=ctx.me.color)
+            else:
+                embed=discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}""", color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
@@ -399,9 +422,10 @@ class moderation(commands.Cog):
             return
         try:
             await member.add_roles(vcbanrole)
-            await member.move_to(None)
+            try: await member.move_to(None)
+            except: pass
             mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been VC-Banned by {ctx.author}", icon_url='https://i.imgur.com/hKNGsMb.png')
+            mem_embed.set_author(name=f"You've been VC-Banned by a staff member", icon_url='https://i.imgur.com/hKNGsMb.png')
             mem_embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
@@ -433,7 +457,7 @@ class moderation(commands.Cog):
         try:
             await member.remove_roles(vcbanrole)
             mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been VC-Unbanned by {ctx.author}", icon_url='https://i.imgur.com/m1MtOVS.png')
+            mem_embed.set_author(name=f"You've been VC-Unbanned by a staff member", icon_url='https://i.imgur.com/m1MtOVS.png')
             mem_embed.set_image(url='https://i.imgur.com/23XECtg.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
