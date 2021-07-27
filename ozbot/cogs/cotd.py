@@ -12,7 +12,6 @@ class cotd(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_task(self):
-        await self.bot.wait_until_ready()
         color = random.randint(0, 0xFFFFFF)
         await self.bot.get_guild(706624339595886683).get_role(800407956323434556).edit(colour=color)
         await self.bot.get_guild(706624339595886683).get_role(800295689585819659).edit(colour=color)
@@ -22,10 +21,11 @@ class cotd(commands.Cog):
         embed = discord.Embed(description=f"Color of the day changed to {color}", color=embcol)
         embed.set_thumbnail(url=f"https://singlecolorimage.com/get/{color}/16x16")
         await channel.send(embed=embed)
-        print(daily_task.current_loop)
+        print(self.daily_task.current_loop)
 
     @daily_task.before_loop
     async def wait_until_7am(self):
+        await self.bot.wait_until_ready()
         # this will use the machine's timezone
         # to use a specific timezone use `.now(timezone)` without `.astimezone()`
         # timezones can be acquired using any of

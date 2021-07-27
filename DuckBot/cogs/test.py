@@ -5,10 +5,22 @@ class tickets(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(help="Makes the bot send an embed to a channel.", usage="")
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def test(self, ctx):
+    async def embed(self, ctx, channel: typing.Optional[discord.TextChannel], *, data=None):
+        channel = channel or ctx.channel
+        if data:
+            try:
+                dictionary = json.loads(data)
+            except:
+                pass
+            embed = discord.Embed().from_dict(dictionary)
+            try:
+                await ctx.send(embed=embed)
+                return
+            except:
+                pass
 
         embed=discord.Embed(color = 0x47B781, description="1️⃣ **STEP ONE: Title**")
         embed.add_field(name="What do you want your embed title to be?", value="send `skip` to skip.")
@@ -83,7 +95,7 @@ class tickets(commands.Cog):
 
         embed.clear_fields()
         embed.description="3️⃣ **STEP THREE: Color**"
-        embed.add_field(name="What color of embed you want?", value="send `skip` to leave it as default. [COLOR PICKER](https://www.google.com/search?q=Color+picker)")
+        embed.add_field(name="What color of embed you want?", value="send `skip` to leave it as default. [COLOR PICKER](https://www.google.com/search?q=Color+picker)\nsend `invisible` to make the color invisible (same as the embed BG)")
         await message.edit(content=ctx.author.mention, embed=embed)
 
         iter = 0
@@ -98,6 +110,12 @@ class tickets(commands.Cog):
                 if msg.content == "skip":
                         try: await msg.delete()
                         except: pass
+                        iter=1
+                elif msg.content == "invisible":
+                        try: await msg.delete()
+                        except: pass
+                        announcement_embed.color=0x2F3136
+                        await announcement.edit(embed=announcement_embed)
                         iter=1
                 elif msg.content == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
@@ -118,7 +136,7 @@ class tickets(commands.Cog):
 
         embed.clear_fields()
         embed.description="4️⃣ **STEP FOUR: fields**"
-        embed.add_field(name="What do you want your fields to be?", value="send `skip` to skip, send `done` to finish adding fields. \n format: `NAME ~ VALUE ~ in-line(yes/no)`\nNAME: max characters = 256 \nVALUE: max characters = 1024", inline=False)
+        embed.add_field(name="What do you want your fields to be?", value="Send `skip` to skip.\nSend `done` to finish adding fields. \n\nFormat: `NAME ~ VALUE ~ in-line(yes/no)`\nNAME: max characters = 256 \nVALUE: max characters = 1024", inline=False)
         embed.add_field(name="_ _", value="_ _", inline=False)
         embed.add_field(name="NAME - this is an in-line field", value="VALUE - this is an example value for an in-line field", inline=True)
         embed.add_field(name="NAME - this is an in-line field", value="VALUE - this is an example value for an in-line field", inline=True)
@@ -165,11 +183,41 @@ class tickets(commands.Cog):
 
         embed.clear_fields()
         embed.description="5️⃣ **STEP FIVE: footer**"
-        embed.add_field(name="What color of embed you want?", value="send `skip` to leave it as default. [COLOR PICKER](https://www.google.com/search?q=Color+picker)")
+        embed.add_field(name="What do you want the footer to be?", value=f"send `skip` to skip.\nSend `default` to set the default footer\n _Default is `message sent by {ctx.author}`_")
+        await message.edit(content=ctx.author.mention, embed=embed)
+
+        try:
+            msg = await self.bot.wait_for(event = 'message', check = check, timeout = 600.0)
+        except asyncio.TimeoutError:
+            err=discord.Embed(color=0xD7342A, description=f"**Sorry, you didn't respond in time**")
+            await message.edit(content=ctx.author.mention, embed=err)
+            return
+        else:
+            if msg.content == "skip":
+                    try: await msg.delete()
+                    except: pass
+            elif msg.content == "cancel":
+                await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
+                return
+            elif msg.content == "default":
+                try: await msg.delete()
+                except: pass
+                announcement_embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.avatar_url)
+                await announcement.edit(embed=announcement_embed)
+            else:
+                try: await msg.delete()
+                except: pass
+                announcement_embed.set_footer(text=msg.content)
+                await announcement.edit(embed=announcement_embed)
+
+
+        embed.clear_fields()
+        embed.description="6️⃣ **STEP SIX: channel**"
+        embed.add_field(name="Where do you want to send the embed to?", value=f"send `cancel` to cancel. you can't skip this step \n only `#channel` mentions work. IDs don't work.")
         await message.edit(content=ctx.author.mention, embed=embed)
 
         iter = 0
-        while iter==0:
+        while iter == 0:
             try:
                 msg = await self.bot.wait_for(event = 'message', check = check, timeout = 600.0)
             except asyncio.TimeoutError:
@@ -177,25 +225,40 @@ class tickets(commands.Cog):
                 await message.edit(content=ctx.author.mention, embed=err)
                 return
             else:
-                if msg.content == "skip":
-                        try: await msg.delete()
-                        except: pass
-                        iter=1
-                elif msg.content == "cancel":
+                if msg.content == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
-                elif re.match("^#?(?:[0-9a-fA-F]{3}){1,2}$", msg.content):
+                elif msg.channel_mentions:
                     try: await msg.delete()
                     except: pass
-                    color = msg.content.replace("#", "")
-                    color = int(color, 16)
-                    announcement_embed.color=color
-                    await announcement.edit(embed=announcement_embed)
-                    iter=1
+                    channel = msg.channel_mentions[0]
+
+                    if channel.type == discord.ChannelType.text:
+                        if channel.permissions_for(ctx.author).send_messages:
+                            if channel.permissions_for(ctx.me).send_messages and channel.permissions_for(ctx.me).embed_links:
+                                if channel == ctx.channel: await message.delete()
+                                else:
+                                    await channel.send(embed=announcement_embed)
+                                    embed=discord.Embed(color = 0x47B781, description="💌 Sent!")
+                                    await message.edit(content=ctx.author.mention, embed=embed)
+                                    await announcement.delete()
+                                iter=1
+                            else:
+                                try: await msg.delete()
+                                except: pass
+                                await ctx.send("I can't send messages to that channel. mention another channel", delete_after=5)
+                        else:
+                            try: await msg.delete()
+                            except: pass
+                            await ctx.send("You can't send messages to that channel. mention another channel", delete_after=5)
+                    else:
+                        try: await msg.delete()
+                        except: pass
+                        await ctx.send("Invalid channel", delete_after=5)
                 else:
                     try: await msg.delete()
                     except: pass
-                    await ctx.send("that's not a valid hex code!", delete_after=5)
+                    await ctx.send("Invalid channel", delete_after=5)
 
 
 
