@@ -7,6 +7,7 @@ class tickets(commands.Cog):
 
     @commands.command(help="Makes the bot send an embed to a channel.", usage="")
     @commands.guild_only()
+
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
     async def embed(self, ctx, channel: typing.Optional[discord.TextChannel], *, data=None):
         channel = channel or ctx.channel
@@ -22,8 +23,8 @@ class tickets(commands.Cog):
             except:
                 pass
 
-        embed=discord.Embed(color = 0x47B781, description="1️⃣ **STEP ONE: Title**")
-        embed.add_field(name="What do you want your embed title to be?", value="send `skip` to skip.")
+        embed=discord.Embed(color = 0x47B781, description="0️⃣ **STEP ZERO: Text**")
+        embed.add_field(name="What do you want your embed text to be?", value="send `ping everyone` to ping @everyone\nsend `ping here` to ping @here\nsend `skip` to skip. you can use __**`markdown`**__ here")
         embed.set_footer(text="all prompts expire in 5 minutes! Send \"cancel\" to cancel")
         message = await ctx.send(ctx.author.mention, embed=embed)
 
@@ -34,6 +35,7 @@ class tickets(commands.Cog):
         def check(m: discord.Message):
             return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
 
+
         try:
             msg = await self.bot.wait_for(event = 'message', check = check, timeout = 600.0)
         except asyncio.TimeoutError:
@@ -41,11 +43,47 @@ class tickets(commands.Cog):
             await message.edit(content=ctx.author.mention, embed=err)
             return
         else:
-            if msg.content == "skip":
+            if msg.content.lower() == "skip":
+                    try: await msg.delete()
+                    except: pass
+                    announcement_content=""
+            elif msg.content.lower() == "ping everyone":
+                    try: await msg.delete()
+                    except: pass
+                    announcement_content="@everyone"
+                    await announcement.edit(content = announcement_content, embed=announcement_embed)
+            elif msg.content.lower() == "ping here":
+                    try: await msg.delete()
+                    except: pass
+                    announcement_content="@here"
+                    await announcement.edit(content = announcement_content, embed=announcement_embed)
+            elif msg.content.lower() == "cancel":
+                await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
+                return
+            else:
+                try: await msg.delete()
+                except: pass
+                announcement_content = msg.content
+                await announcement.edit(content = announcement_content, embed=announcement_embed)
+
+
+        embed.clear_fields()
+        embed.description="1️⃣ **STEP ONE: Title**"
+        embed.add_field(name="What do you want your embed title to be?", value="send `skip` to skip.")
+        await message.edit(content=ctx.author.mention, embed=embed)
+
+        try:
+            msg = await self.bot.wait_for(event = 'message', check = check, timeout = 600.0)
+        except asyncio.TimeoutError:
+            err=discord.Embed(color=0xD7342A, description=f"**Sorry, you didn't respond in time**")
+            await message.edit(content=ctx.author.mention, embed=err)
+            return
+        else:
+            if msg.content.lower() == "skip":
                     try: await msg.delete()
                     except: pass
                     announcement_embed.title=None
-            elif msg.content == "cancel":
+            elif msg.content.lower() == "cancel":
                 await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                 return
             else:
@@ -69,7 +107,7 @@ class tickets(commands.Cog):
                 await message.edit(content=ctx.author.mention, embed=err)
                 return
             else:
-                if msg.content == "skip":
+                if msg.content.lower() == "skip":
                         if announcement_embed.title == None:
                             try: await msg.delete()
                             except: pass
@@ -80,7 +118,7 @@ class tickets(commands.Cog):
                             announcement_embed.description=None
                             iter=1
 
-                elif msg.content == "cancel":
+                elif msg.content.lower() == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
                 else:
@@ -107,17 +145,17 @@ class tickets(commands.Cog):
                 await message.edit(content=ctx.author.mention, embed=err)
                 return
             else:
-                if msg.content == "skip":
+                if msg.content.lower() == "skip":
                         try: await msg.delete()
                         except: pass
                         iter=1
-                elif msg.content == "invisible":
+                elif msg.content.lower() == "invisible":
                         try: await msg.delete()
                         except: pass
                         announcement_embed.color=0x2F3136
                         await announcement.edit(embed=announcement_embed)
                         iter=1
-                elif msg.content == "cancel":
+                elif msg.content.lower() == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
                 elif re.match("^#?(?:[0-9a-fA-F]{3}){1,2}$", msg.content):
@@ -153,12 +191,12 @@ class tickets(commands.Cog):
                 await message.edit(content=ctx.author.mention, embed=err)
                 return
             else:
-                if msg.content == "skip" or msg.content == "done":
+                if msg.content.lower() == "skip" or msg.content == "done":
                     try: await msg.delete()
                     except: pass
                     iter=1
 
-                elif msg.content == "cancel":
+                elif msg.content.lower() == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
 
@@ -193,13 +231,13 @@ class tickets(commands.Cog):
             await message.edit(content=ctx.author.mention, embed=err)
             return
         else:
-            if msg.content == "skip":
+            if msg.content.lower() == "skip":
                     try: await msg.delete()
                     except: pass
-            elif msg.content == "cancel":
+            elif msg.content.lower() == "cancel":
                 await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                 return
-            elif msg.content == "default":
+            elif msg.content.lower() == "default":
                 try: await msg.delete()
                 except: pass
                 announcement_embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.avatar_url)
@@ -225,7 +263,7 @@ class tickets(commands.Cog):
                 await message.edit(content=ctx.author.mention, embed=err)
                 return
             else:
-                if msg.content == "cancel":
+                if msg.content.lower() == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
                 elif msg.channel_mentions:
@@ -236,12 +274,13 @@ class tickets(commands.Cog):
                     if channel.type == discord.ChannelType.text:
                         if channel.permissions_for(ctx.author).send_messages:
                             if channel.permissions_for(ctx.me).send_messages and channel.permissions_for(ctx.me).embed_links:
-                                if channel == ctx.channel: await message.delete()
+                                await channel.send(announcement_content, embed=announcement_embed)
+                                await announcement.delete()
+                                if channel == ctx.channel:
+                                    await message.delete()
                                 else:
-                                    await channel.send(embed=announcement_embed)
                                     embed=discord.Embed(color = 0x47B781, description="💌 Sent!")
                                     await message.edit(content=ctx.author.mention, embed=embed)
-                                    await announcement.delete()
                                 iter=1
                             else:
                                 try: await msg.delete()

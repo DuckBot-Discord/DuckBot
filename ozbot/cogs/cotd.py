@@ -1,7 +1,7 @@
 import typing, discord, asyncio, random, datetime
 from discord.ext import commands, tasks
 
-class cotd(commands.Cog):
+class daily_color(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -44,10 +44,10 @@ class cotd(commands.Cog):
 
 
 
-    @commands.command(aliases=["color"])
+    @commands.command(aliases=["color", "setcolor"], help="Changes the Color of the Day. use \"-r\" to randomize it", usage="<#HEX | -r>")
     @commands.has_permissions(manage_nicknames=True)
-    async def cotd(self, ctx, color: typing.Optional[discord.Colour] = discord.Colour.default, tag = "-n"):
-        await self.bot.wait_until_ready()
+    async def cotd(self, ctx, color: typing.Optional[discord.Colour], tag: typing.Optional[str]):
+        if color == None and tag == None: return await ctx.send("`!cotd <#HEX | -r>` Missing hex code. `-r` to randomize", delete_after=5)
         if tag == "-r": color = random.randint(0, 0xFFFFFF)
         await self.bot.get_guild(706624339595886683).get_role(800407956323434556).edit(colour=color)
         await self.bot.get_guild(706624339595886683).get_role(800295689585819659).edit(colour=color)
@@ -65,4 +65,4 @@ class cotd(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(cotd(bot))
+    bot.add_cog(daily_color(bot))
