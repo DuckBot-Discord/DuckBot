@@ -30,11 +30,12 @@ i'm in {len(self.bot.guilds)} servers.
 <:invite:860644752281436171> Invite me [here]({self.bot.invite_url})!
 **<:info:860295406349058068> Information**
 [<:github:744345792172654643> source]({self.bot.repo}) | [<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})
-> Try also `{ctx.prefix}source [command|command.subcommand
+> Try also `{ctx.prefix}source [command]`
+> or `{ctx.prefix}source [command.subcommand]`
 """)
 
-        embed.add_field(name='Bug report and support:', value= """To give a suggestion and report a bug, typo, issue or anything else DM DuckBot""", inline=False)
-
+        embed.add_field(name='Bug report and support:', value= """DM me to get support or report any issue!""", inline=False)
+        embed.set_thumbnail(url=ctx.me.avatar_url)
         await ctx.send(embed=embed)
 
     @commands.command(help="Links to the bot's code, or a specific command's",aliases = ['sourcecode', 'code'], usage="[command|command.subcommand]")

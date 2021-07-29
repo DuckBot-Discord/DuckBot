@@ -48,7 +48,7 @@ _ _""")
         if alias:
             embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
-    aliases: {alias}
+    aliases: {', '.join(alias)}
 description: {command.help}
 ```""")
         else:
