@@ -9,6 +9,8 @@ class daily_color(commands.Cog):
 
         self.daily_task.start()
 
+    def cog_unload(bot):
+        self.daily_task.stop()
 
     @tasks.loop(hours=24)
     async def daily_task(self):
@@ -26,12 +28,6 @@ class daily_color(commands.Cog):
     @daily_task.before_loop
     async def wait_until_7am(self):
         await self.bot.wait_until_ready()
-        # this will use the machine's timezone
-        # to use a specific timezone use `.now(timezone)` without `.astimezone()`
-        # timezones can be acquired using any of
-        # `datetime.timezone.utc`
-        # `datetime.timezone(offset_timedelta)`
-        # `pytz.timezone(name)` (third-party package)
         now = datetime.datetime.now().astimezone()
         next_run = now.replace(hour=7, minute=0, second=0)
 

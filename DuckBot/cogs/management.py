@@ -27,7 +27,7 @@ class Confirm(menus.Menu):
         return self.result
 
 class bot_management(commands.Cog):
-
+    """🤖Management stuff. Ignore this"""
     def __init__(self, bot):
         self.bot = bot
 

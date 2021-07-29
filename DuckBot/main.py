@@ -5,8 +5,12 @@ from discord.ext import commands
 intents = discord.Intents.default() # Enable all intents except for members and presences
 intents.members = True  # Subscribe to the privileged members intent.
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********', 'duckbot '), case_insensitive=True, intents=intents, owner_id=349373972103561218)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('\.', '.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********', 'duckbot '), case_insensitive=True, intents=intents, owner_id=349373972103561218)
 
+bot.invite_url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
+bot.vote_top_gg="https://top.gg/bot/788278464474120202#/"
+bot.vote_bots_gg="https://discord.bots.gg/bots/788278464474120202"
+bot.repo="https://github.com/LeoCx1000/discord-bots"
 
 class MyHelp(commands.HelpCommand):
     # Formatting
@@ -18,7 +22,14 @@ class MyHelp(commands.HelpCommand):
 
    # !help
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(color=0x5865F2, title=f"Hello {self.context.author}, this is DuckBot help", description=f"Do `{self.clean_prefix}help [command]` to get information on a command\nDo `{self.clean_prefix}help [category]` to get information on a category\n_ _")
+        embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
+        description=f"""```diff
+- usage format: <required> [optional]
++ {self.clean_prefix}help [command] - get information on a command
++ {self.clean_prefix}help [category] - get information on a category
+```[<:invite:860644752281436171> invite me]({bot.invite_url}) | [<:topgg:870133913102721045> top.gg]({bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({bot.vote_bots_gg}) | [<:github:744345792172654643> source]({bot.repo})
+_ _""")
+
         ignored_cogs=['level']
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs: continue
@@ -90,7 +101,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    prefixes = ('.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********', 'duckbot ')
+    prefixes = ('\.', '.', 'duck.', 'duckbot.', 'd.', 'du.', 'db.', 'Duck.', 'D.', 'Duckbot.', '**********', 'duckbot ')
     if bot.maintenance == True:
         if message.author.id == bot.owner_id:
             await bot.process_commands(message)

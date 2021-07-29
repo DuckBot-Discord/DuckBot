@@ -2,7 +2,7 @@ import discord, asyncio, typing
 from discord.ext import commands
 
 class events(commands.Cog):
-    """Go away! jk. Different events, nothing useful here."""
+    """How did you get here 🤨"""
     def __init__(self, bot):
         self.bot = bot
 

@@ -2,7 +2,7 @@ import json, random, typing, discord, asyncio, time, os, inspect, itertools
 from discord.ext import commands
 
 class about(commands.Cog):
-    """Some information about me."""
+    """😮 Bot information."""
     def __init__(self, bot):
         self.bot = bot
 
@@ -21,20 +21,17 @@ class about(commands.Cog):
     @commands.command(help="Shows info about the bot")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def info(self, ctx):
-        embed = discord.Embed(title='DuckBot info', description="Here's information about my bot:", color=ctx.me.color)
-
-        # give info about you here
-        embed.add_field(name='Author', value='LeoCx1000#9999', inline=True)
-
-        # Shows the number of servers the bot is member of.
-        embed.add_field(name='Server count', value="i'm in " + f'{len(self.bot.guilds)}' + " servers", inline=True)
-
-        # give users a link to invite this bot to their server
-        embed.add_field(name='Invite', value='Invite me to your server [here](https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot)', inline=True)
-
-        embed.add_field(name='Source code', value="[Here](https://github.com/LeoCx1000/discord-bots)'s my sourcecode", inline=True)
-
-        embed.add_field(name='_ _', value='_ _', inline=False)
+        information = await self.bot.application_info()
+        embed = discord.Embed(title='DuckBot info', color=ctx.me.color, description=f"""
+**<:role:860644904048132137> Author:**
+{information.owner}
+**<:servers:870152102759006208> Servers:**
+i'm in {len(self.bot.guilds)} servers.
+<:invite:860644752281436171> Invite me [here]({self.bot.invite_url})!
+**<:info:860295406349058068> Information**
+[<:github:744345792172654643> source]({self.bot.repo}) | [<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})
+> Try also `{ctx.prefix}source [command|command.subcommand
+""")
 
         embed.add_field(name='Bug report and support:', value= """To give a suggestion and report a bug, typo, issue or anything else DM DuckBot""", inline=False)
 

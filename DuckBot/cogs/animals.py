@@ -3,7 +3,7 @@ from discord.ext import commands, tasks, timers
 from random import randint
 
 class fun(commands.Cog):
-    """Fun commands!"""
+    """🤪 Fun commands!"""
     def __init__(self, bot):
         self.bot = bot
 
