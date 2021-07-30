@@ -44,6 +44,21 @@ class handler(commands.Cog):
                 except: pass
             return
 
+        elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
+            missing=f"{str(error.param).split(':')[0]}"
+            command = f"{ctx.prefix}{ctx.command} {ctx.command.signature}"
+            separator = (' ' * (len(command.split(missing)[0])-1))
+            indicator = ('^' * (len(missing)+2))
+            print(f"`{separator}`  `{indicator}`")
+            print(error.param)
+            print()
+            await ctx.send(f"""```
+{command}
+{separator}{indicator}
+Missing argument: {missing}
+```""")
+
+
         elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
             embed = discord.Embed(color=0xD7342A, description = f'Please try again in {round(error.retry_after, 2)} seconds')
             embed.set_author(name = 'Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')

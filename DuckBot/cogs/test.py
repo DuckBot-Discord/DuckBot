@@ -7,9 +7,13 @@ class test(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def test(self, ctx):
+    @commands.command(name="raise", help="Testing handling custom errors")
+    async def _raise(self, ctx):
         raise HigherRole()
+
+    @commands.command(help="Another error handling test")
+    async def test(self, ctx, member: discord.Member, *, text):
+        await ctx.send(f"{member} {text}")
 
 def setup(bot):
     bot.add_cog(test(bot))

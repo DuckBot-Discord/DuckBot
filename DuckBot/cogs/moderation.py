@@ -83,7 +83,7 @@ class moderation(commands.Cog):
         # JOIN DATE
         if user.joined_at:
             date = user.joined_at.strftime("%b %-d %Y at %-H:%M")
-            joined = f"\n<:joined:849392863557189633>**joined:** `{date} UTC`"
+            joined = f"\n<:joined:849392863557189633>**Joined:** `{date} UTC`"
         else: joined = ""
         # GUILD OWNER
         if user is ctx.guild.owner:
@@ -112,7 +112,7 @@ class moderation(commands.Cog):
             if role is ctx.guild.default_role: continue
             roles = f"{roles} {role.mention}"
         if roles != "":
-            roles = f"\n<:role:808826577785716756>**roles:** {roles}"
+            roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
         # EMBED
         embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}""")
         embed.set_author(name=user, icon_url=user.avatar_url)
@@ -279,7 +279,7 @@ class moderation(commands.Cog):
 #------------------------ PURGE ------------------------------#
 #-------------------------------------------------------------#
 
-    @commands.group(aliases=['purge'])
+    @commands.group(aliases=['purge', 'cleanup', 'clear', 'delete', 'clean'])
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int]):
@@ -328,7 +328,7 @@ class moderation(commands.Cog):
         else:
             await ctx.send(to_send, delete_after=10)
 
-    @remove.command()
+    @remove.command(aliases=['embed'])
     async def embeds(self, ctx, search=100):
         """Removes messages that have embeds in them."""
         await self.do_removal(ctx, search, lambda e: len(e.embeds))
@@ -507,7 +507,7 @@ class moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def unban(self, ctx, number: typing.Optional[int]):
+    async def unban(self, ctx, entry: typing.Optional[int]):
         if not ctx.channel.permissions_for(ctx.me).ban_members:
             await ctx.send("i'm missing the ban_members permission :pensive:")
             return
@@ -653,6 +653,31 @@ class moderation(commands.Cog):
         await ctx.send(embed=embed)
 
 
+#-------------------------------------------------------------------------------#
+#-------------------------------- NEW UNBAN ------------------------------------#
+#-------------------------------------------------------------------------------#
+
+    @commands.group()
+    @commands.guild_only()
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def unban2(self, ctx, user: typing.Optional[discord.User]):
+        if ctx.invoked_subcommand is None:
+            await ctx.send('user')
+
+    @unban2.command(name="list")
+    async def _allbans(self, ctx):
+        bans = await ctx.guild.bans()
+        if not bans:
+            await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
+            return
+        desc = []
+        number = 1
+        for ban_entry in bans:
+            desc.append(f"**{number}) {ban_entry.user}**")
+            number = number + 1
+        pages = menus.MenuPages(source=banembed(desc), clear_reactions_after=True)
+        await pages.start(ctx)
 
 def setup(bot):
     bot.add_cog(moderation(bot))
