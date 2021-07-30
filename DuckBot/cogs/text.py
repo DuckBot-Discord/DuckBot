@@ -30,7 +30,7 @@ class general(commands.Cog):
     # resends the message as the bot
 
     @commands.command(aliases=['s', 'send'], usage="<text>", help="Speak as if you were me. # URLs/Invites not allowed!")
-    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def say(self, ctx, *, msg: typing.Optional[str]):
         if msg==None:
             await ctx.send(f"Error! empty. do: `{ctx.prefix}{ctx.command} <text>`")
@@ -65,7 +65,7 @@ class general(commands.Cog):
 
     @commands.command(help="Echoes a message to another channel",aliases=['a', 'an', 'announce'], usage="<channel> <message>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def echo(self, ctx, channel: typing.Optional[discord.TextChannel] = None, *, msg: typing.Optional[str]):
         if channel == None:
             await ctx.send(f"""You must specify a channel
@@ -89,7 +89,7 @@ class general(commands.Cog):
                         usage="-reply- [new message] [--d|--s]",
                         help="Quote a bot message to edit it. # Append --s at the end to supress embeds and --d to delete the message")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def edit(self, ctx, *, new_message : typing.Optional[str] = '--d'):
         new = new_message
         if ctx.message.reference:

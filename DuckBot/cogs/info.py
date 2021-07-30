@@ -2,7 +2,7 @@ import json, random, typing, discord, asyncio, time, os, inspect, itertools
 from discord.ext import commands, menus
 from discord.ext.commands import Paginator as CommandPaginator
 
-class RoboPages(menus.MenuPages):
+class Duckinator(menus.MenuPages):
     def __init__(self, source):
         super().__init__(source=source, check_embeds=True)
         self.input_lock = asyncio.Lock()
@@ -67,7 +67,7 @@ class RoboPages(menus.MenuPages):
                 pass
 
 
-class HelpMenu(RoboPages):
+class HelpMenu(Duckinator):
     def __init__(self, source):
         super().__init__(source)
 

@@ -653,31 +653,5 @@ class moderation(commands.Cog):
         await ctx.send(embed=embed)
 
 
-#-------------------------------------------------------------------------------#
-#-------------------------------- NEW UNBAN ------------------------------------#
-#-------------------------------------------------------------------------------#
-
-    @commands.group()
-    @commands.guild_only()
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
-    async def unban2(self, ctx, user: typing.Optional[discord.User]):
-        if ctx.invoked_subcommand is None:
-            await ctx.send('user')
-
-    @unban2.command(name="list")
-    async def _allbans(self, ctx):
-        bans = await ctx.guild.bans()
-        if not bans:
-            await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
-            return
-        desc = []
-        number = 1
-        for ban_entry in bans:
-            desc.append(f"**{number}) {ban_entry.user}**")
-            number = number + 1
-        pages = menus.MenuPages(source=banembed(desc), clear_reactions_after=True)
-        await pages.start(ctx)
-
 def setup(bot):
     bot.add_cog(moderation(bot))

@@ -21,7 +21,11 @@ class info(commands.Cog):
         embed=discord.Embed(title="Please follow the guide!", description="To make sure that your resource pack is set up correctly, please follow [this guide](https://www.stylizedresourcepack.com/guide). Make sure to enable POM (parallax occlusion mapping) to get the 3D effect", color=ctx.me.color)
         embed.add_field(name="Which shaders does the guide cover?", value="The goes in depth into settings for [BSL shaders](https://bitslablab.com/bslshaders/#download) and [SEUS renewed](https://sonicether.com/shaders/download/renewed-v1-0-1/) shaders.", inline=False)
         embed.add_field(name="Help! I have square artifacts on my blocks.", value="For SEUS renewed, make sure to set the parallax resolution correctly to avoid the blocks having artifacts that look like a grid.", inline=False)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command(aliases=['mods'])
     async def modded(self, ctx):
@@ -30,49 +34,82 @@ First off, remember that this texture pack is **1.13 and up only**, so if you're
 Second, We don't assure this texture pack will go along well with mods, there might be compatibility issues and other conflicts with some mod's textures, and especially when using POM(3D stuff)
 ```as a troubleshooting step, remove all your mods and try the texture pack with vanilla. If it works, then it's a compatibility issue with mods. If that doesn't fix it re-install the pack from #downloads, and also check "!guide"```
 """, color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
 
     @commands.command(aliases = ['jvm', 'moreram'])
     async def ram(self, ctx):
-        embed=discord.Embed(title="", description="""**[Guide on how to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)** 
+        embed=discord.Embed(title="", description="""**[Guide on how to allocate more ram](https://www.online-tech-tips.com/gaming/how-to-allocate-more-ram-to-minecraft/)**
 (Keep it between 2-4GB, 6 at most. the default amount of ram is 2GB for a reason)
 For more info read [this message](https://ptb.discord.com/channels/717140270789033984/732911954116739143/741047980542525451) and [the follow-up mesage](https://ptb.discord.com/channels/717140270789033984/732911954116739143/859835012983554089) in <#732911954116739143>""", color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def shaders(self, ctx):
         embed=discord.Embed(title="", description="**download links for: [optifine](https://optifine.net/downloads), [BSL shaders](https://bitslablab.com/bslshaders/#download) and [SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)**", color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def bsl(self, ctx):
         embed=discord.Embed(title="", description="**[download BSL shaders](https://bitslablab.com/bslshaders/#download)** \n**[BitsLab discord server](https://discord.com/invite/ZJd7jjA)** \n**[alternative download](https://drive.google.com/file/d/1DFMQE5JIIFrBATLVnPHsHVOKysEr24xx/view?usp=sharing)**", color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def seus(self, ctx):
         embed=discord.Embed(title="", description="**[download SEUS renewed shaders](https://www.sonicether.com/seus/#downloads)** \n**[SEUS alternative download link](https://drive.google.com/file/d/1Z35kGKzKa14ifLeW3QaSFjOzMueaKCH1/view?usp=sharing)**", color=ctx.me.color)
         embed.set_footer(text='May not work well with AMD graphics!')
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command(aliases = ['of'])
     async def optifine(self, ctx):
         embed=discord.Embed(title="", description="**[download optifine](https://optifine.net/downloads)** \n **[optifine's discord](https://optifine.net/discord)**", color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
-    @commands.command(aliases = ['upgrade', 'cm', 'um', 'pledge'])
+    @commands.command(aliases = ['upgrade', 'pledge'])
     async def cancel(self, ctx):
         embed=discord.Embed(title="", description="**[cancel/upgrade your pledge here](https://www.patreon.com/pledges)**", color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command(aliases = ['download', 'dchannel'])
     async def downloads(self, ctx):
         embed=discord.Embed(title="", description="""To access the download channel you need to have a role <@&717144765690282015> or higher, and you don't appear to have it.
-If you already purchased a <@&717144765690282015> or higher subscription, link your discord to patreon. Check [this article](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!) for more info.
-In case that your discord is already linked, un-link and re-link it.
-If you don't already have a <@&717144765690282015> or higher subscription, you can get one here: [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=ctx.me.color)
-        await ctx.send(embed=embed)
+If you already purchased a <@&717144765690282015> or higher subscription, link your Patreon to Discord. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!)
+If your account is already linked, unlink and relink it. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!) about how to get your role.
+
+If you don't already have a <@&717144765690282015> or higher subscription, you can get one at [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=ctx.me.color)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def radeon(self, ctx):
@@ -93,7 +130,11 @@ I have a Radeon RX 5700 XT, on a B450 Motherboard with a 3700X
 *psst, if you want to use a later driver, like if you want to run CRT or HRR2, if you have a shaderpack that crashes, switch to `internal` shaders before loading it. This has to be done every time you load it, so F3 + R (to reload shader) will still crash*
 Also, starting with 21.2.3, some packs will refuse to load, such as Chocapic V9, while others have improved stability.""", color=ctx.me.color)
         embed.set_author(name="Copied straight from optifine's support channel", icon_url="https://i.imgur.com/uZsxgEf.png")
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command(aliases = ['oldversions', '1.12', '1.8', '1.8.9'])
     async def unsupported(self, ctx):
@@ -101,7 +142,11 @@ Also, starting with 21.2.3, some packs will refuse to load, such as Chocapic V9,
 Older versions of minecraft use a different file structure for their resource packs and/or different names for some of the textures.
 There seems to be some conversion tools out there that can change a texture pack to work in one of these older versions of the game but this is not supported by us, and you will not recieve the same support that you would get using a newer version of minecraft.
 Another way is, if you have the time, changing it manually to the old file structure.""", color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command(aliases = ['communication', 'translate', 'translator'])
     async def translation(self, ctx):
@@ -121,12 +166,32 @@ To translate to english just do:
             embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['HelpMessage'], color=ctx.me.color)
         else:
             embed=discord.Embed(title=self.yaml_data['HelpTitle'], description=self.yaml_data['StaffHelpMessage'], color=ctx.me.color)
-        await ctx.send(embed=embed)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def rank(self, ctx):
         embed=discord.Embed(description="Nah... 😂", color=ctx.me.color)
         await ctx.send(embed=embed)
+
+
+    @commands.command()
+    async def relink(self, ctx):
+        embed=discord.Embed(title="You have an active subscription but you don't have a role?",description=f"""
+to get your role, go to [patreon.com/settings/apps ](https://www.patreon.com/settings/apps), then `disconnect` and `connect` your discord account.
+**Done, you should get your role now!**
+
+[Patreon official support aticle.](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role)
+""", color=ctx.me.color)
+        if ctx.message.reference:
+            reply = ctx.message.reference.resolved
+            await reply.reply(embed=embed)
+        else:
+            await ctx.send(embed=embed)
+
 
 # ------------------------------------------------------------------------------
 # ---- 2.0 stuff that will be available when d.py gets a stable 2.0 release ----

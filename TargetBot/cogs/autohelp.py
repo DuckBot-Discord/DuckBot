@@ -132,7 +132,7 @@ If your account is already linked, unlink and relink it. [[more info]](https://s
 
 If you don't already have a <@&717144765690282015> or higher subscription, you can get one at [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=message.guild.me.color)
             embed.set_author(name="Automatic support", icon_url="https://i.imgur.com/GTttbJW.png")
-            await message.channel.send(embed=embed)
+            await message.reply(embed=embed)
 
 
 def setup(bot):

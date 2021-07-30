@@ -7,6 +7,7 @@ intents.members = True  # Subscribe to the privileged members intent.
 intents.presences = True  # Subscribe to the privileged members intent.
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('!', 'oz!', '**********', '.'), case_insensitive=True, intents=intents)
+bot.loaded=False
 
 class MyHelp(commands.HelpCommand):
     # Formatting
@@ -94,19 +95,21 @@ async def on_ready():
     print("\033[42m======[ BOT ONLINE! ]=======")
     print ("Logged in as " + bot.user.name)
     print('\033[0m')
-    await bot.wait_until_ready()
-    await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.playing, name='DM to contact staff'))
-    print("\033[93m======[ DELAYED LOAD ]======")
-    for cog in yaml_data['DelayedLoadCogs']:
-        try:
-            bot.load_extension(f"cogs.{cog}")
-            print(f'\033[92msuccessfully loaded {cog}')
-        except:
-            print('\033[0m')
-            print("\033[31m========[ WARNING ]========")
-            print(f"\033[91mAn error occurred while loading '{cog}'""")
-            print('\033[0m')
-    print('\033[0m')
+    if bot.loaded==False:
+        bot.loaded=True
+        await bot.wait_until_ready()
+        await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.playing, name='DM to contact staff'))
+        print("\033[93m======[ DELAYED LOAD ]======")
+        for cog in yaml_data['DelayedLoadCogs']:
+            try:
+                bot.load_extension(f"cogs.{cog}")
+                print(f'\033[92msuccessfully loaded {cog}')
+            except:
+                print('\033[0m')
+                print("\033[31m========[ WARNING ]========")
+                print(f"\033[91mAn error occurred while loading '{cog}'""")
+                print('\033[0m')
+        print('\033[0m')
 
 
 print('')
