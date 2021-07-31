@@ -1,4 +1,5 @@
 import discord, asyncio, json, yaml
+from discord.ext import commands
 
 def get_perms(permissions):
     perms = []

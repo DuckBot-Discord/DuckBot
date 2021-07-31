@@ -135,7 +135,10 @@ class MyHelp(commands.HelpCommand):
    # !help
     async def send_bot_help(self, mapping):
         embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
-        description=f"""```diff
+        description=f"""
+**prefixes:** `db.`, `duckbot.`, ~~`.`~~, ~~`duck.`~~, ~~`d.`~~, ~~`du.`~~, ~~`Duck.`~~, ~~`D.`~~, ~~`duckbot `~~*
+> some prefixes are no longer available
+```diff
 - usage format: <required> [optional]
 + {self.clean_prefix}help [command] - get information on a command
 + {self.clean_prefix}help [category] - get information on a category

@@ -1,6 +1,9 @@
 import os, discord, asyncio, traceback, json, typing
 from dotenv import load_dotenv
-from discord.ext import commands
+from discord.ext import commands, menus
+from jishaku.models import copy_context_with
+import contextlib
+
 
 class management(commands.Cog):
 
@@ -11,13 +14,14 @@ class management(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def status(self, ctx, type: typing.Optional[str],* , argument: typing.Optional[str]):
         if ctx.author.guild_permissions.administrator == True:
-            botprefix = '.'
+            botprefix = ctx.prefix
 
             if type == None:
                 embed = discord.Embed(title= "`ERROR` NO STATUS GIVEN!", description="Here is a list of available types:", color = ctx.me.color)
                 embed.add_field(name=(botprefix + 'status Playing <status>'), value='Sets the status to Playing.', inline=False)
-                embed.add_field(name=(botprefix + 'status Listening <status>'), value='Sets the status to Listening.', inline=False)
-                embed.add_field(name=(botprefix + 'status Watching <status>'), value='Sets the status to Watching.', inline=False)
+                embed.add_field(name=(botprefix + 'status Listening <status>'), value='Sets the status to `Listening to`.', inline=False)
+                embed.add_field(name=(botprefix + 'status Watching <status>'), value='Sets the status to `Watching`.', inline=False)
+                embed.add_field(name=(botprefix + 'status Competing <status>'), value='Sets the status to `Competing in`.', inline=False)
                 await ctx.send(embed=embed, delete_after=45)
                 await asyncio.sleep(45)
                 await ctx.message.delete()
@@ -280,6 +284,37 @@ class management(commands.Cog):
     async def shutdown(self, ctx):
         await ctx.send("🛑 **__Stopping the bot__**")
         await ctx.bot.logout()
+
+
+    @commands.command()
+    @commands.is_owner()
+    async def sudo(self, ctx: commands.Context, target: discord.User, *, command_string: str):
+        """
+        Run a command as someone else.
+
+        This will try to resolve to a Member, but will use a User if it can't find one.
+
+        """
+
+        if ctx.guild:
+            # Try to upgrade to a Member instance
+            # This used to be done by a Union converter, but doing it like this makes
+            #  the command more compatible with chaining, e.g. `jsk in .. jsk su ..`
+            target_member = None
+
+            with contextlib.suppress(discord.HTTPException):
+                target_member = ctx.guild.get_member(target.id) or await ctx.guild.fetch_member(target.id)
+
+            target = target_member or target
+
+        alt_ctx = await copy_context_with(ctx, author=target, content=ctx.prefix + command_string)
+
+        if alt_ctx.command is None:
+            if alt_ctx.invoked_with is None:
+                return await ctx.send('This bot has been hard-configured to ignore this user.')
+            return await ctx.send(f'Command "{alt_ctx.invoked_with}" is not found')
+
+        return await alt_ctx.command.invoke(alt_ctx)
 
 def setup(bot):
     bot.add_cog(management(bot))

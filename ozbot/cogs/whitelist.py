@@ -7,6 +7,7 @@ class whitelist(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.denied_keywords = ['agree', 'i agree']
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -15,8 +16,11 @@ class whitelist(commands.Cog):
             await asyncio.sleep(15)
             await message.delete()
             return
-        await asyncio.sleep(0.1)
-        await message.delete()
+        if message.content.lower() in self.denied_keywords:
+            await message.delete(delay=0.2)
+            await message.channel.send("That's not how you do it 😖\nPlease read the rules again 😅", delete_after=10)
+            return
+        await message.delete(delay=0.2)
         user = message.guild.get_member(799749818062077962)
         argument = message.content
         if argument == None:

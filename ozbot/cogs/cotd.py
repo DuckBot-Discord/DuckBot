@@ -5,7 +5,7 @@ class daily_color(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        var = 0
+        self.var = 0
 
         self.daily_task.start()
 

@@ -4,30 +4,62 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 class handler(commands.Cog):
-
+    """🆘 Handle them errors 👀"""
     def __init__(self, bot):
         self.bot = bot
 
     async def perms_error(self, ctx):
         await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-            return
-        except: return
+        try: await ctx.message.delete(delay=5)
+        except: pass
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         error = getattr(error, "original", error)
-        if isinstance(error, discord.ext.commands.errors.CheckFailure):
-            await self.perms_error(ctx)
+
+        embed = discord.Embed(color=0xD7342A)
+        embed.set_author(name = 'Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
+
+        if isinstance(error, commands.NotOwner):
+            await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
             return
-        if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-#            await ctx.message.add_reaction('❓')
-#            await asyncio.sleep(2)
-#            await ctx.message.remove_reaction('❓', self.bot.user)
+
+        if isinstance(error, commands.MissingPermissions):
+            text=f"You're missing the following permissions: \n**{', '.join(error.missing_perms)}**"
+            try:
+                embed.description=text
+                await ctx.send(embed=embed)
+            except:
+                try: await ctx.send(text)
+                except: pass
             return
-        if isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
+
+        elif isinstance(error, commands.BotMissingPermissions):
+            text=f"I'm missing the following permissions: \n**{', '.join(error.missing_perms)}**"
+            try:
+                embed.description=text
+                await ctx.send(embed=embed)
+            except:
+                try: await ctx.send(text)
+                except: pass
+            return
+
+        elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
+            missing=f"{str(error.param).split(':')[0]}"
+            command = f"{ctx.prefix}{ctx.command} {ctx.command.signature}"
+            separator = (' ' * (len(command.split(missing)[0])-1))
+            indicator = ('^' * (len(missing)+2))
+            print(f"`{separator}`  `{indicator}`")
+            print(error.param)
+            print()
+            await ctx.send(f"""```
+{command}
+{separator}{indicator}
+Missing argument: {missing}
+```""")
+
+
+        elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
             embed = discord.Embed(color=0xD7342A, description = f'Please try again in {round(error.retry_after, 2)} seconds')
             embed.set_author(name = 'Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
 
@@ -39,31 +71,17 @@ class handler(commands.Cog):
             if error.cooldown.type == BucketType.category: per = "per category"
             if error.cooldown.type == BucketType.role: per = "per role"
 
-            embed.set_footer(text=f"{error.cooldown.rate} per {error.cooldown.per}s {per}")
-            await ctx.send(embed=embed)
-            return
+            embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
+            return await ctx.send(embed=embed)
 
-        if isinstance(error, discord.ext.commands.errors.MaxConcurrencyReached):
-            embed = discord.Embed(color=0xD7342A, description = f"Please try again once you are done running the command")
-            embed.set_author(name = 'Command is alrady running!', icon_url='https://i.imgur.com/izRBtg9.png')
+        elif isinstance(error, discord.ext.commands.errors.CommandNotFound):
+            pass
 
-            if error.per == BucketType.default: per = ""
-            if error.per == BucketType.user: per = "per user"
-            if error.per == BucketType.guild: per = "per server"
-            if error.per == BucketType.channel: per = "per channel"
-            if error.per == BucketType.member: per = "per member"
-            if error.per == BucketType.category: per = "per category"
-            if error.per == BucketType.role: per = "per role"
-
-            embed.set_footer(text=f"limit is {error.number} command(s) running {per}")
-            await ctx.send(embed=embed)
-            return
-
-        if ctx.command:
-            await self.bot.get_channel(847943387083440128).send(f"""```{ctx.command} command raised an error:
-{error}```""")
         else:
-            await self.bot.get_channel(847943387083440128).send(f"""```{error}```""")
-        raise error
+            await self.bot.wait_until_ready()
+            await self.bot.get_channel(847943387083440128).send(f"""```{ctx.command} command raised an error:
+    {error}```""")
+            raise error
+
 def setup(bot):
     bot.add_cog(handler(bot))

@@ -11,11 +11,8 @@ class handler(commands.Cog):
 
     async def perms_error(self, ctx):
         await ctx.message.add_reaction('🚫')
-        await asyncio.sleep(5)
-        try:
-            await ctx.message.delete()
-            return
-        except: return
+        try: await ctx.message.delete(delay=5)
+        except: pass
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -23,6 +20,10 @@ class handler(commands.Cog):
 
         embed = discord.Embed(color=0xD7342A)
         embed.set_author(name = 'Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
+
+        if isinstance(error, commands.NotOwner):
+            await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
+            return
 
         if isinstance(error, commands.MissingPermissions):
             text=f"You're missing the following permissions: \n**{', '.join(error.missing_perms)}**"
@@ -79,9 +80,6 @@ Missing argument: {missing}
 
         elif isinstance(error, discord.ext.commands.errors.CommandNotFound):
             pass
-
-        elif isinstance(error, discord.ext.commands.errors.CheckFailure):
-            await self.perms_error(ctx)
 
         else:
             await self.bot.wait_until_ready()

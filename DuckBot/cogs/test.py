@@ -1,4 +1,4 @@
-import discord, asyncio, typing, aiohttp, random, json, yaml, re
+import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime
 from discord.ext import commands, menus
 from errors import HigherRole
 from jishaku.models import copy_context_with
@@ -10,6 +10,10 @@ class test(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def get_bot_uptime(self):
+        return f"<t:{round(self.bot.uptime.timestamp())}:R>"
+
+
     @commands.command(name="raise", help="Testing handling custom errors")
     async def _raise(self, ctx):
         raise HigherRole()
@@ -19,33 +23,45 @@ class test(commands.Cog):
         await ctx.send(f"{ctx.author} hi")
 
     @commands.command()
-    async def sudo(self, ctx: commands.Context, target: discord.User, *, command_string: str):
-        """
-        Run a command as someone else.
+    async def about(self, ctx):
+        """Tells you information about the bot itself."""
 
-        This will try to resolve to a Member, but will use a User if it can't find one.
-        """
+        embed = discord.Embed(description='about-me')
+        embed.colour = discord.Colour.blurple()
 
-        if ctx.guild:
-            # Try to upgrade to a Member instance
-            # This used to be done by a Union converter, but doing it like this makes
-            #  the command more compatible with chaining, e.g. `jsk in .. jsk su ..`
-            target_member = None
+        # statistics
+        total_members = 0
+        total_unique = len(self.bot.users)
 
-            with contextlib.suppress(discord.HTTPException):
-                target_member = ctx.guild.get_member(target.id) or await ctx.guild.fetch_member(target.id)
+        text = 0
+        voice = 0
+        guilds = 0
+        for guild in self.bot.guilds:
+            guilds += 1
+            if guild.unavailable:
+                continue
 
-            target = target_member or target
+            total_members += guild.member_count
+            for channel in guild.channels:
+                if isinstance(channel, discord.TextChannel):
+                    text += 1
+                elif isinstance(channel, discord.VoiceChannel):
+                    voice += 1
+        l = [(sum(m.bot for m in g.members) / g.member_count)*100 for g in self.bot.guilds]
 
-        alt_ctx = await copy_context_with(ctx, author=target, content=ctx.prefix + command_string)
+        embed.add_field(name='Members', value=f'{total_members} total\n{total_unique} unique')
+        embed.add_field(name='Channels', value=f'{text + voice} total\n{text} text\n{voice} voice')
 
-        if alt_ctx.command is None:
-            if alt_ctx.invoked_with is None:
-                return await ctx.send('This bot has been hard-configured to ignore this user.')
-            return await ctx.send(f'Command "{alt_ctx.invoked_with}" is not found')
+        memory_usage = psutil.Process().memory_full_info().uss / 1024**2
+        cpu_usage = psutil.Process().cpu_percent() / psutil.cpu_count()
+        embed.add_field(name='Process', value=f'{memory_usage:.2f} MiB\n{cpu_usage:.2f}% CPU')
 
-        return await alt_ctx.command.invoke(alt_ctx)
-
+        version = pkg_resources.get_distribution('discord.py').version
+        embed.add_field(name='Bot servers', value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(l) / len(l), 2)}%")
+        embed.add_field(name='Last boot', value=self.get_bot_uptime())
+        embed.set_footer(text=f'Made with discord.py v{version}', icon_url='http://i.imgur.com/5BFecvA.png')
+        embed.timestamp = datetime.datetime.utcnow()
+        await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(test(bot))
