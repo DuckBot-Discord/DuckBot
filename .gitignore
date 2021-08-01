@@ -6,3 +6,5 @@ ozbot/files/*
 *.yaml
 *.env
 .env
+copy-paste/*
+gafapasta/*
