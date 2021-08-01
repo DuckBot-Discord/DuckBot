@@ -1,28 +1,50 @@
-import os, discord, asyncio, traceback, datetimed
+import os, discord, asyncio, traceback, datetime, asyncpg
 from dotenv import load_dotenv
 from discord.ext import commands
 
-intents = discord.Intents.default() # Enable all intents except for members and presences
-intents.members = True  # Subscribe to the privileged members intent.
+PRE = 'db.'
+async def get_pre(bot, message):
+    if not message.guild:
+        return commands.when_mentioned_or(PRE)(bot,message)
+    if await bot.is_owner(message.author) and bot.noprefix == True:
+        return ''
+    prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
+    if not prefix:
+        prefix = PRE
+    return commands.when_mentioned_or(prefix)(bot,message)
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('db.', 'Db.', 'duckbot.', 'Duckbot.', '**********', '.'), case_insensitive=True, intents=intents, owner_id=349373972103561218)
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(command_prefix=get_pre, case_insensitive=True, intents=intents, owner_id=349373972103561218)
 
 bot.invite_url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
 bot.vote_top_gg="https://top.gg/bot/788278464474120202#/"
 bot.vote_bots_gg="https://discord.bots.gg/bots/788278464474120202"
 bot.repo="https://github.com/LeoCx1000/discord-bots"
-
-os.environ['JISHAKU_HIDE'] = 'True'
-bot.load_extension('jishaku')
-
-
 bot.maintenance = False
 bot.noprefix  = False
 bot.started = False
 bot.uptime = datetime.datetime.utcnow()
 
+os.environ['JISHAKU_HIDE'] = 'True'
+bot.load_extension('jishaku')
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+
+async def create_db_pool():
+
+    credentials = {"user": f"{os.getenv('PSQL_USER')}",
+                   "password": f"{os.getenv('PSQL_PASSWORD')}",
+                   "database": f"{os.getenv('PSQL_DB')}",
+                   "host": f"{os.getenv('PSQL_HOST')}"}
+
+    bot.db = await asyncpg.create_pool(**credentials)
+    print("connection successful")
+
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS prefixes(guild_id bigint PRIMARY KEY, prefix text);")
+    print("table done")
 
 @bot.event
 async def on_ready():
@@ -36,22 +58,8 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    prefixes = ('db.', 'Db.', 'duckbot.', 'Duckbot.', '**********', '.')
-    if bot.maintenance == True:
-        if message.author.id == bot.owner_id:
-            await bot.process_commands(message)
-            return
-        if message.content.startswith(prefixes):
-            await message.add_reaction('<:bot_under_maintenance:857690568368717844>')
-        return
-    if not message.content.startswith(prefixes) and message.author.id == bot.owner_id and bot.noprefix == True:
-        edited_message = message
-        edited_message.content = f"duckbot.{message.content}"
-        await bot.process_commands(edited_message)
-    elif message.author.id == bot.owner_id:
-        await bot.process_commands(message)
-    elif not message.content.startswith('.'):
-        await bot.process_commands(message)
+    if bot.maintenance == True and message.author.id != bot.owner_id: return
+    await bot.process_commands(message)
 
 print('')
 print("\033[93m======[ NORMAL LOAD ]=======")
@@ -67,4 +75,5 @@ for filename in os.listdir("./cogs"):
             print('\033[0m')
 print('\033[0m')
 
+bot.loop.run_until_complete(create_db_pool())
 bot.run(TOKEN, reconnect=True)

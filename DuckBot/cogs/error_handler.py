@@ -56,11 +56,13 @@ class handler(commands.Cog):
             await ctx.send(f"""```
 {command}
 {separator}{indicator}
-Missing argument: {missing}
+{missing} is a required argument that is missing.
 ```""")
 
+        elif isinstance(error, commands.errors.PartialEmojiConversionFailure):
+            await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
 
-        elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
+        elif isinstance(error, commands.errors.CommandOnCooldown):
             embed = discord.Embed(color=0xD7342A, description = f'Please try again in {round(error.retry_after, 2)} seconds')
             embed.set_author(name = 'Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
 

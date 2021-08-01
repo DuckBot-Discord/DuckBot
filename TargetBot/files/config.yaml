@@ -1,0 +1,158 @@
+# NOTE: these are the roles that won't recieve an automated
+# message when the word 'download' is detected in a message
+IgnoredRoles:
+  - 801386133815951361 # @staff
+  - 717144039568441394 # @Sublimer
+  - 717144455156858940 # @Sapphirer
+  - 717144765690282015 # @Steeler
+
+# NOTE: Role that will be applied when someone is !muted
+MuteRole: 777002205034971136
+
+# NOTE: Role to deny sending images to channels
+noMediaRole: 849734365293445132
+
+# NOTE: Role to deny sending URLs to channels
+urlBanRole: 859841694169432124
+
+# NOTE: Token for the sus url api
+sus_url_token: NgMI6bw0yNv1ruK8xLTrzAWjwaJtD0NZ
+
+# NOTE: Bot token
+botToken: ODQ1NTQwMTQ4MjEyNzkzMzY0.YKicoA.bVkXm7lPv-Dvo9O4FFQJc17MvEs
+
+# NOTE: Team Stylized Server ID
+guildID: 717140270789033984
+
+# NOTE: Channel where the ModMail is sent
+ModMailChannel: 856039317952004096
+
+# NOTE: Roles that can use moderation commands
+StaffRoles:
+  - 717151202135113808 # @Admin
+  - 801386133815951361 # @staff
+
+StaffRole: 801386133815951361
+
+# NOTE: Amount of time in seconds
+# until an error message is deleted
+ErrorMessageTimeout: 5 #SECONDS
+
+# NOTE: Amount of time in seconds from
+# the bot adding the 🚫 reaction until
+# the message gets auto-deleted.
+ReactionTimeout: 5 #SECONDS
+
+# NOTE: Cogs that will be loaded after the
+# bot is connected to the discord API.
+DelayedLoadCogs:
+  - moderation
+  - autohelp
+  - smp
+  - info
+  - media
+  - modmail
+
+BaseStaff: 801386133815951361 # @staff
+StaffOrder:
+  - 813988893912203277 # @moderator in training
+  - 801385716017004544 # @helper
+  - 763960697506758676 # @moderator
+
+# NOTE: Channel where game commands are sent
+ConsoleCommandsChannel: 753064323529834557
+
+# NOTE: SMP moderator role
+SMPModeratorRole: 754743164883173387
+
+# NOTE: Message sent when someone does !help
+# add an extra line to message: "\n 　    "
+HelpTitle: "Here is a list of available commands:"
+# Help Body
+HelpMessage: "
+\n **!guide**: Shows the guide
+\n **!oldversions**: Info about older MC versions
+\n **!ram**: How to allocate more ram
+\n **!bsl**: Shows where to download BSL
+\n **!seus**: Shows where to download SEUS renewed
+\n **!optifine**: Shows where to download optifine
+\n **!translate**: How to translate messages
+\n **!radeon**: Radeon graphics? check this.
+\n **!modded**: Using mods? check this.
+\n **!cancel**: Link to cancel/upgrade your membership
+"
+
+# Help Body if you're staff
+StaffHelpMessage: "> `{obligatory} (optional)`
+\n
+\n **__Member Management Commands__**
+\n > all these will DM the infractor
+\n **!mute {member} (reason)**: Mutes a member
+\n **!unmute {member} (reason)**: Unmutes a member
+\n **!ban {member} (reason)**: Bans a member
+\n **!kick {member} (reason)**: Kicks a member
+\n **!denymedia {user} (reason)**: removes image permissions
+\n **!allowmedia {user} (reason)**: allows image permissions
+\n
+\n **__Silent Management Commands__**
+\n > These won't DM the infractors
+\n **!nick {member} (new nick)**: Changes a member's nick
+\n > removes the nick if (new nick) is empty
+\n
+\n **__Message Management Commands__**
+\n **!move {amount} {#channel}**: moves messages to another channel
+\n > There's a limit of 20 messages to avoid rate limits
+\n **!purge {amount}**: Purges messages from the channel
+\n > There's a limit of 1000 messages
+\n
+\n **__Channel Managememnt Commands__**
+\n **!lockdown {channel} (reason)**: Locks down a channel
+\n **!unlock {channel} (reason)**: Unlocks a channel tha was in lockdown
+\n
+\n **__SMP server management commands__**
+\n > You need to be an <@&754743164883173387> to use these
+\n **!GameBan {player} (reason)**: Bans a member of the SMP
+\n **!GameUnban {player}**: Unbans a player of the SMP
+\n 　    
+\n For non-staff commands to `!help n`
+"
+
+safe_urls:
+  - cdn.discordapp.com
+  - media.discordapp.net
+  - ptb.discord.com
+  - canary.discord.com
+  - discord.com
+  - dis.gd
+  - www.dis.gd
+  - www.youtube.com
+  - youtube.com
+  - m.youtube.com
+  - youtu.be
+  - i.imgur.com
+  - imgur.com
+  - www.imgur.com
+  - discord.gift
+  - www.java.com
+  - java.com
+  - www.spigotmc.org
+  - spigotmc.org
+  - vm.tiktok.com
+  - dev.bukkit.org
+  - www.curseforge.com
+  - curseforge.com
+  - github.com
+  - www.github.com
+  - google.com
+  - www.google.com
+  - docs.google.com
+  - www.patreon.com
+  - patreon.com
+  - drive.google.com
+  - www.stylizedresourcepack.com
+  - stylizedresourcepack.com
+  - c.tenor.com
+  - tenor.com
+  - www.tenor.com
+  - bitslablab.com
+  - www.bitslablab.com

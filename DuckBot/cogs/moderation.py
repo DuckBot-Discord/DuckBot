@@ -1,4 +1,4 @@
-import typing, discord, asyncio, random, datetime, argparse, shlex, re
+import typing, discord, asyncio, random, datetime, argparse, shlex, re, asyncpg
 from discord.ext import commands, tasks, timers, menus
 from collections import Counter, defaultdict
 from helpers import helper
@@ -59,6 +59,35 @@ class moderation(commands.Cog):
         embed.set_author(name=message, icon_url='https://i.imgur.com/OAmzSGF.png')
         await ctx.send(embed=embed, delete_after=5)
         await ctx.message.delete(delay=5)
+
+#--------------------------------------------------------------#
+#------------------------ PREFIX ------------------------------#
+#--------------------------------------------------------------#
+
+    @commands.command()
+    @commands.guild_only()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def prefix(self, ctx, new=None):
+        old = await self.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not new:
+            old = old or 'db.'
+            await ctx.send(f"my prefix here is `{old}`")
+            return
+
+        if len(new) > 10:
+            return await ctx.send("Prefixes can only be up to 10 characters")
+        if not old:
+            await self.bot.db.execute('INSERT INTO prefixes(guild_id, prefix) VALUES ($1, $2)', ctx.guild.id, new)
+            await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
+        elif old != new:
+            await self.bot.db.execute('UPDATE prefixes SET prefix = $1 WHERE guild_id = $2', new, ctx.guild.id)
+            await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
+        else:
+            await ctx.send(f"`{new}` is already my prefix")
+
+#-----------------------------------------------------------------#
+#------------------------ USER-INFO ------------------------------#
+#---------------------------------------------------=====---------#
 
     @commands.command(help="Shows a user's information", aliases = ['userinfo', 'ui', 'whois', 'whoami'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)

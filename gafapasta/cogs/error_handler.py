@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 class handler(commands.Cog):
-    """🆘 Handle them errors 👀"""
+    """🆘 manejar los errores 👀"""
     def __init__(self, bot):
         self.bot = bot
 
@@ -18,14 +18,14 @@ class handler(commands.Cog):
         error = getattr(error, "original", error)
 
         embed = discord.Embed(color=0xD7342A)
-        embed.set_author(name = 'Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
+        embed.set_author(name = 'Permisos insuficientes!', icon_url='https://i.imgur.com/OAmzSGF.png')
 
         if isinstance(error, commands.NotOwner):
-            await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
+            await ctx.send(f"Debes ser el dueño de `{ctx.me.display_name}` para usar `{ctx.command}`")
             return
 
         if isinstance(error, commands.MissingPermissions):
-            text=f"You're missing the following permissions: \n**{', '.join(error.missing_perms)}**"
+            text=f"Te faltan los siguientes permisos: \n**{', '.join(error.missing_perms)}**"
             try:
                 embed.description=text
                 await ctx.send(embed=embed)
@@ -35,7 +35,7 @@ class handler(commands.Cog):
             return
 
         elif isinstance(error, commands.BotMissingPermissions):
-            text=f"I'm missing the following permissions: \n**{', '.join(error.missing_perms)}**"
+            text=f"Me faltan los siguientes permisos: \n**{', '.join(error.missing_perms)}**"
             try:
                 embed.description=text
                 await ctx.send(embed=embed)
@@ -55,23 +55,23 @@ class handler(commands.Cog):
             await ctx.send(f"""```
 {command}
 {separator}{indicator}
-Missing argument: {missing}
+Argumento faltante: {missing}
 ```""")
 
 
         elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
-            embed = discord.Embed(color=0xD7342A, description = f'Please try again in {round(error.retry_after, 2)} seconds')
-            embed.set_author(name = 'Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
+            embed = discord.Embed(color=0xD7342A, description = f'Por favor intenta de nuevo en {round(error.retry_after, 2)} segundo(s)')
+            embed.set_author(name = 'Comando en cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
 
             if error.cooldown.type == BucketType.default: per = ""
-            if error.cooldown.type == BucketType.user: per = "per user"
-            if error.cooldown.type == BucketType.guild: per = "per server"
-            if error.cooldown.type == BucketType.channel: per = "per channel"
-            if error.cooldown.type == BucketType.member: per = "per member"
-            if error.cooldown.type == BucketType.category: per = "per category"
-            if error.cooldown.type == BucketType.role: per = "per role"
+            if error.cooldown.type == BucketType.user: per = "por usuario"
+            if error.cooldown.type == BucketType.guild: per = "por servidor"
+            if error.cooldown.type == BucketType.channel: per = "por canal"
+            if error.cooldown.type == BucketType.member: per = "por miembro"
+            if error.cooldown.type == BucketType.category: per = "por categoría"
+            if error.cooldown.type == BucketType.role: per = "por rol"
 
-            embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
+            embed.set_footer(text=f"delay: {error.cooldown.rate} veces cada {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
 
         elif isinstance(error, discord.ext.commands.errors.CommandNotFound):
@@ -79,7 +79,7 @@ Missing argument: {missing}
 
         else:
             await self.bot.wait_until_ready()
-            await self.bot.get_channel(860608884694450196).send(f"""```{ctx.command} command raised an error:
+            await self.bot.get_channel(847943387083440128).send(f"""```{ctx.command} command raised an error:
     {error}```""")
             raise error
 

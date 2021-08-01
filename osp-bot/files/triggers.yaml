@@ -1,0 +1,56 @@
+# NOTE: TRIGGERS must be lowercase
+suicide_triggers:
+  - i want to hurt myself
+  - i wish i were dead
+  - i wish i was dead
+  - i hadn't been born
+  - wasn't born
+  - kms
+  - commit die
+  - commit
+  - unlive
+  - i wish i didn't exist
+  - i want to die
+  - sewerslide
+  - commit sudoku
+
+# NOTE: TRIGGERS must be lowercase
+non_sudoku_triggers:
+  - make myself bleed
+  - cut myself
+  - hurt myself
+
+# NOTE: Responses sent when the bot is pinged
+no_context_responses:
+  - "Hello, %PING_USER%!"
+  - "Hey, I can do that too. %PING_USER%."
+  - "Wassup, %PING_USER%?"
+  - "Ah yes, %PING_USER% is messaging me with no other content."
+  - "I T ' S  A  M E N T I O N !"
+  - "Hey, at least you aren't messaging @ everyone. (don't do that)"
+  - "Got some mentions, it's from %PING_USER%."
+  - "%PING_USER%, you know I never know what to do with these mentions."
+  - "Oh, look! It's a mention from %PING_USER%."
+  - "%PING_USER%, don't make me massping you ;)"
+  - "Mentions!"
+  - "𝕀𝕥'𝕤 𝕒 𝕞𝕖𝕟𝕥𝕚𝕠𝕟 𝕗𝕣𝕠𝕞 %PING_USER%!"
+  - "!%PING_USER% ɯoɹɟ uoıʇuǝɯ ɐ s,ʇI"
+  - "I̴̝̻͎̯̣̟̒̉͛̋̾̊̇̀͝t̸̞̫́̇̋̀̒͒́'̷̢͕͇́̈̂͜͜s̴͕̻̼͓͋̆ ̸̛͈̝̤͙̓̋̓̑͂a̴̯͙̬̻̳͒͆ ̴̟̤̰̝͉̠͇͙̞̓͆̒̍̀̓͂͌͘ͅm̸̛͔͕͙͉͛͌ẹ̴̢̧̢̰͚̳̹͆͌̃͋̏̆̚͘̕n̴͔͚̙̗̦̊̏̎͛̑̈͜t̸̳̙̼͔̠͎̪̏̇̅̓͜i̸̻̘̜̱̯͖͓̠̠͛̈́͐̔o̸͎̠̒̽͛͠n̵̨̛̫̼̂̓̈͐̽͑ ̵͍̣̜̗̮͕́̆͜f̶̧̫̥̣͕͖̻͒̓͊́̌̿̋͂ͅr̷̛̭͇̼̰̥͕͌̌ô̷͖̹͚̮̱͈̦̥̙̋̍̊̔͠ṃ̷̛̖̝̫̈͠ %PING_USER%!"
+  - "Iƚ'ʂ α ɱҽɳƚισɳ ϝɾσɱ %PING_USER%!"
+  - "(っ◔◡◔)っ ♥ It's a mention from%PING_USER%!♥"
+  - "🄼🄴🄽🅃🄸🄾🄽🅂 🄵🅁🄾🄼 %PING_USER%!"
+  - "%PING_USER%🄸🅂 🄼🄴🄽🅃🄸🄾🄽🄸🄽🄶 🄼🄴!"
+  - "i̷̱̬̯̗͓̒ͅt̶̢̢̛̥̜̤̝̍̃̕'̷̖̰̲͂s̵̡̜̼̖̖̬̙͎̊̈́͜͝ ̵͇̃̈́͌̔͑ą̴̠̭̞͎͙̙͙̺͛͗͊̐͛̕ ̸̬͉̗͋̓̊̿͂ͅb̷̯̝̻̜̠̠͎̳̖̯́̉l̴̛̦̦̎̌̇̃́̔̐à̸͚̹̗̼͙͍̤̫̘͍ņ̷͙̳͈̲͍͐͂̀͗̎̈́͑̀͠k̵̢̗͈̩͉͌̓̀͊̍̓̓ ̴̨̛͔͚͙̭͙̱̠m̴̖̼̤͈̰͇̆̒̓̀̋̿̕̕ȩ̸̛͕̣̭̖́̓̇̓́̈́̑͆͘s̸̝̼̲͇̯͉͉̽̈́͋̀̅͋̈́͗̕ͅş̴̛͙̯̺͖̲͂͂̊̈́̍̀̀͐̚ȃ̴̺̯̅ǧ̵̪͚̂́͋̔͑ę̷͙̪̂͛̋̽̒͌̓̉͘͠ ̷̨̺͕̟̞̼́̆̏̏̇f̸̢̡̪͔͇͇̼͂̆̔͘͝r̵̢͕̹̪̣̄̓͗ȍ̷̧̡̢̘̮̤̥̖͇m̴̡̧̠̳͓̟͙͚̲͊̀̋̑́̈̏͘͜ %PING_USER%!"
+  - "%PING_USER%!"
+  - "🅸🆃'🆂 🅰 🅱🅻🅰🅽🅺 🅼🅴🆂🆂🅰🅶🅴 🅵🆁🅾🅼 %PING_USER%!"
+  - "˜”*°•.˜”*°• getting mentioned by %PING_USER%!•°*”˜.•°*”˜"
+
+
+
+context_responses:
+  - "Hello, %PING_USER%!"
+  - "Ooh, a mention (can't read it, though. DM me if you need something!)"
+  - "Yep, that's me being mentioned (even though I can't read it. DM me if you need something!)"
+  - "M E S S A G E S (that I can't read. DM me if you need something!)"
+  - "Fun fact, I can't actually read these messages. Please DM me and an admin will help out!"
+  - "I am a bot. %PING_USER% is not, and so is our admin team. DM me to get in touch with them!"

@@ -31,7 +31,7 @@ class daily_color(commands.Cog):
     async def wait_until_7am(self):
         await self.bot.wait_until_ready()
         now = datetime.datetime.now().astimezone()
-        next_run = now.replace(hour=7, minute=0, second=0)
+        next_run = now.replace(hour=5, minute=0, second=0)
 
         if next_run < now:
             next_run += datetime.timedelta(days=1)

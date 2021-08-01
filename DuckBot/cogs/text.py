@@ -111,17 +111,24 @@ class general(commands.Cog):
     #### .jumbo <Emoji> ####
     # makes emoji go big
 
-    @commands.command(  aliases=['jumbo', 'bigemoji', 'emojinfo'],
-                        help="Makes an emoji bigger and shows it's formatting", usage="<emoji>")
+    @commands.group(help="Makes an emoji bigger and shows it's formatting")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def emoji(self, ctx, emoji: typing.Optional[discord.PartialEmoji]):
-        if emoji == None: await ctx.send(embed = discord.Embed(description="Please specify a valid Custom Emoji", color=ctx.me.color))
-        else:
+    async def emoji(self, ctx, emoji: typing.Union[discord.PartialEmoji, str]):
+        if type(emoji) == discord.PartialEmoji:
             if emoji.animated: emojiformat = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
             else: emojiformat = f"*`<`*`:{emoji.name}:{emoji.id}>`"
             embed = discord.Embed(description=f"{emojiformat}",color=ctx.me.color)
             embed.set_image(url = emoji.url)
             await ctx.send(embed=embed)
+        else:
+            def to_string(c):
+                digit = f'{ord(c):x}'
+                name = unicodedata.name(c, 'Name not found.')
+                return f'`\\U{digit:>08}`: {name} - **{c}** \N{EM DASH} <http://www.fileformat.info/info/unicode/char/{digit}>'
+            msg = '\n'.join(map(to_string, characters))
+
+            menu = menus.MenuPages(EmbedPageSource(msg.split("\n"), per_page=20), delete_message_after=True)
+            await menu.start(ctx)
 
     #### .uuid <mcname> ####
     # gets user's UUID (minecraft)

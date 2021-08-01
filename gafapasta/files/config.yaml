@@ -1,0 +1,15 @@
+# NOTE: Bot token
+botToken: ODYxMDE2MjE2NDAyNzg4Mzky.YODp1g.XAYEFWLnie16jMzP1qQhh5MsTs8
+
+# NOTE: Cogs that will be loaded after the
+# bot is connected to the discord API.
+DelayedLoadCogs:
+  - bonk
+
+server_id: 774561547930304536
+
+staff_role: 871108926207295529
+
+log_whitelist: 871109184031178862
+
+consola_mc: 871109290667167854

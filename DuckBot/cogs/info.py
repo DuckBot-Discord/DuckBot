@@ -136,15 +136,15 @@ class MyHelp(commands.HelpCommand):
     async def send_bot_help(self, mapping):
         embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
         description=f"""
-**prefixes:** `db.`, `duckbot.`, ~~`.`~~, ~~`duck.`~~, ~~`d.`~~, ~~`du.`~~, ~~`Duck.`~~, ~~`D.`~~, ~~`duckbot `~~*
-> some prefixes are no longer available
+📰 **__NEW: custom prefix! do__ `{self.clean_prefix}prefix [new]` __to change it!__** 📰
 ```diff
 - usage format: <required> [optional]
 + {self.clean_prefix}help [command] - get information on a command
 + {self.clean_prefix}help [category] - get information on a category
 ```[<:invite:860644752281436171> invite me]({self.context.bot.invite_url}) | [<:topgg:870133913102721045> top.gg]({self.context.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.context.bot.vote_bots_gg}) | [<:github:744345792172654643> source]({self.context.bot.repo})
-_ _""")
+> **server prefix:** `{await self.context.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', self.context.guild.id) or 'db.'}`
 
+​_ _""")
         ignored_cogs=['helpcog']
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs: continue
@@ -182,9 +182,10 @@ description: {command.help}
         await channel.send(embed=embed)
 
     async def send_cog_help(self, cog):
-        entries = await self.filter_commands(cog.get_commands(), sort=True)
+        entries = cog.get_commands()
         menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.clean_prefix))
         await menu.start(self.context)
+
 
     async def send_group_help(self, group):
         subcommands = group.commands
