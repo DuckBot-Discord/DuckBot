@@ -19,7 +19,7 @@ class banembed(menus.ListPageSource):
         return embed
 
 class Confirm(menus.Menu):
-    def __init__(self, msg):
+    def remove__init__(self, msg):
         super().__init__(timeout=30.0, delete_message_after=True)
         self.msg = msg
         self.result = None
@@ -68,6 +68,8 @@ class moderation(commands.Cog):
     @commands.guild_only()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def prefix(self, ctx, new=None):
+        """🎇NEW changes the bot's prefix for this server.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
+
         old = await self.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not new:
             old = old or 'db.'
@@ -89,7 +91,7 @@ class moderation(commands.Cog):
 #------------------------ USER-INFO ------------------------------#
 #---------------------------------------------------=====---------#
 
-    @commands.command(help="Shows a user's information", aliases = ['userinfo', 'ui', 'whois', 'whoami'])
+    @commands.command(aliases = ['userinfo', 'ui', 'whois', 'whoami'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         if not user: user = ctx.author
@@ -107,12 +109,14 @@ class moderation(commands.Cog):
         if user.nick: nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
         else: nick = ""
         # CREATION DATE
-        date = user.created_at.strftime("%b %-d %Y at %-H:%M")
-        created = f"\n<:invite:658538493949116428>**Created:** `{date} UTC`"
+        date = f"<t:{round(user.created_at.timestamp())}:F>"
+        rdate = f"<t:{round(user.created_at.timestamp())}:R>"
+        created = f"\n<:invite:860644752281436171>**Created:** {date} ({rdate})"
         # JOIN DATE
         if user.joined_at:
-            date = user.joined_at.strftime("%b %-d %Y at %-H:%M")
-            joined = f"\n<:joined:849392863557189633>**Joined:** `{date} UTC`"
+            date = f"<t:{round(user.joined_at.timestamp())}:F>"
+            rdate = f"<t:{round(user.joined_at.timestamp())}:R>"
+            joined = f"\n<:joined:849392863557189633>**joined:** {date} ({rdate})"
         else: joined = ""
         # GUILD OWNER
         if user is ctx.guild.owner:
@@ -308,19 +312,23 @@ class moderation(commands.Cog):
 #------------------------ PURGE ------------------------------#
 #-------------------------------------------------------------#
 
-    @commands.group(aliases=['purge', 'cleanup', 'clear', 'delete', 'clean'])
+    @commands.group(aliases=['purge', 'clear', 'delete', 'clean'], description="""```yaml
+    Removes messages that meet a criteria. In order to use this command, you must have Manage Messages permissions.
+
+    Remember that the bot needs Manage Messages as well. These commands cannot be used in a private message.
+
+    When the command is done doing its work, you will get a message detailing which users got removed and how many messages got removed.
+
+    Note: If ran without any sub-commands, it will remove all messages that are NOT pinned to the channel. use "remove all <amount>" to remove everything
+    ```
+    """)
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int]):
-        """Removes messages that meet a criteria.
-        In order to use this command, you must have Manage Messages permissions.
-        Note that the bot needs Manage Messages as well. These commands cannot
-        be used in a private message.
-        When the command is done doing its work, you will get a message
-        detailing which users got removed and how many messages got removed.
-        """
+
         if ctx.invoked_subcommand is None:
-            await self.do_removal(ctx, search, lambda e: True)
+            await self.do_removal(ctx, search, lambda e: not e.pinned)
 
     async def do_removal(self, ctx, limit, predicate, *, before=None, after=None):
         if limit > 2000:
@@ -373,7 +381,7 @@ class moderation(commands.Cog):
         await self.do_removal(ctx, search, lambda e: len(e.embeds) or len(e.attachments))
 
     @remove.command(name='all')
-    async def _remove_all(self, ctx, search=100):
+    async def remove_remove_all(self, ctx, search=100):
         """Removes all messages."""
         await self.do_removal(ctx, search, lambda e: True)
 
@@ -393,7 +401,7 @@ class moderation(commands.Cog):
             await self.do_removal(ctx, 100, lambda e: substr in e.content)
 
     @remove.command(name='bot', aliases=['bots'])
-    async def _bot(self, ctx, prefix=None, search=100):
+    async def remove_bot(self, ctx, prefix=None, search=100):
         """Removes a bot user's messages and messages with their optional prefix."""
 
         def predicate(m):
@@ -402,7 +410,7 @@ class moderation(commands.Cog):
         await self.do_removal(ctx, search, predicate)
 
     @remove.command(name='emoji', aliases=['emojis'])
-    async def _emoji(self, ctx, search=100):
+    async def remove_emoji(self, ctx, search=100):
         """Removes all messages containing custom emoji."""
         custom_emoji = re.compile(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>')
         def predicate(m):
@@ -411,7 +419,7 @@ class moderation(commands.Cog):
         await self.do_removal(ctx, search, predicate)
 
     @remove.command(name='reactions')
-    async def _reactions(self, ctx, search=100):
+    async def remove_reactions(self, ctx, search=100):
         """Removes all reactions from messages that have them."""
 
         if search > 2000:
@@ -425,30 +433,10 @@ class moderation(commands.Cog):
 
         await ctx.send(f'Successfully removed {total_reactions} reactions.')
 
-    @remove.command()
+    @remove.group()
     async def custom(self, ctx, *, args: str):
         """A more advanced purge command.
-        This command uses a powerful "command line" syntax.
-        Most options support multiple values to indicate 'any' match.
-        If the value has spaces it must be quoted.
-        The messages are only deleted if all options are met unless
-        the --or flag is passed, in which case only if any is met.
-        The following options are valid.
-        --user: A mention or name of the user to remove.
-        --contains: A substring to search for in the message.
-        --starts: A substring to search if the message starts with.
-        --ends: A substring to search if the message ends with.
-        --search: How many messages to search. Default 100. Max 2000.
-        --after: Messages must come after this message ID.
-        --before: Messages must come before this message ID.
-        Flag options (no arguments):
-        --bot: Check if it's a bot user.
-        --embeds: Check if the message has embeds.
-        --files: Check if the message has attachments.
-        --emoji: Check if the message has custom emoji.
-        --reactions: Check if the message has reactions
-        --or: Use logical OR for all options.
-        --not: Use logical NOT for all options.
+        do "%PRE%help remove custom" for usage.
         """
         parser = Arguments(add_help=False, allow_abbrev=False)
         parser.add_argument('--user', nargs='+')
@@ -527,6 +515,93 @@ class moderation(commands.Cog):
 
         args.search = max(0, min(2000, args.search)) # clamp from 0-2000
         await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
+
+    @custom.command(name="readme")
+    async def remove_custom_readme(self, ctx):
+        """A more advanced purge command.
+        This command uses a powerful "command line" syntax.
+        Most options support multiple values to indicate 'any' match.
+        If the value has spaces it must be quoted.
+        The messages are only deleted if all options are met unless
+        the --or flag is passed, in which case only if any is met.
+
+        The following options are valid.
+         --user: A mention or name of the user to remove.
+         --contains: A substring to search for in the message.
+         --starts: A substring to search if the message starts with.
+         --ends: A substring to search if the message ends with.
+         --search: Messages to search. Default 100. Max 2000.
+         --after: Messages after this message ID.
+         --before: Messages before this message ID.
+
+        Flag options (no arguments):
+         --bot: Check if it's a bot user.
+         --embeds: Checks for embeds.
+         --files: Checks for attachments.
+         --emoji: Checks for custom emoji.
+         --reactions: Checks for rections.
+         --or: Use logical OR for ALL options.
+         --not: Use logical NOT for ALL options.
+        """
+        await ctx.send("""```yaml
+                A more advanced purge command.
+                This command uses a powerful "command line" syntax.
+                Most options support multiple values to indicate 'any' match.
+                If the value has spaces it must be quoted.
+                The messages are only deleted if all options are met unless
+                the --or flag is passed, in which case only if any is met.
+                The following options are valid.
+                --user: A mention or name of the user to remove.
+                --contains: A substring to search for in the message.
+                --starts: A substring to search if the message starts with.
+                --ends: A substring to search if the message ends with.
+                --search: How many messages to search. Default 100. Max 2000.
+                --after: Messages after this message ID.
+                --before: Messages before this message ID.
+                Flag options (no arguments):
+                --bot: Check if it's a bot user.
+                --embeds: Checks for embeds.
+                --files: Checks for attachments.
+                --emoji: Checks for custom emoji.
+                --reactions: Checks for rections.
+                --or: Use logical OR for ALL options.
+                --not: Use logical NOT for ALL options.
+                ```"""
+)
+
+    @commands.command()
+    async def cleanup(self, ctx, amount: int=25):
+        """
+        Cleans up the bot's messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
+        """
+        if amount > 25:
+            if not ctx.channel.permissions_for(ctx.author).manage_messages:
+                await ctx.send("You must have `manage_messages` permission to perform a search greater than 25")
+                return
+            if not ctx.channel.permissions_for(ctx.me).manage_messages:
+                await ctx.send("I need the `manage_messages` permission to perform a search greater than 25")
+                return
+
+        def check(msg):
+            return msg.author == ctx.me
+        if ctx.channel.permissions_for(ctx.me).manage_messages:
+            deleted = await ctx.channel.purge(limit=amount, check=check)
+        else:
+            deleted = await ctx.channel.purge(limit=amount, check=check, bulk = False)
+        spammers = Counter(m.author.display_name for m in deleted)
+        deleted = len(deleted)
+        messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
+        if deleted:
+            messages.append('')
+            spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+            messages.extend(f'**{name}**: {count}' for name, count in spammers)
+
+        to_send = '\n'.join(messages)
+        if len(to_send) > 2000:
+            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
+        else:
+            await ctx.send(to_send, delete_after=10)
+
 
 #------------------------------------------------------------------------------#
 #--------------------------------- UNBAN --------------------------------------#

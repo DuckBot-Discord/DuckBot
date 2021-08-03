@@ -1,4 +1,4 @@
-import os, discord, asyncio, yaml
+import os, discord, asyncio, yaml, datetime, asyncpg
 from dotenv import load_dotenv
 from discord.ext import commands
 
@@ -7,12 +7,18 @@ with open(r'files/config.yaml') as file:
     full_yaml = yaml.full_load(file)
 yaml_data = full_yaml
 
-async def error_msg(self, ctx):
-    await ctx.message.add_reaction('🚫')
-    await asyncio.sleep(5)
-    try: await ctx.message.delete()
-    except: return
-    return
+async def create_db_pool():
+
+    credentials = {"user": f"{yaml_data['PSQL_USER']}",
+                   "password": f"{yaml_data['PSQL_PASSWORD']}",
+                   "database": f"{yaml_data['PSQL_DB']}",
+                   "host": f"{yaml_data['PSQL_HOST']}"}
+    print(credentials)
+    bot.db = await asyncpg.create_pool(**credentials)
+    print("connection successful")
+
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS userinfo(user_id bigint PRIMARY KEY, birthdate date);")
+    print("table done")
 
 intents = discord.Intents.all()
 
@@ -24,6 +30,7 @@ bot.owner_ids = [326147079275675651, 349373972103561218, 438513695354650626]
 
 bot.maintenance = False
 bot.noprefix  = False
+bot.started = False
 
 load_dotenv()
 TOKEN = yaml_data['botToken']
@@ -35,29 +42,31 @@ async def on_ready():
     print('\033[0m')
     await bot.wait_until_ready()
     await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.playing, name='DM me to contact staff'))
-    print("\033[93m======[ DELAYED LOAD ]======")
-    for cog in yaml_data['DelayedLoadCogs']:
-        try:
-            bot.load_extension(f"cogs.{cog}")
-            print(f'\033[92msuccessfully loaded {cog}')
-        except:
-            print('\033[0m')
-            print("\033[31m========[ WARNING ]========")
-            print(f"\033[91mAn error occurred while loading '{cog}'""")
-            print('\033[0m')
-    print('\033[0m')
+    if bot.started == False:
+        bot.started = True
+        print("\033[93m======[ DELAYED LOAD ]======")
+        for cog in yaml_data['DelayedLoadCogs']:
+            try:
+                bot.load_extension(f"cogs.{cog}")
+                print(f'\033[92msuccessfully loaded {cog}')
+            except:
+                print('\033[0m')
+                print("\033[31m========[ WARNING ]========")
+                print(f"\033[91mAn error occurred while loading '{cog}'""")
+                print('\033[0m')
+        print('\033[0m')
 
 @bot.event
 async def on_message(message):
     prefixes = ('.')
     if bot.maintenance == True:
-        if message.author.id == bot.owner_id:
+        if message.author.id in bot.owner_ids:
             await bot.process_commands(message)
             return
         if message.content.startswith(prefixes):
             await message.add_reaction('<:bot_under_maintenance:857690568368717844>')
         return
-    if not message.content.startswith(prefixes) and message.author.id == bot.owner_id and bot.noprefix == True:
+    if not message.content.startswith(prefixes) and message.author.id in bot.owner_ids and bot.noprefix == True:
         edited_message = message
         edited_message.content = f".{message.content}"
         await bot.process_commands(edited_message)
@@ -79,4 +88,5 @@ for filename in os.listdir("./cogs"):
             print('\033[0m')
 print('\033[0m')
 
+bot.loop.run_until_complete(create_db_pool())
 bot.run(TOKEN, reconnect=True)

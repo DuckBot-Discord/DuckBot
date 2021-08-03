@@ -1,4 +1,3 @@
-
 import  discord, asyncio
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -18,6 +17,12 @@ class handler(commands.Cog):
     async def on_command_error(self, ctx, error):
         error = getattr(error, "original", error)
 
+        if isinstance(error, discord.ext.commands.CheckAnyFailure):
+            for e in error.errors:
+                if error != commands.NotOwner:
+                    error = e
+                    break
+
         embed = discord.Embed(color=0xD7342A)
         embed.set_author(name = 'Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
 
@@ -25,7 +30,7 @@ class handler(commands.Cog):
             await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
             return
 
-        if isinstance(error, commands.MissingPermissions):
+        if isinstance(error, discord.ext.commands.MissingPermissions):
             text=f"You're missing the following permissions: \n**{', '.join(error.missing_perms)}**"
             try:
                 embed.description=text
@@ -35,7 +40,7 @@ class handler(commands.Cog):
                 except: pass
             return
 
-        elif isinstance(error, commands.BotMissingPermissions):
+        if isinstance(error, discord.ext.commands.BotMissingPermissions):
             text=f"I'm missing the following permissions: \n**{', '.join(error.missing_perms)}**"
             try:
                 embed.description=text

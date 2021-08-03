@@ -1,6 +1,9 @@
-import json, random, typing, discord, asyncio, time, os, inspect, itertools
+import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, itertools, contextlib, datetime
 from discord.ext import commands, menus
 from discord.ext.commands import Paginator as CommandPaginator
+from errors import HigherRole
+from jishaku.models import copy_context_with
+
 
 class Duckinator(menus.MenuPages):
     def __init__(self, source):
@@ -115,7 +118,9 @@ class GroupHelpPageSource(menus.ListPageSource):
 
         for command in commands:
             signature = f'{command.qualified_name} {command.signature}'
-            embed.add_field(name=signature, value=command.short_doc or 'No help given...', inline=False)
+            if command.help: command_help = command.help.replace("%PRE%", self.prefix)
+            else: command_help = 'No help given...'
+            embed.add_field(name=signature, value=f"```yaml\n{command_help}```", inline=False)
 
         maximum = self.get_max_pages()
         if maximum > 1:
@@ -137,6 +142,7 @@ class MyHelp(commands.HelpCommand):
         embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
         description=f"""
 📰 **__NEW: custom prefix! do__ `{self.clean_prefix}prefix [new]` __to change it!__** 📰
+**Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
 - usage format: <required> [optional]
 + {self.clean_prefix}help [command] - get information on a command
@@ -167,16 +173,20 @@ class MyHelp(commands.HelpCommand):
   # !help <command>
     async def send_command_help(self, command):
         alias = command.aliases
+        if command.help: command_help = command.help.replace("%PRE%", self.clean_prefix)
+        else: command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}",
+            description=f"""
+```yaml
       usage: {self.get_minimal_command_signature(command)}
     aliases: {', '.join(alias)}
-description: {command.help}
+description: {command_help}
 ```""")
         else:
             embed = discord.Embed(color=0x5865F2, title=f"information about {self.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
-description: {command.help}
+description: {command_help}
 ```""")
         channel = self.get_destination()
         await channel.send(embed=embed)
@@ -214,6 +224,16 @@ class about(commands.Cog):
         help_command.cog = self
         bot.help_command = help_command
 
+    def get_bot_uptime(self):
+        return f"<t:{round(self.bot.uptime.timestamp())}:R>"
+
+    def get_bot_last_rall(self):
+        return f"<t:{round(self.bot.last_rall.timestamp())}:R>"
+
+    @commands.command(help="Sends a link to invite the bot to your server")
+    async def invite(self, ctx):
+        await ctx.send(embed=discord.Embed(description=f"[**<:invite:860644752281436171> invite me**]({self.bot.invite_url})",color=ctx.me.color))
+
     @commands.command(  help="Checks the bot's ping to Discord")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def ping(self, ctx):
@@ -221,30 +241,64 @@ class about(commands.Cog):
         start = time.perf_counter()
         message = await ctx.send(embed=embed)
         end = time.perf_counter()
+
+        pstart = time.perf_counter()
+        await self.bot.db.fetch("SELECT 1")
+        pend = time.perf_counter()
+        ping = (pend - pstart) * 1000
+
         await asyncio.sleep(0.7)
         duration = (end - start) * 1000
-        embed = discord.Embed(title='', description=f'**websocket:** `{(self.bot.latency * 1000):.2f}ms` \n**message:** `{duration:.2f}ms`', color=ctx.me.color)
+        embed = discord.Embed(description=f"""**<:open_site:854786097363812352> Websocket:** `{(self.bot.latency * 1000):.2f}ms`
+                                            **<a:typing:597589448607399949> Message:** `{duration:.2f}ms`
+                                            **<:psql:871758815345901619> Database:** `{ping:.2f}ms`""", color=ctx.me.color)
         await message.edit(embed=embed)
 
-    @commands.command(help="Shows info about the bot")
+    @commands.command(help="Shows info about the bot", aliases=['info'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def info(self, ctx):
+    async def about(self, ctx):
+        """Tells you information about the bot itself."""
         information = await self.bot.application_info()
-        embed = discord.Embed(title='DuckBot info', color=ctx.me.color, description=f"""
-**<:role:860644904048132137> Author:**
-{information.owner}
-**<:servers:870152102759006208> Servers:**
-i'm in {len(self.bot.guilds)} servers.
-<:invite:860644752281436171> Invite me [here]({self.bot.invite_url})!
-**<:info:860295406349058068> Information**
-[<:github:744345792172654643> source]({self.bot.repo}) | [<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})
+        embed = discord.Embed(color=0x5865F2, description=f"""
+[<:github:744345792172654643> source]({self.bot.repo}) | [<:invite:860644752281436171> invite me]({self.bot.invite_url}) | [<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})
 > Try also `{ctx.prefix}source [command]`
 > or `{ctx.prefix}source [command.subcommand]`
 """)
+        embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.avatar_url)
+        # statistics
+        total_members = 0
+        total_unique = len(self.bot.users)
 
-        embed.add_field(name='Bug report and support:', value= """DM me to get support or report any issue!""", inline=False)
-        embed.set_thumbnail(url=ctx.me.avatar_url)
+        text = 0
+        voice = 0
+        guilds = 0
+        for guild in self.bot.guilds:
+            guilds += 1
+            if guild.unavailable:
+                continue
+
+            total_members += guild.member_count
+            for channel in guild.channels:
+                if isinstance(channel, discord.TextChannel):
+                    text += 1
+                elif isinstance(channel, discord.VoiceChannel):
+                    voice += 1
+        l = [(sum(m.bot for m in g.members) / g.member_count)*100 for g in self.bot.guilds]
+
+        embed.add_field(name='Members', value=f'{total_members} total\n{total_unique} unique')
+        embed.add_field(name='Channels', value=f'{text + voice} total\n{text} text\n{voice} voice')
+
+        memory_usage = psutil.Process().memory_full_info().uss / 1024**2
+        cpu_usage = psutil.cpu_percent()
+        embed.add_field(name='Process', value=f'{memory_usage:.2f} MiB\n{cpu_usage:.2f}% CPU')
+
+        version = pkg_resources.get_distribution('discord.py').version
+        embed.add_field(name='Bot servers', value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(l) / len(l), 2)}%")
+        embed.add_field(name='Command info:', value=f"**Last reboot:**\n{self.get_bot_uptime()}\n**Last command reload:**\n{self.get_bot_last_rall()}")
+        embed.set_footer(text=f'Made with discord.py v{version} 💖', icon_url='http://i.imgur.com/5BFecvA.png')
+        embed.timestamp = datetime.datetime.utcnow()
         await ctx.send(embed=embed)
+
 
     @commands.command(help="Links to the bot's code, or a specific command's",aliases = ['sourcecode', 'code'], usage="[command|command.subcommand]")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -290,9 +344,9 @@ i'm in {len(self.bot.guilds)} servers.
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def privacy(self, ctx):
         embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
-We don't store any user data _yet_ :wink:
-
-Privacy concerns, DM the bot.""", color=ctx.me.color)
+> We store your `server id` for purpose of custom prefixes.
+""", color=ctx.me.color)
+        embed.set_footer(text='Privacy concerns, DM the bot.')
         await ctx.send(embed=embed)
 
 

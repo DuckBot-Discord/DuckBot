@@ -125,10 +125,13 @@ class general(commands.Cog):
                 digit = f'{ord(c):x}'
                 name = unicodedata.name(c, 'Name not found.')
                 return f'`\\U{digit:>08}`: {name} - **{c}** \N{EM DASH} <http://www.fileformat.info/info/unicode/char/{digit}>'
-            msg = '\n'.join(map(to_string, characters))
+            msg = '\n'.join(map(to_string, emoji[:1]))
+            await ctx.send(f"{msg}\n*use\"{ctx.prefix}charinfo\" to get info about more characters at once*")
 
-            menu = menus.MenuPages(EmbedPageSource(msg.split("\n"), per_page=20), delete_message_after=True)
-            await menu.start(ctx)
+    @emoji.command(name="lock")
+    @commands.has_permissions(manage_emojis=True)
+    async def emoji_lock(self, ctx):
+        await ctx.send("a")
 
     #### .uuid <mcname> ####
     # gets user's UUID (minecraft)

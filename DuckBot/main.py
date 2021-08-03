@@ -7,7 +7,7 @@ async def get_pre(bot, message):
     if not message.guild:
         return commands.when_mentioned_or(PRE)(bot,message)
     if await bot.is_owner(message.author) and bot.noprefix == True:
-        return ''
+        return commands.when_mentioned_or("")(bot,message)
     prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
     if not prefix:
         prefix = PRE
@@ -26,6 +26,7 @@ bot.maintenance = False
 bot.noprefix  = False
 bot.started = False
 bot.uptime = datetime.datetime.utcnow()
+bot.last_rall = datetime.datetime.utcnow()
 
 os.environ['JISHAKU_HIDE'] = 'True'
 bot.load_extension('jishaku')

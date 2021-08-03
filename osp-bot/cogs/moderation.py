@@ -1,4 +1,4 @@
-import typing, discord, asyncio, yaml
+import typing, discord, asyncio, yaml, datetime
 from discord.ext import commands
 
 class moderation(commands.Cog):
@@ -67,6 +67,7 @@ class moderation(commands.Cog):
 
 
     @commands.command(aliases = ['userinfo', 'ui'])
+    @commands.has_permissions(manage_messages=True)
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         if not user: user = ctx.author
         # BADGES
@@ -79,20 +80,22 @@ class moderation(commands.Cog):
         if user.nick: nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
         else: nick = ""
         # CREATION DATE
-        date = user.created_at.strftime("%b %-d %Y at %-H:%M")
-        created = f"\n<:invite:860644752281436171>**Created:** `{date} UTC`"
+        date = f"<t:{round(user.created_at.timestamp())}:F>"
+        rdate = f"<t:{round(user.created_at.timestamp())}:R>"
+        created = f"\n<:invite:860644752281436171>**Created:** {date} ({rdate})"
         # JOIN DATE
         if user.joined_at:
-            date = user.joined_at.strftime("%b %-d %Y at %-H:%M")
-            joined = f"\n<:joined:849392863557189633>**joined:** `{date} UTC`"
+            date = f"<t:{round(user.joined_at.timestamp())}:F>"
+            rdate = f"<t:{round(user.joined_at.timestamp())}:R>"
+            joined = f"\n<:joined:849392863557189633>**joined:** {date} ({rdate})"
         else: joined = ""
         # GUILD OWNER
         if user is ctx.guild.owner:
-            owner = f"\n<:owner:860644790005399573>**Owner:** <:check:314349398811475968>"
+            owner = f"\n<:owner:860644790005399573>**Owner:** ✅"
         else: owner = ""
         # BOT
         if user.bot:
-            bot = f"\n<:botTag:860645571076030525>**Bot:** <:check:314349398811475968>"
+            bot = f"\n<:botTag:860645571076030525>**Bot:** ✅"
         else: bot = ""
         # BOOSTER SINCE
         if user.premium_since:
@@ -114,8 +117,18 @@ class moderation(commands.Cog):
             roles = f"{roles} {role.mention}"
         if roles != "":
             roles = f"\n<:role:860644904048132137>**roles:** {roles}"
+
+        #BIRTHDAY
+        current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', user.id)
+        if current_birthday:
+            now = datetime.datetime.now().date()
+            delta = now - current_birthday
+            age = int(delta.days / 365.2425)
+            birthday = f"\n🎉**birthday:** `{current_birthday.strftime('%B %d, %Y')} ({age} Y/O)`"
+        else: birthday = ""
+
         # EMBED
-        embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
+        embed = discord.Embed(color=ctx.me.color, description=f"""{nick}{badges}{owner}{bot}{userid}{created}{joined}{order}{birthday}{boost}{roles}""")
         embed.set_author(name=user, icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
         embed.set_thumbnail(url=user.avatar_url)
         await ctx.send(embed=embed)

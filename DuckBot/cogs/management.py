@@ -1,4 +1,4 @@
-import os, discord, asyncio, traceback, json, typing
+import os, discord, asyncio, traceback, json, typing, datetime
 from dotenv import load_dotenv
 from discord.ext import commands, menus
 from jishaku.models import copy_context_with
@@ -266,6 +266,7 @@ class bot_management(commands.Cog):
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reloadall(self, ctx, argument: typing.Optional[str]):
+        self.bot.last_rall = datetime.datetime.utcnow()
         list = ""
         desc = ""
         err = False

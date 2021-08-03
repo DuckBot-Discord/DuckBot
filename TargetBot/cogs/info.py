@@ -14,8 +14,6 @@ class info(commands.Cog):
         self.console = self.bot.get_channel(full_yaml['ConsoleCommandsChannel'])
         self.yaml_data = full_yaml
 
-
-
     @commands.command()
     async def guide(self, ctx):
         embed=discord.Embed(title="Please follow the guide!", description="To make sure that your resource pack is set up correctly, please follow [this guide](https://www.stylizedresourcepack.com/guide). Make sure to enable POM (parallax occlusion mapping) to get the 3D effect", color=ctx.me.color)
