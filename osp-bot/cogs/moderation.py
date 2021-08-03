@@ -65,7 +65,7 @@ class moderation(commands.Cog):
         if emoji_flags == "": emoji_flags = None
         return emoji_flags
 
-
+    @commands.command(help="Shows information for a specified user")
     @commands.command(aliases = ['userinfo', 'ui'])
     @commands.has_permissions(manage_messages=True)
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
@@ -139,6 +139,7 @@ class moderation(commands.Cog):
 #------------------------------------------------------------#
 
     @commands.command()
+    @commands.command(help="kicks specified member")
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -192,6 +193,7 @@ class moderation(commands.Cog):
 #-----------------------------------------------------------#
 
     @commands.command()
+    @commands.command(help="Bans specified member")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -246,6 +248,7 @@ class moderation(commands.Cog):
 #------------------------ NICK ------------------------------#
 #------------------------------------------------------------#
 
+    @commands.command(help="Edits user's server nickname")
     @commands.command(aliases = ['sn', 'nick'])
     @commands.has_permissions(manage_messages=True, change_nickname=True)
     async def setnick(self, ctx, member : typing.Optional[discord.Member], *, new : typing.Optional[str] = 'None'):
@@ -306,6 +309,7 @@ class moderation(commands.Cog):
 #------------------------ PURGE ------------------------------#
 #-------------------------------------------------------------#
 
+    @commands.command(help="removes specified number of messages from channel. Max 1000 messages")
     @commands.command(aliases=['clean', 'purge', 'delete'])
     @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx, argument: typing.Optional[int] = "noimput"):
@@ -330,7 +334,7 @@ class moderation(commands.Cog):
 #------------------------------------------------------------#
 #------------------------ MUTE ------------------------------#
 #------------------------------------------------------------#
-
+    @commands.command(help="mutes member lol")
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
@@ -364,6 +368,7 @@ class moderation(commands.Cog):
 #------------------------ UNMUTE -----------------------------#
 #-------------------------------------------------------------#
 
+    @commands.command(help="unmutes member...")
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
@@ -397,7 +402,7 @@ class moderation(commands.Cog):
 #-----------------------------------------------------------------#
 #------------------------ DENYMEDIA ------------------------------#
 #-----------------------------------------------------------------#
-
+    
     @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md', 'mediaban', 'nm', 'mb', 'mban'])
     @commands.has_permissions(manage_messages=True)
     async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
