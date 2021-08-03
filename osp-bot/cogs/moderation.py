@@ -65,8 +65,7 @@ class moderation(commands.Cog):
         if emoji_flags == "": emoji_flags = None
         return emoji_flags
 
-
-    @commands.command(aliases = ['userinfo', 'ui'])
+    @commands.command(aliases = ['userinfo', 'ui'],help="Shows information for a specified user")
     @commands.has_permissions(manage_messages=True)
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         if not user: user = ctx.author
@@ -138,7 +137,7 @@ class moderation(commands.Cog):
 #------------------------ KICK ------------------------------#
 #------------------------------------------------------------#
 
-    @commands.command()
+    @commands.command(help="kicks specified member")
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -191,7 +190,7 @@ class moderation(commands.Cog):
 #------------------------ BAN ------------------------------#
 #-----------------------------------------------------------#
 
-    @commands.command()
+    @commands.command(help="Bans specified member")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -246,7 +245,7 @@ class moderation(commands.Cog):
 #------------------------ NICK ------------------------------#
 #------------------------------------------------------------#
 
-    @commands.command(aliases = ['sn', 'nick'])
+    @commands.command(aliases = ['sn', 'nick'],help="Edits user's server nickname")
     @commands.has_permissions(manage_messages=True, change_nickname=True)
     async def setnick(self, ctx, member : typing.Optional[discord.Member], *, new : typing.Optional[str] = 'None'):
         if member == None:
@@ -306,7 +305,7 @@ class moderation(commands.Cog):
 #------------------------ PURGE ------------------------------#
 #-------------------------------------------------------------#
 
-    @commands.command(aliases=['clean', 'purge', 'delete'])
+    @commands.command(aliases=['clean', 'purge', 'delete'],help="removes specified number of messages from channel. Max 1000 messages")
     @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx, argument: typing.Optional[int] = "noimput"):
         amount = argument
@@ -330,8 +329,7 @@ class moderation(commands.Cog):
 #------------------------------------------------------------#
 #------------------------ MUTE ------------------------------#
 #------------------------------------------------------------#
-
-    @commands.command()
+    @commands.command(help="mutes member lol")
     @commands.has_permissions(manage_messages=True)
     async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -364,7 +362,7 @@ class moderation(commands.Cog):
 #------------------------ UNMUTE -----------------------------#
 #-------------------------------------------------------------#
 
-    @commands.command()
+    @commands.command(help="unmutes member...")
     @commands.has_permissions(manage_messages=True)
     async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -397,7 +395,7 @@ class moderation(commands.Cog):
 #-----------------------------------------------------------------#
 #------------------------ DENYMEDIA ------------------------------#
 #-----------------------------------------------------------------#
-
+    
     @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md', 'mediaban', 'nm', 'mb', 'mban'])
     @commands.has_permissions(manage_messages=True)
     async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
@@ -528,7 +526,7 @@ class moderation(commands.Cog):
 #------------------------ MOVE MESSAGES -----------------------------#
 #--------------------------------------------------------------------#
 
-    @commands.command()
+    @commands.command(help="moves messages to a different channel")
     @commands.has_permissions(manage_messages=True)
     async def move(self, ctx, amount: typing.Optional[int], channel: typing.Optional[discord.TextChannel]):
         if not any(role in self.staff_roles for role in ctx.author.roles):
