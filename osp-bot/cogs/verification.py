@@ -1,19 +1,109 @@
-from discord.ext import commands
+from discord.ext import commands, menus, tasks
 import asyncio
 import datetime
 import discord
 import re
 import os
 import humanize
+import typing
+import yaml
+
+class AllEmbed(menus.ListPageSource):
+    def __init__(self, data, per_page=20):
+        super().__init__(data, per_page=per_page)
+
+    async def format_page(self, menu, entries):
+        embed = discord.Embed(title=f"All birth dates",
+                              description="\n".join(entries))
+        return embed
+
 
 class verification(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.daily_task.start()
+
+        #------------- YAML STUFF -------------#
+        with open(r'files/config.yaml') as file:
+            full_yaml = yaml.full_load(file)
+            staff_roles = []
+            for roleid in full_yaml['StaffRoles']:
+                staff_roles.append(self.bot.get_guild(full_yaml['guildID']).get_role(roleid))
+        self.staff_roles = staff_roles
+        self.yaml_data = full_yaml
+        self.underaged = self.bot.get_guild(full_yaml['guildID']).get_role(full_yaml['Underage'])
+        self.overaged = self.bot.get_guild(full_yaml['guildID']).get_role(full_yaml['Overage'])
+        self.verified = self.bot.get_guild(full_yaml['guildID']).get_role(full_yaml['RulesVerRole'])
+        self.unverified = self.bot.get_guild(full_yaml['guildID']).get_role(full_yaml['RulesUnvRole'])
+        self.tosrole = self.bot.get_guild(full_yaml['guildID']).get_role(full_yaml['TosRole'])
+
+
+    def cog_unload(self):
+        self.daily_task.cancel()
+
+
+    @tasks.loop(hours=24)
+    async def daily_task(self):
+        query = """SELECT * FROM userinfo
+                   WHERE EXTRACT(day from birthdate) = date_part('day' , CURRENT_DATE)
+                   AND EXTRACT(month from birthdate) = date_part('month', CURRENT_DATE)
+                """
+        ids_today = await self.bot.db.fetch(query)
+        if len(ids_today) == 0: return
+        now = datetime.datetime.now().date()
+        for entry in ids_today:
+            delta = now - entry['birthdate']
+            age = int(delta.days / 365.2425)
+            OverageChannel = self.bot.get_channel(self.yaml_data['OverageBdayChannel'])
+            UnderageChannel = self.bot.get_channel(self.yaml_data['UnderageBdayChannel'])
+            if age >= 18:
+                role_user = UnderageChannel.guild.get_member(entry['user_id'])
+                if role_user:
+                    embed=discord.Embed(title=f"Today is {role_user}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
+                    embed.set_author(name=role_user, icon_url=role_user.avatar_url)
+                    embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
+                    await OverageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
+                    if self.overaged not in role_user.roles:
+                        await role_user.add_roles(self.overaged)
+                    if self.underaged in role_user.roles:
+                        await role_user.remove_roles(self.underaged)
+                    if age == 18:
+                        try: await role_user.send("Happy birthday! 🎉 You have been moved to the 18+ categories")
+                        except: pass
+                else:
+                    await self.bot.get_channel(self.yaml_data['JLLog']).send(f"could not resolve database entry **{entry['user_id']}** into a user! not sending birthday message.")
+
+            else:
+                role_user = UnderageChannel.guild.get_member(entry['user_id'])
+                if role_user:
+                    embed=discord.Embed(title=f"Today is {ctx.author}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
+                    embed.set_author(name=role_user, icon_url=role_user.avatar_url)
+                    embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
+                    await UnderageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
+                    if self.overaged in role_user.roles:
+                        await role_user.remove_roles(self.overaged)
+                    if self.underaged not in role_user.roles:
+                        await role_user.add_roles(self.underaged)
+                else:
+                    await self.bot.get_channel(self.yaml_data['JLLog']).send(f"could not resolve database entry **{entry['user_id']}** into a user! not sending birthday message.")
+            await asyncio.sleep(1)
+
+    @daily_task.before_loop
+    async def wait_until_7am(self):
+        await self.bot.wait_until_ready()
+        now = datetime.datetime.now().astimezone()
+        next_run = now.replace(hour=16, minute=0, second=0)
+
+        if next_run < now:
+            next_run += datetime.timedelta(days=1)
+
+        await discord.utils.sleep_until(next_run)
+
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot: return
-        if message.channel.id != 871770060736307230: return
+        if message.channel.id != self.bot.get_guild(self.yaml_data['guildID']).rules_channel.id: return
 
         try: await message.delete(delay=0.5)
         except: pass
@@ -59,63 +149,77 @@ class verification(commands.Cog):
 
         try: await mess.delete()
         except: pass
-        overage = message.guild.get_role(871812629411291196)
-        underage = message.guild.get_role(871812586688090172)
+        overage = self.overaged
+        underage = self.underaged
+        tosrole = self.tosrole
         if not overage or not underage:
             await delmessage.edit(content=f"Sorry, something went wrong getting the roles.")
 
         current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', message.author.id)
 
-        if current_birthday != None:
-            await delmessage.edit(content=f"Sorry {message.author.mention}, but you are already verified with date: **{current_birthday.strftime('%B %d, %Y')}**", delete_after=10)
-            return
-
-        await self.bot.db.execute('INSERT INTO userinfo(user_id, birthdate) VALUES ($1, $2)', message.author.id, new_birthday)
+        if current_birthday:
+            await delmessage.edit(content=f"Sorry {message.author.mention}, but you previously verified with date: **{current_birthday.strftime('%B %d, %Y')}**\n\n If you think this is an error, please DM me ({message.guild.me.mention}) to get in contact with an admin.\n_this message will delete in 60 seconds_\n_ _", delete_after=60)
+            age = int((now - current_birthday).days /365.2425)
+        else:
+            await self.bot.db.execute('INSERT INTO userinfo(user_id, birthdate) VALUES ($1, $2)', message.author.id, new_birthday)
 
         if age >=18:
-            await message.author.add_roles(overage)
-            await message.author.remove_roles(underage)
+            await message.author.add_roles(overage, self.verified)
+            await message.author.remove_roles(underage, self.unverified)
         elif age >= 13:
-            await message.author.add_roles(underage)
-            await message.author.remove_roles(overage)
+            await message.author.add_roles(underage, self.verified)
+            await message.author.remove_roles(overage, self.unverified)
         else:
-            await message.author.remove_roles(underage)
-            await message.author.remove_roles(overage)
+            await message.author.remove_roles(underage, overage, self.verified)
+            await message.author.add_roles(tosrole, self.unverified)
 
         if age >= 13:
-            await delmessage.edit(content=f"{message.author.mention}, you have been verified with date: **{new_birthday.strftime('%B %d, %Y')}**", delete_after=10)
-            return
+            if not current_birthday:
+                await delmessage.edit(content=f"{message.author.mention}, you have been verified with date: **{new_birthday.strftime('%B %d, %Y')}**", delete_after=10)
+                return
+            else:
+                await message.channel.send(f"{message.author.mention} i gave you the corresponding roles according to the age you had registered before.")
         else:
-            await delmessage.edit(content=f"{message.author.mention}, Your age has been updated. Unfortunately, you cannot verify since you are under 13 years of age. For more information, read Discord's [TOS](http://discord.com/terms). If this is an error, please message me to have our admin team assist you.", delete_after=25)
+            if not current_birthday:
+                await delmessage.edit(content=f"{message.author.mention}, Your age has been updated. Unfortunately, you cannot verify since you are under 13 years of age. For more information, read Discord's Terms Of Service: http://discord.com/terms. \n_If this is an error, please message me to have ({message.guild.me.mention}) our admin team assist you._\n_this message will delete in 60 seconds_", delete_after=60)
+            else:
+                await message.channel.send(f"{message.author.mention}, Your age has been updated. Unfortunately, you cannot verify since you are under 13 years of age. For more information, read Discord's Terms Of Service: http://discord.com/terms. \n_If this is an error, please message me to have ({message.guild.me.mention}) our admin team assist you._\n_this message will delete in 60 seconds_", delete_after=60)
+########################################################################################################
+#################################### DATABASE MANAGEMENT CMD ###########################################
+########################################################################################################
 
-
-    @commands.command(name="set")
+    @commands.group(help="Command group to manage the birth date verification database #Admin Only", aliases=['bd', 'birthdate', 'birthday'], hidden=True)
     @commands.has_permissions(administrator=True)
-    async def bday_set(self, ctx, user: discord.User, *, bday: str):
+    async def bday(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(ctx.command)
+
+    @bday.command(name="set", help="Sets a user's birthday")
+    async def bday_set(self, ctx, member: discord.User, *, bday: str):
         try:
             new_birthday = datetime.datetime.strptime(bday, "%m-%d-%Y").date()
             now = datetime.datetime.now().date()
         except:
-            await message.channel.send(f"`{bday}` does not match date format: **MM-DD-YYYY**", delete_after=10)
+            await ctx.send(f"`{bday}` does not match date format: **MM-DD-YYYY**", delete_after=10)
             return
         formatted = new_birthday.strftime('%B %d, %Y')
         delta = now - new_birthday
         age = int(delta.days / 365.2425)
 
-        current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', user.id)
+        current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', member.id)
 
         if current_birthday:
-            await self.bot.db.execute('UPDATE userinfo SET birthdate = $1 WHERE user_id = $2', new_birthday, user.id)
+            await self.bot.db.execute('UPDATE userinfo SET birthdate = $1 WHERE user_id = $2', new_birthday, member.id)
             deltabd = now - current_birthday
-            await ctx.send(f"Birth day updated for {user}: \n`{current_birthday.strftime('%B %d, %Y')} ({int(deltabd.days / 365.2425)} Y/O)` ➡ `{formatted} ({age} Y/O)` \n*remember to update their roles*")
+            await ctx.send(f"Birth day updated for {member}: \n`{current_birthday.strftime('%B %d, %Y')} ({int(deltabd.days / 365.2425)} Y/O)` ➡ `{formatted} ({age} Y/O)` \n*remember to update their roles*")
         else:
-            mess = await message.channel.send(f"This user doesn't have their birthday set yet. Are you sure you want to set if for them?")
+            mess = await ctx.send(f"{member} doesn't have their birthday set yet. Are you sure you want to set if for them?")
             await mess.add_reaction("✅")
             await mess.add_reaction("❌")
             def reaction_check(reaction, user):
-                return user == message.author and str(reaction.emoji) in ['✅', '❌', '❓'] and reaction.message.id == mess.id
+                return user == ctx.author and str(reaction.emoji) in ['✅', '❌', '❓'] and reaction.message.id == mess.id
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=120.0, check=reaction_check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=reaction_check)
 
             except asyncio.TimeoutError:
                 await mess.edit(content="**Failed to confirm in time**")
@@ -124,19 +228,70 @@ class verification(commands.Cog):
                 if str(reaction.emoji) == '❌':
                     await mess.edit(content="**Ok, did not update their birt date!**")
                     return
-            await self.bot.db.execute('INSERT INTO userinfo(user_id, birthdate) VALUES ($1, $2)', user.id, new_birthday)
-            await mess.edit(content=f"Birth day updated for {user} to `{formatted} ({age} Y/O)` \n*remember to update their roles*")
+            await self.bot.db.execute('INSERT INTO userinfo(user_id, birthdate) VALUES ($1, $2)', member.id, new_birthday)
+            await mess.edit(content=f"Birth day updated for {member} to `{formatted} ({age} Y/O)` \n*remember to update their roles*")
 
-    @commands.command()
-    async def allbds(self, ctx):
-        dates = await self.bot.db.fetch("TABLE userinfo")
+    @bday.command(name='all', help="Gives a list of all birthdays sorted by ASC/DESC date")
+    async def bday_all(self, ctx, sort = 'ASC/DESC'):
+        if sort.upper() not in ['ASC', 'DESC']: sort = 'DESC'
+        if sort.lower() == 'asc':
+            dates = await self.bot.db.fetch("SELECT * FROM userinfo ORDER BY birthdate ASC")
+        else:
+            dates = await self.bot.db.fetch("SELECT * FROM userinfo ORDER BY birthdate DESC")
         lr = []
         for r in dates:
-            lr.append(f"<@{r['user_id']}> {r['birthdate'].strftime('%B %d, %Y')}")
-        bds = "\n".join(lr)
-        await ctx.send(embed=discord.Embed(description=bds))
+            lr.append(f"<@{r['user_id']}> `{r['birthdate'].strftime('%B %d, %Y')} ({int((datetime.datetime.now().date() - r['birthdate']).days / 365.2425)} Y/O)`")
+        pages = menus.MenuPages(source=AllEmbed(lr), delete_message_after=True)
+        await pages.start(ctx)
+        return
 
+    @bday.command(help="Deletes a birthday if found", name="del", aliases=['rem'])
+    async def _del(self, ctx, member: discord.User):
+        current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', member.id)
+        if current_birthday:
+            mess = await ctx.send(f"Are you sure you want to delete **{member}**'s birthday from the database?")
+            await mess.add_reaction("✅")
+            await mess.add_reaction("❌")
+            def reaction_check(reaction, user):
+                return user == ctx.author and str(reaction.emoji) in ['✅', '❌', '❓'] and reaction.message.id == mess.id
 
+            try: reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=reaction_check)
+            except asyncio.TimeoutError: return await mess.edit(content="**Failed to confirm in time**")
+            else:
+                if str(reaction.emoji) == '❌': return await mess.edit(content="**Ok, did not delete their birt date!**")
+            await self.bot.db.execute("DELETE FROM userinfo WHERE user_id = $1", member.id)
+            await mess.edit(content=f"birthday for **{member}** deleted!")
+        else: return await ctx.send(f"{member} is not in the database!")
+
+    @bday.command(name="delid", help="deletes a birthday without checking if the ID exists", aliases=['remid'])
+    async def bday_del_id(self, ctx, id: int):
+        if re.fullmatch("^\d{18}$", str(id)):
+            current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', id)
+            if current_birthday:
+                def reaction_check(reaction, user):
+                    return user == ctx.author and str(reaction.emoji) in ['✅', '❌', '❓'] and reaction.message.id == mess.id
+                mess = await ctx.send(f"Are you sure you want to delete **{id}**'s birthday from the database?")
+                await mess.add_reaction("✅")
+                await mess.add_reaction("❌")
+                try: reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=reaction_check)
+                except asyncio.TimeoutError: return await mess.edit(content="**Failed to confirm in time**")
+                else:
+                    if str(reaction.emoji) == '❌': return await mess.edit(content="**Ok, did not delete their birt date!**")
+                await self.bot.db.execute("DELETE FROM userinfo WHERE user_id = $1", id)
+                return await mess.edit(content=f"birthday for **{id}** deleted!")
+            else: return await ctx.send(f"{id} is not in the database!")
+        else:
+            await ctx.send("That's not a valid discord ID!")
+
+    @bday.command(help="Tries to fetch user information from a given ID", name="find", aliases=['get', 'lookup'])
+    async def bday_user(self, ctx, member: discord.User):
+        current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', member.id)
+        if current_birthday:
+            embed=discord.Embed(color = ctx.me.color, title=f"Birthday: {current_birthday.strftime('%B %d, %Y')} ({int((datetime.datetime.now().date() - current_birthday).days / 365.2425)} Y/O)")
+        else:
+            embed=discord.Embed(color = ctx.me.color, title=f"Birthday: not found...")
+        embed.set_author(name=member, icon_url=member.avatar_url)
+        await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(verification(bot))

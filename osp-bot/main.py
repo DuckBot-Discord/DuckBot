@@ -13,12 +13,12 @@ async def create_db_pool():
                    "password": f"{yaml_data['PSQL_PASSWORD']}",
                    "database": f"{yaml_data['PSQL_DB']}",
                    "host": f"{yaml_data['PSQL_HOST']}"}
-    print(credentials)
     bot.db = await asyncpg.create_pool(**credentials)
-    print("connection successful")
+    print("\033[42m\033[34mconnection to database successful")
 
     await bot.db.execute("CREATE TABLE IF NOT EXISTS userinfo(user_id bigint PRIMARY KEY, birthdate date);")
-    print("table done")
+    print("\033[42m\033[34mDatabase tables done")
+    print('\033[0m')
 
 intents = discord.Intents.all()
 

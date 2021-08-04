@@ -114,7 +114,9 @@ class GroupHelpPageSource(menus.ListPageSource):
 
         for command in commands:
             signature = f'{command.qualified_name} {command.signature}'
-            embed.add_field(name=signature, value=command.short_doc or 'No help given...', inline=False)
+            if command.help: command_help = command.help.replace("%PRE%", self.prefix)
+            else: command_help = 'No help given...'
+            embed.add_field(name=signature, value=f"```yaml\n{command_help}```", inline=False)
 
         maximum = self.get_max_pages()
         if maximum > 1:
@@ -164,24 +166,29 @@ _ _""")
   # !help <command>
     async def send_command_help(self, command):
         alias = command.aliases
+        if command.help: command_help = command.help.replace("%PRE%", self.clean_prefix)
+        else: command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}",
+            description=f"""
+```yaml
       usage: {self.get_minimal_command_signature(command)}
     aliases: {', '.join(alias)}
-description: {command.help}
+description: {command_help}
 ```""")
         else:
             embed = discord.Embed(color=0x5865F2, title=f"information about {self.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
-description: {command.help}
+description: {command_help}
 ```""")
         channel = self.get_destination()
         await channel.send(embed=embed)
 
     async def send_cog_help(self, cog):
-        entries = await self.filter_commands(cog.get_commands(), sort=True)
+        entries = cog.get_commands()
         menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.clean_prefix))
         await menu.start(self.context)
+
 
     async def send_group_help(self, group):
         subcommands = group.commands
@@ -195,11 +202,6 @@ description: {command.help}
         source = GroupHelpPageSource(group, entries, prefix=self.clean_prefix)
         menu = HelpMenu(source)
         await menu.start(self.context)
-
-
-    async def on_help_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
-            await ctx.send(embed=discord.Embed(color=0x5865F2, description=str(error.original)))
 
 
 

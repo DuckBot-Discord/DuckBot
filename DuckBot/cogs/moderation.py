@@ -543,31 +543,7 @@ class moderation(commands.Cog):
          --or: Use logical OR for ALL options.
          --not: Use logical NOT for ALL options.
         """
-        await ctx.send("""```yaml
-                A more advanced purge command.
-                This command uses a powerful "command line" syntax.
-                Most options support multiple values to indicate 'any' match.
-                If the value has spaces it must be quoted.
-                The messages are only deleted if all options are met unless
-                the --or flag is passed, in which case only if any is met.
-                The following options are valid.
-                --user: A mention or name of the user to remove.
-                --contains: A substring to search for in the message.
-                --starts: A substring to search if the message starts with.
-                --ends: A substring to search if the message ends with.
-                --search: How many messages to search. Default 100. Max 2000.
-                --after: Messages after this message ID.
-                --before: Messages before this message ID.
-                Flag options (no arguments):
-                --bot: Check if it's a bot user.
-                --embeds: Checks for embeds.
-                --files: Checks for attachments.
-                --emoji: Checks for custom emoji.
-                --reactions: Checks for rections.
-                --or: Use logical OR for ALL options.
-                --not: Use logical NOT for ALL options.
-                ```"""
-)
+        await ctx.send("hi")
 
     @commands.command()
     async def cleanup(self, ctx, amount: int=25):

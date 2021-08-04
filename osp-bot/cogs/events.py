@@ -40,25 +40,7 @@ class events(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.member.bot: return
-        if payload.channel_id == self.mguild.rules_channel.id:
-            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
-            mem = payload.member.id
-            own = self.bot.get_guild(self.yaml_data['guildID']).owner_id
-
-            if self.verified in payload.member.roles and mem != own and self.unverified not in payload.member.roles:
-                await message.remove_reaction(payload.emoji, payload.member)
-                return
-            if mem != own:
-                try: await message.remove_reaction(payload.emoji, payload.member)
-                except: pass
-            try: await payload.member.add_roles(self.verified)
-            except: pass
-            try: await payload.member.remove_roles(self.unverified)
-            except: pass
-            try: await self.bot.get_channel(860610324020592689).send(payload.member.mention, delete_after=0.1)
-            except: pass
-
-        elif str(payload.emoji) == "🚪":
+        if str(payload.emoji) == "🚪":
             category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
             chids = []
             if category.text_channels:
@@ -266,13 +248,14 @@ You have 5 minutes to do so.""")
                             timestamp = datetime.datetime.now(),
                             title = f"Welcome, {member}")
 
-        embed.set_author(name = member.guild.name,
-                        icon_url = member.guild.icon_url)
+        embed.set_author(name = member.name,
+                        icon_url = member.avatar_url)
 
         embed.set_footer(text = "Member joined")
 
-        await self.bot.get_channel(self.yaml_data['WelcomeChannel']).send(embed = embed)
+        await self.bot.get_channel(self.yaml_data['WelcomeChannel']).send(f"👋 {member.mention}", embed = embed)
         await self.bot.get_channel(self.yaml_data['JLLog']).send(f"""<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}** joined **{member.guild.name}**!""")
+        await member.add_roles(self.mguild.get_role(860612731102822400), self.mguild.get_role(860609206453665792), self.mguild.get_role(860613002906697800), self.mguild.get_role(860612542619189249), self.mguild.get_role(867094081241612308), self.mguild.get_role(867096893863624734), self.mguild.get_role(860613615811166219), reason=f"autoroles automatically applied to {member}")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):

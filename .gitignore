@@ -4,7 +4,9 @@ test-stuff/*
 *informatica.py
 ozbot/files/*
 *.yaml
+.yml
+*.yml
 *.env
 .env
 copy-paste/*
-gafapasta/*
+gafapasta/files/*
