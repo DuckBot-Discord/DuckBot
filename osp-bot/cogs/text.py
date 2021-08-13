@@ -1,6 +1,7 @@
-import json, random, typing, discord, asyncio, time, os, inspect, itertools, re, time, yaml, json
+import json, random, typing, discord, asyncio, time, os, inspect, itertools, re, time, yaml, json, aiohttp
 from discord.ext import commands, menus
 from discord.ext.commands import Paginator as CommandPaginator
+import helpers
 
 class Duckinator(menus.MenuPages):
     def __init__(self, source):
@@ -218,6 +219,7 @@ class text(commands.Cog):
     # resends the message as the bot
 
     @commands.command(aliases=['s', 'send'], usage="<text>", help="Speak as if you were me. # URLs/Invites not allowed!")
+    @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     async def say(self, ctx, *, msg: typing.Optional[str]):
         if msg==None:
@@ -254,24 +256,20 @@ class text(commands.Cog):
     @commands.command(help="Echoes a message to another channel",aliases=['a', 'an', 'announce'], usage="<channel> <message>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
-    async def echo(self, ctx, channel: typing.Optional[discord.TextChannel] = None, *, msg: typing.Optional[str]):
-        if channel == None:
-            await ctx.send(f"""You must specify a channel
-`{ctx.prefix}{ctx.command}{ctx.usage} [#channel] [message]`""")
-            return
-        if msg == None:
-            await ctx.send(f"""You must type a message.
-`{ctx.prefix}{ctx.command} [#channel] [message]`""")
-            return
-        if channel.permissions_for(ctx.author).mention_everyone:
-            if ctx.message.reference:
-                msg = ctx.message.reference.resolved.content
-            await channel.send(msg)
+    async def echo(self, ctx, channels: commands.Greedy[discord.TextChannel], *, msg):
+        await ctx.send(f"""```
+{msg}
+``` sent to: {', '.join([tc.mention for tc in channels])}""")
+        for channel in channels:
+            if channel.permissions_for(ctx.author).mention_everyone:
+                if ctx.message.reference:
+                    msg = ctx.message.reference.resolved.content
+                await channel.send(msg)
 
-        else:
-            if ctx.message.reference:
-                msg = ctx.message.reference.resolved.content
-            await channel.send(msg, allowed_mentions = discord.AllowedMentions(everyone = False))
+            else:
+                if ctx.message.reference:
+                    msg = ctx.message.reference.resolved.content
+                await channel.send(msg, allowed_mentions = discord.AllowedMentions(everyone = False))
 
     @commands.command(  aliases=['e'],
                         usage="-reply- [new message] [--d|--s]",
@@ -364,6 +362,7 @@ class text(commands.Cog):
                 return
 
     @commands.command()
+    @helpers.is_osp_server()
     async def donate(self,ctx):
         embed=discord.Embed(title="**Thank you so much for supporting us!**", description="If applicable, please add a note saying it's for OSP so I can put it in the right bank account!", color=0x0066ff)
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
@@ -374,8 +373,9 @@ class text(commands.Cog):
         embed.set_footer(text="Again, thank you for your support! Money that isn't planned to be used for the project will be donated to NAMI.")
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(help = "shows a specified server rule")
     @commands.guild_only()
+    @helpers.is_osp_server()
     async def rule(self, ctx, number: typing.Optional[int]):
         if number == None:
             await ctx.send(
@@ -612,6 +612,19 @@ Rule {number} not found. Please only use numbers 1-15.
                         embed.set_image(url=f"https://http.cat/{number}")
                         await ctx.send(embed=embed)
 
+    @commands.command()
+    @helpers.is_osp_server()
+    async def about(self, ctx):
+        await ctx.send("""**The Obscure Sorrows Project**
+*Helping us make sense of our past, and giving it purpose and creativity.*
+https://youtu.be/sSDfBiHTFpo""")
+
+    @commands.command()
+    @helpers.is_osp_server()
+    async def vote(self, ctx):
+        embed = discord.Embed(color = ctx.me.color, description="**On [Disboard](https://disboard.org/server/831897006812561409) and [Disforge](https://disforge.com/server/46125-osp)!**")
+        embed.set_author(name=f"{ctx.guild.name} - vote here:", icon_url=ctx.guild.icon_url)
+        await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(text(bot))

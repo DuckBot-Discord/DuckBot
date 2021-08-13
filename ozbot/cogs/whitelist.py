@@ -4,10 +4,10 @@ from discord.ext import commands
 
 
 class whitelist(commands.Cog):
-
+    """📜 whitelisting and accepting the rules."""
     def __init__(self, bot):
         self.bot = bot
-        self.denied_keywords = ['agree', 'i agree']
+        self.denied_keywords = ['agree', 'i agree', 'yes', 'ok', 'agreed']
 
     @commands.Cog.listener()
     async def on_message(self, message):

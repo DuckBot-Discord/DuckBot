@@ -1,6 +1,7 @@
 import typing, discord, asyncio, random, datetime, argparse, shlex, re, asyncpg, yaml
 from discord.ext import commands, tasks, timers, menus
 from collections import Counter, defaultdict
+import helpers
 
 class Arguments(argparse.ArgumentParser):
     def error(self, message):
@@ -106,10 +107,18 @@ class moderation(commands.Cog):
         if emoji_flags == "": emoji_flags = None
         return emoji_flags
 
+    @commands.command(help="Shows a user's avatar", alias=['pfp'])
+    async def pfp(self, ctx, user: typing.Optional[discord.Member]):
+        user = user or ctx.author
+        embed=discord.Embed(color=ctx.me.color)
+        embed.description=f"[PNG]({user.avatar_url_as(format='png', size=2048)}) **|** [JPG]({user.avatar_url_as(format='jpg', size=2048)}) **|** [WEBP]({user.avatar_url_as(format='webp', size=2048)})"
+        embed.set_image(url=user.avatar_url)
+        await ctx.send(embed=embed)
+
     @commands.command(aliases = ['userinfo', 'ui'],help="Shows information for a specified user")
     @commands.has_permissions(manage_messages=True)
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
-        if not user: user = ctx.author
+        user = user or ctx.author
         # BADGES
         badges = self.get_user_badges(user)
         if badges: badges = f"\n<:store_tag:860644620857507901>**Badges:**{badges}"
@@ -620,6 +629,7 @@ class moderation(commands.Cog):
 #------------------------ MUTE ------------------------------#
 #------------------------------------------------------------#
     @commands.command(help="mutes member lol")
+    @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
     async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -653,6 +663,7 @@ class moderation(commands.Cog):
 #-------------------------------------------------------------#
 
     @commands.command(help="unmutes member...")
+    @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
     async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -687,6 +698,7 @@ class moderation(commands.Cog):
 #-----------------------------------------------------------------#
 
     @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md', 'mediaban', 'nm', 'mb', 'mban'])
+    @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
     async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -719,6 +731,7 @@ class moderation(commands.Cog):
 #-----------------------------------------------------------------#
 
     @commands.command(aliases=['yesmedia', 'yesimages', 'allowimages', 'yesimg', 'ma', 'mediaunban', 'ym', 'mub', 'munban'])
+    @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
     async def allowmedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
         if not any(role in self.staff_roles for role in ctx.author.roles):

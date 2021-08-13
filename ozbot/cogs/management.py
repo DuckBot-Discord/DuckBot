@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 
 class management(commands.Cog):
-
+    """👩‍⚖️ Commands to manage the bot itself."""
     def __init__(self, bot):
         self.bot = bot
 

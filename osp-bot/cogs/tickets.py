@@ -1,5 +1,6 @@
 import discord, asyncio, typing, aiohttp, random, json, yaml, re
 from discord.ext import commands, menus
+import helpers
 
 class tickets(commands.Cog):
     def __init__(self, bot):
@@ -33,6 +34,7 @@ class tickets(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @helpers.is_osp_server()
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
     async def ticket(self, ctx):
         embed=discord.Embed(color=0x47B781, description=f"<a:loading:864708067496296468> Checking, please wait...")
@@ -188,6 +190,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
 
     @commands.command(help="Adds a member to a ticket", usage = "<member>", aliases=["addm", "am"])
     @commands.guild_only()
+    @helpers.is_osp_server()
     @commands.has_role(864737541726142474)
     async def addmember(self, ctx, member: typing.Optional[discord.Member]):
         if self.ticket_staff not in ctx.author.roles:
@@ -224,6 +227,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
 
     @commands.command(help="Removes a member from a ticket", usage = "<member>", aliases=["rmem"])
     @commands.guild_only()
+    @helpers.is_osp_server()
     @commands.has_role(864737541726142474)
     async def removemember(self, ctx, member: typing.Optional[discord.Member]):
         category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
@@ -257,6 +261,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
 
     @commands.command(help="Allows a member to leave a ticket", aliases=["leave"])
     @commands.guild_only()
+    @helpers.is_osp_server()
     async def leaveticket(self, ctx):
         category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
         if ctx.channel.category != category:
@@ -324,6 +329,7 @@ You have 5 minutes to do so.""")
 
     @commands.command(help="Adds a member to a ticket", usage = "<member>", aliases=["addm", "am"])
     @commands.guild_only()
+    @helpers.is_osp_server()
     @commands.has_role(864737541726142474)
     async def addmember(self, ctx, member: typing.Optional[discord.Member]):
         category = self.bot.get_channel(self.yaml_data['TicketsCategory'])
@@ -358,6 +364,7 @@ You have 5 minutes to do so.""")
 
     @commands.command(aliases=["closeticket"])
     @commands.guild_only()
+    @helpers.is_osp_server()
     @commands.has_role(864737541726142474)
     async def close(self, ctx, *, reason: typing.Optional[str]):
         category = self.bot.get_channel(self.yaml_data['TicketsCategory'])

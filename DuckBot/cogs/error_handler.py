@@ -30,6 +30,10 @@ class handler(commands.Cog):
             await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
             return
 
+        if isinstance(error, commands.TooManyArguments):
+            await ctx.send(f"Too many arguments passed to the command!")
+            return
+
         if isinstance(error, discord.ext.commands.MissingPermissions):
             text=f"You're missing the following permissions: \n**{', '.join(error.missing_perms)}**"
             try:

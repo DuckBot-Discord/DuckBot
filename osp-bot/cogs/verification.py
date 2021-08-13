@@ -22,6 +22,10 @@ class verification(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.daily_task.start()
+        self.counters.start()
+        self._members = 0
+        self._creators = 0
+        self._storytellers = 0
 
         #------------- YAML STUFF -------------#
         with open(r'files/config.yaml') as file:
@@ -40,6 +44,34 @@ class verification(commands.Cog):
 
     def cog_unload(self):
         self.daily_task.cancel()
+        self.second_daily_task.cancel()
+        self.counters.cancel()
+
+    @tasks.loop(minutes=10)
+    async def counters(self):
+        maguild = self.bot.get_guild(self.yaml_data['guildID'])
+        storytellers = maguild.get_role(self.yaml_data['_storytellers'])
+        creators = maguild.get_role(self.yaml_data['_creators'])
+
+        ch_members = maguild.get_channel(self.yaml_data['ch_members'])
+        ch_storytellers = maguild.get_channel(self.yaml_data['ch_storytellers'])
+        ch_creators = maguild.get_channel(self.yaml_data['ch_creators'])
+
+        mc_members = len([x for x in maguild.members if not x.bot])
+        if mc_members != self._members:
+            self._members = mc_members
+            await ch_members.edit(name=f"MEMBERS: {mc_members}")
+
+        mc_storytellers = len([x for x in storytellers.members if not x.bot])
+        if mc_storytellers != self._storytellers:
+            self._storytellers = mc_storytellers
+            await ch_storytellers.edit(name=f"STORYTELLERS: {mc_storytellers}")
+
+        mc_creators = len([x for x in creators.members if not x.bot])
+        if mc_creators != self._creators:
+            self._creators = mc_creators
+            await ch_creators.edit(name=f"CREATORS: {mc_creators}")
+
 
 
     @tasks.loop(hours=24)
@@ -48,51 +80,102 @@ class verification(commands.Cog):
                    WHERE EXTRACT(day from birthdate) = date_part('day' , CURRENT_DATE)
                    AND EXTRACT(month from birthdate) = date_part('month', CURRENT_DATE)
                 """
-        ids_today = await self.bot.db.fetch(query)
-        if len(ids_today) == 0: return
-        now = datetime.datetime.now().date()
-        for entry in ids_today:
-            delta = now - entry['birthdate']
-            age = int(delta.days / 365.2425)
-            OverageChannel = self.bot.get_channel(self.yaml_data['OverageBdayChannel'])
-            UnderageChannel = self.bot.get_channel(self.yaml_data['UnderageBdayChannel'])
-            if age >= 18:
-                role_user = UnderageChannel.guild.get_member(entry['user_id'])
-                if role_user:
-                    embed=discord.Embed(title=f"Today is {role_user}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
-                    embed.set_author(name=role_user, icon_url=role_user.avatar_url)
-                    embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
-                    await OverageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
-                    if self.overaged not in role_user.roles:
-                        await role_user.add_roles(self.overaged)
-                    if self.underaged in role_user.roles:
-                        await role_user.remove_roles(self.underaged)
-                    if age == 18:
-                        try: await role_user.send("Happy birthday! 🎉 You have been moved to the 18+ categories")
-                        except: pass
-                else:
-                    await self.bot.get_channel(self.yaml_data['JLLog']).send(f"could not resolve database entry **{entry['user_id']}** into a user! not sending birthday message.")
 
-            else:
-                role_user = UnderageChannel.guild.get_member(entry['user_id'])
-                if role_user:
-                    embed=discord.Embed(title=f"Today is {ctx.author}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
-                    embed.set_author(name=role_user, icon_url=role_user.avatar_url)
-                    embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
-                    await UnderageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
-                    if self.overaged in role_user.roles:
-                        await role_user.remove_roles(self.overaged)
-                    if self.underaged not in role_user.roles:
-                        await role_user.add_roles(self.underaged)
+        query_tmr = """SELECT * FROM userinfo
+                   WHERE EXTRACT(day from birthdate) = date_part('day' , current_date - INTEGER '1')
+                   AND EXTRACT(month from birthdate) = date_part('month', current_date - INTEGER '1')
+                """
+        ids_tmr = await self.bot.db.fetch(query_tmr)
+
+
+        ids_today = await self.bot.db.fetch(query)
+
+        if len(ids_today) == 0 and len(ids_tmr) == 0: return
+
+        now = datetime.datetime.now().date()
+
+        if len(ids_today) != 0:
+            for entry in ids_today:
+                delta = now - entry['birthdate']
+                age = int(delta.days / 365.2425)
+                OverageChannel = self.bot.get_channel(self.yaml_data['OverageBdayChannel'])
+                UnderageChannel = self.bot.get_channel(self.yaml_data['UnderageBdayChannel'])
+                BdayRoles = UnderageChannel.guild.get_role(self.yaml_data['BdayRole'])
+
+                if age >= 18:
+
+                    role_user = UnderageChannel.guild.get_member(entry['user_id'])
+                    if role_user:
+                        try: await role_user.add_roles(BdayRoles)
+                        except: pass
+                        embed=discord.Embed(title=f"Today is {role_user}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
+                        embed.set_author(name=role_user, icon_url=role_user.avatar_url)
+                        embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
+
+                        try: await OverageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
+                        except: pass
+
+                        if self.overaged not in role_user.roles:
+
+                            try: await role_user.add_roles(self.overaged)
+                            except: pass
+
+                        if self.underaged in role_user.roles:
+                            try: await role_user.remove_roles(self.underaged)
+                            except: pass
+
+                        if age == 18:
+                            try: await role_user.send("Happy birthday! 🎉 You have been moved to the 18+ categories")
+                            except: pass
+
+                    else:
+                        try: await self.bot.get_channel(self.yaml_data['JLLog']).send(f"could not resolve database entry **{entry['user_id']}** into a user! not sending birthday message.")
+                        except: pass
+
                 else:
-                    await self.bot.get_channel(self.yaml_data['JLLog']).send(f"could not resolve database entry **{entry['user_id']}** into a user! not sending birthday message.")
-            await asyncio.sleep(1)
+
+                    role_user = UnderageChannel.guild.get_member(entry['user_id'])
+
+                    if role_user:
+                        try: await role_user.add_roles(BdayRoles)
+                        except: pass
+                        embed=discord.Embed(title=f"Today is {ctx.author}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
+                        embed.set_author(name=role_user, icon_url=role_user.avatar_url)
+                        embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
+
+                        try: await UnderageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
+                        except: pass
+
+                        if self.overaged in role_user.roles:
+                            try: await role_user.remove_roles(self.overaged)
+                            except: pass
+
+                        if self.underaged not in role_user.roles:
+                            try: await role_user.add_roles(self.underaged)
+                            except: pass
+
+                    else:
+                        try: await self.bot.get_channel(self.yaml_data['JLLog']).send(f"could not resolve database entry **{entry['user_id']}** into a user! not sending birthday message.")
+                        except: pass
+                await asyncio.sleep(1)
+        if len(ids_tmr) != 0:
+            for entry in ids_tmr:
+
+                UnderageChannel = self.bot.get_channel(self.yaml_data['UnderageBdayChannel'])
+                BdayRoles = UnderageChannel.guild.get_role(self.yaml_data['BdayRole'])
+                role_user = UnderageChannel.guild.get_member(entry['user_id'])
+
+                if role_user:
+                    try:
+                        await role_user.remove_roles(BdayRoles)
+                        print(f"{role_user} got their bday role removed.")
+                    except: pass
 
     @daily_task.before_loop
     async def wait_until_7am(self):
         await self.bot.wait_until_ready()
         now = datetime.datetime.now().astimezone()
-        next_run = now.replace(hour=16, minute=0, second=0)
+        next_run = now.replace(hour=4, minute=0, second=0)
 
         if next_run < now:
             next_run += datetime.timedelta(days=1)
@@ -175,10 +258,10 @@ class verification(commands.Cog):
 
         if age >= 13:
             if not current_birthday:
-                await delmessage.edit(content=f"{message.author.mention}, you have been verified with date: **{new_birthday.strftime('%B %d, %Y')}**", delete_after=10)
+                await delmessage.edit(content=f"{message.author.mention}, you have been verified with date: **{new_birthday.strftime('%B %d, %Y')}**", delete_after=15)
                 return
             else:
-                await message.channel.send(f"{message.author.mention} i gave you the corresponding roles according to the age you had registered before.")
+                await message.channel.send(f"{message.author.mention} i gave you the corresponding roles according to the age you had registered before.", delete_after=15)
         else:
             if not current_birthday:
                 await delmessage.edit(content=f"{message.author.mention}, Your age has been updated. Unfortunately, you cannot verify since you are under 13 years of age. For more information, read Discord's Terms Of Service: http://discord.com/terms. \n_If this is an error, please message me to have ({message.guild.me.mention}) our admin team assist you._\n_this message will delete in 60 seconds_", delete_after=60)

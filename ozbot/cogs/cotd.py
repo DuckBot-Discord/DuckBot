@@ -2,15 +2,17 @@ import typing, discord, asyncio, random, datetime
 from discord.ext import commands, tasks
 
 class daily_color(commands.Cog):
-
+    """🎨 A role that changes color every day."""
     def __init__(self, bot):
         self.bot = bot
         self.var = 0
 
+        self.remrole.start()
         self.daily_task.start()
 
     def cog_unload(self):
         self.daily_task.cancel()
+        self.remrole.cancel()
 
     @tasks.loop(hours=24)
     async def daily_task(self):
@@ -60,6 +62,21 @@ class daily_color(commands.Cog):
         imcolor = imcolor.replace("#", "")
         embed.set_thumbnail(url=f" https://singlecolorimage.com/get/{imcolor}/16x16")
         await channel.send(embed=embed)
+
+
+
+    @tasks.loop(minutes=15)
+    async def remrole(self):
+        role = self.bot.get_guild(706624339595886683).get_role(851498082033205268)
+        for members in role.members:
+            date = members.joined_at
+            now = datetime.datetime.now()
+            diff = now - date
+            hours = diff.total_seconds() / 60 /60
+            if hours >= 336:
+                await members.remove_roles(role)
+            await asyncio.sleep(5)
+
 
 
 def setup(bot):

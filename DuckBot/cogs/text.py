@@ -111,25 +111,22 @@ class general(commands.Cog):
     #### .jumbo <Emoji> ####
     # makes emoji go big
 
-    @commands.group(help="Makes an emoji bigger and shows it's formatting")
+    @commands.group(help="Makes an emoji bigger and shows it's formatting", invoke_without_command=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def emoji(self, ctx, emoji: typing.Union[discord.PartialEmoji, str]):
-        if type(emoji) == discord.PartialEmoji:
+    async def emoji(self, ctx, CustomEmojis: commands.Greedy[discord.PartialEmoji]):
+        if len(CustomEmojis) > 5:
+            raise commands.TooManyArguments()
+            return
+        for emoji in CustomEmojis:
             if emoji.animated: emojiformat = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
             else: emojiformat = f"*`<`*`:{emoji.name}:{emoji.id}>`"
             embed = discord.Embed(description=f"{emojiformat}",color=ctx.me.color)
             embed.set_image(url = emoji.url)
             await ctx.send(embed=embed)
-        else:
-            def to_string(c):
-                digit = f'{ord(c):x}'
-                name = unicodedata.name(c, 'Name not found.')
-                return f'`\\U{digit:>08}`: {name} - **{c}** \N{EM DASH} <http://www.fileformat.info/info/unicode/char/{digit}>'
-            msg = '\n'.join(map(to_string, emoji[:1]))
-            await ctx.send(f"{msg}\n*use\"{ctx.prefix}charinfo\" to get info about more characters at once*")
 
     @emoji.command(name="lock")
     @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_lock(self, ctx):
         await ctx.send("a")
 

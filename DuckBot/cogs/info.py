@@ -1,8 +1,8 @@
 import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, itertools, contextlib, datetime
 from discord.ext import commands, menus
 from discord.ext.commands import Paginator as CommandPaginator
-from errors import HigherRole
-from jishaku.models import copy_context_with
+
+from helpers import helper
 
 
 class Duckinator(menus.MenuPages):
@@ -130,6 +130,7 @@ class GroupHelpPageSource(menus.ListPageSource):
         return embed
 
 class MyHelp(commands.HelpCommand):
+
     # Formatting
     def get_minimal_command_signature(self, command):
         return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
@@ -223,6 +224,7 @@ class about(commands.Cog):
         help_command = MyHelp()
         help_command.cog = self
         bot.help_command = help_command
+        bot.session = aiohttp.ClientSession()
 
     def get_bot_uptime(self):
         return f"<t:{round(self.bot.uptime.timestamp())}:R>"
@@ -237,22 +239,54 @@ class about(commands.Cog):
     @commands.command(  help="Checks the bot's ping to Discord")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def ping(self, ctx):
-        embed = discord.Embed(title='', description="🏓 pong!", color=ctx.me.color)
+        pings = []
+        number = 0
+
+        typings = time.monotonic()
+        await ctx.trigger_typing()
+        typinge = time.monotonic()
+        typingms = (typinge - typings) * 1000
+        pings.append(typingms)
+
         start = time.perf_counter()
-        message = await ctx.send(embed=embed)
+        message = await ctx.send("🏓 pong!")
         end = time.perf_counter()
+        messagems = (end - start) * 1000
+        pings.append(messagems)
+
+        discords = time.monotonic()
+        url = "https://discordapp.com/"
+        async with self.bot.session.get(url) as resp:
+            if resp.status is 200:
+                discorde = time.monotonic()
+                discordms = (discorde - discords) * 1000
+                pings.append(discordms)
+            else:
+                discordms = 0
+
+        latencyms = self.bot.latency * 1000
+        pings.append(latencyms)
 
         pstart = time.perf_counter()
         await self.bot.db.fetch("SELECT 1")
         pend = time.perf_counter()
-        ping = (pend - pstart) * 1000
+        psqlms = (pend - pstart) * 1000
+        pings.append(psqlms)
+
+        for ms in pings:
+            number += ms
+        average = number / len(pings)
 
         await asyncio.sleep(0.7)
-        duration = (end - start) * 1000
-        embed = discord.Embed(description=f"""**<:open_site:854786097363812352> Websocket:** `{(self.bot.latency * 1000):.2f}ms`
-                                            **<a:typing:597589448607399949> Message:** `{duration:.2f}ms`
-                                            **<:psql:871758815345901619> Database:** `{ping:.2f}ms`""", color=ctx.me.color)
-        await message.edit(embed=embed)
+
+        await message.edit(content=re.sub('\n *', '\n', f"""
+     <:open_site:854786097363812352> **| `Websocket-|{round(latencyms, 3)}ms{' ' * (9-len(str(round(latencyms, 3))))}`**
+       <a:typing:597589448607399949> **| `Typing----|{round(typingms, 3)}ms{' ' * (9-len(str(round(typingms, 3))))}`**
+                    :speech_balloon: **| `Message---|{round(messagems, 3)}ms{' ' * (9-len(str(round(messagems, 3))))}`**
+       <:discord:314003252830011395> **| `Discord---|{round(discordms, 3)}ms{' ' * (9-len(str(round(discordms, 3))))}`**
+          <:psql:871758815345901619> **| `Database--|{round(psqlms, 3)}ms{' ' * (9-len(str(round(psqlms, 3))))}`**
+                          :infinity: **| `Average---|{round(average, 3)}ms{' ' * (9-len(str(round(average, 3))))}`**
+"""))
 
     @commands.command(help="Shows info about the bot", aliases=['info'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -347,6 +381,71 @@ class about(commands.Cog):
 > We store your `server id` for purpose of custom prefixes.
 """, color=ctx.me.color)
         embed.set_footer(text='Privacy concerns, DM the bot.')
+        await ctx.send(embed=embed)
+
+#-----------------------------------------------------------------#
+#------------------------ USER-INFO ------------------------------#
+#---------------------------------------------------=====---------#
+
+    @commands.command(aliases = ['userinfo', 'ui', 'whois', 'whoami'])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
+        if not user: user = ctx.author
+        # BADGES
+        badges = helper.get_user_badges(user)
+        if badges: badges = f"\n<:store_tag:658538492409806849>**Badges:**{badges}"
+        else: badges = ''
+        # BADGES
+        perms = helper.get_perms(user.guild_permissions)
+        if perms: perms = f"\n<:store_tag:658538492409806849>**Staff permissions:** {', '.join(perms)}"
+        else: perms = ''
+        # USERID
+        userid = f"\n<:greyTick:596576672900186113>**ID:** `{user.id}`"
+        # NICKNAME
+        if user.nick: nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
+        else: nick = ""
+        # CREATION DATE
+        date = f"<t:{round(user.created_at.timestamp())}:F>"
+        rdate = f"<t:{round(user.created_at.timestamp())}:R>"
+        created = f"\n<:invite:860644752281436171>**Created:** {date} ({rdate})"
+        # JOIN DATE
+        if user.joined_at:
+            date = f"<t:{round(user.joined_at.timestamp())}:F>"
+            rdate = f"<t:{round(user.joined_at.timestamp())}:R>"
+            joined = f"\n<:joined:849392863557189633>**joined:** {date} ({rdate})"
+        else: joined = ""
+        # GUILD OWNER
+        if user is ctx.guild.owner:
+            owner = f"\n<:owner:585789630800986114>**Owner:** <:check:314349398811475968>"
+        else: owner = ""
+        # BOT
+        if user.bot:
+            bot = f"\n<:botTag:230105988211015680>**Bot:** <:check:314349398811475968>"
+        else: bot = ""
+        # BOOSTER SINCE
+        if user.premium_since:
+            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
+            boost = f"\n<:booster4:585764446178246657>**Boosting since:** `{date} UTC`"
+        else: boost = ""
+
+        # Join Order
+        order = f"\n<:moved:848312880666640394>**Join position:** `{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
+
+        if user.premium_since:
+            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
+            boost = f"\n<:booster4:585764446178246657>**Boosting since:** `{date} UTC`"
+        else: boost = ""
+        # ROLES
+        roles = ""
+        for role in user.roles:
+            if role is ctx.guild.default_role: continue
+            roles = f"{roles} {role.mention}"
+        if roles != "":
+            roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
+        # EMBED
+        embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}""")
+        embed.set_author(name=user, icon_url=user.avatar_url)
+        embed.set_thumbnail(url=user.avatar_url)
         await ctx.send(embed=embed)
 
 

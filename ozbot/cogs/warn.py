@@ -4,7 +4,7 @@ from discord.ext import commands
 
 
 class events(commands.Cog):
-
+    """events only, not much."""
     def __init__(self, bot):
         self.bot = bot
 

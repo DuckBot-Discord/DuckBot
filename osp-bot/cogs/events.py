@@ -1,4 +1,4 @@
-import json, random, typing, discord, asyncio, yaml, datetime, random
+import json, random, typing, discord, asyncio, yaml, datetime, random, re
 from discord.ext import commands
 
 class events(commands.Cog):
@@ -244,7 +244,7 @@ You have 5 minutes to do so.""")
         if member.guild.id != self.yaml_data['guildID']: return
 
         embed = discord.Embed(color = 0x0066ff,
-                            description = f"""Welcome to the {member.guild.name}! You are the {sorted(member.guild.members, key=lambda user: member.joined_at).index(member) + 1} member. Please check out our <#860610050448031784> and agree to the {member.guild.rules_channel.mention} to gain access to the rest of the server. If you need anything, please message me, {self.bot.user.mention}, and our admin team will help you out! We hope you enjoy your time here.""",
+                            description = f"""Welcome to the {member.guild.name}! You are the {sorted(member.guild.members, key=lambda user: member.joined_at).index(member) + 1} member. Please check out our <#860610050448031784> and read the {member.guild.rules_channel.mention} to gain access to the rest of the server. If you need anything, please message me, {self.bot.user.mention}, and our admin team will help you out! We hope you enjoy your time here.""",
                             timestamp = datetime.datetime.now(),
                             title = f"Welcome, {member}")
 
@@ -336,8 +336,9 @@ You might want to follow up on this.
 
 ################################################################################
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
+    @commands.Cog.listener('on_message')
+    async def on_trigger_word(self, message):
+        print('a')
         if message.author.bot: return
         if message.channel.id in self.yaml_data['blackholes']:
             await message.delete()
@@ -363,7 +364,6 @@ You might want to follow up on this.
         if "help" in message.content.lower() and self.bot.user in message.mentions:
             await message.channel.send(f"hello, {message.author.mention}! If you need assistance, please DM me and an admin will assist you!")
 
-
         #####  TRIGGERS.YAML STUFF #####
 
         # Triggers if any of the suicide_triggers in the triggers.yaml is said
@@ -379,20 +379,86 @@ You might want to follow up on this.
         # Triggers if the bot is pinged without context OR if the bot is quoted, and the message is less than 22 characters long.
         elif self.bot.user in message.mentions and message and len(message.content) <= 22 and not message.content.startswith("."):
             # gets the response from the list no_context_responses in triggers.yaml
-            num = random.randint(0,100)
-            if num <=30:
-                response = random.choice(self.trigger_words['no_context_responses'])
-                response = response.replace('%PING_USER%', f'{message.author.mention}')
-                await message.channel.send(response)
+            response = random.choice(self.trigger_words['no_context_responses'])
+            response = response.replace('%PING_USER%', f'{message.author.mention}')
+            await message.channel.send(response)
 
         # Triggers if the bot is pinged with context
         elif self.bot.user in message.mentions and not message.content.startswith("."):
             # gets the response from the list context_responses in triggers.yaml
-            num = random.randint(0,100)
-            if num <=30:
-                response = random.choice(self.trigger_words['context_responses'])
-                response = response.replace('%PING_USER%', f'{message.author.mention}')
-                await message.channel.send(response)
+            response = random.choice(self.trigger_words['context_responses'])
+            response = response.replace('%PING_USER%', f'{message.author.mention}')
+            await message.channel.send(response)
+
+    @commands.Cog.listener('on_message')
+    async def on_d_bump(self, message):
+        if message.channel.id in self.yaml_data['blackholes']:
+            await message.delete()
+            return
+        if message.guild and message.content.startswith("!d bump") and not message.author.bot:
+            def check(m: discord.Message):  # m = discord.Message.
+                return m.author.id == 302050872383242240 and m.channel.id == message.channel.id
+            try:
+                msg = await self.bot.wait_for(event = 'message', check = check, timeout = 3.0)
+
+            except asyncio.TimeoutError:
+                return
+            else:
+                if msg.embeds:
+                    desc = msg.embeds[0].description
+                    match = re.findall('[0-9]{1,3}', desc)
+                    if 'wait another' in desc:
+                        time = int(match[-1])
+
+                        def reaction_check(reaction, user):
+                            return user == message.author and str(reaction.emoji) in ['✅', '❌'] and reaction.message.id == mess.id
+
+                        mess = await message.channel.send(f"Would you like to start a timer for {time} minutes?")
+                        await mess.add_reaction("✅")
+                        await mess.add_reaction("❌")
+                        try:
+                            reaction, user = await self.bot.wait_for('reaction_add', timeout=120.0, check=reaction_check)
+
+                        except asyncio.TimeoutError:
+                            await mess.edit(content="**Timed out.**")
+                            await mess.clear_reactions()
+                            return
+                        else:
+                            if str(reaction.emoji) == '❌':
+                                await mess.edit(content="**Timer cancelled.**")
+                                await mess.clear_reactions()
+                                return
+                            if str(reaction.emoji) == '✅':
+                                await mess.edit(content=f"timer for {time} minutes started!")
+                                await mess.clear_reactions()
+                                await asyncio.sleep(time*60)
+                                await message.channel.send(f"{message.author.mention} `!d bump` reminder!")
+
+                    else:
+                        time = 120
+                        def reaction_check(reaction, user):
+                            return user == message.author and str(reaction.emoji) in ['✅', '❌'] and reaction.message.id == mess.id
+
+                        mess = await message.channel.send(f"Would you like to start a timer for {time} minutes?")
+                        await mess.add_reaction("✅")
+                        await mess.add_reaction("❌")
+                        try:
+                            reaction, user = await self.bot.wait_for('reaction_add', timeout=120.0, check=reaction_check)
+
+                        except asyncio.TimeoutError:
+                            await mess.edit(content="**Timed out.**")
+                            await mess.clear_reactions()
+                            return
+                        else:
+                            if str(reaction.emoji) == '❌':
+                                await mess.edit(content="**Timer cancelled.**")
+                                await mess.clear_reactions()
+                                return
+                            if str(reaction.emoji) == '✅':
+                                await mess.edit(content=f"timer for {time} minutes started!")
+                                await mess.clear_reactions()
+                                await asyncio.sleep(time*60)
+                                await message.channel.send(f"{message.author.mention} `!d bump` reminder!")
 
 def setup(bot):
     bot.add_cog(events(bot))

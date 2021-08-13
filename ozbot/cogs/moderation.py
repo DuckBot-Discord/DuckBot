@@ -2,7 +2,7 @@ import typing, discord, asyncio, yaml, aiohttp
 from discord.ext import commands
 
 class moderation(commands.Cog):
-
+    """⚖ Moderation commands."""
     def __init__(self, bot):
         self.bot = bot
         #------------- YAML STUFF -------------#

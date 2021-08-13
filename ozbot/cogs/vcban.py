@@ -2,7 +2,7 @@ import typing, discord, asyncio, yaml
 from discord.ext import commands
 
 class promote(commands.Cog):
-
+    """🤖 automated VC-Ban overwrites"""
     def __init__(self, bot):
         self.bot = bot
     #------------- YAML STUFF -------------#

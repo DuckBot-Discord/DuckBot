@@ -19,6 +19,7 @@ class automod(commands.Cog):
         self.urlBanRole = self.bot.get_guild(yaml_data['guildID']).get_role(yaml_data['urlBanRole'])
 
     @commands.command(aliases=['test'])
+    @commands.has_permissions(manage_messages=True)
     async def urltest(self, ctx, *, url):
         results = re.findall("http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", url)
         if not results:
@@ -131,6 +132,9 @@ If you already purchased a <@&717144765690282015> or higher subscription, link y
 If your account is already linked, unlink and relink it. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!) about how to get your role.
 
 If you don't already have a <@&717144765690282015> or higher subscription, you can get one at [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=message.guild.me.color)
+
+            embed=discord.Embed(color=message.guild.me.color, description="The patreon-discord integration is down at the moment. get your downloads here:\nhttps://www.patreon.com/posts/download-links-54730682\n\n _The issue will be fixed soon ♥ sorry for the inconvenience_")
+
             embed.set_author(name="Automatic support", icon_url="https://i.imgur.com/GTttbJW.png")
             await message.reply(embed=embed)
 

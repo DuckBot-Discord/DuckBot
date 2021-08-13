@@ -1,4 +1,4 @@
-
+import helpers
 import  discord, asyncio
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -19,6 +19,12 @@ class handler(commands.Cog):
 
         embed = discord.Embed(color=0xD7342A)
         embed.set_author(name = 'Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
+
+        if isinstance(error, helpers.NotOSP):
+            await self.bot.get_channel(860608884694450196).send(f"""```{ctx.command} command raised an error:
+    **This command is restricted to OSP!**\n    discord.gg/tkuDSz6wsc```""")
+            await ctx.send("**This command is restricted to OSP!**\ndiscord.gg/tkuDSz6wsc")
+            return
 
         if isinstance(error, commands.NotOwner):
             await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
@@ -57,6 +63,11 @@ class handler(commands.Cog):
 {separator}{indicator}
 Missing argument: {missing}
 ```""")
+
+
+        elif isinstance(error, commands.errors.MaxConcurrencyReached):
+            await ctx.send("Maximum command concurrency reached!")
+            return
 
 
         elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown):

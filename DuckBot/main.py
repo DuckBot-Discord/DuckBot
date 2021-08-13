@@ -1,6 +1,8 @@
 import os, discord, asyncio, traceback, datetime, asyncpg
 from dotenv import load_dotenv
 from discord.ext import commands
+import logging
+logging.basicConfig(level=logging.INFO)
 
 PRE = 'db.'
 async def get_pre(bot, message):

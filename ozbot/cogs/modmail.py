@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
 class modmail(commands.Cog):
-
+    """🎫 Dm the bot for help!"""
     def __init__(self, bot):
         self.bot = bot
         #------------- YAML STUFF -------------#
