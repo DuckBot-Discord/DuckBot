@@ -65,6 +65,8 @@ Here's some extra information about Minecraft usernames, accounts and how to fin
                     await message.author.send(embed=embed2)
                     await message.channel.send(f"❌ `{argument}` doesn't seem to be a JAVA EDITION account. Just sent you a DM some info on how to find it :smile:", delete_after=20)
 
+                elif cs.status != 200: return await message.channel.send(f"{cs.status} - something went wrong...")
+
                 elif user.status == discord.Status.online:
                     await message.author.add_roles(message.guild.get_role(833843541872214056),message.guild.get_role(798698824738668605))
                     try: await message.author.remove_roles(message.guild.get_role(851593341409820722))

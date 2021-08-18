@@ -8,9 +8,12 @@ PRE = 'db.'
 async def get_pre(bot, message):
     if not message.guild:
         return commands.when_mentioned_or(PRE)(bot,message)
-    if await bot.is_owner(message.author) and bot.noprefix == True:
-        return commands.when_mentioned_or("")(bot,message)
     prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
+    if await bot.is_owner(message.author) and bot.noprefix == True:
+        if prefix:
+            return commands.when_mentioned_or(prefix, "")(bot,message)
+        else:
+            return commands.when_mentioned_or(PRE, "")(bot,message)
     if not prefix:
         prefix = PRE
     return commands.when_mentioned_or(prefix)(bot,message)

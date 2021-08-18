@@ -16,7 +16,7 @@ class handler(commands.Cog):
     async def on_command_error(self, ctx, error):
         error = getattr(error, "original", error)
 
-        if isinstance(error, discord.ext.commands.CheckAnyFailure):
+        if isinstance(error, commands.CheckAnyFailure):
             for e in error.errors:
                 if error != commands.NotOwner:
                     error = e
@@ -29,7 +29,7 @@ class handler(commands.Cog):
             await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
             return
 
-        if isinstance(error, discord.ext.commands.MissingPermissions):
+        if isinstance(error, commands.MissingPermissions):
             text=f"You're missing the following permissions: \n**{', '.join(error.missing_perms)}**"
             try:
                 embed.description=text
@@ -39,7 +39,7 @@ class handler(commands.Cog):
                 except: pass
             return
 
-        if isinstance(error, discord.ext.commands.BotMissingPermissions):
+        if isinstance(error, commands.BotMissingPermissions):
             text=f"I'm missing the following permissions: \n**{', '.join(error.missing_perms)}**"
             try:
                 embed.description=text
@@ -49,7 +49,7 @@ class handler(commands.Cog):
                 except: pass
             return
 
-        elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             missing=f"{str(error.param).split(':')[0]}"
             command = f"{ctx.prefix}{ctx.command} {ctx.command.signature}"
             separator = (' ' * (len(command.split(missing)[0])-1))
@@ -81,11 +81,11 @@ class handler(commands.Cog):
             embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
 
-        elif isinstance(error, HigherRole):
-            await ctx.send("error handled")
-
-        elif isinstance(error, discord.ext.commands.errors.CommandNotFound):
+        elif isinstance(error, commands.errors.CommandNotFound):
             pass
+
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send(f"Bad argument: {error}")
 
         else:
             await self.bot.wait_until_ready()

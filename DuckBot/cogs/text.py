@@ -130,6 +130,20 @@ class general(commands.Cog):
     async def emoji_lock(self, ctx):
         await ctx.send("a")
 
+    @emoji.command(name="steal")
+    async def emoji_steal(self, ctx):
+        CustomEmojis = ctx.message.reference.resolved.emojis
+        if not CustomEmojis: return await ctx.send("no message quoted")
+        if len(CustomEmojis) > 5:
+            raise commands.TooManyArguments()
+            return
+        for emoji in CustomEmojis:
+            if emoji.animated: emojiformat = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
+            else: emojiformat = f"*`<`*`:{emoji.name}:{emoji.id}>`"
+            embed = discord.Embed(description=f"{emojiformat}",color=ctx.me.color)
+            embed.set_image(url = emoji.url)
+            await ctx.send(embed=embed)
+
     #### .uuid <mcname> ####
     # gets user's UUID (minecraft)
 

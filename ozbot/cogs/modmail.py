@@ -163,7 +163,7 @@ It should look like this: https://i.imgur.com/2py4Csc.png
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if member.guild.id != 706624339595886683: return
-        await self.bot.get_channel(706624465378738217).send(f"""{member.mention}, Welcome to {member.guild.name}! Make sure to read and agree to the <#706825075516768297> to get access to the rest of {member.guild.name}.""")
+        if not member.bot: await self.bot.get_channel(706624465378738217).send(f"""{member.mention}, Welcome to {member.guild.name}! Make sure to read and agree to the <#706825075516768297> to get access to the rest of {member.guild.name}.""")
         await self.bot.get_channel(708316690638700607).send(f"""<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}** joined **{member.guild.name}**!""")
 
     @commands.Cog.listener()

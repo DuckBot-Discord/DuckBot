@@ -1,4 +1,4 @@
-import os, discord, asyncio, yaml
+import os, discord, asyncio, yaml, asyncpg
 from dotenv import load_dotenv
 from discord.ext import commands
 
@@ -25,6 +25,24 @@ async def error_msg(self, ctx):
     try: await ctx.message.delete()
     except: return
     return
+
+
+
+async def create_db_pool():
+
+    credentials = {"user": f"{os.getenv('PSQL_USER')}",
+                   "password": f"{os.getenv('PSQL_PASSWORD')}",
+                   "database": f"{os.getenv('PSQL_DB')}",
+                   "host": f"{os.getenv('PSQL_HOST')}"}
+
+    bot.db = await asyncpg.create_pool(**credentials)
+    print("connection successful")
+
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS selfmutes(member_id bigint PRIMARY KEY, end_time timestamp);")
+    print("table done")
+
+
+
 
 @bot.event
 async def on_ready():
@@ -63,4 +81,5 @@ for filename in os.listdir("./cogs"):
             print('\033[0m')
 print('\033[0m')
 
+bot.loop.run_until_complete(create_db_pool())
 bot.run(TOKEN, reconnect=True)

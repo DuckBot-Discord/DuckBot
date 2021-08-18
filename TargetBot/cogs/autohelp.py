@@ -122,18 +122,13 @@ dismiss case:
         if "download" in f"{message.content.lower()}":
             if self.bot.get_guild(717140270789033984).get_role(717144906350592061) in message.author.roles:
                 embed=discord.Embed(title="", description="""I see you're asking about downloads. To access the download channel you need to have a role <@&717144765690282015> or higher, but you seem to have the <@&717144906350592061> role.
-
 You can get a <@&717144765690282015> or higher subscription here: [patreon.com/stylized](https://www.patreon.com/Stylized).
 _if you already have one, unlink and relink your patreon_""", color=message.guild.me.color)
             else:
                 embed=discord.Embed(title="", description="""I see you're asking about downloads. To access the download channel you need to have a role <@&717144765690282015> or higher, but you don't seem to have any roles.
-
 If you already purchased a <@&717144765690282015> or higher subscription, link your Patreon to Discord. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!)
 If your account is already linked, unlink and relink it. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!) about how to get your role.
-
 If you don't already have a <@&717144765690282015> or higher subscription, you can get one at [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=message.guild.me.color)
-
-            embed=discord.Embed(color=message.guild.me.color, description="The patreon-discord integration is down at the moment. get your downloads here:\nhttps://www.patreon.com/posts/download-links-54730682\n\n _The issue will be fixed soon ♥ sorry for the inconvenience_")
 
             embed.set_author(name="Automatic support", icon_url="https://i.imgur.com/GTttbJW.png")
             await message.reply(embed=embed)
