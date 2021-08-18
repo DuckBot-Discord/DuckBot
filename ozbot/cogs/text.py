@@ -130,7 +130,7 @@ class GroupHelpPageSource(menus.ListPageSource):
 class MyHelp(commands.HelpCommand):
     # Formatting
     def get_minimal_command_signature(self, command):
-        return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
+        return '%s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
 
     def get_command_name(self, command):
         return '%s' % (command.qualified_name)
@@ -142,8 +142,8 @@ class MyHelp(commands.HelpCommand):
 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
 - usage format: <required> [optional]
-+ {self.clean_prefix}help [command] - get information on a command
-+ {self.clean_prefix}help [category] - get information on a category
++ {self.context.clean_prefix}help [command] - get information on a command
++ {self.context.clean_prefix}help [category] - get information on a category
 ```""")
         ignored_cogs=['helpcog']
         for cog, commands in mapping.items():
@@ -167,10 +167,10 @@ class MyHelp(commands.HelpCommand):
   # !help <command>
     async def send_command_help(self, command):
         alias = command.aliases
-        if command.help: command_help = command.help.replace("%PRE%", self.clean_prefix)
+        if command.help: command_help = command.help.replace("%PRE%", self.context.clean_prefix)
         else: command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}",
+            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.context.clean_prefix}{command}",
             description=f"""
 ```yaml
       usage: {self.get_minimal_command_signature(command)}
@@ -178,7 +178,7 @@ class MyHelp(commands.HelpCommand):
 description: {command_help}
 ```""")
         else:
-            embed = discord.Embed(color=0x5865F2, title=f"information about {self.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=0x5865F2, title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
@@ -187,7 +187,7 @@ description: {command_help}
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.clean_prefix))
+        menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix))
         await menu.start(self.context)
 
 
@@ -200,7 +200,7 @@ description: {command_help}
         if len(entries) == 0:
             return await self.send_command_help(group)
 
-        source = GroupHelpPageSource(group, entries, prefix=self.clean_prefix)
+        source = GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
         menu = HelpMenu(source)
         await menu.start(self.context)
 

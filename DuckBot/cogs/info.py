@@ -133,7 +133,7 @@ class MyHelp(commands.HelpCommand):
 
     # Formatting
     def get_minimal_command_signature(self, command):
-        return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
+        return '%s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
 
     def get_command_name(self, command):
         return '%s' % (command.qualified_name)
@@ -142,12 +142,12 @@ class MyHelp(commands.HelpCommand):
     async def send_bot_help(self, mapping):
         embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
         description=f"""
-📰 **__NEW: custom prefix! do__ `{self.clean_prefix}prefix [new]` __to change it!__** 📰
+📰 **__NEW: custom prefix! do__ `{self.context.clean_prefix}prefix [new]` __to change it!__** 📰
 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
 - usage format: <required> [optional]
-+ {self.clean_prefix}help [command] - get information on a command
-+ {self.clean_prefix}help [category] - get information on a category
++ {self.context.clean_prefix}help [command] - get information on a command
++ {self.context.clean_prefix}help [category] - get information on a category
 ```[<:invite:860644752281436171> invite me]({self.context.bot.invite_url}) | [<:topgg:870133913102721045> top.gg]({self.context.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.context.bot.vote_bots_gg}) | [<:github:744345792172654643> source]({self.context.bot.repo})
 > **server prefix:** `{await self.context.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', self.context.guild.id) or 'db.'}`
 
@@ -174,10 +174,10 @@ class MyHelp(commands.HelpCommand):
   # !help <command>
     async def send_command_help(self, command):
         alias = command.aliases
-        if command.help: command_help = command.help.replace("%PRE%", self.clean_prefix)
+        if command.help: command_help = command.help.replace("%PRE%", self.context.clean_prefix)
         else: command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}",
+            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.context.clean_prefix}{command}",
             description=f"""
 ```yaml
       usage: {self.get_minimal_command_signature(command)}
@@ -185,7 +185,7 @@ class MyHelp(commands.HelpCommand):
 description: {command_help}
 ```""")
         else:
-            embed = discord.Embed(color=0x5865F2, title=f"information about {self.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=0x5865F2, title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
@@ -194,7 +194,7 @@ description: {command_help}
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.clean_prefix))
+        menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix))
         await menu.start(self.context)
 
 
@@ -207,7 +207,7 @@ description: {command_help}
         if len(entries) == 0:
             return await self.send_command_help(group)
 
-        source = GroupHelpPageSource(group, entries, prefix=self.clean_prefix)
+        source = GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
         menu = HelpMenu(source)
         await menu.start(self.context)
 
@@ -298,7 +298,7 @@ class about(commands.Cog):
 > Try also `{ctx.prefix}source [command]`
 > or `{ctx.prefix}source [command.subcommand]`
 """)
-        embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.avatar_url)
+        embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.avatar.url)
         # statistics
         total_members = 0
         total_unique = len(self.bot.users)
@@ -444,8 +444,8 @@ class about(commands.Cog):
             roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
         # EMBED
         embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}""")
-        embed.set_author(name=user, icon_url=user.avatar_url)
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_author(name=user, icon_url=user.avatar.url)
+        embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
 
 

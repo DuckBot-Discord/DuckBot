@@ -111,8 +111,8 @@ class moderation(commands.Cog):
     async def pfp(self, ctx, user: typing.Optional[discord.Member]):
         user = user or ctx.author
         embed=discord.Embed(color=ctx.me.color)
-        embed.description=f"[PNG]({user.avatar_url_as(format='png', size=2048)}) **|** [JPG]({user.avatar_url_as(format='jpg', size=2048)}) **|** [WEBP]({user.avatar_url_as(format='webp', size=2048)})"
-        embed.set_image(url=user.avatar_url)
+        embed.description=f"[PNG]({user.avatar.url_as(format='png', size=2048)}) **|** [JPG]({user.avatar.url_as(format='jpg', size=2048)}) **|** [WEBP]({user.avatar.url_as(format='webp', size=2048)})"
+        embed.set_image(url=user.avatar.url)
         await ctx.send(embed=embed)
 
     @commands.command(aliases = ['userinfo', 'ui'],help="Shows information for a specified user")
@@ -179,7 +179,7 @@ class moderation(commands.Cog):
         # EMBED
         embed = discord.Embed(color=ctx.me.color, description=f"""{nick}{badges}{owner}{bot}{userid}{created}{joined}{order}{birthday}{boost}{roles}""")
         embed.set_author(name=user, icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
 
 
@@ -888,15 +888,15 @@ class moderation(commands.Cog):
                 myfile = await file.to_file()
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, file = myfile, content = message.content, embed=embed)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, file = myfile, content = message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, file = myfile, content = message.content)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, file = myfile, content = message.content)
             else:
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, content = message.content, embed=embed)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, content = message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, content = message.content)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, content = message.content)
             try: await message.delete()
             except: pass
             await asyncio.sleep(0.5)

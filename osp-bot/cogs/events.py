@@ -60,7 +60,7 @@ class events(commands.Cog):
 
 You have 5 minutes to do so.""")
 
-                embed.set_author(name=f"{payload.member} is leaving the ticket", icon_url=payload.member.avatar_url)
+                embed.set_author(name=f"{payload.member} is leaving the ticket", icon_url=payload.member.avatar.url)
                 embed.set_footer(text="Send \"no\" if you don't want to")
                 lmsg = await message.channel.send(payload.member.mention, embed=embed)
 
@@ -101,7 +101,7 @@ You have 5 minutes to do so.""")
                 if msg:
                     if msg.content and msg.content.lower() != "no":
                         logemb.add_field(name="Reason:", value=msg.content)
-                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar.url)
                 await TicketLog.send(embed=logemb)
 
         elif str(payload.emoji) == "📁" and self.ticket_staff in payload.member.roles:
@@ -125,7 +125,7 @@ You have 5 minutes to do so.""")
                 TicketLog = await self.get_webhook(self.ticket_log)
                 logemb = discord.Embed(color=0x4286F4, title=f"Ticket #{message.channel.name} archived", description= f"""
                 {payload.member.mention} archived {message.channel.name}""")
-                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar.url)
                 await TicketLog.send(embed=logemb)
 
 
@@ -184,7 +184,7 @@ You have 5 minutes to do so.""")
                 TicketLog = await self.get_webhook(self.ticket_log)
                 logemb = discord.Embed(color=0x4286F4, title=f"Ticket #{message.channel.name} closed", description= f"""
                 {payload.member.mention} closed ticket: {message.channel.mention}""")
-                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar.url)
                 await TicketLog.send(embed=logemb)
                 return
 
@@ -223,7 +223,7 @@ You have 5 minutes to do so.""")
                 TicketLog = await self.get_webhook(self.ticket_log)
                 logemb = discord.Embed(color=0xD7342A, title=f"Ticket #{message.channel.name} deleted", description= f"""
                 {payload.member.mention} deleted ticket {message.channel.mention}""")
-                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar_url)
+                logemb.set_author(name=str(payload.member), icon_url=payload.member.avatar.url)
                 await TicketLog.send(embed=logemb)
                 return
 
@@ -249,7 +249,7 @@ You have 5 minutes to do so.""")
                             title = f"Welcome, {member}")
 
         embed.set_author(name = member.name,
-                        icon_url = member.avatar_url)
+                        icon_url = member.avatar.url)
 
         embed.set_footer(text = "Member joined")
 

@@ -129,7 +129,7 @@ class GroupHelpPageSource(menus.ListPageSource):
 class MyHelp(commands.HelpCommand):
     # Formatting
     def get_minimal_command_signature(self, command):
-        return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
+        return '%s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
 
     def get_command_name(self, command):
         return '%s' % (command.qualified_name)
@@ -140,8 +140,8 @@ class MyHelp(commands.HelpCommand):
         description=f"""
 ```fix
 usage format: <required> [optional]
-{self.clean_prefix}help [command] - get information on a command
-{self.clean_prefix}help [category] - get information on a category
+{self.context.clean_prefix}help [command] - get information on a command
+{self.context.clean_prefix}help [category] - get information on a category
 ```
 _ _""")
 
@@ -167,10 +167,10 @@ _ _""")
   # !help <command>
     async def send_command_help(self, command):
         alias = command.aliases
-        if command.help: command_help = command.help.replace("%PRE%", self.clean_prefix)
+        if command.help: command_help = command.help.replace("%PRE%", self.context.clean_prefix)
         else: command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.clean_prefix}{command}",
+            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.context.clean_prefix}{command}",
             description=f"""
 ```yaml
       usage: {self.get_minimal_command_signature(command)}
@@ -178,7 +178,7 @@ _ _""")
 description: {command_help}
 ```""")
         else:
-            embed = discord.Embed(color=0x5865F2, title=f"information about {self.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=0x5865F2, title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
@@ -187,7 +187,7 @@ description: {command_help}
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.clean_prefix))
+        menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix))
         await menu.start(self.context)
 
 
@@ -200,7 +200,7 @@ description: {command_help}
         if len(entries) == 0:
             return await self.send_command_help(group)
 
-        source = GroupHelpPageSource(group, entries, prefix=self.clean_prefix)
+        source = GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
         menu = HelpMenu(source)
         await menu.start(self.context)
 
@@ -365,7 +365,7 @@ class text(commands.Cog):
     @helpers.is_osp_server()
     async def donate(self,ctx):
         embed=discord.Embed(title="**Thank you so much for supporting us!**", description="If applicable, please add a note saying it's for OSP so I can put it in the right bank account!", color=0x0066ff)
-        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
         embed.set_thumbnail(url="https://i.pinimg.com/originals/b9/27/e8/b927e82096e8f74e62b1666e727a694c.gif")
         embed.add_field(name="Donate using Venmo:", value="[Click Here to donate using Venmo](http://venmo.com/maxwellmandell)", inline=False)
         embed.add_field(name="Donate using CashApp:", value="[Click Here to donate using Cashapp](https://cash.app/obscuresorrowsproj)", inline=False)
@@ -623,7 +623,7 @@ https://youtu.be/sSDfBiHTFpo""")
     @helpers.is_osp_server()
     async def vote(self, ctx):
         embed = discord.Embed(color = ctx.me.color, description="**On [Disboard](https://disboard.org/server/831897006812561409) and [Disforge](https://disforge.com/server/46125-osp)!**")
-        embed.set_author(name=f"{ctx.guild.name} - vote here:", icon_url=ctx.guild.icon_url)
+        embed.set_author(name=f"{ctx.guild.name} - vote here:", icon_url=ctx.guild.icon.url)
         await ctx.send(embed=embed)
 
 def setup(bot):
