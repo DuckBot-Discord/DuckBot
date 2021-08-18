@@ -338,7 +338,6 @@ You might want to follow up on this.
 
     @commands.Cog.listener('on_message')
     async def on_trigger_word(self, message):
-        print('a')
         if message.author.bot: return
         if message.channel.id in self.yaml_data['blackholes']:
             await message.delete()
