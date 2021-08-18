@@ -170,7 +170,7 @@ class moderation(commands.Cog):
         #BIRTHDAY
         current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', user.id)
         if current_birthday:
-            now = discord.utils.utcnow().date()
+            now = discord.utils.now().date()
             delta = now - current_birthday
             age = int(delta.days / 365.2425)
             birthday = f"\n🎉**birthday:** `{current_birthday.strftime('%B %d, %Y')} ({age} Y/O)`"
@@ -452,6 +452,16 @@ class moderation(commands.Cog):
 
         def predicate(m):
             return (m.webhook_id is None and m.author.bot) or (prefix and m.content.startswith(prefix))
+
+        await self.do_removal(ctx, search, predicate)
+
+    @remove.command(name='death', aliases=['death'])
+    async def remove_dsrv_deaths(self, ctx, prefix=None, search=100):
+        """Removes all messages that may be deaths from DiscordSRV (has a black embed color)."""
+
+        def predicate(m):
+        	if m.embeds:
+                return m.embeds[0].color == discord.Color(0x000000)
 
         await self.do_removal(ctx, search, predicate)
 
