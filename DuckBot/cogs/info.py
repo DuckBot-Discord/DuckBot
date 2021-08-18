@@ -142,27 +142,41 @@ class MyHelp(commands.HelpCommand):
     async def send_bot_help(self, mapping):
         embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
         description=f"""
+<<<<<<< HEAD
+**Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
+```diff
+- usage format: <required> [optional]
+- dont type these brackets when using the command!
++ {self.context.clean_prefix}help [command] - get information on a command
++ {self.context.clean_prefix}help [category] - get information on a category
+=======
 📰 **__NEW: custom prefix! do__ `{self.context.clean_prefix}prefix [new]` __to change it!__** 📰
 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
 - usage format: <required> [optional]
 + {self.context.clean_prefix}help [command] - get information on a command
 + {self.context.clean_prefix}help [category] - get information on a category
+>>>>>>> 41d87bee6171e4e69aac1cc4790597b77eb4b94d
 ```[<:invite:860644752281436171> invite me]({self.context.bot.invite_url}) | [<:topgg:870133913102721045> top.gg]({self.context.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.context.bot.vote_bots_gg}) | [<:github:744345792172654643> source]({self.context.bot.repo})
 > **server prefix:** `{await self.context.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', self.context.guild.id) or 'db.'}`
+""")
 
-​_ _""")
+        allcogs = []
         ignored_cogs=['helpcog']
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs: continue
             filtered = await self.filter_commands(commands, sort=True)
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
-                val = "`, `".join(command_signatures)
-                embed.add_field(name=cog.qualified_name, value=f"{cog.description}\n`{val}`", inline=True)
+                allcogs.append(cog.qualified_name)
+        nl = '\n'
+        embed.add_field(name=f"Available categories [{len(allcogs)}]", value=f"```\n{nl.join(allcogs)}```")
+        embed.add_field(name="📰 Latest News - DAY (RELATIVE_TIME)", value = "INFORMATION")
+
 
         channel = self.get_destination()
         await channel.send(embed=embed)
+
 
     def common_command_formatting(self, embed_like, command):
         embed_like.title = self.get_command_signature(command)
