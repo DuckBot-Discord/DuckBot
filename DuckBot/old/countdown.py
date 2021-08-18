@@ -16,7 +16,7 @@ class help(commands.Cog):
         DAY = 24 * HOUR
         MONTH = 30 * DAY
         def get_relative_time(dt):
-            now = discord.utils.now()
+            now = discord.utils.utcnow()
             delta_time = dt - now
 
             delta =  delta_time.days * DAY + delta_time.seconds

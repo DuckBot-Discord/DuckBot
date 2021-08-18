@@ -170,7 +170,7 @@ class moderation(commands.Cog):
         #BIRTHDAY
         current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', user.id)
         if current_birthday:
-            now = discord.utils.now().date()
+            now = discord.utils.utcnow().date()
             delta = now - current_birthday
             age = int(delta.days / 365.2425)
             birthday = f"\n🎉**birthday:** `{current_birthday.strftime('%B %d, %Y')} ({age} Y/O)`"

@@ -70,7 +70,7 @@ class daily_color(commands.Cog):
         role = self.bot.get_guild(706624339595886683).get_role(851498082033205268)
         for members in role.members:
             date = members.joined_at
-            now = discord.utils.now()
+            now = discord.utils.utcnow()
             diff = now - date
             hours = diff.total_seconds() / 60 /60
             if hours >= 336:
