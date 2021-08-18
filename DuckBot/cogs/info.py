@@ -1,11 +1,18 @@
 import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, itertools, contextlib, datetime
 from discord.ext import commands, menus
-from discord.ext.commands import Paginator as CommandPaginator
+from discord.ext.menus.views import ViewMenuPages
 
 from helpers import helper
 
 
-class Duckinator(menus.MenuPages):
+class InvSrc(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me', url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"))
+        self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code', url="https://github.com/LeoCx1000/discord-bots"))
+
+
+class Duckinator(ViewMenuPages):
     def __init__(self, source):
         super().__init__(source=source, check_embeds=True)
         self.input_lock = asyncio.Lock()
@@ -140,29 +147,19 @@ class MyHelp(commands.HelpCommand):
 
    # !help
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
+        embed = discord.Embed(color=0x5865F2,
         description=f"""
-<<<<<<< HEAD
 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
 - usage format: <required> [optional]
 - dont type these brackets when using the command!
 + {self.context.clean_prefix}help [command] - get information on a command
 + {self.context.clean_prefix}help [category] - get information on a category
-=======
-📰 **__NEW: custom prefix! do__ `{self.context.clean_prefix}prefix [new]` __to change it!__** 📰
-**Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
-```diff
-- usage format: <required> [optional]
-+ {self.context.clean_prefix}help [command] - get information on a command
-+ {self.context.clean_prefix}help [category] - get information on a category
->>>>>>> 41d87bee6171e4e69aac1cc4790597b77eb4b94d
-```[<:invite:860644752281436171> invite me]({self.context.bot.invite_url}) | [<:topgg:870133913102721045> top.gg]({self.context.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.context.bot.vote_bots_gg}) | [<:github:744345792172654643> source]({self.context.bot.repo})
-> **server prefix:** `{await self.context.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', self.context.guild.id) or 'db.'}`
+```
 """)
-
+        embed.set_author(name=self.context.author, icon_url=self.context.author.avatar.url)
         allcogs = []
-        ignored_cogs=['helpcog']
+        ignored_cogs=[]
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs: continue
             filtered = await self.filter_commands(commands, sort=True)
@@ -170,12 +167,19 @@ class MyHelp(commands.HelpCommand):
             if command_signatures:
                 allcogs.append(cog.qualified_name)
         nl = '\n'
-        embed.add_field(name=f"Available categories [{len(allcogs)}]", value=f"```\n{nl.join(allcogs)}```")
-        embed.add_field(name="📰 Latest News - DAY (RELATIVE_TIME)", value = "INFORMATION")
+        embed.add_field(name=f"Available categories [{len(allcogs)}]", value=f"```fix\n{nl.join(allcogs)}```")
+        embed.add_field(name="📰 Latest News - <t:1629266339:d> (<t:1629266339:R>)", value = f"""
+_ _
+> <:nickname:850914031953903626> **Custom prefixes!**
+Chane my prefix by doing `{self.context.clean_prefix}prefix [new]`
+
+> **Updated to discord.py Version 2.0(BETA)**
+‍*If a command isn't working, DM me ({self.context.me.mention}) with the command you tried to execute and it will be fixed!* 💞
+""")
 
 
         channel = self.get_destination()
-        await channel.send(embed=embed)
+        await channel.send(embed=embed, view=InvSrc())
 
 
     def common_command_formatting(self, embed_like, command):
