@@ -7,6 +7,7 @@ class test(commands.Cog):
         self.bot = bot
 
     @commands.command(help="👁👄👁")
+    @commands.cooldown(1, 5.0, commands.BucketType.channel)
     async def blink(self, ctx):
         msg = await ctx.send("👁👄👁")
         await asyncio.sleep(0.5)
@@ -18,6 +19,7 @@ class test(commands.Cog):
         await ctx.message.delete()
 
     @commands.command(help="😉")
+    @commands.cooldown(1, 5.0, commands.BucketType.channel)
     async def blink2(self, ctx):
         msg = await ctx.send("😐")
         await asyncio.sleep(0.5)
@@ -29,6 +31,8 @@ class test(commands.Cog):
         await ctx.message.delete()
 
     @commands.command(help="👁👄👁")
+    @commands.cooldown(1, 5.0, commands.BucketType.channel)
+
     async def wink(self, ctx):
         msg = await ctx.send("👁👄👁")
         await asyncio.sleep(0.5)
@@ -40,7 +44,7 @@ class test(commands.Cog):
         await ctx.message.delete()
 
     @commands.command(help="hmm")
-    @commands.cooldown(1, 3.0, commands.BucketType.user)
+    @commands.cooldown(1, 5.0, commands.BucketType.channel)
     async def smiles(self, ctx):
         msg = await ctx.send(":slight_smile:")
         await asyncio.sleep(1)

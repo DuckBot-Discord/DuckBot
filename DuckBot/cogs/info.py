@@ -5,11 +5,24 @@ from discord.ext.menus.views import ViewMenuPages
 from helpers import helper
 
 
+class InviteButtons(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.Button(emoji="<:topgg:870133913102721045>", label='top.gg', url="https://top.gg/bot/788278464474120202#/"))
+        self.add_item(discord.ui.Button(emoji="<:botsgg:870134146972938310>", label='bots.gg', url="https://discord.bots.gg/bots/788278464474120202"))
+
 class InvSrc(discord.ui.View):
     def __init__(self):
         super().__init__()
         self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me', url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"))
         self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code', url="https://github.com/LeoCx1000/discord-bots"))
+
+    @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji = "<:topgg:870133913102721045>")
+    async def receive(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed=discord.Embed(description="<:topgg:870133913102721045> **vote here!** <:botsgg:870134146972938310>", color = discord.Colour.blurple())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
+
+
 
 
 class Duckinator(ViewMenuPages):
@@ -160,12 +173,15 @@ class MyHelp(commands.HelpCommand):
         embed.set_author(name=self.context.author, icon_url=self.context.author.avatar.url)
         allcogs = []
         ignored_cogs=[]
+        iter = 1
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs: continue
             filtered = await self.filter_commands(commands, sort=True)
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
-                allcogs.append(cog.qualified_name)
+                num = f"{iter}\U0000fe0f\U000020e3"
+                allcogs.append(f"{num} {cog.qualified_name}")
+                iter+=1
         nl = '\n'
         embed.add_field(name=f"Available categories [{len(allcogs)}]", value=f"```fix\n{nl.join(allcogs)}```")
         embed.add_field(name="📰 Latest News - <t:1629266339:d> (<t:1629266339:R>)", value = f"""
@@ -358,7 +374,7 @@ class about(commands.Cog):
         source_url = 'https://github.com/LeoCx1000/discord-bots'
         branch = 'master/DuckBot'
         if command is None:
-            embed=discord.Embed(color=ctx.me.color, description=f"**[Here's my surce code]({source_url})**")
+            embed=discord.Embed(color=ctx.me.color, description=f"**[Here's my source code]({source_url})**")
             return await ctx.send(embed=embed)
 
         if command == 'help':
@@ -368,7 +384,7 @@ class about(commands.Cog):
         else:
             obj = self.bot.get_command(command.replace('.', ' '))
             if obj is None:
-                embed=discord.Embed(color=ctx.me.color, description=f"**[Here's my surce code]({source_url})**", title="command not found")
+                embed=discord.Embed(color=ctx.me.color, description=f"**[Here's my source code]({source_url})**", title="command not found")
                 return await ctx.send(embed=embed)
 
             src = obj.callback.__code__

@@ -1,6 +1,7 @@
 import typing, discord, asyncio, random, datetime, argparse, shlex, re, asyncpg, yaml
 from discord.ext import commands, tasks, timers, menus
 from collections import Counter, defaultdict
+from discord.ext.menus.views import ViewMenuPages
 import helpers
 
 class Arguments(argparse.ArgumentParser):

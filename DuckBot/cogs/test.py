@@ -19,6 +19,7 @@ class test(commands.Cog):
         await ctx.send(f"{ctx.author} hi")
 
     @commands.command(help="👁👄👁")
+    @commands.cooldown(1, 2.0, commands.BucketType.channel)
     async def blink(self, ctx):
         msg = await ctx.send("👁👄👁")
         await asyncio.sleep(0.5)

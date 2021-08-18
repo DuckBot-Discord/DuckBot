@@ -1,4 +1,5 @@
 from discord.ext import commands, menus, tasks
+from discord.ext.menus.views import ViewMenuPages
 import asyncio
 import datetime
 import discord
@@ -324,7 +325,7 @@ class verification(commands.Cog):
         lr = []
         for r in dates:
             lr.append(f"<@{r['user_id']}> `{r['birthdate'].strftime('%B %d, %Y')} ({int((datetime.datetime.now().date() - r['birthdate']).days / 365.2425)} Y/O)`")
-        pages = menus.MenuPages(source=AllEmbed(lr), delete_message_after=True)
+        pages = ViewMenuPages(source=AllEmbed(lr), delete_message_after=True)
         await pages.start(ctx)
         return
 

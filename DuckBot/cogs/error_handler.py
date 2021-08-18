@@ -75,13 +75,13 @@ class handler(commands.Cog):
             embed = discord.Embed(color=0xD7342A, description = f'Please try again in {round(error.retry_after, 2)} seconds')
             embed.set_author(name = 'Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
 
-            if error.cooldown.type == BucketType.default: per = ""
-            if error.cooldown.type == BucketType.user: per = "per user"
-            if error.cooldown.type == BucketType.guild: per = "per server"
-            if error.cooldown.type == BucketType.channel: per = "per channel"
-            if error.cooldown.type == BucketType.member: per = "per member"
-            if error.cooldown.type == BucketType.category: per = "per category"
-            if error.cooldown.type == BucketType.role: per = "per role"
+            if error.type == BucketType.default: per = ""
+            elif error.type == BucketType.user: per = "per user"
+            elif error.type == BucketType.guild: per = "per server"
+            elif error.type == BucketType.channel: per = "per channel"
+            elif error.type == BucketType.member: per = "per member"
+            elif error.type == BucketType.category: per = "per category"
+            elif error.type == BucketType.role: per = "per role"
 
             embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
