@@ -92,7 +92,7 @@ class verification(commands.Cog):
 
         if len(ids_today) == 0 and len(ids_tmr) == 0: return
 
-        now = datetime.datetime.now().date()
+        now = discord.utils.now().date()
 
         if len(ids_today) != 0:
             for entry in ids_today:

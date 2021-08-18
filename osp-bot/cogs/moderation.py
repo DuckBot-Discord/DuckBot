@@ -170,7 +170,7 @@ class moderation(commands.Cog):
         #BIRTHDAY
         current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', user.id)
         if current_birthday:
-            now = datetime.datetime.now().date()
+            now = discord.utils.now().date()
             delta = now - current_birthday
             age = int(delta.days / 365.2425)
             birthday = f"\n🎉**birthday:** `{current_birthday.strftime('%B %d, %Y')} ({age} Y/O)`"
@@ -898,15 +898,15 @@ class moderation(commands.Cog):
                 myfile = await file.to_file()
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, file = myfile, content = message.content, embed=embed)
+                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, file = myfile, content = message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, file = myfile, content = message.content)
+                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, file = myfile, content = message.content)
             else:
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, content = message.content, embed=embed)
+                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, content = message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, content = message.content)
+                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, content = message.content)
             try: await message.delete()
             except: pass
             await asyncio.sleep(0.5)

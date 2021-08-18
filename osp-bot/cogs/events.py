@@ -245,7 +245,7 @@ You have 5 minutes to do so.""")
 
         embed = discord.Embed(color = 0x0066ff,
                             description = f"""Welcome to the {member.guild.name}! You are the {sorted(member.guild.members, key=lambda user: member.joined_at).index(member) + 1} member. Please check out our <#860610050448031784> and read the {member.guild.rules_channel.mention} to gain access to the rest of the server. If you need anything, please message me, {self.bot.user.mention}, and our admin team will help you out! We hope you enjoy your time here.""",
-                            timestamp = datetime.datetime.now(),
+                            timestamp = discord.utils.now(),
                             title = f"Welcome, {member}")
 
         embed.set_author(name = member.name,
