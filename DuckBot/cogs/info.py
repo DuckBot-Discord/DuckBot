@@ -14,7 +14,7 @@ class InviteButtons(discord.ui.View):
 class InvSrc(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me!', url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"))
+        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me', url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"))
         self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code', url="https://github.com/LeoCx1000/discord-bots"))
 
     @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji = "<:topgg:870133913102721045>")
