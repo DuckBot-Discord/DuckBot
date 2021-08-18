@@ -21,7 +21,7 @@ class ShortTime:
             raise commands.BadArgument('invalid time provided')
 
         data = { k: int(v) for k, v in match.groupdict(default=0).items() }
-        now = now or discord.utils.now()
+        now = now or discord.utils.utcnow()
         self.dt = now + relativedelta(**data)
 
     @classmethod
