@@ -76,7 +76,7 @@ class HelpMenu(Duckinator):
     async def show_bot_help(self, payload):
         """shows how to use the bot"""
 
-        embed = discord.Embed(title='Using the bot', colour=0x5865F2)
+        embed = discord.Embed(title='Using the bot', colour=discord.Colour.blurple())
         embed.title = 'Using the bot'
         embed.description = 'Hello! Welcome to the help page.'
 
@@ -112,7 +112,7 @@ class GroupHelpPageSource(menus.ListPageSource):
         self.description = self.group.description
 
     async def format_page(self, menu, commands):
-        embed = discord.Embed(title=self.title, description=self.description, colour=0x5865F2)
+        embed = discord.Embed(title=self.title, description=self.description, colour=discord.Colour.blurple())
 
         for command in commands:
             signature = f'{command.qualified_name} {command.signature}'
@@ -137,7 +137,7 @@ class MyHelp(commands.HelpCommand):
 
    # !help
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(color=0x5865F2, title=f"ℹ {self.context.me.name} help",
+        embed = discord.Embed(color=discord.Colour.blurple(), title=f"ℹ {self.context.me.name} help",
         description=f"""
 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
@@ -170,7 +170,7 @@ class MyHelp(commands.HelpCommand):
         if command.help: command_help = command.help.replace("%PRE%", self.context.clean_prefix)
         else: command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.context.clean_prefix}{command}",
+            embed = discord.Embed(color=discord.Colour.blurple(), title=f"information about: {self.context.clean_prefix}{command}",
             description=f"""
 ```yaml
       usage: {self.get_minimal_command_signature(command)}
@@ -178,7 +178,7 @@ class MyHelp(commands.HelpCommand):
 description: {command_help}
 ```""")
         else:
-            embed = discord.Embed(color=0x5865F2, title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=discord.Colour.blurple(), title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
@@ -207,7 +207,7 @@ description: {command_help}
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
-            await ctx.send(embed=discord.Embed(color=0x5865F2, description=str(error.original)))
+            await ctx.send(embed=discord.Embed(color=discord.Colour.blurple(), description=str(error.original)))
 
 
 

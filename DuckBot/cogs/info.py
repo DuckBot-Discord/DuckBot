@@ -85,7 +85,7 @@ class HelpMenu(Duckinator):
     async def show_bot_help(self, payload):
         """shows how to use the bot"""
 
-        embed = discord.Embed(title='Using the bot', colour=0x5865F2)
+        embed = discord.Embed(title='Using the bot', colour=discord.Colour.blurple())
         embed.title = 'Using the bot'
         embed.description = 'Hello! Welcome to the help page.'
 
@@ -121,7 +121,7 @@ class GroupHelpPageSource(menus.ListPageSource):
         self.description = self.group.description
 
     async def format_page(self, menu, commands):
-        embed = discord.Embed(title=self.title, description=self.description, colour=0x5865F2)
+        embed = discord.Embed(title=self.title, description=self.description, colour=discord.Colour.blurple())
 
         for command in commands:
             signature = f'{command.qualified_name} {command.signature}'
@@ -147,7 +147,7 @@ class MyHelp(commands.HelpCommand):
 
    # !help
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(color=0x5865F2,
+        embed = discord.Embed(color=discord.Colour.blurple(),
         description=f"""
 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
@@ -195,7 +195,7 @@ Chane my prefix by doing `{self.context.clean_prefix}prefix [new]`
         if command.help: command_help = command.help.replace("%PRE%", self.context.clean_prefix)
         else: command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=0x5865F2, title=f"information about: {self.context.clean_prefix}{command}",
+            embed = discord.Embed(color=discord.Colour.blurple(), title=f"information about: {self.context.clean_prefix}{command}",
             description=f"""
 ```yaml
       usage: {self.get_minimal_command_signature(command)}
@@ -203,7 +203,7 @@ Chane my prefix by doing `{self.context.clean_prefix}prefix [new]`
 description: {command_help}
 ```""")
         else:
-            embed = discord.Embed(color=0x5865F2, title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=discord.Colour.blurple(), title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
@@ -232,7 +232,7 @@ description: {command_help}
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
-            await ctx.send(embed=discord.Embed(color=0x5865F2, description=str(error.original)))
+            await ctx.send(embed=discord.Embed(color=discord.Colour.blurple(), description=str(error.original)))
 
 
 class about(commands.Cog):
@@ -311,7 +311,7 @@ class about(commands.Cog):
     async def about(self, ctx):
         """Tells you information about the bot itself."""
         information = await self.bot.application_info()
-        embed = discord.Embed(color=0x5865F2, description=f"""
+        embed = discord.Embed(color=discord.Colour.blurple(), description=f"""
 [<:github:744345792172654643> source]({self.bot.repo}) | [<:invite:860644752281436171> invite me]({self.bot.invite_url}) | [<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | [<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})
 > Try also `{ctx.prefix}source [command]`
 > or `{ctx.prefix}source [command.subcommand]`
