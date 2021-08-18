@@ -406,7 +406,7 @@ class general(commands.Cog):
             elif msg.content.lower() == "default":
                 try: await msg.delete()
                 except: pass
-                announcement_embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.avatar_url)
+                announcement_embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.avatar.url)
                 await announcement.edit(embed=announcement_embed)
             else:
                 try: await msg.delete()

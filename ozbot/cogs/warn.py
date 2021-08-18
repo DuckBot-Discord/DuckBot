@@ -77,7 +77,7 @@ class events(commands.Cog):
                 channel = self.bot.get_channel(799483071069945866)
                 hooks = await channel.webhooks()
                 hook = hooks[0]
-                await hook.send(username = "VC bot", content=f"<:incomingarrow:800218133225930763> **{member.display_name}** joined VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
+                await hook.send(username = "VC bot", content=f"<:incomingarrow:800218133225930763> **{member.display_name}** joined VC", avatar.url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
             elif after.channel == staffchat and before.channel != staffchat:
                 await textchannel.send(f"!c helpop {member.display_name} joined Staff-VC")
 
@@ -91,7 +91,7 @@ class events(commands.Cog):
                 channel = self.bot.get_channel(799483071069945866)
                 hooks = await channel.webhooks()
                 hook = hooks[0]
-                await hook.send(username = "VC bot", content=f"<:outgoingarrow:800218133364867073> **{member.display_name}** left VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
+                await hook.send(username = "VC bot", content=f"<:outgoingarrow:800218133364867073> **{member.display_name}** left VC", avatar.url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
             elif before.channel == staffchat and after.channel != staffchat:
                 await textchannel.send(f"!c helpop {member.display_name} left Staff-VC")
 

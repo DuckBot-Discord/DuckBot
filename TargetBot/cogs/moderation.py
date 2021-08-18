@@ -229,8 +229,8 @@ class moderation(commands.Cog):
             roles = f"\n<:role:860644904048132137>**roles:** {roles}"
         # EMBED
         embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
-        embed.set_author(name=user, icon_url=user.avatar_url)
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_author(name=user, icon_url=user.avatar.url)
+        embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
 
 
@@ -678,15 +678,15 @@ class moderation(commands.Cog):
                 myfile = await file.to_file()
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, file = myfile, content = message.content, embed=embed)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, file = myfile, content = message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, file = myfile, content = message.content)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, file = myfile, content = message.content)
             else:
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, content = message.content, embed=embed)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, content = message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar_url, content = message.content)
+                    await webhook.send(username = message.author.display_name, avatar.url = message.author.avatar.url, content = message.content)
             try: await message.delete()
             except: pass
             await asyncio.sleep(0.5)
@@ -845,7 +845,7 @@ class moderation(commands.Cog):
      reason: {ban_entry.reason}
  created at: {date.strftime("%b %-d %Y at %-H:%M")} UTC
 ```""")
-        embed.set_author(name=ban_entry.user, icon_url=ban_entry.user.avatar_url)
+        embed.set_author(name=ban_entry.user, icon_url=ban_entry.user.avatar.url)
         await ctx.send(embed=embed)
 
 
