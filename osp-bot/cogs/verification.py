@@ -196,7 +196,7 @@ class verification(commands.Cog):
             new_birthday = datetime.datetime.strptime(message.content, "%m-%d-%Y").date()
             now = datetime.datetime.now().date()
         except:
-            await message.channel.send(f"`{message.content}` does not match date format: **MM-DD-YYYY**", delete_after=10)
+            await message.channel.send(f"`{message.content}` does not match date format: **MM-DD-YYYY**\n_month**-**day**-**year. E.G: (`09-24-2001`)", delete_after=10)
             return
         formatted = new_birthday.strftime('%B %d, %Y')
         delta = now - new_birthday

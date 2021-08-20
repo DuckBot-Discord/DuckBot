@@ -91,45 +91,30 @@ class moderation(commands.Cog):
 #------------------------ KICK ------------------------------#
 #------------------------------------------------------------#
 
-    @commands.command(help="Kicks a member from the server", usage="<member>, [reason]")
+    @commands.command(help="Kicks a member from the server", usage="<member> [reason]")
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, kick_members=True)
-    async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
-        if member == None:
-            await self.error_message(ctx, 'You must specify a member to kick')
-            return
-        elif member == ctx.author:
+    async def kick(self, ctx, member: discord.Member, *, reason = None):
+        if member == ctx.author:
             await self.error_message(ctx, 'You can\'t kick yourself')
             return
         elif member.top_role >= ctx.me.top_role:
-            await self.error_message(ctx, 'I\'m not high enough in role hierarchy to kick that member!')
-            return
-        if member.top_role <= ctx.author.top_role:
-            if member.guild_permissions.ban_members == False and member.guild_permissions.kick_members == False and member.guild_permissions.manage_messages == False:
-                try:
-                    mem_embed=discord.Embed(description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**", color=ctx.me.color)
-                    if reason: mem_embed.set_footer(text=f'reason: {reason}')
-                    await member.send(embed=mem_embed)
-                    await member.kick(reason=reason)
-                    if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
-```reason: {reason}```""", color=ctx.me.color)
-                    else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""", color=ctx.me.color)
-                    embed.set_footer(text=f'{member.id} | DM sent: ✅')
-                    await ctx.send(embed=embed)
-                except discord.HTTPException:
-                    await member.kick(reason=reason)
-                    if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
-```reason: {reason}```""", color=ctx.me.color)
-                    else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""", color=ctx.me.color)
-                    embed.set_footer(text=f'{member.id} | DM sent: ❌')
-                    await ctx.send(embed=embed)
-            else:
-                await self.error_message(ctx, 'you can\'t kick another moderator')
-                return
+            return await self.error_message(ctx, 'I\'m not high enough in role hierarchy to kick that member!')
+        if member.top_role < ctx.author.top_role or ctx.author.id == ctx.guild.owner_id:
+            mem_embed=discord.Embed(description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**", color=ctx.me.color)
+            if reason: mem_embed.set_footer(text=f'reason: {reason}')
+            try:
+                await member.send(embed=mem_embed)
+                dm_success = '✅'
+            except discord.HTTPException: dm_success = '❌'
+            await member.kick(reason=f"{ctx.author} (ID: {ctx.author.id}): {reason}")
+            if reason: reason = f"\n```\nreason: {reason}```"
+            else: reason = ''
+
+            embed=discord.Embed(description=f"{ctx.author.mention} kicked **{member}**({member.mention}){reason}", color=ctx.me.color)
+            embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
+            await ctx.send(embed=embed)
+
         else:
             await self.error_message(ctx, 'Member is higher than you in role hierarchy')
             return
@@ -138,49 +123,35 @@ class moderation(commands.Cog):
 #------------------------ BAN ------------------------------#
 #-----------------------------------------------------------#
 
-    @commands.command(help="Bans a member from the server", usage="<member> [reason]")
+    @commands.command(help="Bans a member from the server")
+    @commands.guild_only()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
-    async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
-        if member == None:
-            await self.error_message(ctx, 'You must specify a member to kick')
-            return
-        elif member == ctx.author:
-            await self.error_message(ctx, 'You can\'t kick yourself')
-            return
-        elif member.top_role >= ctx.me.top_role:
-            await self.error_message(ctx, 'I\'m not high enough in role hierarchy to kick that member!')
-            return
-        if member.top_role <= ctx.author.top_role:
-            if member.guild_permissions.ban_members == False and member.guild_permissions.kick_members == False and member.guild_permissions.manage_messages == False:
+    async def ban(self, ctx, user: typing.Union[discord.Member, discord.User], *, reason = None):
+        member = user
+        if member == ctx.author: return await self.error_message(ctx, 'You can\'t ban yourself')
+        if isinstance(user, discord.Member):
+            if member.top_role >= ctx.me.top_role: return await self.error_message(ctx, 'I\'m not high enough in role hierarchy to ban that member!')
+            if member.top_role < ctx.author.top_role or ctx.author.id == ctx.guild.owner_id:
+                mem_embed=discord.Embed(description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**", color=ctx.me.color)
+                if reason: mem_embed.set_footer(text=f'reason: {reason}')
                 try:
-                    mem_embed=discord.Embed(description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**", color=ctx.me.color)
-                    if reason: mem_embed.set_footer(text=f'reason: {reason}')
                     await member.send(embed=mem_embed)
-                    await member.ban(reason=reason)
-                    if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
-```reason: {reason}```""", color=ctx.me.color)
-                    else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""", color=ctx.me.color)
-                    embed.set_footer(text=f'{member.id} | DM sent: ✅')
-                    await ctx.send(embed=embed)
-                except discord.HTTPException:
-                    await member.ban(reason=reason)
-                    if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
-```reason: {reason}```""", color=ctx.me.color)
-                    else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""", color=ctx.me.color)
-                    embed.set_footer(text=f'{member.id} | DM sent: ❌')
-                    await ctx.send(embed=embed)
+                    dm_success = '✅'
+                except discord.HTTPException: dm_success = '❌'
             else:
-                await self.error_message(ctx, 'you can\'t ban another moderator!')
+                await self.error_message(ctx, 'Member is higher than you in role hierarchy')
                 return
 
-        else:
-            await self.error_message(ctx, 'Member is higher than you in role hierarchy')
-            return
+        else: dm_success = '❌'
+
+        embed=discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){reason}", color=ctx.me.color)
+        embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
+        await ctx.send(embed=embed)
+
+        if reason: reason = f"\n```\nreason: {reason}```"
+        else: reason = ''
+        await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason}")
 
 #------------------------------------------------------------#
 #------------------------ NICK ------------------------------#
@@ -259,7 +230,7 @@ class moderation(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
-    async def remove(self, ctx, search: typing.Optional[int]):
+    async def remove(self, ctx, search: typing.Optional[int]=100):
 
         if ctx.invoked_subcommand is None:
             await self.do_removal(ctx, search, lambda e: not e.pinned)
@@ -517,32 +488,12 @@ class moderation(commands.Cog):
 #--------------------------------- UNBAN --------------------------------------#
 #------------------------------------------------------------------------------#
 
-    @commands.command(help="unbans a member # run without arguments to get a list of entries", usage="[entry]")
+    @commands.command(help="unbans a member # run without arguments to get a list of entries")
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def unban(self, ctx, entry: typing.Optional[int]):
-        if not ctx.channel.permissions_for(ctx.me).ban_members:
-            await ctx.send("i'm missing the ban_members permission :pensive:")
-            return
-        if not number:
-            try:
-                bans = await ctx.guild.bans()
-            except:
-                await ctx.send("i'm missing the ban_members permission :pensive:")
-                return
-            if not bans:
-                await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
-                return
-            desc = []
-            number = 1
-            for ban_entry in bans:
-                desc.append(f"**{number}) {ban_entry.user}**")
-                number = number + 1
-            pages = menus.MenuPages(source=banembed(desc), clear_reactions_after=True)
-            await pages.start(ctx)
-            return
-
+    async def unban(self, ctx, entry: int):
+        number=entry
         if number <=0:
             embed=discord.Embed(color=0xFF0000,
             description=f"__number__ must be greater than 1\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`\n To get the number use the `{ctx.prefix}{ctx.command}` command")

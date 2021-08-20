@@ -86,8 +86,10 @@ Argumento faltante: {missing}
 
         else:
             await self.bot.wait_until_ready()
-            await self.bot.get_channel(847943387083440128).send(f"""```{ctx.command} command raised an error:
-    {error}```""")
+            await ctx.send(f"""```diff\n- Un error inesperado ha ocurrido durante la ejecución del comando \"{ctx.command}\"
+{error}```""")
+            await self.bot.get_channel(847943387083440128).send(f"""```diff\n- {ctx.command} command raised an error:
+{error}```""")
             raise error
 
 def setup(bot):

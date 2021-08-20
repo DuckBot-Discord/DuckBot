@@ -3,7 +3,7 @@ from discord.ext import commands, menus
 from discord.ext.commands import Paginator as CommandPaginator
 import helpers
 
-class Duckinator(menus.ViewMenuPages):
+class Duckinator(menus.MenuPages):
     def __init__(self, source):
         super().__init__(source=source, check_embeds=True)
         self.input_lock = asyncio.Lock()

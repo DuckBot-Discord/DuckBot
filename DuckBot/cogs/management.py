@@ -366,13 +366,10 @@ class bot_management(commands.Cog):
     @commands.command(help = "Adds something to de to-do list", usage="<text>")
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def todo(self, ctx, *, message = None):
+    async def todo(self, ctx, *, message=None):
         channel = self.bot.get_channel(830992446434312192)
-        if message == None:
-            await ctx.message.add_reaction('⚠')
-            return
-        if ctx.message.channel == channel:
-            await ctx.message.delete()
+        if ctx.message.reference: message = ctx.message.reference.resolved.content
+        if ctx.message.channel == channel: await ctx.message.delete()
         embed = discord.Embed(description=message, color=0x47B781)
         await channel.send(embed=embed)
         await ctx.message.add_reaction('✅')

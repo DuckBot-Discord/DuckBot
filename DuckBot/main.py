@@ -1,8 +1,6 @@
 import os, discord, asyncio, traceback, datetime, asyncpg
 from dotenv import load_dotenv
 from discord.ext import commands
-import logging
-logging.basicConfig(level=logging.INFO)
 
 PRE = 'db.'
 async def get_pre(bot, message):
@@ -18,11 +16,26 @@ async def get_pre(bot, message):
         prefix = PRE
     return commands.when_mentioned_or(prefix)(bot,message)
 
+async def get_pref(bot, message):
+    if not message.guild:
+        return PRE
+    prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
+    if await bot.is_owner(message.author) and bot.noprefix == True:
+        if prefix:
+            return (prefix, "")
+        else:
+            return (PRE, "")
+    if not prefix:
+        prefix = PRE
+    return prefix
+
 intents = discord.Intents.default()
 intents.members = True
 
 bot = commands.Bot(command_prefix=get_pre, case_insensitive=True, intents=intents, owner_id=349373972103561218)
+bot._BotBase__cogs  = commands.core._CaseInsensitiveDict()
 
+bot.allcogs = []
 bot.invite_url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
 bot.vote_top_gg="https://top.gg/bot/788278464474120202#/"
 bot.vote_bots_gg="https://discord.bots.gg/bots/788278464474120202"
@@ -65,6 +78,10 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     if bot.maintenance == True and message.author.id != bot.owner_id: return
+    if message.content in ['<@788278464474120202>', '<@!788278464474120202>']:
+        prefix = await get_pref(bot, message)
+        nl = "\n"
+        return await message.reply(f"For a list of commands do `{prefix}help` 💞")
     await bot.process_commands(message)
 
 print('')
@@ -80,6 +97,8 @@ for filename in os.listdir("./cogs"):
             print(f"\033[91mAn error occurred while loading '{filename}'""")
             print('\033[0m')
 print('\033[0m')
+
+bot.persistent_views_added = False
 
 bot.loop.run_until_complete(create_db_pool())
 bot.run(TOKEN, reconnect=True)

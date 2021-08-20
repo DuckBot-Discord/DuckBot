@@ -1,31 +1,9 @@
 import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, itertools, contextlib, datetime
 from discord.ext import commands, menus
-from discord.ext.menus.views import ViewMenuPages
 
 from helpers import helper
 
-
-class InviteButtons(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        self.add_item(discord.ui.Button(emoji="<:topgg:870133913102721045>", label='top.gg', url="https://top.gg/bot/788278464474120202#/"))
-        self.add_item(discord.ui.Button(emoji="<:botsgg:870134146972938310>", label='bots.gg', url="https://discord.bots.gg/bots/788278464474120202"))
-
-class InvSrc(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me', url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"))
-        self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code', url="https://github.com/LeoCx1000/discord-bots"))
-
-    @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji = "<:topgg:870133913102721045>")
-    async def receive(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed=discord.Embed(description="<:topgg:870133913102721045> **vote here!** <:botsgg:870134146972938310>", color = discord.Colour.blurple())
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
-
-
-
-
-class Duckinator(ViewMenuPages):
+class Duckinator(menus.MenuPages):
     def __init__(self, source):
         super().__init__(source=source, check_embeds=True)
         self.input_lock = asyncio.Lock()
@@ -89,6 +67,22 @@ class Duckinator(ViewMenuPages):
             except Exception:
                 pass
 
+class InviteButtons(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.Button(emoji="<:topgg:870133913102721045>", label='top.gg', url="https://top.gg/bot/788278464474120202#/"))
+        self.add_item(discord.ui.Button(emoji="<:botsgg:870134146972938310>", label='bots.gg', url="https://discord.bots.gg/bots/788278464474120202"))
+
+class InvSrc(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me', url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"))
+        self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code', url="https://github.com/LeoCx1000/discord-bots"))
+
+    @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji = "<:topgg:870133913102721045>", custom_id='BotVoteSites')
+    async def receive(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed=discord.Embed(description="<:topgg:870133913102721045> **vote here!** <:botsgg:870134146972938310>", color = discord.Colour.blurple())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
 
 class HelpMenu(Duckinator):
     def __init__(self, source):
@@ -172,6 +166,7 @@ class MyHelp(commands.HelpCommand):
 """)
         embed.set_author(name=self.context.author, icon_url=self.context.author.avatar.url)
         allcogs = []
+        cogindex = []
         ignored_cogs=[]
         iter = 1
         for cog, commands in mapping.items():
@@ -180,17 +175,24 @@ class MyHelp(commands.HelpCommand):
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
                 num = f"{iter}\U0000fe0f\U000020e3"
+                cogindex.append(cog.qualified_name)
                 allcogs.append(f"{num} {cog.qualified_name}")
                 iter+=1
+        self.context.bot.all_cogs = cogindex
         nl = '\n'
+
         embed.add_field(name=f"Available categories [{len(allcogs)}]", value=f"```fix\n{nl.join(allcogs)}```")
-        embed.add_field(name="📰 Latest News - <t:1629266339:d> (<t:1629266339:R>)", value = f"""
+
+        embed.add_field(name="📰 Latest News - <t:1629337475:d> (<t:1629337475:R>)", value = f"""
 _ _
 > <:nickname:850914031953903626> **Custom prefixes!**
 Chane my prefix by doing `{self.context.clean_prefix}prefix [new]`
 
-> **Updated to discord.py Version 2.0(BETA)**
+> <:update:264184209617321984> **Updated to discord.py Version 2.0(BETA)**
 ‍*If a command isn't working, DM me ({self.context.me.mention}) with the command you tried to execute and it will be fixed!* 💞
+
+> \U0001f518 **Added buttons to the help menu.**
+_Press on them to invite me!_ ❣
 """)
 
 
@@ -245,6 +247,13 @@ description: {command_help}
         menu = HelpMenu(source)
         await menu.start(self.context)
 
+    async def send_error_message(self, error):
+        channel = self.get_destination()
+        try:
+            index = int(error[19:][:-8])-1
+            await self.context.send_help(self.context.bot.all_cogs[index])
+        except:
+            await channel.send(error[:50])
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
@@ -259,6 +268,13 @@ class about(commands.Cog):
         help_command.cog = self
         bot.help_command = help_command
         bot.session = aiohttp.ClientSession()
+
+    @commands.Cog.listener('on_ready')
+    async def register_views(self):
+        if not self.bot.persistent_views_added:
+            self.bot.add_view(InvSrc())
+            self.bot.persistent_views_added = True
+
 
     def get_bot_uptime(self):
         return f"<t:{round(self.bot.uptime.timestamp())}:R>"
@@ -314,12 +330,12 @@ class about(commands.Cog):
         await asyncio.sleep(0.7)
 
         await message.edit(content=re.sub('\n *', '\n', f"""
-     <:open_site:854786097363812352> **| `Websocket-|{round(latencyms, 3)}ms{' ' * (9-len(str(round(latencyms, 3))))}`**
-       <a:typing:597589448607399949> **| `Typing----|{round(typingms, 3)}ms{' ' * (9-len(str(round(typingms, 3))))}`**
-                    :speech_balloon: **| `Message---|{round(messagems, 3)}ms{' ' * (9-len(str(round(messagems, 3))))}`**
-       <:discord:314003252830011395> **| `Discord---|{round(discordms, 3)}ms{' ' * (9-len(str(round(discordms, 3))))}`**
-          <:psql:871758815345901619> **| `Database--|{round(psqlms, 3)}ms{' ' * (9-len(str(round(psqlms, 3))))}`**
-                          :infinity: **| `Average---|{round(average, 3)}ms{' ' * (9-len(str(round(average, 3))))}`**
+     <:open_site:854786097363812352> **| `Websocket ═╣ {round(latencyms, 3)}ms{' ' * (9-len(str(round(latencyms, 3))))}`**
+       <a:typing:597589448607399949> **| `Typing ════╣ {round(typingms, 3)}ms{' ' * (9-len(str(round(typingms, 3))))}`**
+                    :speech_balloon: **| `Message ═══╣ {round(messagems, 3)}ms{' ' * (9-len(str(round(messagems, 3))))}`**
+       <:discord:314003252830011395> **| `Discord ═══╣ {round(discordms, 3)}ms{' ' * (9-len(str(round(discordms, 3))))}`**
+          <:psql:871758815345901619> **| `Database ══╣ {round(psqlms, 3)}ms{' ' * (9-len(str(round(psqlms, 3))))}`**
+                          :infinity: **| `Average ═══╣ {round(average, 3)}ms{' ' * (9-len(str(round(average, 3))))}`**
 """))
 
     @commands.command(help="Shows info about the bot", aliases=['info'])
