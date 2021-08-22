@@ -238,11 +238,5 @@ class management(commands.Cog):
             embed = discord.Embed(title = 'Reloaded all extensions', color=ctx.me.color, description = desc)
             await message.edit(embed=embed)
 
-    @commands.command(aliases = ['stop','sd'])
-    @commands.is_owner()
-    async def shutdown(self, ctx):
-        await ctx.send("🛑 **__Stopping the bot__**")
-        await ctx.bot.logout()
-
 def setup(bot):
     bot.add_cog(management(bot))

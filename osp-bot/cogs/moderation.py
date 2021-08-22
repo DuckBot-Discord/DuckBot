@@ -108,11 +108,11 @@ class moderation(commands.Cog):
         if emoji_flags == "": emoji_flags = None
         return emoji_flags
 
-    @commands.command(help="Shows a user's avatar", alias=['pfp'])
+    @commands.command(help="Shows a user's avatar", alias=['avatar'])
     async def pfp(self, ctx, user: typing.Optional[discord.Member]):
         user = user or ctx.author
         embed=discord.Embed(color=ctx.me.color)
-        embed.description=f"[PNG]({user.avatar.url_as(format='png', size=2048)}) **|** [JPG]({user.avatar.url_as(format='jpg', size=2048)}) **|** [WEBP]({user.avatar.url_as(format='webp', size=2048)})"
+        embed.description=f"[PNG]({user.avatar.replace(format='png', size=2048).url}) **|** [JPG]({user.avatar.replace(format='jpg', size=2048).url}) **|** [WEBP]({user.avatar.replace(format='webp', size=2048).url})"
         embed.set_image(url=user.avatar.url)
         await ctx.send(embed=embed)
 

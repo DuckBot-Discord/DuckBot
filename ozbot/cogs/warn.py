@@ -62,6 +62,7 @@ class events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
+        if member.bot: return
         textchannel = self.bot.get_channel(851314198654484521)
 
         chids = [706624340170375471, 722999864719573083, 722999922869141534, 723000127404638249]

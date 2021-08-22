@@ -1,4 +1,4 @@
-import  discord, asyncio
+import  discord, asyncio, typing
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from errors import HigherRole
@@ -22,6 +22,11 @@ class handler(commands.Cog):
                 if error != commands.NotOwner:
                     error = e
                     break
+
+        if isinstance(error, discord.ext.commands.BadUnionArgument):
+            for e in error.errors:
+                error = e
+                break
 
         embed = discord.Embed(color=0xD7342A)
         embed.set_author(name = 'Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
@@ -88,6 +93,12 @@ class handler(commands.Cog):
 
         elif isinstance(error, HigherRole):
             await ctx.send("error handled")
+
+        elif isinstance(error, commands.errors.MemberNotFound):
+            await ctx.send(f"I couldn't fin `{error.argument}` in this server")
+
+        elif isinstance(error, commands.errors.UserNotFound):
+            await ctx.send(f"I've searched far and wide, but `{error.argument}` doesn't seem to be a member discord user...")
 
         elif isinstance(error, discord.ext.commands.errors.CommandNotFound):
             pass

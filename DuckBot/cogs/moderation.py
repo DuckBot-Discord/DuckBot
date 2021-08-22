@@ -3,23 +3,8 @@ from discord.ext import commands, tasks, timers, menus
 from collections import Counter, defaultdict
 from helpers import helper
 
-class Arguments(argparse.ArgumentParser):
-    def error(self, message):
-        raise RuntimeError(message)
-
-class banembed(menus.ListPageSource):
-    def __init__(self, data, per_page=15):
-        super().__init__(data, per_page=per_page)
-
-
-    async def format_page(self, menu, entries):
-        embed = discord.Embed(title=f"Server bans ({len(entries)})",
-                              description="\n".join(entries))
-        embed.set_footer(text=f"To unban do db.unban [entry]\nMore user info do db.baninfo [entry]")
-        return embed
-
 class Confirm(menus.Menu):
-    def remove__init__(self, msg):
+    def __init__(self, msg):
         super().__init__(timeout=30.0, delete_message_after=True)
         self.msg = msg
         self.result = None
@@ -41,6 +26,41 @@ class Confirm(menus.Menu):
         await self.start(ctx, wait=True)
         return self.result
 
+
+class Arguments(argparse.ArgumentParser):
+    def error(self, message):
+        raise RuntimeError(message)
+
+def can_execute_action(ctx, user, target):
+    return user.id == ctx.bot.owner_id or \
+           user == ctx.guild.owner or \
+           user.top_role > target.top_role
+
+class ActionReason(commands.Converter):
+    async def convert(self, ctx, argument):
+        ret = f'{ctx.author} (ID: {ctx.author.id}): {argument}'
+
+        if len(ret) > 512:
+            reason_max = 512 - len(ret) + len(argument)
+            raise commands.BadArgument(f'Reason is too long ({len(argument)}/{reason_max})')
+        return ret
+
+def safe_reason_append(base, to_append):
+    appended = base + f'({to_append})'
+    if len(appended) > 512:
+        return base
+    return appended
+
+class banembed(menus.ListPageSource):
+    def __init__(self, data, per_page=15):
+        super().__init__(data, per_page=per_page)
+
+
+    async def format_page(self, menu, entries):
+        embed = discord.Embed(title=f"Server bans ({len(entries)})",
+                              description="\n".join(entries))
+        embed.set_footer(text=f"To unban do db.unban [entry]\nMore user info do db.baninfo [entry]")
+        return embed
 
 class moderation(commands.Cog):
     """🔨Moderation commands! 👮‍♂️"""
@@ -134,7 +154,7 @@ class moderation(commands.Cog):
             if member.top_role >= ctx.me.top_role: return await self.error_message(ctx, 'I\'m not high enough in role hierarchy to ban that member!')
             if member.top_role < ctx.author.top_role or ctx.author.id == ctx.guild.owner_id:
                 mem_embed=discord.Embed(description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**", color=ctx.me.color)
-                if reason: mem_embed.set_footer(text=f'reason: {reason}')
+                if isinstance(reason, str): mem_embed.set_footer(text=f'reason: {reason}')
                 try:
                     await member.send(embed=mem_embed)
                     dm_success = '✅'
@@ -145,13 +165,13 @@ class moderation(commands.Cog):
 
         else: dm_success = '❌'
 
+        if isinstance(reason, str): reason = f"\n```\nreason: {reason}```"
+
         embed=discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){reason}", color=ctx.me.color)
         embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
         await ctx.send(embed=embed)
 
-        if reason: reason = f"\n```\nreason: {reason}```"
-        else: reason = ''
-        await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason}")
+        await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason or ''}")
 
 #------------------------------------------------------------#
 #------------------------ NICK ------------------------------#
@@ -484,6 +504,199 @@ class moderation(commands.Cog):
             await ctx.send(to_send, delete_after=10)
 
 
+#--------------------------------------------------------------------------------#
+#--------------------------------- MASSBAN --------------------------------------#
+#--------------------------------------------------------------------------------#
+
+    @commands.command()
+    @commands.guild_only()
+    @commands.has_permissions(ban_members=True)
+    async def massban(self, ctx, *, args):
+        """Mass bans multiple members from the server.
+        This command has a powerful "command line" syntax. To use this command
+        you and the bot must both have Ban Members permission. **Every option is optional.**
+        Users are only banned **if and only if** all conditions are met.
+        The following options are valid.
+        `--channel` or `-c`: Channel to search for message history.
+        `--reason` or `-r`: The reason for the ban.
+        `--regex`: Regex that usernames must match.
+        `--created`: Matches users whose accounts were created less than specified minutes ago.
+        `--joined`: Matches users that joined less than specified minutes ago.
+        `--joined-before`: Matches users who joined before the member ID given.
+        `--joined-after`: Matches users who joined after the member ID given.
+        `--no-avatar`: Matches users who have no avatar. (no arguments)
+        `--no-roles`: Matches users that have no role. (no arguments)
+        `--show`: Show members instead of banning them (no arguments).
+        Message history filters (Requires `--channel`):
+        `--contains`: A substring to search for in the message.
+        `--starts`: A substring to search if the message starts with.
+        `--ends`: A substring to search if the message ends with.
+        `--match`: A regex to match the message content to.
+        `--search`: How many messages to search. Default 100. Max 2000.
+        `--after`: Messages must come after this message ID.
+        `--before`: Messages must come before this message ID.
+        `--files`: Checks if the message has attachments (no arguments).
+        `--embeds`: Checks if the message has embeds (no arguments).
+        """
+
+        # For some reason there are cases due to caching that ctx.author
+        # can be a User even in a guild only context
+        # Rather than trying to work out the kink with it
+        # Just upgrade the member itself.
+        if not isinstance(ctx.author, discord.Member):
+            try:
+                author = await ctx.guild.fetch_member(ctx.author.id)
+            except discord.HTTPException:
+                return await ctx.send('Somehow, Discord does not seem to think you are in this server.')
+        else:
+            author = ctx.author
+
+        parser = Arguments(add_help=False, allow_abbrev=False)
+        parser.add_argument('--channel', '-c')
+        parser.add_argument('--reason', '-r')
+        parser.add_argument('--search', type=int, default=100)
+        parser.add_argument('--regex')
+        parser.add_argument('--no-avatar', action='store_true')
+        parser.add_argument('--no-roles', action='store_true')
+        parser.add_argument('--created', type=int)
+        parser.add_argument('--joined', type=int)
+        parser.add_argument('--joined-before', type=int)
+        parser.add_argument('--joined-after', type=int)
+        parser.add_argument('--contains')
+        parser.add_argument('--starts')
+        parser.add_argument('--ends')
+        parser.add_argument('--match')
+        parser.add_argument('--show', action='store_true')
+        parser.add_argument('--embeds', action='store_const', const=lambda m: len(m.embeds))
+        parser.add_argument('--files', action='store_const', const=lambda m: len(m.attachments))
+        parser.add_argument('--after', type=int)
+        parser.add_argument('--before', type=int)
+
+        try:
+            args = parser.parse_args(shlex.split(args))
+        except Exception as e:
+            return await ctx.send(str(e))
+
+        members = []
+
+        if args.channel:
+            channel = await commands.TextChannelConverter().convert(ctx, args.channel)
+            before = args.before and discord.Object(id=args.before)
+            after = args.after and discord.Object(id=args.after)
+            predicates = []
+            if args.contains:
+                predicates.append(lambda m: args.contains in m.content)
+            if args.starts:
+                predicates.append(lambda m: m.content.startswith(args.starts))
+            if args.ends:
+                predicates.append(lambda m: m.content.endswith(args.ends))
+            if args.match:
+                try:
+                    _match = re.compile(args.match)
+                except re.error as e:
+                    return await ctx.send(f'Invalid regex passed to `--match`: {e}')
+                else:
+                    predicates.append(lambda m, x=_match: x.match(m.content))
+            if args.embeds:
+                predicates.append(args.embeds)
+            if args.files:
+                predicates.append(args.files)
+
+            async for message in channel.history(limit=min(max(1, args.search), 2000), before=before, after=after):
+                if all(p(message) for p in predicates):
+                    members.append(message.author)
+        else:
+            if ctx.guild.chunked:
+                members = ctx.guild.members
+            else:
+                async with ctx.typing():
+                    await ctx.guild.chunk(cache=True)
+                members = ctx.guild.members
+
+        # member filters
+        predicates = [
+            lambda m: isinstance(m, discord.Member) and can_execute_action(ctx, author, m), # Only if applicable
+            lambda m: not m.bot, # No bots
+            lambda m: m.discriminator != '0000', # No deleted users
+        ]
+
+        converter = commands.MemberConverter()
+
+        if args.regex:
+            try:
+                _regex = re.compile(args.regex)
+            except re.error as e:
+                return await ctx.send(f'Invalid regex passed to `--regex`: {e}')
+            else:
+                predicates.append(lambda m, x=_regex: x.match(m.name))
+
+        if args.no_avatar:
+            predicates.append(lambda m: m.avatar == m.default_avatar)
+
+        if args.no_roles:
+            predicates.append(lambda m: len(getattr(m, 'roles', [])) <= 1)
+
+        now = discord.utils.utcnow()
+
+        if args.created:
+            def created(member, *, offset=now - datetime.timedelta(minutes=args.created)):
+                return member.created_at > offset
+            predicates.append(created)
+
+        if args.joined:
+            def joined(member, *, offset=now - datetime.timedelta(minutes=args.joined)):
+                if isinstance(member, discord.User):
+                    # If the member is a user then they left already
+                    return True
+                return member.joined_at and member.joined_at > offset
+            predicates.append(joined)
+
+        if args.joined_after:
+            _joined_after_member = await converter.convert(ctx, str(args.joined_after))
+            def joined_after(member, *, _other=_joined_after_member):
+                return member.joined_at and _other.joined_at and member.joined_at > _other.joined_at
+            predicates.append(joined_after)
+
+        if args.joined_before:
+            _joined_before_member = await converter.convert(ctx, str(args.joined_before))
+            def joined_before(member, *, _other=_joined_before_member):
+                return member.joined_at and _other.joined_at and member.joined_at < _other.joined_at
+            predicates.append(joined_before)
+
+        members = {m for m in members if all(p(m) for p in predicates)}
+        if len(members) == 0:
+            return await ctx.send('No members found matching criteria.')
+
+        if args.show:
+            members = sorted(members, key=lambda m: m.joined_at or now)
+            fmt = "\n".join(f'{m.id}\tJoined: {m.joined_at}\tCreated: {m.created_at}\t{m}' for m in members)
+            content = f'Current Time: {discord.utils.utcnow()}\nTotal members: {len(members)}\n{fmt}'
+            file = discord.File(io.BytesIO(content.encode('utf-8')), filename='members.txt')
+            return await ctx.send(file=file)
+
+        if args.reason is None:
+            return await ctx.send('--reason flag is required.')
+        else:
+            reason = await ActionReason().convert(ctx, args.reason)
+
+
+        confirm = await Confirm(f'This will ban **{len(members)}** member(s). Are you sure?').prompt(ctx)
+
+        if not confirm:
+            return await ctx.send('Aborting.')
+
+        count = 0
+        for member in members:
+            try:
+                await ctx.guild.ban(member, reason=reason)
+            except discord.HTTPException:
+                pass
+            else:
+                count += 1
+
+        await ctx.send(f'Banned {count}/{len(members)}')
+
+
 #------------------------------------------------------------------------------#
 #--------------------------------- UNBAN --------------------------------------#
 #------------------------------------------------------------------------------#
@@ -519,12 +732,9 @@ class moderation(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        confirm = await Confirm(f'are you sure you want to unban {ban_entry.user}?').prompt(ctx)
-        if confirm:
-            await ctx.guild.unban(ban_entry.user)
-            await ctx.send(f'unbanned {ban_entry.user}')
-        else:
-            await ctx.send('cancelled!')
+        await ctx.guild.unban(ban_entry.user)
+        await ctx.send(f'unbanned **{ban_entry.user}**')
+
 
 #------------------------------------------------------------------------------#
 #-------------------------------- BAN LIST ------------------------------------#

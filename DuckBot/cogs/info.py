@@ -73,6 +73,8 @@ class InviteButtons(discord.ui.View):
         self.add_item(discord.ui.Button(emoji="<:topgg:870133913102721045>", label='top.gg', url="https://top.gg/bot/788278464474120202#/"))
         self.add_item(discord.ui.Button(emoji="<:botsgg:870134146972938310>", label='bots.gg', url="https://discord.bots.gg/bots/788278464474120202"))
 
+
+
 class InvSrc(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -249,11 +251,8 @@ description: {command_help}
 
     async def send_error_message(self, error):
         channel = self.get_destination()
-        try:
-            index = int(error[19:][:-8])-1
-            await self.context.send_help(self.context.bot.all_cogs[index])
-        except:
-            await channel.send(error[:50])
+        cmd = error[19:][:-8]
+        await channel.send(f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔\ndo `{self.context.clean_prefix}help` for help with all commands")
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):

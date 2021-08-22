@@ -308,11 +308,11 @@ For more info read [this message](https://ptb.discord.com/channels/7171402707890
 
     @commands.command(aliases = ['download', 'dchannel'])
     async def downloads(self, ctx):
-        embed=discord.Embed(title="", description="""To access the download channel you need to have a role <@&717144765690282015> or higher, and you don't appear to have it.
-If you already purchased a <@&717144765690282015> or higher subscription, link your Patreon to Discord. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!)
+        embed=discord.Embed(title="", description="""To access the download channel you need to have a role `Steeler` or higher, and you don't appear to have it.
+If you already purchased a `Steeler` or higher subscription, link your Patreon to Discord. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!)
 If your account is already linked, unlink and relink it. [[more info]](https://support.patreon.com/hc/en-us/articles/212052266-Get-my-Discord-role#:~:text=Step%201%3A%20Log%20in%20to,role%20tied%20to%20your%20Tier!) about how to get your role.
 
-If you don't already have a <@&717144765690282015> or higher subscription, you can get one at [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=ctx.me.color)
+If you don't already have a `Steeler` or higher subscription, you can get one at [patreon.com/stylized](https://www.patreon.com/Stylized).""", color=ctx.me.color)
         if ctx.message.reference:
             reply = ctx.message.reference.resolved
             await reply.reply(embed=embed)

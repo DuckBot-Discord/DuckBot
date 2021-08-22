@@ -21,8 +21,6 @@ class handler(commands.Cog):
         embed.set_author(name = 'Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
 
         if isinstance(error, helpers.NotOSP):
-            await self.bot.get_channel(860608884694450196).send(f"""```{ctx.command} command raised an error:
-    **This command is restricted to OSP!**\n    discord.gg/tkuDSz6wsc```""")
             await ctx.send("**This command is restricted to OSP!**\ndiscord.gg/tkuDSz6wsc")
             return
 
