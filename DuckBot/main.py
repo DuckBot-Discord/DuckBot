@@ -68,7 +68,6 @@ class DuckBot(commands.Bot):
                 self._load_extension(f'cogs.{cog}')
         
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
-        return self.PRE
         if not message.guild:
             return commands.when_mentioned_or(self.PRE)(bot,message)
         prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
