@@ -31,6 +31,8 @@ class Fun(commands.Cog, name='Fun'):
         """
 
         async with self.bot.session.get('https://aws.random.cat/meow') as r:
+            if r.status != 200:
+                raise discord.HTTPException
             res = await r.json()  # returns dict
 
         embed = discord.Embed(title='Here is a cat!', color=random.randint(0, 0xFFFFFF))
@@ -43,6 +45,9 @@ class Fun(commands.Cog, name='Fun'):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def dog(self, ctx: commands.Context) -> discord.Message:
         async with self.bot.session.get('https://dog.ceo/api/breeds/image/random') as r:
+            if r.status != 200:
+                raise discord.HTTPException
+
             res = await r.json()
 
         embed = discord.Embed(title='Here is a dog!', color=random.randint(0, 0xFFFFFF))
@@ -54,6 +59,9 @@ class Fun(commands.Cog, name='Fun'):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def duck(self, ctx: commands.Context) -> discord.Message:
         async with self.bot.session.get('https://random-d.uk/api/random?format=json') as r:
+            if r.status != 200:
+                raise discord.HTTPException
+
             res = await r.json()
 
         embed = discord.Embed(title='Here is a duck!', color=random.randint(0, 0xFFFFFF))
@@ -64,15 +72,15 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(help="Try it and see...")
     @commands.bot_has_permissions(send_messages=True)
     async def tias(self, ctx: commands.Context) -> discord.Message:
-        if ctx.channel.permissions_for(ctx.me).manage_messages:
-            await ctx.message.delete()
-
         return await ctx.send("https://tryitands.ee/")
 
     @commands.command(help="shows a funny \"inspirational\" image")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def inspireme(self, ctx) -> discord.Message:
         async with self.bot.session.get('http://inspirobot.me/api?generate=true') as r:
+            if r.status != 200:
+                raise discord.HTTPException
+
             res = await r.text()
 
         embed = discord.Embed(title='An inspirational image...', color=random.randint(0, 0xFFFFFF))
