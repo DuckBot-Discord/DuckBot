@@ -210,7 +210,7 @@ class Moderation(commands.Cog):
                       usage="<member> [new nick]")
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
-    async def setnick(self, ctx, member: discord.Member, *, new: str = 'None'):
+    async def setnick(self, ctx, member: discord.Member, *, new: str = None):
         if len(new) > 32:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
         if not can_execute_action(ctx, ctx.author, member):
