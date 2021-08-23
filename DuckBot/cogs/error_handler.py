@@ -72,7 +72,8 @@ class Handler(commands.Cog, name='Handler'):
 
         elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
             missing = f"{str(error.param).split(':')[0]}"
-            command = f"{ctx.prefix}{ctx.command} {ctx.command.signature}"
+            command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
+            command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
             separator = (' ' * (len(command.split(missing)[0]) - 1))
             indicator = ('^' * (len(missing) + 2))
 

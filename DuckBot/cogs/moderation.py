@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import datetime
 import discord
 import re
 import shlex
