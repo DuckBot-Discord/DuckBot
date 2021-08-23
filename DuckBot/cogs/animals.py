@@ -23,14 +23,12 @@ class Fun(commands.Cog, name='Fun'):
 
     ### CAT ###
     # Sends a pic of a cat
-    @commands.group(usage="[rory|manchas] [specific ID]", invoke_without_command=True)
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def cat(self, ctx: commands.Context) -> Optional[discord.Message]:
         """
-        Sends a random cat image\nIf specified, can also send a random or specific picture of Manchas or Rory
+        Sends a random cat image
         """
-        if ctx.invoked_subcommand:
-            return
 
         async with self.bot.session.get('https://aws.random.cat/meow') as r:
             res = await r.json()  # returns dict
@@ -39,56 +37,6 @@ class Fun(commands.Cog, name='Fun'):
         embed.set_image(url=res["file"])
         embed.set_footer(text='by random.cat',
                          icon_url='https://purr.objects-us-east-1.dream.io/static/img/random.cat-logo.png')
-        return await ctx.send(embed=embed)
-
-    @cat.command(
-        name='rory',
-        brief='View rory')
-    async def cat_rory(self, ctx: commands.Context, id: Optional[int]) -> Optional[discord.Message]:
-        embed = discord.Embed(title='Here is Rory!', color=random.randint(0, 0xFFFFFF))
-        url = 'https://rory.cat/purr'
-        url += id if id else ''
-
-        async with self.bot.session.get(url, allow_redirects=True) as cs:
-            res = await cs.json()
-            if not id:
-                url = cs.url
-                embed.set_image(url=url)
-                manchas_id = str(url).split('/')[-1]
-                embed.set_footer(text=f'by rory.cat | ID: {res["id"]}')
-            elif cs.setstatus == 404:
-                await ctx.message.delete(delay=5)
-                return await ctx.send("⚠ Manchas not found", delete_after=5)
-
-        embed.set_image(url=url)
-        embed.set_footer(text=f'by rory.cat | ID: {res["id"]}')
-        return await ctx.send(embed=embed)
-
-    @cat.command(
-        name='manchas',
-        brief='View manchas')
-    async def cat_manchas(self, ctx: commands.Context, id: Optional[int]) -> Optional[discord.Message]:
-        embed = discord.Embed(title=f'Here is {ctx.command}!', color=random.randint(0, 0xFFFFFF))
-        url = 'https://api.manchas.cat/'
-        url += id if id else ''
-
-        async with self.bot.session.get(url, allow_redirects=True) as cs:
-            if not id:
-                url = cs.url
-                embed.set_image(url=url)
-                manchas_id = str(url).split('/')[-1]
-                embed.set_footer(text=f'by api.manchas.cat | ID: {manchas_id}')
-            else:
-                if cs.setstatus == 404:
-                    await ctx.send("⚠ Manchas not found", delete_after=5)
-                    try:
-                        await ctx.message.delete()
-                    except discord.forbidden:
-                        return
-                    finally:
-                        return
-            embed.set_image(url=f'https://api.manchas.cat/{id}')
-            embed.set_footer(text=f'by api.manchas.cat | ID: {id}')
         return await ctx.send(embed=embed)
 
     @commands.command(help="Sends a random dog image")
