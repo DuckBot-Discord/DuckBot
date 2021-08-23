@@ -9,6 +9,7 @@ from discord.ext import commands, menus
 
 import errors
 
+
 class Confirm(menus.Menu):
     def __init__(self, msg):
         super().__init__(timeout=30.0, delete_message_after=True)
@@ -219,7 +220,7 @@ class Moderation(commands.Cog):
         try:
             await member.edit(nick=new)
             await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
-                           "\n**`{old}`** -> **`{new}`**")
+                           f"\n**`{old}`** -> **`{new}`**")
         except discord.Forbidden:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
         except discord.HTTPException:
