@@ -41,56 +41,38 @@ class Fun(commands.Cog, name='Fun'):
                          icon_url='https://purr.objects-us-east-1.dream.io/static/img/random.cat-logo.png')
         return await ctx.send(embed=embed)
 
-        # .. note:
-        # These should all be subcommands, they'll be blanked out.
+    @cat.command(
+        name='rory',
+        brief='View rory')
+    async def cat_rory(self, ctx: commands.Context, id: Optional[int]) -> Optional[discord.Message]:
+        embed = discord.Embed(title='Here is Rory!', color=random.randint(0, 0xFFFFFF))
+        url = 'https://rory.cat/purr'
+        url += id if id else ''
 
-        # RORY ==========================
-        """elif cat.lower() == "rory":
-            if id == None:
-                async with self.bot.session('https://rory.cat/purr') as r:
-                    res = await r.json()  # returns dict
-                    embed = discord.Embed(title='Here is a Rory!', color=random.randint(0, 0xFFFFFF))
-                    embed.set_image(url=res["url"])
-                    embed.set_footer(text=f'by rory.cat | ID: {res["id"]}')
-                    await ctx.send(embed=embed)
-            else:
-                async with self.bot.session(f'https://rory.cat/purr/{id}') as r:
-                    if r.status == 404:
-                        await ctx.send("⚠ Rory not found", delete_after=5)
-                        await asyncio.sleep(5)
-                        try:
-                            await ctx.message.delete()
-                        except discord.forbidden:
-                            return
-                        return
-                    res = await r.json()  # returns dict
-                    embed = discord.Embed(title='Here is a Rory!', color=random.randint(0, 0xFFFFFF))
-                    embed.set_image(url=res["url"])
-                    embed.set_footer(text=f'by rory.cat | ID: {res["id"]}')
-                    await ctx.send(embed=embed)
-        elif cat.lower() == 'help':
-            embed = discord.Embed(title='Cat help', description="fields: `.cat <cat> <id>`", color=random.randint(0, 0xFFFFFF))
-            embed.add_field(name=".cat", value="Gets a totally random cat", inline=False)
-            embed.add_field(name=".cat Rory <id>", value="gets a Rory - ID is optional to get a specific Rory image", inline=False)
-            embed.add_field(name=".cat Manchas <id>", value="gets a Manchas - ID is optional to get a specific Manchas image", inline=False)
-            await ctx.send(embed=embed)
-        else:
-            async with self.bot.session('https://aws.random.cat/meow') as r:
-                res = await r.json()  # returns dict
-                embed = discord.Embed(title='Here is a cat!', color=random.randint(0, 0xFFFFFF))
-                embed.set_image(url=res["file"])
-                embed.set_footer(text='by random.cat', icon_url='https://purr.objects-us-east-1.dream.io/static/img/random.cat-logo.png')
-                await ctx.send(embed=embed)"""
+        async with self.bot.session(url, allow_redirects=True) as cs:
+            res = await cs.json()
+            if not id:
+                url = cs.url
+                embed.set_image(url=url)
+                manchas_id = str(url).split('/')[-1]
+                embed.set_footer(text=f'by rory.cat | ID: {res["id"]}')
+            elif cs.setstatus == 404:
+                await ctx.message.delete(delay=5)
+                return await ctx.send("⚠ Manchas not found", delete_after=5)
+
+        embed.set_image(url=url)
+        embed.set_footer(text=f'by rory.cat | ID: {res["id"]}')
+        return await ctx.send(embed=embed)
 
     @cat.command(
         name='manchas',
         brief='View manchas')
     async def cat_manchas(self, ctx: commands.Context, id: Optional[int]) -> Optional[discord.Message]:
-        embed = discord.Embed(title='Here is Manchas!', color=random.randint(0, 0xFFFFFF))
+        embed = discord.Embed(title=f'Here is {ctx.command}!', color=random.randint(0, 0xFFFFFF))
         url = 'https://api.manchas.cat/'
         url += id if id else ''
 
-        async with self.bot.session('https://api.manchas.cat/', allow_redirects=True) as cs:
+        async with self.bot.session(url, allow_redirects=True) as cs:
             if not id:
                 url = cs.url
                 embed.set_image(url=url)

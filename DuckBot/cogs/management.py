@@ -91,7 +91,7 @@ class Management(commands.Cog, name='Bot Management'):
     @status.command(name='competing')
     async def status_competing(self, ctx: commands.Context, text):
         await self.bot.change_presence(
-            activity=discord.Activity(type=discord.ActivityType.watching, name=f'{text}'))
+            activity=discord.Activity(type=discord.ActivityType.listening, name=f'{text}'))
         await ctx.message.add_reaction('✅')
         await ctx.send(f"Activity changed to `Watching {text}` ")
 
