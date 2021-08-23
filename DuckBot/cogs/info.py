@@ -82,6 +82,11 @@ class InviteButtons(discord.ui.View):
         self.add_item(discord.ui.Button(emoji="<:topgg:870133913102721045>", label='top.gg', url="https://top.gg/bot/788278464474120202#/"))
         self.add_item(discord.ui.Button(emoji="<:botsgg:870134146972938310>", label='bots.gg', url="https://discord.bots.gg/bots/788278464474120202"))
 
+class ServerInvite(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.Button(emoji="<:servers:870152102759006208>", label='.gg/TdRfGKg8Wh', url="https://discord.gg/TdRfGKg8Wh"))
+
 
 class InvSrc(discord.ui.View):
     def __init__(self):
@@ -90,9 +95,16 @@ class InvSrc(discord.ui.View):
         self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code', url="https://github.com/LeoCx1000/discord-bots"))
 
     @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji = "<:topgg:870133913102721045>", custom_id='BotVoteSites')
-    async def receive(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def votes(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed=discord.Embed(description="<:topgg:870133913102721045> **vote here!** <:botsgg:870134146972938310>", color = discord.Colour.blurple())
         await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
+
+    @discord.ui.button(label='Discord Server', style=discord.ButtonStyle.gray, emoji = "<:servers:870152102759006208>", custom_id='ServerInvite')
+    async def invite(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed=discord.Embed(description="<:servers:870152102759006208> **Join my server!** <:servers:870152102759006208>"
+                                        "\nNote that this **will not ask for consent** to join! \nIt will just yoink you into the server",
+                                        color = discord.Colour.blurple())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
 
 class HelpMenu(Duckinator):
     def __init__(self, source):
@@ -172,7 +184,7 @@ class MyHelp(commands.HelpCommand):
 - dont type these brackets when using the command!
 + {self.context.clean_prefix}help [command] - get information on a command
 + {self.context.clean_prefix}help [category] - get information on a category
-``` 
+```
 """,
         timestamp = discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.avatar.url)

@@ -21,7 +21,7 @@ class Handler(commands.Cog, name='Handler'):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         error = getattr(error, "original", error)
-
+        print(error)
         ignored = (
             commands.CommandNotFound,
         )

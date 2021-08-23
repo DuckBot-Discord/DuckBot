@@ -24,9 +24,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def modmail(self, message):
-        if message.guild or message.author == self.bot.user: 
+        if message.guild or message.author == self.bot.user:
             return
-    
+
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
         channel = discord.utils.get(category.channels, name=str(message.author.id))
         if not channel:
@@ -37,6 +37,7 @@ class Events(commands.Cog):
                 "there was an issue delivering the message.")
             channel = await category.create_text_channel(
                 name=str(message.author.id),
+                topic=f"{message.author}'s DMs",
                 position=0,
                 reason="DuckBot ModMail"
         )
