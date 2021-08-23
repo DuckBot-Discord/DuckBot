@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import discord
 import re
 import shlex
@@ -8,6 +7,7 @@ from collections import Counter
 
 from discord.ext import commands, menus
 
+import errors
 
 class Confirm(menus.Menu):
     def __init__(self, msg):
@@ -207,64 +207,26 @@ class Moderation(commands.Cog):
 
     @commands.command(help="Sets yours or someone else's nick # leave empty to remove nick", aliases=['sn', 'nick'],
                       usage="<member> [new nick]")
+    @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
-    async def setnick(self, ctx, member: typing.Optional[discord.Member], *, new: typing.Optional[str] = 'None'):
-        if member == None:
-            if ctx.channel.permissions_for(ctx.author).manage_nicknames:
-                await ctx.send("`!nick [member] (newNick)` - You must specify a member", delete_after=10)
-                await asyncio.sleep(10)
-                await ctx.message.delete()
+    async def setnick(self, ctx, member: discord.Member, *, new: str = 'None'):
+        if len(new) > 32:
+            raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
+        if not can_execute_action(ctx, ctx.author, member):
+            raise commands.MissingPermissions('role hierarchy error')
+        new = new or member.name
+        old = member.display_name
+        try:
+            await member.edit(nick=new)
+            await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
+                           "\n**`{old}`** -> **`{new}`**")
+        except discord.Forbidden:
+            raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
+        except discord.HTTPException:
+            await ctx.message.add_reaction('#️⃣')
+            await ctx.message.add_reaction('3️⃣')
+            await ctx.message.add_reaction('2️⃣')
             return
-        if new == 'None':
-            new = f'{member.name}'
-        else:
-            new = new
-        old = f'{member.nick}'
-        if old == 'None':
-            old = f'{member.name}'
-        else:
-            old = old
-        if member == ctx.author and ctx.channel.permissions_for(ctx.author).change_nickname:
-            try:
-                await member.edit(nick=new)
-                await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
-                "\n**`{old}`** -> **`{new}`**")
-                try:
-                    await ctx.message.delete()
-                except discord.Forbidden:
-                    return
-            except discord.Forbidden:
-                await self.error_message(ctx, 'Bot not high enough in role hierarchy')
-                return
-            except discord.HTTPException:
-                await ctx.message.add_reaction('#️⃣')
-                await ctx.message.add_reaction('3️⃣')
-                await ctx.message.add_reaction('2️⃣')
-                return
-        elif ctx.channel.permissions_for(ctx.author).manage_nicknames:
-            if member.top_role >= ctx.author.top_role:
-                await self.error_message(ctx, "⚠ Cannot edit nick for members equal or above yourself!")
-                return
-            try:
-                await member.edit(nick=new)
-                await ctx.send(f"✏ {ctx.author.mention} edited nick for **{member}**\n**`{old}`** -> **`{new}`**")
-                try:
-                    await ctx.message.delete()
-                except discord.Forbidden:
-                    return
-            except discord.Forbidden:
-                await self.error_message(ctx, 'Bot not high enough in role hierarchy')
-                return
-            except discord.HTTPException:
-                await ctx.message.add_reaction('#️⃣')
-                await ctx.message.add_reaction('3️⃣')
-                await ctx.message.add_reaction('2️⃣')
-        elif member == ctx.author and ctx.channel.permissions_for(ctx.author).change_nickname:
-            await self.error_message(ctx, f"""You can only change your own nick!
-> !nick {ctx.author.mention} `<new nick>`""")
-            return
-        else:
-            await self.perms_error(ctx)
 
     # -------------------------------------------------------------#
     # ------------------------ PURGE ------------------------------#
