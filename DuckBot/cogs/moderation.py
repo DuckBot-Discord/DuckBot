@@ -213,7 +213,7 @@ class Moderation(commands.Cog):
     async def setnick(self, ctx, member: discord.Member, *, new: str = None):
         new = new or member.name
         old = member.display_name
-        if len(new) > 32:
+        if len() > 32:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
         if not can_execute_action(ctx, ctx.author, member):
             raise commands.MissingPermissions('role hierarchy error')
