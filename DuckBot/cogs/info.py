@@ -1,7 +1,16 @@
-import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, itertools, contextlib, datetime
+import aiohttp
+import asyncio
+import discord
+import inspect
+import os
+import pkg_resources
+import psutil
+import re
+import time
+import typing
 from discord.ext import commands, menus
-
 from helpers import helper
+
 
 class Duckinator(menus.MenuPages):
     def __init__(self, source):
@@ -72,7 +81,6 @@ class InviteButtons(discord.ui.View):
         super().__init__()
         self.add_item(discord.ui.Button(emoji="<:topgg:870133913102721045>", label='top.gg', url="https://top.gg/bot/788278464474120202#/"))
         self.add_item(discord.ui.Button(emoji="<:botsgg:870134146972938310>", label='bots.gg', url="https://discord.bots.gg/bots/788278464474120202"))
-
 
 
 class InvSrc(discord.ui.View):

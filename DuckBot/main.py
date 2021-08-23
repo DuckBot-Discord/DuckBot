@@ -1,104 +1,102 @@
-import os, discord, asyncio, traceback, datetime, asyncpg
-from dotenv import load_dotenv
+import datetime
+import logging
+import os
+import traceback
+from typing import Final, List, Optional
+
+import aiohttp
+import discord
 from discord.ext import commands
+from discord.ext.commands.errors import (
+    ExtensionAlreadyLoaded,
+    ExtensionFailed,
+    ExtensionNotFound,
+    NoEntryPointError
+)
 
-PRE = 'db.'
-async def get_pre(bot, message):
-    if not message.guild:
-        return commands.when_mentioned_or(PRE)(bot,message)
-    prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
-    if await bot.is_owner(message.author) and bot.noprefix == True:
-        if prefix:
-            return commands.when_mentioned_or(prefix, "")(bot,message)
-        else:
-            return commands.when_mentioned_or(PRE, "")(bot,message)
-    if not prefix:
-        prefix = PRE
-    return commands.when_mentioned_or(prefix)(bot,message)
+initial_extensions = (
+    'jishaku',
+)
 
-async def get_pref(bot, message):
-    if not message.guild:
-        return PRE
-    prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
-    if await bot.is_owner(message.author) and bot.noprefix == True:
-        if prefix:
-            return (prefix, "")
-        else:
-            return (PRE, "")
-    if not prefix:
-        prefix = PRE
-    return prefix
 
-intents = discord.Intents.default()
-intents.members = True
+class DuckBot(commands.Bot):
+    PRE: Final[str] = 'db.'
+    
+    def __init__(self) -> None:
+        intents = discord.Intents.default()
+        intents.members = True
 
-bot = commands.Bot(command_prefix=get_pre, case_insensitive=True, intents=intents, owner_id=349373972103561218)
-bot._BotBase__cogs  = commands.core._CaseInsensitiveDict()
-
-bot.allcogs = []
-bot.invite_url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
-bot.vote_top_gg="https://top.gg/bot/788278464474120202#/"
-bot.vote_bots_gg="https://discord.bots.gg/bots/788278464474120202"
-bot.repo="https://github.com/LeoCx1000/discord-bots"
-bot.maintenance = False
-bot.noprefix  = False
-bot.started = False
-bot.uptime = datetime.datetime.utcnow()
-bot.last_rall = datetime.datetime.utcnow()
-
-os.environ['JISHAKU_HIDE'] = 'True'
-bot.load_extension('jishaku')
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-
-async def create_db_pool():
-
-    credentials = {"user": f"{os.getenv('PSQL_USER')}",
-                   "password": f"{os.getenv('PSQL_PASSWORD')}",
-                   "database": f"{os.getenv('PSQL_DB')}",
-                   "host": f"{os.getenv('PSQL_HOST')}"}
-
-    bot.db = await asyncpg.create_pool(**credentials)
-    print("connection successful")
-
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS prefixes(guild_id bigint PRIMARY KEY, prefix text);")
-    print("table done")
-
-@bot.event
-async def on_ready():
-    print("\033[42m======[ BOT ONLINE! ]=======")
-    print ("Logged in as " + bot.user.name)
-    print('\033[0m')
-    if bot.started==False:
-        bot.started=True
-        await bot.wait_until_ready()
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'))
-
-@bot.event
-async def on_message(message):
-    if bot.maintenance == True and message.author.id != bot.owner_id: return
-    if message.content in ['<@788278464474120202>', '<@!788278464474120202>']:
-        prefix = await get_pref(bot, message)
-        nl = "\n"
-        return await message.reply(f"For a list of commands do `{prefix}help` 💞")
-    await bot.process_commands(message)
-
-print('')
-print("\033[93m======[ NORMAL LOAD ]=======")
-for filename in os.listdir("./cogs"):
-    if filename.endswith(".py"):
+        super().__init__(
+            intents=intents,
+            command_prefix=self.get_pre,
+            case_insensitive=True
+        )
+        self.owner_id = 349373972103561218
+        
+        self._BotBase__cogs = commands.core._CaseInsensitiveDict()
+        
+        # Bot based stuff
+        self.invite_url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
+        self.vote_top_gg="https://top.gg/bot/788278464474120202#/"
+        self.vote_bots_gg="https://discord.bots.gg/bots/788278464474120202"
+        self.repo="https://github.com/LeoCx1000/discord-bots"
+        self.maintenance = False
+        self.noprefix  = False
+        self.started = False
+        self.persistent_views_added = False
+        self.uptime = datetime.datetime.utcnow()
+        self.last_rall = datetime.datetime.utcnow()
+        
+        self.session = aiohttp.ClientSession(loop=self.loop)
+        
+        for ext in initial_extensions:
+            self._load_extension(ext)
+        self._dynamic_cogs()
+        
+    def _load_extension(self, name: str) -> None:
         try:
-            bot.load_extension("cogs.{}".format(filename[:-3]))
-            print(f'\033[92msuccessfully loaded {filename[:-3]}')
-        except:
-            print('\033[0m')
-            print("\033[31m========[ WARNING ]========")
-            print(f"\033[91mAn error occurred while loading '{filename}'""")
-            print('\033[0m')
-print('\033[0m')
-
-bot.persistent_views_added = False
-
-bot.loop.run_until_complete(create_db_pool())
-bot.run(TOKEN, reconnect=True)
+            self.load_extension(name)
+        except (ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed):
+            traceback.print_exc()
+            print() # Empty line
+    
+    def _dynamic_cogs(self) -> None:
+        for filename in os.listdir("./cogs"):
+            if filename.endswith(".py"):
+                cog = filename[:-3]
+                self._load_extension(cog)
+        
+    async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
+        if not message.guild:
+            return commands.when_mentioned_or(self.PRE)(bot,message)
+        prefix = await bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
+        if await bot.is_owner(message.author) and bot.noprefix == True:
+            if prefix:
+                return commands.when_mentioned_or(prefix, "")(bot,message) if not raw_prefix else (prefix, "")
+            else:
+                return commands.when_mentioned_or(self.PRE, "")(bot,message) if not raw_prefix else (self.PRE, "")
+        
+        prefix = prefix or self.PRE
+        return commands.when_mentioned_or(prefix)(bot,message)
+    
+    
+    # Event based 
+    async def on_ready(self) -> None:
+        logging.info("\033[42m======[ BOT ONLINE! ]=======")
+        logging.info ("Logged in as " + self.user.name)
+        logging.info('\033[0m')
+        if not self.started:
+            self.started = True
+            await self.wait_until_ready()
+            await self.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'))
+            
+    async def on_message(self, message: discord.Message) -> None:
+        if any((self.maintenance == True, message.author.id != self.owner_id)):
+            return
+        
+        if self.user:
+            if message.content == f'<@!{self.user.id}>':  # Sets faster
+                prefix = await self.get_pre(self, message, raw_prefix=True)
+                return await message.reply(f"For a list of commands do `{prefix}help` 💞")
+        
+        await self.process_commands(message)

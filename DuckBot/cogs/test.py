@@ -1,8 +1,8 @@
-import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime
-from discord.ext import commands, menus
-from jishaku.models import copy_context_with
-import contextlib
+import discord
+import random
 import wavelink
+from discord.ext import commands
+
 
 class Music(commands.Cog):
     """Music cog to hold Wavelink related commands and listeners."""

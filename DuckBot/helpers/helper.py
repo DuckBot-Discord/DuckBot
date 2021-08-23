@@ -1,5 +1,4 @@
-import discord, asyncio, json, yaml
-from discord.ext import commands
+
 
 def get_perms(permissions):
     perms = []
@@ -68,8 +67,8 @@ def get_user_badges(user):
     if user.premium_since:
         emoji_flags = f"{emoji_flags} <:booster4:585764446178246657>"
     if flags['bug_hunter_level_2'] is True:
-        emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>" #not from bots.gg
+        emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>"  # not from bots.gg
     if flags['verified_bot_developer'] is True:
-        emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>" #not from bots.gg
+        emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>"  # not from bots.gg
     if emoji_flags == "": emoji_flags = None
     return emoji_flags
