@@ -65,7 +65,7 @@ class DuckBot(commands.Bot):
             if filename.endswith(".py"):
                 cog = filename[:-3]
                 logging.info(f"Trying to load cog: {cog}")
-                self._load_extension(cog)
+                self._load_extension(f'cogs.{cog}')
         
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         return self.PRE
