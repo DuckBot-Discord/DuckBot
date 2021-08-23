@@ -7,7 +7,14 @@ import typing
 
 import discord
 from discord.ext import commands, menus
-from jishaku.models import copy_context_with
+
+from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
+from jishaku.codeblocks import Codeblock, codeblock_converter
+from jishaku.exception_handling import ReplResponseReactor
+from jishaku.features.baseclass import Feature
+from jishaku.paginators import PaginatorInterface, WrappedPaginator
+from jishaku.shell import ShellReader
+
 
 
 def setup(bot):
@@ -41,6 +48,14 @@ class Management(commands.Cog, name='Bot Management'):
     """🤖Management stuff. Ignore this"""
     def __init__(self, bot):
         self.bot = bot
+
+    #Git but to the correct directory
+    @Feature.Command(parent="jsk", name="git")
+    async def jsk_git(self, ctx: commands.Context, *, argument: codeblock_converter):
+        """
+        Shortcut for 'jsk sh git'. Invokes the system shell.
+        """
+        return await ctx.invoke("jsk shell", argument=Codeblock(argument.language, "cd ~/.git/DiscordBots\ngit " + argument.content))
 
     @commands.command(aliases = ['setstatus', 'ss', 'activity'], usage="<playing|listening|watching|competing|clear> [text]")
     @commands.is_owner()
@@ -415,4 +430,3 @@ class Management(commands.Cog, name='Bot Management'):
             return await ctx.send(f'Command "{alt_ctx.invoked_with}" is not found')
 
         return await alt_ctx.command.invoke(alt_ctx)
-
