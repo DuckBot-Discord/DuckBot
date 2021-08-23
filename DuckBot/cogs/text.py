@@ -1,6 +1,7 @@
-import typing, discord, asyncio, random, datetime, json, aiohttp, re, unicodedata
+import typing, discord, asyncio, random, datetime, json, aiohttp, re, unicodedata, aiofiles, io
 from discord.ext import commands, tasks, timers, menus
 from random import randint
+import custom_errors
 
 class EmbedPageSource(menus.ListPageSource):
     async def format_page(self, menu, item):
@@ -128,22 +129,20 @@ class general(commands.Cog):
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_lock(self, ctx):
-        await ctx.send("a")
+        await ctx.send("not yet implemented sorry")
 
-    @emoji.command(name="steal")
-    async def emoji_steal(self, ctx):
-        CustomEmojis = ctx.message.reference.resolved.emojis
-        if not CustomEmojis: return await ctx.send("no message quoted")
-        if len(CustomEmojis) > 5:
-            raise commands.TooManyArguments()
-            return
-        for emoji in CustomEmojis:
-            if emoji.animated: emojiformat = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
-            else: emojiformat = f"*`<`*`:{emoji.name}:{emoji.id}>`"
-            embed = discord.Embed(description=f"{emojiformat}",color=ctx.me.color)
-            embed.set_image(url = emoji.url)
-            await ctx.send(embed=embed)
-
+    @emoji.command(name="steal", hidden=True)
+    @commands.is_owner()
+    async def emoji_steal(self, ctx, index:int=1):
+        if not ctx.message.reference: raise custom_errors.NoQuotedMessage
+        custom_emoji = re.compile('<a?:[a-zA-Z0-9\_]+:[0-9]+>')
+        emojis = custom_emoji.findall(ctx.message.reference.resolved.content)
+        if not emojis: raise custom_errors.NoEmojisFound
+        emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index-1])
+        file = await emoji.read()
+        guild = self.bot.get_guild(831313673351593994)
+        emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason="stolen emoji KEK")
+        await ctx.send(f"i just stole {emoji}")
     #### .uuid <mcname> ####
     # gets user's UUID (minecraft)
 
@@ -162,7 +161,7 @@ class general(commands.Cog):
                     embed.add_field(name='⚠ ERROR ⚠', value=f"`{argument}` is not a minecraft username!")
 
                 elif cs.status == 400:
-                    embed.add_field(name="⛔ ERROR ⛔", value="ERROR 400! Bad request.")
+                    embed.add_field(name="⛔ ERROR ⛔", vfalue="ERROR 400! Bad request.")
                 else:
                     res = await cs.json()
                     user = res["name"]

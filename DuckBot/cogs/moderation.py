@@ -111,7 +111,7 @@ class moderation(commands.Cog):
 #------------------------ KICK ------------------------------#
 #------------------------------------------------------------#
 
-    @commands.command(help="Kicks a member from the server", usage="<member> [reason]")
+    @commands.command(help="Kicks a member from the server")
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, kick_members=True)
     async def kick(self, ctx, member: discord.Member, *, reason = None):
@@ -128,10 +128,10 @@ class moderation(commands.Cog):
                 dm_success = '✅'
             except discord.HTTPException: dm_success = '❌'
             await member.kick(reason=f"{ctx.author} (ID: {ctx.author.id}): {reason}")
-            if reason: reason = f"\n```\nreason: {reason}```"
-            else: reason = ''
+            if reason: actionReason = f"\n```\nreason: {reason}```"
+            else: actionReason = ''
 
-            embed=discord.Embed(description=f"{ctx.author.mention} kicked **{member}**({member.mention}){reason}", color=ctx.me.color)
+            embed=discord.Embed(description=f"{ctx.author.mention} kicked **{member}**({member.mention}){actionReason}", color=ctx.me.color)
             embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
             await ctx.send(embed=embed)
 
@@ -165,9 +165,10 @@ class moderation(commands.Cog):
 
         else: dm_success = '❌'
 
-        if isinstance(reason, str): reason = f"\n```\nreason: {reason}```"
+        if isinstance(reason, str): actionReason = f"\n```\nreason: {reason}```"
+        else: actionReason = ''
 
-        embed=discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){reason}", color=ctx.me.color)
+        embed=discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){actionReason}", color=ctx.me.color)
         embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
         await ctx.send(embed=embed)
 
@@ -689,6 +690,7 @@ class moderation(commands.Cog):
         for member in members:
             try:
                 await ctx.guild.ban(member, reason=reason)
+                await asyncio.sleep(0.5)
             except discord.HTTPException:
                 pass
             else:

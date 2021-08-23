@@ -1,7 +1,7 @@
 import  discord, asyncio, typing
 from discord.ext import commands
 from discord.ext.commands import BucketType
-from errors import HigherRole
+import custom_errors
 
 class handler(commands.Cog):
     """🆘 Handle them errors 👀"""
@@ -91,8 +91,13 @@ class handler(commands.Cog):
             embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
 
-        elif isinstance(error, HigherRole):
-            await ctx.send("error handled")
+        elif isinstance(error, custom_errors.NoQuotedMessage):
+            await ctx.send("<:reply:824240882488180747> Missing reply!")
+            return
+
+        elif isinstance(error, custom_errors.NoEmojisFound):
+            await ctx.send("I couldn't find any emojis there.")
+            return
 
         elif isinstance(error, commands.errors.MemberNotFound):
             await ctx.send(f"I couldn't fin `{error.argument}` in this server")

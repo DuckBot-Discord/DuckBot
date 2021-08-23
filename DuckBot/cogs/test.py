@@ -1,9 +1,49 @@
 import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime
 from discord.ext import commands, menus
-from errors import HigherRole
 from jishaku.models import copy_context_with
 import contextlib
+import wavelink
 
+class Music(commands.Cog):
+    """Music cog to hold Wavelink related commands and listeners."""
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+        bot.loop.create_task(self.connect_nodes())
+
+    async def connect_nodes(self):
+        """Connect to our Lavalink nodes."""
+        await self.bot.wait_until_ready()
+
+        await wavelink.NodePool.create_node(bot=self.bot,
+                                            host='wave.link',
+                                            port=80,
+                                            password='password',
+                                            https=False,
+                                            identifier='main')
+
+    @commands.Cog.listener()
+    async def on_wavelink_node_ready(self, node: wavelink.Node):
+        """Event fired when a node has finished connecting."""
+        print(f'Node: <{node.identifier}> is ready!')
+
+    @commands.command()
+    async def play(self, ctx: commands.Context, *, search: wavelink.YouTubeTrack):
+        """Play a song with the given search query.
+        If not connected, connect to our voice channel.
+        """
+        if not ctx.voice_client:
+            vc: Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+        else:
+            vc: Player = ctx.voice_client
+
+        await vc.play(search)
+
+################################################################################################
+################################################################################################
+################################################################################################
+################################################################################################
 
 class test(commands.Cog):
     """🧪 Test commands. 💀 May not work or not be what you think they'll be."""
@@ -35,5 +75,19 @@ Region: {server.region}
         """)
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def banana(self, ctx, member: discord.Member=None):
+        member = member or ctx.author
+        size = random.uniform(8, 25)
+        embed = discord.Embed(color = 0xFFCD71)
+        embed.description = f"""
+                             8{'=' * int(round(size/2, 0))}D
+
+                             **{member.name}**'s 🍌 is {round(size, 1)} cm
+                             """
+        embed.set_author(icon_url=member.avatar.url, name=member)
+        await ctx.send(embed=embed)
+
 def setup(bot):
     bot.add_cog(test(bot))
+    bot.add_cog(Music(bot))

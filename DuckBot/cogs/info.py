@@ -164,8 +164,9 @@ class MyHelp(commands.HelpCommand):
 - dont type these brackets when using the command!
 + {self.context.clean_prefix}help [command] - get information on a command
 + {self.context.clean_prefix}help [category] - get information on a category
-```
-""")
+``` 
+""",
+        timestamp = discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.avatar.url)
         allcogs = []
         cogindex = []
@@ -185,19 +186,19 @@ class MyHelp(commands.HelpCommand):
 
         embed.add_field(name=f"Available categories [{len(allcogs)}]", value=f"```fix\n{nl.join(allcogs)}```")
 
-        embed.add_field(name="📰 Latest News - <t:1629337475:d> (<t:1629337475:R>)", value = f"""
+        embed.add_field(name="📰 Latest News - <t:1629668507:d> (<t:1629668507:R>)", value = f"""
 _ _
-> <:nickname:850914031953903626> **Custom prefixes!**
-Chane my prefix by doing `{self.context.clean_prefix}prefix [new]`
-
 > <:update:264184209617321984> **Updated to discord.py Version 2.0(BETA)**
-‍*If a command isn't working, DM me ({self.context.me.mention}) with the command you tried to execute and it will be fixed!* 💞
+‍*If a command isn't working as intended, or not at all, DM me ({self.context.me.mention}) with the command you tried to execute and it will be fixed!* 💞
 
 > \U0001f518 **Added buttons to the help menu.**
 _Press on them to invite me!_ ❣
+
+> 🎓 **Added proper credits to the help command**
 """)
 
 
+        embed.set_footer(text=f"Help command inspiration and credits at \"{self.context.clean_prefix}about\"")
         channel = self.get_destination()
         await channel.send(embed=embed, view=InvSrc())
 
@@ -252,6 +253,21 @@ description: {command_help}
     async def send_error_message(self, error):
         channel = self.get_destination()
         cmd = error[19:][:-8]
+        if cmd.lower() == 'credits':
+            charles = self.context.bot.get_user(505532526257766411)
+            print(charles, type(charles))
+            if not charles: charles = "Charles#5244"
+            dutchy = self.context.bot.get_user(171539705043615744)
+            print(dutchy, type(dutchy))
+            if not dutchy: charles = "Dutchy#6127"
+            embed = discord.Embed(color = self.context.me.color, description = f"""
+The main page of the help command was not designed by me. It is inspired by **{dutchy}**'s **{charles}** bot.
+
+check it out at https://charles-bot.com/ 💞""")
+            if not isinstance(charles, str):
+                embed.set_thumbnail(url=charles.avatar.url)
+            embed.set_author(icon_url=self.context.author.avatar.url, name=f"{self.context.author} - help page credits")
+            return await channel.send(embed=embed)
         await channel.send(f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔\ndo `{self.context.clean_prefix}help` for help with all commands")
 
     async def on_help_command_error(self, ctx, error):
@@ -373,13 +389,15 @@ class about(commands.Cog):
 
         memory_usage = psutil.Process().memory_full_info().uss / 1024**2
         cpu_usage = psutil.cpu_percent()
+
         embed.add_field(name='Process', value=f'{memory_usage:.2f} MiB\n{cpu_usage:.2f}% CPU')
+        embed.add_field(name='Bot servers', value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(l) / len(l), 2)}%")
+        embed.add_field(name='Help command', value = f"The help command's main page is inspired by another bot's - Do `{ctx.clean_prefix}help credits` for more info 💞")
+        embed.add_field(name='Command info:', value=f"**Last reboot:**\n{self.get_bot_uptime()}\n**Last command reload:**\n{self.get_bot_last_rall()}")
 
         version = pkg_resources.get_distribution('discord.py').version
-        embed.add_field(name='Bot servers', value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(l) / len(l), 2)}%")
-        embed.add_field(name='Command info:', value=f"**Last reboot:**\n{self.get_bot_uptime()}\n**Last command reload:**\n{self.get_bot_last_rall()}")
         embed.set_footer(text=f'Made with discord.py v{version} 💖', icon_url='http://i.imgur.com/5BFecvA.png')
-        embed.timestamp = datetime.datetime.utcnow()
+        embed.timestamp = discord.utils.utcnow()
         await ctx.send(embed=embed)
 
 
