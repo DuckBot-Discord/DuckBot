@@ -85,7 +85,7 @@ class InviteButtons(discord.ui.View):
 class ServerInvite(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.add_item(discord.ui.Button(emoji="<:servers:870152102759006208>", label='.gg/TdRfGKg8Wh', url="https://discord.gg/TdRfGKg8Wh"))
+        self.add_item(discord.ui.Button(emoji="<:servers:870152102759006208>", label='discord.gg/TdRfGKg8Wh', url="https://discord.gg/TdRfGKg8Wh"))
 
 
 class InvSrc(discord.ui.View):
