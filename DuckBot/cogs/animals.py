@@ -97,7 +97,7 @@ class Fun(commands.Cog, name='Fun'):
                 manchas_id = str(url).split('/')[-1]
                 embed.set_footer(text=f'by api.manchas.cat | ID: {manchas_id}')
             else:
-                if cs.status == 404:
+                if cs.setstatus == 404:
                     await ctx.send("⚠ Manchas not found", delete_after=5)
                     try:
                         await ctx.message.delete()

@@ -36,12 +36,12 @@ class DuckBot(commands.Bot):
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()
 
         # Bot based stuff
-        self.invite_url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
-        self.vote_top_gg="https://top.gg/bot/788278464474120202#/"
-        self.vote_bots_gg="https://discord.bots.gg/bots/788278464474120202"
-        self.repo="https://github.com/LeoCx1000/discord-bots"
+        self.invite_url = "https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
+        self.vote_top_gg = "https://top.gg/bot/788278464474120202#/"
+        self.vote_bots_gg = "https://discord.bots.gg/bots/788278464474120202"
+        self.repo = "https://github.com/LeoCx1000/discord-bots"
         self.maintenance = False
-        self.noprefix  = False
+        self.noprefix = False
         self.started = False
         self.persistent_views_added = False
         self.uptime = datetime.datetime.utcnow()
@@ -58,7 +58,7 @@ class DuckBot(commands.Bot):
             self.load_extension(name)
         except (ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed):
             traceback.print_exc()
-            print() # Empty line
+            print()  # Empty line
 
     def _dynamic_cogs(self) -> None:
         for filename in os.listdir("./cogs"):
@@ -71,21 +71,20 @@ class DuckBot(commands.Bot):
         if not message:
             return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else (self.PRE)
         if not message.guild:
-            return commands.when_mentioned_or(self.PRE)(bot,message) if not raw_prefix else (self.PRE)
+            return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else (self.PRE)
         prefix = await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
         if await bot.is_owner(message.author) and bot.noprefix == True:
             if prefix:
-                return commands.when_mentioned_or(prefix, "")(bot,message) if not raw_prefix else (prefix, "")
+                return commands.when_mentioned_or(prefix, "")(bot, message) if not raw_prefix else (prefix, "")
             else:
-                return commands.when_mentioned_or(self.PRE, "")(bot,message) if not raw_prefix else (self.PRE, "")
+                return commands.when_mentioned_or(self.PRE, "")(bot, message) if not raw_prefix else (self.PRE, "")
         prefix = prefix or self.PRE
-        return commands.when_mentioned_or(prefix)(bot,message) if not raw_prefix else (prefix)
-
+        return commands.when_mentioned_or(prefix)(bot, message) if not raw_prefix else (prefix)
 
     # Event based
     async def on_ready(self) -> None:
         logging.info("\033[42m======[ BOT ONLINE! ]=======")
-        logging.info ("Logged in as " + self.user.name)
+        logging.info("Logged in as " + self.user.name)
         logging.info('\033[0m')
         if not self.started:
             self.started = True

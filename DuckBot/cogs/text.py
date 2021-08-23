@@ -181,10 +181,10 @@ class General(commands.Cog):
 
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
             embed = discord.Embed(color=ctx.me.color)
-            if cs.status == 204:
+            if cs.setstatus == 204:
                 embed.add_field(name='⚠ ERROR ⚠', value=f"`{argument}` is not a minecraft username!")
 
-            elif cs.status == 400:
+            elif cs.setstatus == 400:
                 embed.add_field(name="⛔ ERROR ⛔", value="ERROR 400! Bad request.")
             else:
                 res = await cs.json()
