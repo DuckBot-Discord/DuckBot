@@ -353,16 +353,8 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.command(help="Dms a user from any guild", aliases=['md', 'pm', 'id-dm'], usage="[ID]")
     @commands.is_owner()
-    async def dm(self, ctx, member: typing.Optional[discord.User], *, message=""):
+    async def dm(self, ctx, member: discord.User, *, message=""):
 
-        if member == None:
-            await ctx.message.add_reaction('⁉')
-            await asyncio.sleep(3)
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                return
-            return
         if member.bot:
             await ctx.message.add_reaction('🤖')
             await asyncio.sleep(3)
@@ -471,7 +463,7 @@ class Management(commands.Cog, name='Bot Management'):
 
         func = env['func']
         try:
-            with redirect_stdout(stdout):
+            with contextlib.redirect_stdout(stdout):
                 ret = await func()
         except Exception as e:
             value = stdout.getvalue()
