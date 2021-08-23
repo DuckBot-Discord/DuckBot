@@ -49,7 +49,7 @@ class Fun(commands.Cog, name='Fun'):
         url = 'https://rory.cat/purr'
         url += id if id else ''
 
-        async with self.bot.session(url, allow_redirects=True) as cs:
+        async with self.bot.session.get(url, allow_redirects=True) as cs:
             res = await cs.json()
             if not id:
                 url = cs.url
@@ -72,7 +72,7 @@ class Fun(commands.Cog, name='Fun'):
         url = 'https://api.manchas.cat/'
         url += id if id else ''
 
-        async with self.bot.session(url, allow_redirects=True) as cs:
+        async with self.bot.session.get(url, allow_redirects=True) as cs:
             if not id:
                 url = cs.url
                 embed.set_image(url=url)
@@ -94,7 +94,7 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(help="Sends a random dog image")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def dog(self, ctx: commands.Context) -> discord.Message:
-        async with self.bot.session('https://dog.ceo/api/breeds/image/random') as r:
+        async with self.bot.session.get('https://dog.ceo/api/breeds/image/random') as r:
             res = await r.json()
 
         embed = discord.Embed(title='Here is a dog!', color=random.randint(0, 0xFFFFFF))
@@ -105,7 +105,7 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(help="Sends a random duck image")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def duck(self, ctx: commands.Context) -> discord.Message:
-        async with self.bot.session('https://random-d.uk/api/random?format=json') as r:
+        async with self.bot.session.get('https://random-d.uk/api/random?format=json') as r:
             res = await r.json()
 
         embed = discord.Embed(title='Here is a duck!', color=random.randint(0, 0xFFFFFF))
@@ -124,7 +124,7 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(help="shows a funny \"inspirational\" image")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def inspireme(self, ctx) -> discord.Message:
-        async with self.bot.session('http://inspirobot.me/api?generate=true') as r:
+        async with self.bot.session.get('http://inspirobot.me/api?generate=true') as r:
             res = await r.text()
 
         embed = discord.Embed(title='An inspirational image...', color=random.randint(0, 0xFFFFFF))
