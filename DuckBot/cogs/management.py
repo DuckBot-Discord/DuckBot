@@ -24,7 +24,6 @@ def setup(bot):
 
 
 class Confirm(menus.Menu):
-    """Management-only stuff"""
 
     def __init__(self, msg):
         super().__init__(timeout=30.0, delete_message_after=True)
@@ -64,6 +63,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     def __init__(self, bot):
         self.bot = bot
+        self._last_result = None
 
     # Git but to the correct directory
     @Feature.Command(parent="jsk", name="git")
