@@ -124,7 +124,7 @@ class Handler(commands.Cog, name='Handler'):
                 f"I've searched far and wide, but `{error.argument}` doesn't seem to be a member discord user...")
 
         elif isinstance(error, commands.BadArgument):
-            return await ctx.send(error.message or "Bad argument given!")
+            return await ctx.send(error or "Bad argument given!")
 
         await self.bot.wait_until_ready()
         await self.bot.get_channel(847943387083440128).send(f"```\n{ctx.command} command raised an error:{error}\n```")
