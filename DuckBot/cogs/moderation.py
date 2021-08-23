@@ -211,12 +211,12 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
     async def setnick(self, ctx, member: discord.Member, *, new: str = None):
+        new = new or member.name
+        old = member.display_name
         if len(new) > 32:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
         if not can_execute_action(ctx, ctx.author, member):
             raise commands.MissingPermissions('role hierarchy error')
-        new = new or member.name
-        old = member.display_name
         try:
             await member.edit(nick=new)
             await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
