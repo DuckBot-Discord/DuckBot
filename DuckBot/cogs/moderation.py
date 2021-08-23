@@ -228,8 +228,8 @@ class Moderation(commands.Cog):
         if member == ctx.author and ctx.channel.permissions_for(ctx.author).change_nickname:
             try:
                 await member.edit(nick=new)
-                await ctx.send(f"""✏ {ctx.author.mention} nick for {member}
-**`{old}`** -> **`{new}`**""")
+                await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
+                "\n**`{old}`** -> **`{new}`**")
                 try:
                     await ctx.message.delete()
                 except discord.Forbidden:

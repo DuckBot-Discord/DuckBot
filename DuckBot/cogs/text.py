@@ -85,15 +85,7 @@ class General(commands.Cog):
                       usage="<channel> <message>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def echo(self, ctx, channel: typing.Optional[discord.TextChannel] = None, *, msg: typing.Optional[str]):
-        if channel == None:
-            await ctx.send(f"""You must specify a channel
-`{ctx.prefix}{ctx.command}{ctx.usage} [#channel] [message]`""")
-            return
-        if msg is None:
-            await ctx.send(f"""You must type a message.
-`{ctx.prefix}{ctx.command} [#channel] [message]`""")
-            return
+    async def echo(self, ctx, channel: discord.TextChannel = None, *, msg: str) -> discord.Message:
         if channel.permissions_for(ctx.author).mention_everyone:
             if ctx.message.reference:
                 msg = ctx.message.reference.resolved.content

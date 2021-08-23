@@ -530,7 +530,7 @@ class about(commands.Cog):
         if roles != "":
             roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
         # EMBED
-        embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}""")
+        embed = discord.Embed(color=ctx.me.color, description=f"{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}")
         embed.set_author(name=user, icon_url=user.avatar.url)
         embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
