@@ -115,9 +115,9 @@ class DuckBot(commands.Bot):
         prefix = await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
         if await bot.is_owner(message.author) and bot.noprefix is True:
             if prefix:
-                return commands.when_mentioned_or(prefix, "")(bot, message) if not raw_prefix else (prefix, "")
+                return commands.when_mentioned_or(prefix, "")(bot, message) if not raw_prefix else prefix
             else:
-                return commands.when_mentioned_or(self.PRE, "")(bot, message) if not raw_prefix else (self.PRE, "")
+                return commands.when_mentioned_or(self.PRE, "")(bot, message) if not raw_prefix else self.PRE
         prefix = prefix or self.PRE
         return commands.when_mentioned_or(prefix)(bot, message) if not raw_prefix else prefix
 
