@@ -10,12 +10,8 @@ import typing
 import discord
 from discord.ext import commands, menus
 
-from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
 from jishaku.codeblocks import Codeblock, codeblock_converter
-from jishaku.exception_handling import ReplResponseReactor
 from jishaku.features.baseclass import Feature
-from jishaku.paginators import PaginatorInterface, WrappedPaginator
-from jishaku.shell import ShellReader
 from jishaku.models import copy_context_with
 
 
@@ -73,13 +69,6 @@ class Management(commands.Cog, name='Bot Management'):
         """
         return await ctx.invoke("jsk shell",
                                 argument=Codeblock(argument.language, "cd ~/.git/DiscordBots\ngit " + argument.content))
-
-    @commands.command()
-    @commands.is_owner()
-    async def update(self, ctx):
-        await ctx.invoke("jsk git", argument="pull")
-        await asyncio.sleep(1)
-        await ctx.invoke("rall")
 
     @commands.group(aliases=['setstatus', 'ss', 'activity'], invoke_without_subcommand=True)
     @commands.is_owner()
@@ -445,7 +434,10 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.is_owner()
     async def _eval(self, ctx, *, body: str):
         """Evaluates a code"""
-
+        try:
+            await ctx.message.add_reaction('▶')
+        except (discord.Forbidden, discord.HTTPException):
+            pass
         env = {
             'bot': self.bot,
             'ctx': ctx,
@@ -466,6 +458,10 @@ class Management(commands.Cog, name='Bot Management'):
         try:
             exec(to_compile, env)
         except Exception as e:
+            try:
+                await ctx.message.add_reaction('⚠')
+            except (discord.Forbidden, discord.HTTPException):
+                pass
             return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
 
         func = env['func']
@@ -474,12 +470,16 @@ class Management(commands.Cog, name='Bot Management'):
                 ret = await func()
         except Exception as e:
             value = stdout.getvalue()
+            try:
+                await ctx.message.add_reaction('⚠')
+            except (discord.Forbidden, discord.HTTPException):
+                pass
             await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
         else:
             value = stdout.getvalue()
             try:
                 await ctx.message.add_reaction('\u2705')
-            except:
+            except (discord.Forbidden, discord.HTTPException):
                 pass
 
             if ret is None:
