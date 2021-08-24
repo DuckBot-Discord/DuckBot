@@ -1,13 +1,17 @@
-import discord, asyncio, typing
+import discord
 from discord.errors import HTTPException
 from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 
 
+def setup(bot):
+    bot.add_cog(Events(bot))
+
+
 async def get_webhook(channel):
-    hookslist = await channel.webhooks()
-    if hookslist:
-        for hook in hookslist:
+    webhook_list = await channel.webhooks()
+    if webhook_list:
+        for hook in webhook_list:
             if hook.token:
                 return hook
             else:
@@ -23,7 +27,7 @@ class Events(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener('on_message')
-    async def modmail(self, message):
+    async def on_mail(self, message):
         if message.guild or message.author == self.bot.user:
             return
 
@@ -31,16 +35,16 @@ class Events(commands.Cog):
         channel = discord.utils.get(category.channels, name=str(message.author.id))
         if not channel:
             await message.author.send(
-                "**Warning! This is DuckBot's modmail thread.** \nThis conversation will be sent to the bot "
+                "**Warning! This is DuckBot's ModMail thread.** \nThis conversation will be sent to the bot "
                 "developers. \n_They will reply to you as soon as possible! 💞_\n\n**<:nickname:850914031953903626> "
-                "Message edits are not saved! <:nickname:850914031953903626>**\nIf the message recieves a ⚠ reaction, "
+                "Message edits are not saved! <:nickname:850914031953903626>**\nIf the message receives a ⚠ reaction, "
                 "there was an issue delivering the message.")
             channel = await category.create_text_channel(
                 name=str(message.author.id),
                 topic=f"{message.author}'s DMs",
                 position=0,
                 reason="DuckBot ModMail"
-        )
+                )
         wh = await get_webhook(channel)
 
         files = []
@@ -53,11 +57,11 @@ class Events(commands.Cog):
         try:
             await wh.send(content=message.content, username=message.author.name, avatar_url=message.author.avatar.url,
                           files=files)
-        except:
+        except (discord.Forbidden, discord.HTTPException):
             return await message.add_reaction('⚠')
 
     @commands.Cog.listener('on_message')
-    async def modmail_reply(self, message):
+    async def on_mail_reply(self, message):
         if any((not message.guild, message.author.bot, message.channel.category_id != 878123261525901342)):
             return
 
@@ -77,9 +81,5 @@ class Events(commands.Cog):
 
         try:
             await user.send(content=message.content, files=files)
-        except:
+        except (discord.Forbidden, discord.HTTPException):
             return await message.add_reaction('⚠')
-
-
-def setup(bot):
-    bot.add_cog(Events(bot))

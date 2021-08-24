@@ -1,9 +1,9 @@
 import logging
-
-import errors
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
+
+import errors
 
 
 def setup(bot):
@@ -21,7 +21,6 @@ class Handler(commands.Cog, name='Handler'):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         error = getattr(error, "original", error)
-        print(error)
         ignored = (
             commands.CommandNotFound,
         )
@@ -30,13 +29,13 @@ class Handler(commands.Cog, name='Handler'):
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
-                if error != commands.NotOwner:
+                if not isinstance(error, commands.NotOwner):
                     error = e
                     break
 
         if isinstance(error, discord.ext.commands.BadUnionArgument):
-            if e.errors:
-                error = e.errors[0]
+            if error.errors:
+                error = error.errors[0]
 
         embed = discord.Embed(color=0xD7342A)
         embed.set_author(name='Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
@@ -48,38 +47,36 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(f"Too many arguments passed to the command!")
 
         if isinstance(error, discord.ext.commands.MissingPermissions):
-            text = f"You're missing the following permissions: \n**{', '.join(error.missing_perms)}**"
+            text = f"You're missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
             embed.description = text
             try:
                 return await ctx.send(embed=embed)
-            except:
+            except discord.Forbidden:
                 try:
                     return await ctx.send(text)
-                except:
+                except discord.Forbidden:
                     pass
                 finally:
                     return
 
         if isinstance(error, discord.ext.commands.BotMissingPermissions):
-            text = f"I'm missing the following permissions: \n**{', '.join(error.missing_perms)}**"
+            text = f"I'm missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
             try:
                 embed.description = text
                 await ctx.send(embed=embed)
-            except:
-                pass
+            except discord.Forbidden:
+                await ctx.send(text)
             finally:
                 return
 
         elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
             missing = f"{str(error.param).split(':')[0]}"
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
-            command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
             separator = (' ' * (len(command.split(missing)[0]) - 1))
             indicator = ('^' * (len(missing) + 2))
 
             logging.info(f"`{separator}`  `{indicator}`")
             logging.info(error.param)
-            print()
 
             return await ctx.send(
                 f"```{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
@@ -106,6 +103,8 @@ class Handler(commands.Cog, name='Handler'):
                 per = "per category"
             elif error.type == BucketType.role:
                 per = "per role"
+            else:
+                per = ""
 
             embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
@@ -117,7 +116,7 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send("I couldn't find any emojis there.")
 
         elif isinstance(error, commands.errors.MemberNotFound):
-            return await ctx.send(f"I couldn't fin `{error.argument}` in this server")
+            return await ctx.send(f"I couldn't find `{error.argument}` in this server")
 
         elif isinstance(error, commands.errors.UserNotFound):
             return await ctx.send(
