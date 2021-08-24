@@ -578,13 +578,13 @@ class about(commands.Cog):
         embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=['perms'])
     @commands.guild_only()
-    async def permissions(self, ctx: commands.Context, target: discord.Member = None):
+    async def permissions(self, ctx: commands.Context, target: discord.Member = None) -> discord.Message:
         """
         Shows a user's guild permissions
         """
-        target = target or ctx.author
+        target = target or ctx.me
         allowed = []
         denied = []
         for perm in target.guild_permissions:
@@ -594,6 +594,8 @@ class about(commands.Cog):
                 denied.append(await ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
 
         embed = discord.Embed(color=ctx.me.color)
+        embed.set_author(icon_url=target.avatar.url, name=target)
+        embed.set_footer(icon_url=target.avatar.url, text=f"{target.name}'s guild permissions")
         if allowed:
             embed.add_field(name="allowed", value="\n".join(allowed))
         if denied:
