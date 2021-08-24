@@ -30,7 +30,7 @@ class CustomContext(commands.Context):
         }
         emoji = ticks.get(opt, "<:redTick:596576672149667840>")
         if text:
-            return f"{emoji}: {text}"
+            return f"{emoji} {text}"
         return emoji
 
     @staticmethod
@@ -42,7 +42,7 @@ class CustomContext(commands.Context):
         }
         emoji = ticks.get(opt, "❌")
         if text:
-            return f"{emoji}: {text}"
+            return f"{emoji} {text}"
         return emoji
 
     @staticmethod
@@ -54,7 +54,7 @@ class CustomContext(commands.Context):
         }
         emoji = ticks.get(opt, "🟥")
         if text:
-            return f"{emoji}: {text}"
+            return f"{emoji} {text}"
         return emoji
 
 class DuckBot(commands.Bot):
