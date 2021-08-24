@@ -358,16 +358,6 @@ class about(commands.Cog):
         message_ms = (end - start) * 1000
         pings.append(message_ms)
 
-        discords = time.monotonic()
-        url = "https://discordapp.com/"
-        async with self.bot.session.get(url) as resp:
-            if resp.status == 200:
-                discord_end = time.monotonic()
-                discord_ms = (discord_end - discords) * 1000
-                pings.append(discord_ms)
-            else:
-                discord_ms = 0
-
         latency_ms = self.bot.latency * 1000
         pings.append(latency_ms)
 
@@ -386,7 +376,6 @@ class about(commands.Cog):
         await message.edit(content=re.sub('\n *', '\n', f"\n<:open_site:854786097363812352> **| `Websocket ═╣ {round(latency_ms, 3)}ms{' ' * (9 - len(str(round(latency_ms, 3))))}`** "
                                                           f"\n<a:typing:597589448607399949> **| `Typing ════╣ {round(typing_ms, 3)}ms{' ' * (9 - len(str(round(typing_ms, 3))))}`**"
                                                                        f"\n:speech_balloon: **| `Message ═══╣ {round(message_ms, 3)}ms{' ' * (9 - len(str(round(message_ms, 3))))}`**"
-                                                          f"\n<:discord:314003252830011395> **| `Discord ═══╣ {round(discord_ms, 3)}ms{' ' * (9 - len(str(round(discord_ms, 3))))}`**"
                                                              f"\n<:psql:871758815345901619> **| `Database ══╣ {round(postgres_ms, 3)}ms{' ' * (9 - len(str(round(postgres_ms, 3))))}`**"
                                                                              f"\n:infinity: **| `Average ═══╣ {round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
 
