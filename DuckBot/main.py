@@ -19,6 +19,21 @@ initial_extensions = (
 )
 
 
+class CustomContext(commands.Context):
+
+    @staticmethod
+    async def tick(opt, text=None):
+        ticks = {
+            True: '<:greyTick:860644729933791283>',
+            False: '<:greyTick:860644729933791283>',
+            None: '<:greyTick:860644729933791283>',
+        }
+        emoji = ticks.get(opt, "<:redTick:330090723011592193>")
+        if text:
+            return f"{emoji}: {text}"
+        return emoji
+
+
 class DuckBot(commands.Bot):
     PRE: Final[str] = 'db.'
 
@@ -36,7 +51,8 @@ class DuckBot(commands.Bot):
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()
 
         # Bot based stuff
-        self.invite_url = "https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"
+        self.invite_url = "https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope" \
+                          "=bot%20applications.commands "
         self.vote_top_gg = "https://top.gg/bot/788278464474120202#/"
         self.vote_bots_gg = "https://discord.bots.gg/bots/788278464474120202"
         self.repo = "https://github.com/LeoCx1000/discord-bots"
@@ -80,6 +96,9 @@ class DuckBot(commands.Bot):
                 return commands.when_mentioned_or(self.PRE, "")(bot, message) if not raw_prefix else (self.PRE, "")
         prefix = prefix or self.PRE
         return commands.when_mentioned_or(prefix)(bot, message) if not raw_prefix else (prefix)
+
+    async def get_context(self, message, *, cls=CustomContext):
+        return await super().get_context(message, cls=cls)
 
     # Event based
     async def on_ready(self) -> None:
