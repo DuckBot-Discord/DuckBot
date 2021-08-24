@@ -24,11 +24,11 @@ class CustomContext(commands.Context):
     @staticmethod
     async def tick(opt, text=None):
         ticks = {
-            True: '<:greyTick:860644729933791283>',
-            False: '<:greyTick:860644729933791283>',
+            True: '<:greenTick:596576670815879169>',
+            False: '<:redTick:596576672149667840>',
             None: '<:greyTick:860644729933791283>',
         }
-        emoji = ticks.get(opt, "<:redTick:330090723011592193>")
+        emoji = ticks.get(opt, "<:redTick:596576672149667840>")
         if text:
             return f"{emoji}: {text}"
         return emoji
