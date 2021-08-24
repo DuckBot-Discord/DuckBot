@@ -19,31 +19,6 @@ def setup(bot):
     bot.add_cog(Management(bot))
 
 
-class Confirm(menus.Menu):
-
-    def __init__(self, msg):
-        super().__init__(timeout=30.0, delete_message_after=True)
-        self.msg = msg
-        self.result = None
-
-    async def send_initial_message(self, ctx, channel):
-        return await channel.send(self.msg)
-
-    @menus.button('\N{WHITE HEAVY CHECK MARK}')
-    async def do_confirm(self, payload):
-        self.result = True
-        self.stop()
-
-    @menus.button('\N{CROSS MARK}')
-    async def do_deny(self, payload):
-        self.result = False
-        self.stop()
-
-    async def prompt(self, ctx):
-        await self.start(ctx, wait=True)
-        return self.result
-
-
 def cleanup_code(content):
     """Automatically removes code blocks from the code."""
     # remove ```py\n```
@@ -321,7 +296,8 @@ class Management(commands.Cog, name='Bot Management'):
                 traceback_string = "".join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))
                 to_send = f"{to_send} \n❌ {filename[:-3]} - Execution error"
                 embed_error = discord.Embed(color=ctx.me.color,
-                                            description=f"\n❌ {filename[:-3]} Execution error - Traceback\n```\n{traceback_string}\n```")
+                                            description=f"\n❌ {filename[:-3]} Execution error - Traceback"
+                                                        f"\n```\n{traceback_string}\n```")
                 if not silent:
                     if not channel:
                         await ctx.author.send(embed=embed_error)
@@ -468,7 +444,7 @@ class Management(commands.Cog, name='Bot Management'):
         try:
             with contextlib.redirect_stdout(stdout):
                 ret = await func()
-        except Exception as e:
+        except Exception:
             value = stdout.getvalue()
             try:
                 await ctx.message.add_reaction('⚠')

@@ -10,30 +10,6 @@ from discord.ext import commands, menus
 import errors
 
 
-class Confirm(menus.Menu):
-    def __init__(self, msg):
-        super().__init__(timeout=30.0, delete_message_after=True)
-        self.msg = msg
-        self.result = None
-
-    async def send_initial_message(self, ctx, channel):
-        return await channel.send(self.msg)
-
-    @menus.button('\N{WHITE HEAVY CHECK MARK}')
-    async def do_confirm(self, payload):
-        self.result = True
-        self.stop()
-
-    @menus.button('\N{CROSS MARK}')
-    async def do_deny(self, payload):
-        self.result = False
-        self.stop()
-
-    async def prompt(self, ctx):
-        await self.start(ctx, wait=True)
-        return self.result
-
-
 class Arguments(argparse.ArgumentParser):
     def error(self, message):
         raise RuntimeError(message)
@@ -66,7 +42,8 @@ class BanEmbed(menus.ListPageSource):
     def __init__(self, data, per_page=15):
         super().__init__(data, per_page=per_page)
 
-    async def format_page(self, menu, entries):
+    @staticmethod
+    async def format_page(entries):
         embed = discord.Embed(title=f"Server bans ({len(entries)})",
                               description="\n".join(entries))
         embed.set_footer(text=f"To unban do db.unban [entry]\nMore user info do db.baninfo [entry]")
@@ -102,7 +79,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def prefix(self, ctx, new: typing.Optional[str] = None):
-        """🎇NEW changes the bot's prefix for this server.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
+        """🎇NEW changes the bots prefix for this server.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
 
         old = await self.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not new:
@@ -137,7 +114,8 @@ class Moderation(commands.Cog):
         if member.top_role < ctx.author.top_role or ctx.author.id == ctx.guild.owner_id:
             mem_embed = discord.Embed(description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**",
                                       color=ctx.me.color)
-            if reason: mem_embed.set_footer(text=f'reason: {reason}')
+            if reason:
+                mem_embed.set_footer(text=f'reason: {reason}')
             try:
                 await member.send(embed=mem_embed)
                 dm_success = '✅'
@@ -145,12 +123,12 @@ class Moderation(commands.Cog):
                 dm_success = '❌'
             await member.kick(reason=f"{ctx.author} (ID: {ctx.author.id}): {reason}")
             if reason:
-                actionReason = f"\n```\nreason: {reason}```"
+                action_reason = f"\n```\nreason: {reason}```"
             else:
-                actionReason = ''
+                action_reason = ''
 
             embed = discord.Embed(
-                description=f"{ctx.author.mention} kicked **{member}**({member.mention}){actionReason}",
+                description=f"{ctx.author.mention} kicked **{member}**({member.mention}){action_reason}",
                 color=ctx.me.color)
             embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
             await ctx.send(embed=embed)
@@ -169,15 +147,17 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     async def ban(self, ctx, user: typing.Union[discord.Member, discord.User], *, reason: typing.Optional[str] = None):
         member = user
-        if member == ctx.author: return await self.error_message(ctx, 'You can\'t ban yourself')
+        if member == ctx.author:
+            return await self.error_message(ctx, 'You can\'t ban yourself')
         if isinstance(user, discord.Member):
-            if member.top_role >= ctx.me.top_role: return await self.error_message(ctx,
-                                                                                   'I\'m not high enough in role hierarchy to ban that member!')
+            if member.top_role >= ctx.me.top_role:
+                return await self.error_message(ctx, 'I\'m not high enough in role hierarchy to ban that member!')
             if member.top_role < ctx.author.top_role or ctx.author.id == ctx.guild.owner_id:
                 mem_embed = discord.Embed(
                     description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**",
                     color=ctx.me.color)
-                if isinstance(reason, str): mem_embed.set_footer(text=f'reason: {reason}')
+                if isinstance(reason, str):
+                    mem_embed.set_footer(text=f'reason: {reason}')
                 try:
                     await member.send(embed=mem_embed)
                     dm_success = '✅'
@@ -191,11 +171,11 @@ class Moderation(commands.Cog):
             dm_success = '❌'
 
         if isinstance(reason, str):
-            actionReason = f"\n```\nreason: {reason}```"
+            action_reason = f"\n```\nreason: {reason}```"
         else:
-            actionReason = ''
+            action_reason = ''
 
-        embed = discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){actionReason}",
+        embed = discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){action_reason}",
                               color=ctx.me.color)
         embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
         await ctx.send(embed=embed)
@@ -216,7 +196,7 @@ class Moderation(commands.Cog):
         if len(new) > 32:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
         if not can_execute_action(ctx, ctx.author, member):
-            raise commands.MissingPermissions('role hierarchy error')
+            raise commands.MissingPermissions(['role hierarchy error'])
         try:
             await member.edit(nick=new)
             await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
@@ -252,7 +232,8 @@ class Moderation(commands.Cog):
         if ctx.invoked_subcommand is None:
             await self.do_removal(ctx, search, lambda e: not e.pinned)
 
-    async def do_removal(self, ctx, limit, predicate, *, before=None, after=None):
+    @staticmethod
+    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None):
         if limit > 2000:
             return await ctx.send(f'Too many messages to search given ({limit}/2000)')
 
@@ -267,7 +248,7 @@ class Moderation(commands.Cog):
         try:
             await ctx.message.delete()
             deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
-        except discord.Forbidden as e:
+        except discord.Forbidden:
             return await ctx.send('I do not have permissions to delete messages.')
         except discord.HTTPException as e:
             return await ctx.send(f'Error: {e} (try a smaller search?)')
@@ -313,14 +294,14 @@ class Moderation(commands.Cog):
         await self.do_removal(ctx, search, lambda e: e.author == member)
 
     @remove.command()
-    async def contains(self, ctx, *, substr: str):
+    async def contains(self, ctx, *, text: str):
         """Removes all messages containing a substring.
         The substring must be at least 3 characters long.
         """
-        if len(substr) < 3:
+        if len(text) < 3:
             await ctx.send('The substring length must be at least 3 characters.')
         else:
-            await self.do_removal(ctx, 100, lambda e: substr in e.content)
+            await self.do_removal(ctx, 100, lambda e: text in e.content)
 
     @remove.command(name='bot', aliases=['bots'])
     async def remove_bot(self, ctx, prefix: typing.Optional[str] = None, search=100):
@@ -334,7 +315,7 @@ class Moderation(commands.Cog):
     @remove.command(name='emoji', aliases=['emojis'])
     async def remove_emoji(self, ctx, search=100):
         """Removes all messages containing custom emoji."""
-        custom_emoji = re.compile(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>')
+        custom_emoji = re.compile(r'<a?:[a-zA-Z0-9_]+:([0-9]+)>')
 
         def predicate(m):
             return custom_emoji.search(m.content)
@@ -463,7 +444,7 @@ class Moderation(commands.Cog):
          --embeds: Checks for embeds.
          --files: Checks for attachments.
          --emoji: Checks for custom emoji.
-         --reactions: Checks for rections.
+         --reactions: Checks for reactions.
          --or: Use logical OR for ALL options.
          --not: Use logical NOT for ALL options.
         """
@@ -472,7 +453,7 @@ class Moderation(commands.Cog):
     @commands.command()
     async def cleanup(self, ctx, amount: int = 25):
         """
-        Cleans up the bot's messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
+        Cleans up the bots messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
         """
         if amount > 25:
             if not ctx.channel.permissions_for(ctx.author).manage_messages:
@@ -515,24 +496,23 @@ class Moderation(commands.Cog):
         number = entry
         if number <= 0:
             embed = discord.Embed(color=0xFF0000,
-                                  description=f"__number__ must be greater than 1\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`\n To get the number use the `{ctx.prefix}{ctx.command}` command")
+                                  description=f"__number__ must be greater than 1"
+                                              f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
+                                              f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
             await ctx.send(embed=embed)
             return
 
         number = number - 1
 
-        try:
-            bans = await ctx.guild.bans()
-        except:
-            await ctx.send("i'm missing the ban_members permission :pensive:")
-            return
+        bans = await ctx.guild.bans()
+
         if not bans:
             await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
             return
 
         try:
             ban_entry = bans[number]
-        except:
+        except IndexError:
             embed = discord.Embed(color=0xFF0000,
                                   description=f"That member was not found. \nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`\n To get the number use the `{ctx.prefix}{ctx.command}` command")
             await ctx.send(embed=embed)
@@ -549,15 +529,10 @@ class Moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def bans(self, ctx):
-        try:
-            bans = await ctx.guild.bans()
-        except:
-            await ctx.send("i'm missing the ban_members permission :pensive:")
-            return
+    async def bans(self, ctx: commands.Context) -> discord.Message:
+        bans = await ctx.guild.bans()
         if not bans:
-            await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
-            return
+            return await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
         desc = []
         number = 1
         for ban_entry in bans:
@@ -578,12 +553,10 @@ class Moderation(commands.Cog):
         if not ctx.channel.permissions_for(ctx.me).ban_members:
             await ctx.send("i'm missing the ban_members permission :pensive:")
             return
+
         if not number:
-            try:
-                bans = await ctx.guild.bans()
-            except:
-                await ctx.send("i'm missing the ban_members permission :pensive:")
-                return
+            bans = await ctx.guild.bans()
+
             if not bans:
                 await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
                 return
@@ -606,17 +579,14 @@ class Moderation(commands.Cog):
 
         number = number - 1
 
-        try:
-            bans = await ctx.guild.bans()
-        except:
-            await ctx.send("i'm missing the ban_members permission :pensive:")
-            return
+        bans = await ctx.guild.bans()
+
         if not bans:
             await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
             return
         try:
             ban_entry = bans[number]
-        except:
+        except IndexError:
             embed = discord.Embed(color=0xFF0000,
                                   description=f"That member was not found. \nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`\n To get the number use the `{ctx.prefix}{ctx.command}` command")
             await ctx.send(embed=embed)

@@ -21,7 +21,7 @@ class Fun(commands.Cog, name='Fun'):
     def __init__(self, bot):
         self.bot = bot
 
-    ### CAT ###
+    # CAT
     # Sends a pic of a cat
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)

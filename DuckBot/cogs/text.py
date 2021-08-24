@@ -1,4 +1,3 @@
-import aiohttp
 import asyncio
 import discord
 import json
@@ -11,6 +10,7 @@ from discord.ext import commands, menus
 
 
 class EmbedPageSource(menus.ListPageSource):
+
     async def format_page(self, menu, item):
         embed = discord.Embed(description="\n".join(item), title="ℹ Character information")
         return embed
@@ -22,48 +22,45 @@ class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(name='charinfo')
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def charinfo(self, ctx, *, characters: str):
+    async def character_info(self, ctx, *, characters: str):
         """Shows you information about a number of characters."""
 
         def to_string(c):
             digit = f'{ord(c):x}'
             name = unicodedata.name(c, 'Name not found.')
-            return f'`\\U{digit:>08}`: {name} - **{c}** \N{EM DASH} <http://www.fileformat.info/info/unicode/char/{digit}>'
+            return f'`\\U{digit:>08}`: {name} - **{c}** \N{EM DASH} ' \
+                   f'<http://www.fileformat.info/info/unicode/char/{digit}>'
 
         msg = '\n'.join(map(to_string, characters))
 
         menu = menus.MenuPages(EmbedPageSource(msg.split("\n"), per_page=20), delete_message_after=True)
         await menu.start(ctx)
 
-    ##### .s <text> #####
+    # .s <text>
     # resends the message as the bot
 
     @commands.command(aliases=['s', 'send'], usage="<text>",
                       help="Speak as if you were me. # URLs/Invites not allowed!")
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def say(self, ctx, *, msg: typing.Optional[str]):
-        if msg == None:
+        if not msg:
             await ctx.send(f"Error! empty. do: `{ctx.prefix}{ctx.command} <text>`")
 
-        results = re.findall(r"http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
+        results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
                              msg)  # HTTP/HTTPS URL regex
-        results2 = re.findall(r"(?:https?:\/\/)?discord(?:app)?\.(?:com\/invite|gg)\/[a-zA-Z0-9]+\/?",
+        results2 = re.findall(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?",
                               msg)  # Discord invite regex
         if results or results2:
             await ctx.send(
                 f"`{ctx.prefix}{ctx.command}` can't be used to send invites or URLs, as it could bypass spam filters!",
                 delete_after=5)
-            try:
-                await ctx.message.delete(delay=5)
-            except:
-                return
-            return
+            await ctx.message.delete(delay=5)
 
         try:
             await ctx.message.delete()
-        except:
+        except (discord.Forbidden, discord.NotFound, discord.HTTPException):
             pass
         if ctx.channel.permissions_for(ctx.author).mention_everyone:
             if ctx.message.reference:
@@ -78,7 +75,7 @@ class General(commands.Cog):
             else:
                 await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
 
-    ##### .a <TextChannel> <text> ######
+    # .a <TextChannel> <text>
     # sends the message in a channel
 
     @commands.command(help="Echoes a message to another channel", aliases=['a', 'an', 'announce'],
@@ -89,12 +86,12 @@ class General(commands.Cog):
         if channel.permissions_for(ctx.author).mention_everyone:
             if ctx.message.reference:
                 msg = ctx.message.reference.resolved.content
-            await channel.send(msg)
+            return await channel.send(msg)
 
         else:
             if ctx.message.reference:
                 msg = ctx.message.reference.resolved.content
-            await channel.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
+            return await channel.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
 
     @commands.command(
         aliases=['e'],
@@ -106,31 +103,25 @@ class General(commands.Cog):
         new = new_message
         if ctx.message.reference:
             msg = ctx.message.reference.resolved
-            try:
-                if new.endswith("--s"):
-                    await msg.edit(content=f"{new[:-3]}", suppress=True)
-                elif new.endswith('--d'):
-                    await msg.delete()
-                else:
-                    await msg.edit(content=new, suppress=False)
-                try:
-                    await ctx.message.delete()
-                except discord.Forbidden:
-                    return
-            except:
-                pass
+            if new.endswith("--s"):
+                await msg.edit(content=f"{new[:-3]}", suppress=True)
+            elif new.endswith('--d'):
+                await msg.delete()
+            else:
+                await msg.edit(content=new, suppress=False)
+            await ctx.message.delete(delay=0.1)
+
         else:
             await ctx.message.add_reaction('⚠')
             await asyncio.sleep(3)
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                return
+            await ctx.message.delete(delay=0.1)
 
-    #### .jumbo <Emoji> ####
+    # .jumbo <Emoji>
     # makes emoji go big
 
-    @commands.group(help="Makes an emoji bigger and shows it's formatting", invoke_without_command=True)
+    @commands.group(help="Makes an emoji bigger and shows it's formatting",
+                    invoke_without_command=True,
+                    aliases=['em'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def emoji(self, ctx, custom_emojis: commands.Greedy[discord.PartialEmoji]):
         if len(custom_emojis) > 5:
@@ -151,13 +142,15 @@ class General(commands.Cog):
     async def emoji_lock(self, ctx):
         await ctx.send("not yet implemented sorry")
 
-    @emoji.command(name="steal", hidden=True)
+    @emoji.command(name="steal",
+                   hidden=True,
+                   aliases=['s'])
     @commands.is_owner()
     async def emoji_steal(self, ctx, index: int = 1):
         if not ctx.message.reference:
             raise errors.NoQuotedMessage
 
-        custom_emoji = re.compile('<a?:[a-zA-Z0-9\_]+:[0-9]+>')
+        custom_emoji = re.compile(r"<a?:[a-zA-Z0-9_]+:[0-9]+>")
         emojis = custom_emoji.findall(ctx.message.reference.resolved.content)
         if not emojis:
             raise errors.NoEmojisFound
@@ -166,9 +159,12 @@ class General(commands.Cog):
         file = await emoji.read()
         guild = self.bot.get_guild(831313673351593994)
         emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason="stolen emoji KEK")
-        await ctx.send(f"i just stole {emoji}")
+        try:
+            await ctx.message.add_reaction(emoji)
+        except discord.NotFound:
+            pass
 
-    #### .uuid <mcname> ####
+    # .uuid <minecraft_username>
     # gets user's UUID (minecraft)
 
     @commands.command(help="Fetches the UUID of a minecraft user",
@@ -202,15 +198,11 @@ class General(commands.Cog):
         if data:
             try:
                 dictionary = json.loads(data)
-            except:
-                return await ctx.send("Invalid dictionary! Please try again \<3")
+            except json.JSONDecodeError:
+                return await ctx.send("Invalid dictionary! Please try again <3")
 
             embed = discord.Embed().from_dict(dictionary)
-            try:
-                await ctx.send(embed=embed)
-                return
-            except:
-                pass
+            await channel.send(embed=embed)
 
         embed = discord.Embed(color=0x47B781, description="0️⃣ **STEP ZERO: Text**")
         embed.add_field(
@@ -292,7 +284,6 @@ class General(commands.Cog):
                 except:
                     pass
                 announcement_embed.title = msg.content
-                EmTitle = msg.content
                 await announcement.edit(embed=announcement_embed)
 
         embed.clear_fields()
@@ -301,8 +292,8 @@ class General(commands.Cog):
                         value="send `skip` to skip. you can use __**`markdown`**__ here")
         await message.edit(content=ctx.author.mention, embed=embed)
 
-        iter = 0
-        while iter == 0:
+        iteration_amount = 0
+        while iteration_amount == 0:
             try:
                 msg = await self.bot.wait_for(event='message', check=check, timeout=600.0)
             except asyncio.TimeoutError:
@@ -311,7 +302,7 @@ class General(commands.Cog):
                 return
             else:
                 if msg.content.lower() == "skip":
-                    if announcement_embed.title == None:
+                    if not announcement_embed.title:
                         try:
                             await msg.delete()
                         except:
@@ -323,7 +314,7 @@ class General(commands.Cog):
                         except:
                             pass
                         announcement_embed.description = None
-                        iter = 1
+                        iteration_amount = 1
 
                 elif msg.content.lower() == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
@@ -335,7 +326,7 @@ class General(commands.Cog):
                         pass
                     announcement_embed.description = msg.content
                     await announcement.edit(embed=announcement_embed)
-                    iter = 1
+                    iteration_amount = 1
 
         embed.clear_fields()
         embed.description = "3️⃣ **STEP THREE: Color**"
@@ -346,8 +337,8 @@ class General(commands.Cog):
                   "as the embed BG)")
         await message.edit(content=ctx.author.mention, embed=embed)
 
-        iter = 0
-        while iter == 0:
+        iteration_amount = 0
+        while iteration_amount == 0:
             try:
                 msg = await self.bot.wait_for(event='message', check=check, timeout=600.0)
             except asyncio.TimeoutError:
@@ -360,28 +351,28 @@ class General(commands.Cog):
                         await msg.delete()
                     except:
                         pass
-                    iter = 1
+                    iteration_amount = 1
                 elif msg.content.lower() == "invisible":
                     try:
                         await msg.delete()
                     except:
                         pass
-                    announcement_embed.color = 0x2F3136
+                    announcement_embed.colour = 0x2F3136
                     await announcement.edit(embed=announcement_embed)
-                    iter = 1
+                    iteration_amount = 1
                 elif msg.content.lower() == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
                 elif re.match(r"^#?(?:[0-9a-fA-F]{3}){1,2}$", msg.content):
                     try:
                         await msg.delete()
-                    except:
+                    except (discord.Forbidden, discord.HTTPException, discord.NotFound):
                         pass
                     color = msg.content.replace("#", "")
                     color = int(color, 16)
-                    announcement_embed.color = color
+                    announcement_embed.colour = color
                     await announcement.edit(embed=announcement_embed)
-                    iter = 1
+                    iteration_amount = 1
                 else:
                     try:
                         await msg.delete()
@@ -392,7 +383,11 @@ class General(commands.Cog):
         embed.clear_fields()
         embed.description = "4️⃣ **STEP FOUR: fields**"
         embed.add_field(name="What do you want your fields to be?",
-                        value="Send `skip` to skip.\nSend `done` to finish adding fields. \n\nFormat: `NAME ~ VALUE ~ in-line(yes/no)`\nNAME: max characters = 256 \nVALUE: max characters = 1024",
+                        value="Send `skip` to skip."
+                              "\nSend `done` to finish adding fields. "
+                              "\n\nFormat: `NAME ~ VALUE ~ in-line(yes/no)`"
+                              "\nNAME: max characters = 256 "
+                              "\nVALUE: max characters = 1024",
                         inline=False)
         embed.add_field(name="_ _", value="_ _", inline=False)
         embed.add_field(name="NAME - this is an in-line field",
@@ -400,13 +395,14 @@ class General(commands.Cog):
         embed.add_field(name="NAME - this is an in-line field",
                         value="VALUE - this is an example value for an in-line field", inline=True)
         embed.add_field(name="NAME - this is a not in-line field",
-                        value="VALUE - this is an example value for a field in-line that is not in-line, as you can see they are made in a new line.",
+                        value="VALUE - this is an example value for a field in-line that "
+                              "is not in-line, as you can see they are made in a new line.",
                         inline=False)
         embed.add_field(name="_ _", value="_ _", inline=False)
         await message.edit(content=ctx.author.mention, embed=embed)
 
-        iter = 0
-        while iter == 0:
+        iteration_amount = 0
+        while iteration_amount == 0:
             try:
                 msg = await self.bot.wait_for(event='message', check=check, timeout=600.0)
             except asyncio.TimeoutError:
@@ -419,7 +415,7 @@ class General(commands.Cog):
                         await msg.delete()
                     except:
                         pass
-                    iter = 1
+                    iteration_amount = 1
 
                 elif msg.content.lower() == "cancel":
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
@@ -439,20 +435,28 @@ class General(commands.Cog):
                     await announcement.edit(embed=announcement_embed)
                     if len(announcement_embed.fields) >= 25:
                         await ctx.send("max amount of fields reached!", delete_after=5)
-                        iter = 1
+                        iteration_amount = 1
                 else:
                     try:
                         await msg.delete(delay=20)
                     except:
                         pass
-                    embed.description = "4️⃣ **STEP FOUR: fields** \n\nsomething went wrong! remember to add the `~` to separate the values. \nformat: `NAME ~ VALUE ~ in-line(yes/no)`\nYou must format your field like: ```\nName (max: 1024 characters) ~ Value (max: 1024 characters) ~ inline(yes/no)``` \n**example:**```\nI'm a name ~ I'm  a value ~ yes```"
+                    embed.description = "4️⃣ **STEP FOUR: fields** " \
+                                        "\n\nsomething went wrong! remember to add " \
+                                        "the `~` to separate the values. " \
+                                        "\nformat: `NAME ~ VALUE ~ in-line(yes/no)`" \
+                                        "\nYou must format your field like: ```" \
+                                        "\nName (max: 1024 characters) ~ " \
+                                        "Value (max: 1024 characters) ~ inline(yes/no)```" \
+                                        "\n**example:**```\nI'm a name ~ I'm  a value ~ yes```"
                     embed.clear_fields()
                     await message.edit(content=ctx.author.mention, embed=embed)
 
         embed.clear_fields()
         embed.description = "5️⃣ **STEP FIVE: footer**"
         embed.add_field(name="What do you want the footer to be?",
-                        value=f"send `skip` to skip.\nSend `default` to set the default footer\n _Default is `message sent by {ctx.author}`_")
+                        value=f"send `skip` to skip.\nSend `default` to set the default footer"
+                              f"\n _Default is `message sent by {ctx.author}`_")
         await message.edit(content=ctx.author.mention, embed=embed)
 
         try:
@@ -488,11 +492,12 @@ class General(commands.Cog):
         embed.clear_fields()
         embed.description = "6️⃣ **STEP SIX: channel**"
         embed.add_field(name="Where do you want to send the embed to?",
-                        value=f"send `cancel` to cancel. you can't skip this step \n only `#channel` mentions work. IDs don't work.")
+                        value=f"send `cancel` to cancel. you can't skip this step "
+                              f"\n only `#channel` mentions work. IDs don't work.")
         await message.edit(content=ctx.author.mention, embed=embed)
 
-        iter = 0
-        while iter == 0:
+        iteration_amount = 0
+        while iteration_amount == 0:
             try:
                 msg = await self.bot.wait_for(event='message', check=check, timeout=600.0)
             except asyncio.TimeoutError:
@@ -521,7 +526,7 @@ class General(commands.Cog):
                                 else:
                                     embed = discord.Embed(color=0x47B781, description="💌 Sent!")
                                     await message.edit(content=ctx.author.mention, embed=embed)
-                                iter = 1
+                                iteration_amount = 1
                             else:
                                 try:
                                     await msg.delete()

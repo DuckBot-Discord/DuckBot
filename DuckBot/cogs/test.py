@@ -1,52 +1,13 @@
 import discord
 import random
-import wavelink
 from discord.ext import commands
 
 
-class Music(commands.Cog):
-    """Music cog to hold Wavelink related commands and listeners."""
+def setup(bot):
+    bot.add_cog(Test(bot))
 
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
 
-        bot.loop.create_task(self.connect_nodes())
-
-    async def connect_nodes(self):
-        """Connect to our Lavalink nodes."""
-        await self.bot.wait_until_ready()
-
-        await wavelink.NodePool.create_node(bot=self.bot,
-                                            host='wave.link',
-                                            port=80,
-                                            password='password',
-                                            https=False,
-                                            identifier='main')
-
-    @commands.Cog.listener()
-    async def on_wavelink_node_ready(self, node: wavelink.Node):
-        """Event fired when a node has finished connecting."""
-        print(f'Node: <{node.identifier}> is ready!')
-
-    @commands.command()
-    @commands.is_owner()
-    async def play(self, ctx: commands.Context, *, search: wavelink.YouTubeTrack):
-        """Play a song with the given search query.
-        If not connected, connect to our voice channel.
-        """
-        if not ctx.voice_client:
-            vc: Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-        else:
-            vc: Player = ctx.voice_client
-
-        await vc.play(search)
-
-################################################################################################
-################################################################################################
-################################################################################################
-################################################################################################
-
-class test(commands.Cog):
+class Test(commands.Cog):
     """🧪 Test commands. 💀 May not work or not be what you think they'll be."""
     def __init__(self, bot):
         self.bot = bot
@@ -55,8 +16,10 @@ class test(commands.Cog):
     @commands.is_owner()
     async def si(self, ctx):
         server = ctx.guild
-        if ctx.me.guild_permissions.ban_members: bans = len(await server.bans())
-        else: bans = None
+        if ctx.me.guild_permissions.ban_members:
+            bans = len(await server.bans())
+        else:
+            bans = None
         embed = discord.Embed(title=f"Server info - {server}", description=f"""
 Name: {server}
 <:greyTick:860644729933791283> ID: {server.id}
@@ -77,10 +40,10 @@ Region: {server.region}
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def banana(self, ctx, member: discord.Member=None):
+    async def banana(self, ctx, member: discord.Member = None):
         member = member or ctx.author
         size = random.uniform(8, 25)
-        embed = discord.Embed(color = 0xFFCD71)
+        embed = discord.Embed(colour=0xFFCD71)
         embed.description = f"""
                              8{'=' * int(round(size/2, 0))}D
 
@@ -88,7 +51,3 @@ Region: {server.region}
                              """
         embed.set_author(icon_url=member.avatar.url, name=member)
         await ctx.send(embed=embed)
-
-def setup(bot):
-    bot.add_cog(test(bot))
-    bot.add_cog(Music(bot))

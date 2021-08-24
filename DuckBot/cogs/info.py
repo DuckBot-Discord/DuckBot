@@ -13,7 +13,7 @@ from helpers import helper
 
 
 def setup(bot):
-    bot.add_cog(about(bot))
+    bot.add_cog(About(bot))
 
 
 class DuckPaginator(menus.MenuPages):
@@ -76,7 +76,7 @@ class DuckPaginator(menus.MenuPages):
 
             try:
                 await channel.delete_messages(to_delete)
-            except Exception:
+            except (discord.Forbidden, discord.HTTPException, discord.NotFound):
                 pass
 
 
@@ -116,7 +116,8 @@ class InvSrc(discord.ui.View):
     async def invite(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = discord.Embed(
             description="<:servers:870152102759006208> **Join my server!** <:servers:870152102759006208>"
-                        "\nNote that this **will not ask for consent** to join! \nIt will just yoink you into the server",
+                        "\nNote that this **will not ask for consent** to join! "
+                        "\nIt will just yoink you into the server",
             color=discord.Colour.blurple())
         await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
 
@@ -137,8 +138,8 @@ class HelpMenu(DuckPaginator):
             ('<argument>', 'This means the argument is __**required**__.'),
             ('[argument]', 'This means the argument is __**optional**__.'),
             ('[A|B]', 'This means that it can be __**either A or B**__.'),
-            ('[argument...]', 'This means you can have multiple arguments.\n' \
-                              'Now that you know the basics, it should be noted that...\n' \
+            ('[argument...]', 'This means you can have multiple arguments.\n'
+                              'Now that you know the basics, it should be noted that...\n'
                               '__**You do not type in the brackets!**__')
         )
 
@@ -190,8 +191,9 @@ class MyHelp(commands.HelpCommand):
     def get_minimal_command_signature(self, command):
         return '%s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
 
-    def get_command_name(self, command):
-        return '%s' % (command.qualified_name)
+    @staticmethod
+    def get_command_name(command):
+        return '%s' % command.qualified_name
 
     # !help
     async def send_bot_help(self, mapping):
@@ -202,27 +204,28 @@ class MyHelp(commands.HelpCommand):
                                           "\n- usage format: <required> [optional]"
                                           "\n- dont type these brackets when using the command!"
                                           f"\n+ {self.context.clean_prefix}help [command] - get information on a command"
-                                          f"\n+ {self.context.clean_prefix}help [category] - get information on a category"
+                                          f"\n+ {self.context.clean_prefix}help [category] - get information on a category "
                                           f"\n```",
                               timestamp=discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.avatar.url)
-        allcogs = []
-        cogindex = []
+        all_cogs = []
+        cog_index = []
         ignored_cogs = []
-        iter = 1
+        iterations = 1
         for cog, commands in mapping.items():
-            if cog is None or cog.qualified_name in ignored_cogs: continue
+            if cog is None or cog.qualified_name in ignored_cogs:
+                continue
             filtered = await self.filter_commands(commands, sort=True)
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
-                num = f"{iter}\U0000fe0f\U000020e3"
-                cogindex.append(cog.qualified_name)
-                allcogs.append(f"{num} {cog.qualified_name}")
-                iter += 1
-        self.context.bot.all_cogs = cogindex
+                num = f"{iterations}\U0000fe0f\U000020e3"
+                cog_index.append(cog.qualified_name)
+                all_cogs.append(f"{num} {cog.qualified_name}")
+                iterations += 1
+        self.context.bot.all_cogs = cog_index
         nl = '\n'
 
-        embed.add_field(name=f"Available categories [{len(allcogs)}]", value=f"```fix\n{nl.join(allcogs)}```")
+        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}```")
 
         embed.add_field(name="📰 Latest News - <t:1629668507:d> (<t:1629668507:R>)", value=f"""
 _ _
@@ -312,7 +315,7 @@ description: {command_help}
             await ctx.send(embed=discord.Embed(color=discord.Colour.blurple(), description=str(error.original)))
 
 
-class about(commands.Cog):
+class About(commands.Cog):
     """😮 Bot information."""
 
     def __init__(self, bot):
@@ -373,23 +376,25 @@ class about(commands.Cog):
 
         await asyncio.sleep(0.7)
 
-        await message.edit(content=re.sub('\n *', '\n', f"\n<:open_site:854786097363812352> **| `Websocket ═╣ {round(latency_ms, 3)}ms{' ' * (9 - len(str(round(latency_ms, 3))))}`** "
-                                                          f"\n<a:typing:597589448607399949> **| `Typing ════╣ {round(typing_ms, 3)}ms{' ' * (9 - len(str(round(typing_ms, 3))))}`**"
-                                                                       f"\n:speech_balloon: **| `Message ═══╣ {round(message_ms, 3)}ms{' ' * (9 - len(str(round(message_ms, 3))))}`**"
-                                                             f"\n<:psql:871758815345901619> **| `Database ══╣ {round(postgres_ms, 3)}ms{' ' * (9 - len(str(round(postgres_ms, 3))))}`**"
-                                                                             f"\n:infinity: **| `Average ═══╣ {round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
+        await message.edit(content=re.sub('\n *', '\n',
+                                          f"\n<:open_site:854786097363812352> **| `Websocket ═╣ {round(latency_ms, 3)}ms{' ' * (9 - len(str(round(latency_ms, 3))))}`** "
+                                          f"\n<a:typing:597589448607399949> **| `Typing ════╣ {round(typing_ms, 3)}ms{' ' * (9 - len(str(round(typing_ms, 3))))}`**"
+                                          f"\n:speech_balloon: **| `Message ═══╣ {round(message_ms, 3)}ms{' ' * (9 - len(str(round(message_ms, 3))))}`**"
+                                          f"\n<:psql:871758815345901619> **| `Database ══╣ {round(postgres_ms, 3)}ms{' ' * (9 - len(str(round(postgres_ms, 3))))}`**"
+                                          f"\n:infinity: **| `Average ═══╣ {round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
 
     @commands.command(help="Shows info about the bot", aliases=['info'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def about(self, ctx):
         """Tells you information about the bot itself."""
         information = await self.bot.application_info()
-        embed = discord.Embed(color=discord.Colour.blurple(), description=f"[<:github:744345792172654643> source]({self.bot.repo}) | "
-                                                                          f"[<:invite:860644752281436171> invite me]({self.bot.invite_url}) | "
-                                                                          f"[<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | "
-                                                                          f"[<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})"
-                                                                          f"\n> Try also `{ctx.prefix}source [command]`"
-                                                                          f"\n> or `{ctx.prefix}source [command.subcommand]`")
+        embed = discord.Embed(color=discord.Colour.blurple(),
+                              description=f"[<:github:744345792172654643> source]({self.bot.repo}) | "
+                                          f"[<:invite:860644752281436171> invite me]({self.bot.invite_url}) | "
+                                          f"[<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | "
+                                          f"[<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})"
+                                          f"\n> Try also `{ctx.prefix}source [command]`"
+                                          f"\n> or `{ctx.prefix}source [command.subcommand]`")
 
         embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.avatar.url)
         # statistics
@@ -410,7 +415,7 @@ class about(commands.Cog):
                     text += 1
                 elif isinstance(channel, discord.VoiceChannel):
                     voice += 1
-        l = [(sum(m.bot for m in g.members) / g.member_count) * 100 for g in self.bot.guilds]
+        avg = [(sum(m.bot for m in g.members) / g.member_count) * 100 for g in self.bot.guilds]
 
         embed.add_field(name='Members', value=f'{total_members} total\n{total_unique} unique')
         embed.add_field(name='Channels', value=f'{text + voice} total\n{text} text\n{voice} voice')
@@ -420,7 +425,7 @@ class about(commands.Cog):
 
         embed.add_field(name='Process', value=f'{memory_usage:.2f} MiB\n{cpu_usage:.2f}% CPU')
         embed.add_field(name='Bot servers',
-                        value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(l) / len(l), 2)}%")
+                        value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(avg) / len(avg), 2)}%")
         embed.add_field(name='Help command',
                         value=f"The help command's main page is inspired by another bot's - Do `{ctx.clean_prefix}help credits` for more info 💞")
         embed.add_field(name='Command info:',
@@ -589,4 +594,4 @@ class about(commands.Cog):
             embed.add_field(name="allowed", value="\n".join(allowed))
         if denied:
             embed.add_field(name="denied", value="\n".join(denied))
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
