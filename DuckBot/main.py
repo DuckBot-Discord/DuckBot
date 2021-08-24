@@ -21,8 +21,7 @@ initial_extensions = (
 
 class CustomContext(commands.Context):
 
-    @staticmethod
-    async def tick(opt, text=None):
+    async def tick(self, opt, text=None):
         ticks = {
             True: '<:greyTick:860644729933791283>',
             False: '<:greyTick:860644729933791283>',
