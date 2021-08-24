@@ -144,7 +144,7 @@ class DuckBot(commands.Bot):
                 if isinstance(prefix, str):
                     return await message.reply(f"For a list of commands do `{prefix}help` 💞")
                 elif isinstance(prefix, (tuple, list)):
-                    return await message.reply(f"My prefixes here are `{'`, `'.join(prefix)}`."
+                    return await message.reply(f"My prefixes here are `{'`, `'.join(prefix)}`"
                                                f"\n For a list of commands do`{prefix[0]}help` 💞")
 
         await self.process_commands(message)
