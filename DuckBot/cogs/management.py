@@ -77,7 +77,7 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.command()
     @commands.is_owner()
     async def update(self, ctx):
-        await ctx.invoke("jsk git", "pull")
+        await ctx.invoke("jsk git", argument="pull")
         await asyncio.sleep(1)
         await ctx.invoke("rall")
 
