@@ -33,6 +33,29 @@ class CustomContext(commands.Context):
             return f"{emoji}: {text}"
         return emoji
 
+    @staticmethod
+    async def default_tick(opt, text=None):
+        ticks = {
+            True: '✅',
+            False: '❌',
+            None: '➖',
+        }
+        emoji = ticks.get(opt, "❌")
+        if text:
+            return f"{emoji}: {text}"
+        return emoji
+
+    @staticmethod
+    async def square_tick(opt, text=None):
+        ticks = {
+            True: '🟩',
+            False: '🟥',
+            None: '⬛',
+        }
+        emoji = ticks.get(opt, "🟥")
+        if text:
+            return f"{emoji}: {text}"
+        return emoji
 
 class DuckBot(commands.Bot):
     PRE: Final[str] = 'db.'
