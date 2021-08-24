@@ -361,7 +361,7 @@ class about(commands.Cog):
         discords = time.monotonic()
         url = "https://discordapp.com/"
         async with self.bot.session.get(url) as resp:
-            if resp.setstatus == 200:
+            if resp.status == 200:
                 discord_end = time.monotonic()
                 discord_ms = (discord_end - discords) * 1000
                 pings.append(discord_ms)
