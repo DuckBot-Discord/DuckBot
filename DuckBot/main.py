@@ -57,12 +57,13 @@ class CustomContext(commands.Context):
             return f"{emoji} {text}"
         return emoji
 
+
 class DuckBot(commands.Bot):
     PRE: Final[str] = 'db.'
 
     def __init__(self) -> None:
-        intents = discord.Intents.all()
-        intents.presences = False
+        intents = discord.Intents.default()
+        intents.members = True
 
         super().__init__(
             intents=intents,
@@ -108,17 +109,17 @@ class DuckBot(commands.Bot):
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
-            return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else (self.PRE)
+            return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else self.PRE
         if not message.guild:
-            return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else (self.PRE)
+            return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else self.PRE
         prefix = await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
-        if await bot.is_owner(message.author) and bot.noprefix == True:
+        if await bot.is_owner(message.author) and bot.noprefix is True:
             if prefix:
                 return commands.when_mentioned_or(prefix, "")(bot, message) if not raw_prefix else (prefix, "")
             else:
                 return commands.when_mentioned_or(self.PRE, "")(bot, message) if not raw_prefix else (self.PRE, "")
         prefix = prefix or self.PRE
-        return commands.when_mentioned_or(prefix)(bot, message) if not raw_prefix else (prefix)
+        return commands.when_mentioned_or(prefix)(bot, message) if not raw_prefix else prefix
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
@@ -133,13 +134,16 @@ class DuckBot(commands.Bot):
             await self.wait_until_ready()
             await self.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'))
 
-    async def on_message(self, message: discord.Message) -> None:
-        if all((self.maintenance == True, message.author.id != self.owner_id)):
+    async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
+        if all((self.maintenance is True, message.author.id != self.owner_id)):
             return
 
         if self.user:
             if message.content == f'<@!{self.user.id}>':  # Sets faster
                 prefix = await self.get_pre(self, message, raw_prefix=True)
-                return await message.reply(f"For a list of commands do `{prefix}help` 💞")
+                if isinstance(prefix, str):
+                    return await message.reply(f"For a list of commands do `{prefix}help` 💞")
+                elif isinstance(prefix, (tuple, list)):
+                    return await message.reply(f"My prefixes here are `{' '.join(prefix)}`")
 
         await self.process_commands(message)
