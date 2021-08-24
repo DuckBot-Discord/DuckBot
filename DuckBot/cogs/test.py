@@ -29,6 +29,7 @@ class Music(commands.Cog):
         print(f'Node: <{node.identifier}> is ready!')
 
     @commands.command()
+    @commands.is_owner()
     async def play(self, ctx: commands.Context, *, search: wavelink.YouTubeTrack):
         """Play a song with the given search query.
         If not connected, connect to our voice channel.

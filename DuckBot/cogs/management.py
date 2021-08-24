@@ -74,6 +74,13 @@ class Management(commands.Cog, name='Bot Management'):
         return await ctx.invoke("jsk shell",
                                 argument=Codeblock(argument.language, "cd ~/.git/DiscordBots\ngit " + argument.content))
 
+    @commands.command()
+    @commands.is_owner()
+    async def update(self, ctx):
+        await ctx.invoke("jsk git", "pull")
+        await asyncio.sleep(1)
+        await ctx.invoke("rall")
+
     @commands.group(aliases=['setstatus', 'ss', 'activity'], invoke_without_subcommand=True)
     @commands.is_owner()
     async def status(self, ctx: commands.Context):
