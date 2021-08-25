@@ -196,12 +196,10 @@ class Moderation(commands.Cog):
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
         if not can_execute_action(ctx, ctx.author, member) and ctx.guild.id != 745059550998298756:
             raise commands.MissingPermissions(['role_hierarchy'])
-        try:
-            await member.edit(nick=new)
-            return await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
-                                  f"\n**`{old}`** -> **`{new}`**")
-        except discord.Forbidden:
-            raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
+
+        await member.edit(nick=new)
+        return await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
+                              f"\n**`{old}`** -> **`{new}`**")
 
     # -------------------------------------------------------------#
     # ------------------------ PURGE ------------------------------#
