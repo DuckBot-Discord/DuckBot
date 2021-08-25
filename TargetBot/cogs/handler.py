@@ -170,4 +170,4 @@ class Handler(commands.Cog, name='Handler'):
         raise error
 
 def setup(bot):
-    bot.add_cog(handler(bot))
+    bot.add_cog(Handler(bot))
