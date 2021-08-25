@@ -7,8 +7,6 @@ from collections import Counter
 
 from discord.ext import commands, menus
 
-import errors
-
 
 class Arguments(argparse.ArgumentParser):
     def error(self, message):
@@ -190,24 +188,20 @@ class Moderation(commands.Cog):
                       usage="<member> [new nick]")
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
-    async def setnick(self, ctx, member: discord.Member, *, new: str = None):
+    @commands.guild_only()
+    async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> typing.Optional[discord.Message]:
         new = new or member.name
         old = member.display_name
         if len(new) > 32:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
-        if not can_execute_action(ctx, ctx.author, member):
-            raise commands.MissingPermissions(['role hierarchy error'])
+        if not can_execute_action(ctx, ctx.author, member) and ctx.guild.id != 745059550998298756:
+            raise commands.MissingPermissions(['role_hierarchy'])
         try:
             await member.edit(nick=new)
-            await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
-                           f"\n**`{old}`** -> **`{new}`**")
+            return await ctx.send(f"✏ {ctx.author.mention} nick for {member}"
+                                  f"\n**`{old}`** -> **`{new}`**")
         except discord.Forbidden:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
-        except discord.HTTPException:
-            await ctx.message.add_reaction('#️⃣')
-            await ctx.message.add_reaction('3️⃣')
-            await ctx.message.add_reaction('2️⃣')
-            return
 
     # -------------------------------------------------------------#
     # ------------------------ PURGE ------------------------------#

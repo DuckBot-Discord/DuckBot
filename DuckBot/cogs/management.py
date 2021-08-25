@@ -182,10 +182,11 @@ class Management(commands.Cog, name='Bot Management'):
             embed = discord.Embed(color=ctx.me.color, description=f"❌ Execution error\n```{traceback_string}```")
             try:
                 await message.edit(embed=embed)
-            except:
+            except (discord.HTTPException, discord.Forbidden):
                 embed = discord.Embed(color=ctx.me.color,
-                                      description=f"❌ Execution error ```\n error too long, check the console\n```")
-                await message.edit(embed=embed)
+                                      description=f"❌ Execution error ```\n error too long\n```")
+                await message.edit(embed=embed,
+                                   file=io.StringIO(traceback_string))
             raise e
 
     @commands.command(help="Unloads an extension", aliases=['unl', 'ue', 'uc'])
@@ -242,7 +243,7 @@ class Management(commands.Cog, name='Bot Management'):
             embed = discord.Embed(color=ctx.me.color, description=f"❌ Execution error\n```{traceback_string}```")
             try:
                 await message.edit(embed=embed)
-            except:
+            except (discord.Forbidden, discord.HTTPException):
                 embed = discord.Embed(color=ctx.me.color,
                                       description=f"❌ Execution error ```\n error too long, check the console\n```")
                 await message.edit(embed=embed)
@@ -278,7 +279,7 @@ class Management(commands.Cog, name='Bot Management'):
                 try:
                     self.bot.reload_extension("cogs.{}".format(filename[:-3]))
                     to_send = f"{to_send} \n✅ {filename[:-3]}"
-                except:
+                except commands.ExtensionFailed:
                     first_reload_failed_extensions.append(filename)
 
         for filename in first_reload_failed_extensions:
