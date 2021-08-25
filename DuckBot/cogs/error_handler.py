@@ -1,4 +1,6 @@
+import io
 import logging
+import traceback
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -125,6 +127,26 @@ class Handler(commands.Cog, name='Handler'):
         elif isinstance(error, commands.BadArgument):
             return await ctx.send(error or "Bad argument given!")
 
+        elif isinstance(error, discord.HTTPException):
+            return await ctx.send("Oh no! An unexpected HTTP error occurred while handling this command! 😔"
+                                  "\nI've notified the developers about it. in the meantime, maybe try again?")
+
+        elif isinstance(error, discord.Forbidden):
+            return await ctx.send("Oh no! It seems like I don't have permissions to perform that action!"
+                                  "\nThis may be due to me missing permissions in a specific channel, server"
+                                  "permissions, or an issue with role hierarchy. Try adjusting my permissions"
+                                  "for this server. \n(Note that I can't edit the server owner)")
+
+        error_channel = self.bot.get_channel(847943387083440128)
+
+        traceback_string = "".join(traceback.format_exception(
+            etype=None, value=e, tb=e.__traceback__))
+
         await self.bot.wait_until_ready()
-        await self.bot.get_channel(847943387083440128).send(f"```\n{ctx.command} command raised an error:{error}\n```")
+
+        if len(traceback_string) < 1900:
+            await error_channel.send(f"```py\n{ctx.command} command raised an error:{traceback_string}\n```")
+        else:
+            await error_channel.send(file=discord.File(io.StringIO(traceback_string), filename='traceback.txt'))
+
         raise error
