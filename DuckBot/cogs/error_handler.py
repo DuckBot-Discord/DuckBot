@@ -21,7 +21,7 @@ class Handler(commands.Cog, name='Handler'):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: commands.Context, error):
         error = getattr(error, "original", error)
         ignored = (
             commands.CommandNotFound,
@@ -144,7 +144,16 @@ class Handler(commands.Cog, name='Handler'):
 
         await self.bot.wait_until_ready()
 
-        to_send = f"```\n{ctx.message.content}``````py\n{ctx.command} " \
+        if ctx.guild:
+            command_data = f"command: {ctx.message.content}" \
+                           f"\nguild_id: {ctx.guild.id}" \
+                           f"\nowner_id: {ctx.guild.owner.id}" \
+                           f"\nbot admin: {await ctx.default_tick(ctx.me.guild_permissions.administrator)}"
+        else:
+            command_data = f"command: {ctx.message.content}" \
+                           f"\nCommand executed in DMs"
+
+        to_send = f"```\n{command_data}``````py\n{ctx.command} " \
                   f"command raised an error:\n{traceback_string}\n```"
         if len(to_send) < 2000:
             try:
