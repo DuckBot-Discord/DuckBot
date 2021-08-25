@@ -487,7 +487,15 @@ class About(commands.Cog):
         """
         embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
 > We store your `server id` for purpose of custom prefixes.
-""", color=ctx.me.color)
+
+> when a command error happens, we get the following data for troubleshooting purposes: ```yaml
+The command executed
+The server id, and server owner id
+DuckBot's top role position
+# This data is disposed of once
+# the error has been fixed.
+```""",
+                              color=ctx.me.color)
         embed.set_footer(text='Privacy concerns, DM the bot.')
         await ctx.send(embed=embed)
 

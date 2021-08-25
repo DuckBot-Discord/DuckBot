@@ -148,7 +148,8 @@ class Handler(commands.Cog, name='Handler'):
             command_data = f"command: {ctx.message.content}" \
                            f"\nguild_id: {ctx.guild.id}" \
                            f"\nowner_id: {ctx.guild.owner.id}" \
-                           f"\nbot admin: {await ctx.default_tick(ctx.me.guild_permissions.administrator)}"
+                           f"\nbot admin: {await ctx.default_tick(ctx.me.guild_permissions.administrator)} " \
+                           f"- role pos: {ctx.me.top_role.position}"
         else:
             command_data = f"command: {ctx.message.content}" \
                            f"\nCommand executed in DMs"
