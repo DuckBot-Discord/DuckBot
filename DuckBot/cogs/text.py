@@ -5,7 +5,9 @@ import re
 import typing
 import unicodedata
 
+from typing import Optional
 from discord.ext import commands, menus
+from discord.ext.commands.core import command
 
 import errors
 
@@ -44,7 +46,7 @@ class General(commands.Cog):
     @commands.command(aliases=['s', 'send'],
                       help="Speak as if you were me. # URLs/Invites not allowed!")
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def say(self, ctx, *, msg):
+    async def say(self, ctx: commands.context, *, msg: str) -> Optional[discord.Message]:
 
         results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
                              msg)  # HTTP/HTTPS URL regex
@@ -56,22 +58,9 @@ class General(commands.Cog):
                 delete_after=5)
             await ctx.message.delete(delay=5)
 
-        try:
-            await ctx.message.delete()
-        except (discord.Forbidden, discord.NotFound, discord.HTTPException):
-            pass
-        if ctx.channel.permissions_for(ctx.author).mention_everyone:
-            if ctx.message.reference:
-                reply = ctx.message.reference.resolved
-                await reply.reply(msg)
-            else:
-                await ctx.send(msg)
-        else:
-            if ctx.message.reference:
-                reply = ctx.message.reference.resolved
-                await reply.reply(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
-            else:
-                await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
+            await ctx.message.delete(delay = 1)
+
+            return await ctx.send(msg, allowed_mentions=discord.AllowedMentions().none(), reference = ctx.message.reference)
 
     # .a <TextChannel> <text>
     # sends the message in a channel
@@ -162,7 +151,7 @@ class General(commands.Cog):
     @commands.command(help="Fetches the UUID of a minecraft user",
                       usage="<Minecraft username>")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def uuid(self, ctx, *, argument: typing.Optional[str] = None):
+    async def uuid(self, ctx: commands.Context, *, argument: typing.Optional[str] = None) -> Optional[discord.Message]:
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
             embed = discord.Embed(color=ctx.me.color)
             if cs.status == 204:
