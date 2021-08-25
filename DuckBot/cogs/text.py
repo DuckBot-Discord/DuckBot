@@ -67,15 +67,14 @@ class General(commands.Cog):
     # sends the message in a channel
 
     @commands.command(
-        aliases=['a', 'an', 'announce'],
-        usage="<channel> <message or reply>")
+        aliases=['a', 'an', 'announce'])
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def echo(self, ctx: commands.Context, channel: discord.TextChannel, *, message_or_reply: str = None) -> discord.Message:
         """"Echoes a message to another channel"""
         if not ctx.message.reference and not message_or_reply:
             raise commands.MissingRequiredArgument(
-                Parameter(name='message or reply', kind=Parameter.POSITIONAL_ONLY))
+                Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY))
         elif ctx.message.reference:
             msg = ctx.message.reference.resolved
         return await channel.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True))
