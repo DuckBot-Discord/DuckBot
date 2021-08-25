@@ -1,4 +1,5 @@
 import asyncio
+from inspect import Parameter
 import discord
 import json
 import re
@@ -54,37 +55,38 @@ class General(commands.Cog):
                               msg)  # Discord invite regex
         if results or results2:
             await ctx.send(
-                f"`{ctx.prefix}{ctx.command}` can't be used to send invites or URLs, as it could bypass spam filters!",
+                f"`Urls or invites aren't allowed!",
                 delete_after=5)
             await ctx.message.delete(delay=5)
 
         await ctx.message.delete(delay=0)
 
-        return await ctx.send(msg, allowed_mentions=discord.AllowedMentions().none(), reference = ctx.message.reference)
+        return await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True), reference=ctx.message.reference)
 
     # .a <TextChannel> <text>
     # sends the message in a channel
 
-    @commands.command(help="Echoes a message to another channel", aliases=['a', 'an', 'announce'])
+    @commands.command(
+        aliases=['a', 'an', 'announce'],
+        usage="<message or reply>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def echo(self, ctx, channel: discord.TextChannel, *, msg: str) -> discord.Message:
-        if channel.permissions_for(ctx.author).mention_everyone:
-            if ctx.message.reference:
-                msg = ctx.message.reference.resolved.content
-            return await channel.send(msg)
-        else:
-            if ctx.message.reference:
-                msg = ctx.message.reference.resolved.content
-            return await channel.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
+    async def echo(self, ctx: commands.Context, channel: discord.TextChannel, *, message_or_reply: str = None) -> discord.Message:
+        """"Echoes a message to another channel"""
+        if not ctx.message.reference and not message_or_reply:
+            raise commands.MissingRequiredArgument(
+                Parameter(name='message or reply', kind=Parameter.POSITIONAL_ONLY))
+        elif ctx.message.reference:
+            msg = ctx.message.reference.resolved
+        return await channel.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True))
 
     @commands.command(
         aliases=['e'],
-        usage="[reply] [new message] [--d|--s]",
-        help="Quote a bot message to edit it. # Append --s at the end to supress embeds and --d to delete the message")
+        usage="[reply] [new message] [--d|--s]")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def edit(self, ctx, *, new: typing.Optional[str] = '--d'):
+        """Quote a bot message to edit it. # Append --s at the end to supress embeds and --d to delete the message"""
         if ctx.message.reference:
             msg = ctx.message.reference.resolved
             if new.endswith("--s"):
