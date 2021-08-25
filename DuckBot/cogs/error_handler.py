@@ -179,6 +179,6 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def wastebasket(self, payload: discord.RawReactionActionEvent):
-        if payload.channel_id != self.error_channel:
+        if payload.channel_id != self.error_channel or payload.member.bot:
             return
         await self.bot.get_channel(payload.channel_id).get_partial_message(payload.message_id).delete()
