@@ -144,9 +144,20 @@ class Handler(commands.Cog, name='Handler'):
 
         await self.bot.wait_until_ready()
 
-        if len(traceback_string) < 1900:
-            await error_channel.send(f"```py\n{ctx.command} command raised an error:{traceback_string}\n```")
-        else:
-            await error_channel.send(file=discord.File(io.StringIO(traceback_string), filename='traceback.txt'))
+        to_send = f"```\n{ctx.message.content}``````py\n{ctx.command} " \
+                  f"command raised an error:\n{traceback_string}\n```"
+        if len(to_send) < 2000:
+            try:
+                await error_channel.send(to_send)
 
+            except (discord.Forbidden, discord.HTTPException):
+                await error_channel.send(f"```\nThe following command:\n{ctx.message.content[0:1900]}"
+                                         f"\nRaised the following error:\n```",
+                                         file=discord.File(io.StringIO(traceback_string),
+                                                           filename='traceback.py'))
+        else:
+            await error_channel.send(f"```\nThe following command:\n{ctx.message.content[0:1900]}"
+                                     f"\nRaised the following error:\n```",
+                                     file=discord.File(io.StringIO(traceback_string),
+                                                       filename='traceback.py'))
         raise error
