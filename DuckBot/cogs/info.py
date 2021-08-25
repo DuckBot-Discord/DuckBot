@@ -100,7 +100,8 @@ class InvSrc(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me',
-                                        url="https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope=bot%20applications.commands"))
+                                        url="https://discord.com/api/oauth2/authorize?client_id="
+                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
         self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code',
                                         url="https://github.com/LeoCx1000/discord-bots"))
 
@@ -488,7 +489,8 @@ class About(commands.Cog):
         embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
 > We store your `server id` for purpose of custom prefixes.
 
-> when a command error happens, we get the following data for troubleshooting purposes: ```yaml
+> when a command error happens, we get the following data for troubleshooting purposes: 
+```yaml
 The command executed
 The server id, and server owner id
 DuckBot's top role position
