@@ -140,7 +140,7 @@ class Handler(commands.Cog, name='Handler'):
         error_channel = self.bot.get_channel(847943387083440128)
 
         traceback_string = "".join(traceback.format_exception(
-            etype=None, value=e, tb=e.__traceback__))
+            etype=None, value=error, tb=error.__traceback__))
 
         await self.bot.wait_until_ready()
 
