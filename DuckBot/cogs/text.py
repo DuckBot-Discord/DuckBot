@@ -67,7 +67,8 @@ class General(commands.Cog):
     # sends the message in a channel
 
     @commands.command(
-        aliases=['a', 'an', 'announce'])
+        aliases=['a', 'an', 'announce'],
+        usage="<channel> <message_or_reply>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def echo(self, ctx: commands.Context, channel: discord.TextChannel, *, message_or_reply: str = None) -> discord.Message:
