@@ -58,9 +58,9 @@ class General(commands.Cog):
                 delete_after=5)
             await ctx.message.delete(delay=5)
 
-            await ctx.message.delete(delay = 1)
+        await ctx.message.delete(delay=0)
 
-            return await ctx.send(msg, allowed_mentions=discord.AllowedMentions().none(), reference = ctx.message.reference)
+        return await ctx.send(msg, allowed_mentions=discord.AllowedMentions().none(), reference = ctx.message.reference)
 
     # .a <TextChannel> <text>
     # sends the message in a channel
