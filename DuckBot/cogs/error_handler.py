@@ -19,9 +19,10 @@ class Handler(commands.Cog, name='Handler'):
 
     def __init__(self, bot):
         self.bot = bot
+        self.error_channel = 847943387083440128
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error):
+    @commands.Cog.listener('on_command_error')
+    async def error_handler(self, ctx: commands.Context, error):
         error = getattr(error, "original", error)
         ignored = (
             commands.CommandNotFound,
@@ -137,7 +138,7 @@ class Handler(commands.Cog, name='Handler'):
                            "permissions, or an issue with role hierarchy. Try adjusting my permissions"
                            "for this server. \n(Note that I can't edit the server owner)")
 
-        error_channel = self.bot.get_channel(847943387083440128)
+        error_channel = self.bot.get_channel(self.error_channel)
 
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))
@@ -154,20 +155,30 @@ class Handler(commands.Cog, name='Handler'):
             command_data = f"command: {ctx.message.content[0:1700]}" \
                            f"\nCommand executed in DMs"
 
-        to_send = f"```\n{command_data}``````py\n{ctx.command} " \
+        to_send = f"```yaml\n{command_data}``````py\n{ctx.command} " \
                   f"command raised an error:\n{traceback_string}\n```"
         if len(to_send) < 2000:
             try:
-                await error_channel.send(to_send)
+                sent_error = await error_channel.send(to_send)
 
             except (discord.Forbidden, discord.HTTPException):
-                await error_channel.send(f"```\n{command_data}``````py Command: {ctx.command}"
-                                         f"Raised the following error:\n```",
-                                         file=discord.File(io.StringIO(traceback_string),
-                                                           filename='traceback.py'))
+                sent_error = await error_channel.send(f"```yaml\n{command_data}``````py Command: {ctx.command}"
+                                                      f"Raised the following error:\n```",
+                                                      file=discord.File(io.StringIO(traceback_string),
+                                                                        filename='traceback.py'))
         else:
-            await error_channel.send(f"```\n{command_data}``````py Command: {ctx.command}"
-                                     f"Raised the following error:\n```",
-                                     file=discord.File(io.StringIO(traceback_string),
-                                                       filename='traceback.py'))
+            sent_error = await error_channel.send(f"```yaml\n{command_data}``````py Command: {ctx.command}"
+                                                  f"Raised the following error:\n```",
+                                                  file=discord.File(io.StringIO(traceback_string),
+                                                                    filename='traceback.py'))
+        try:
+            await sent_error.add_reaction('🗑')
+        except (discord.HTTPException, discord.Forbidden):
+            pass
         raise error
+
+    @commands.Cog.listener('on_raw_reaction_add')
+    async def wastebasket(self, payload: discord.RawReactionActionEvent):
+        if payload.channel_id != self.error_channel:
+            return
+        await self.bot.get_channel(payload.channel_id).get_partial_message(payload.message_id).delete()
