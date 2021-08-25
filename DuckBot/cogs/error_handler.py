@@ -145,13 +145,13 @@ class Handler(commands.Cog, name='Handler'):
         await self.bot.wait_until_ready()
 
         if ctx.guild:
-            command_data = f"command: {ctx.message.content}" \
+            command_data = f"command: {ctx.message.content[0:1700]}" \
                            f"\nguild_id: {ctx.guild.id}" \
                            f"\nowner_id: {ctx.guild.owner.id}" \
                            f"\nbot admin: {await ctx.default_tick(ctx.me.guild_permissions.administrator)} " \
                            f"- role pos: {ctx.me.top_role.position}"
         else:
-            command_data = f"command: {ctx.message.content}" \
+            command_data = f"command: {ctx.message.content[0:1700]}" \
                            f"\nCommand executed in DMs"
 
         to_send = f"```\n{command_data}``````py\n{ctx.command} " \
@@ -161,13 +161,13 @@ class Handler(commands.Cog, name='Handler'):
                 await error_channel.send(to_send)
 
             except (discord.Forbidden, discord.HTTPException):
-                await error_channel.send(f"```\nThe following command:\n{ctx.message.content[0:1900]}"
-                                         f"\nRaised the following error:\n```",
+                await error_channel.send(f"```\n{command_data}``````py Command: {ctx.command}"
+                                         f"Raised the following error:\n```",
                                          file=discord.File(io.StringIO(traceback_string),
                                                            filename='traceback.py'))
         else:
-            await error_channel.send(f"```\nThe following command:\n{ctx.message.content[0:1900]}"
-                                     f"\nRaised the following error:\n```",
+            await error_channel.send(f"```\n{command_data}``````py Command: {ctx.command}"
+                                     f"Raised the following error:\n```",
                                      file=discord.File(io.StringIO(traceback_string),
                                                        filename='traceback.py'))
         raise error
