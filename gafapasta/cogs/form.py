@@ -1,11 +1,19 @@
-import discord, asyncio, typing, aiohttp, random, json, yaml, re
-from discord.ext import commands, menus
+import aiohttp
+import asyncio
+import discord
+import yaml
+from discord.ext import commands
 from main import execute_command
 
-class form(commands.Cog):
+
+def setup(bot):
+    bot.add_cog(Form(bot))
+
+
+class Form(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        #------------- YAML STUFF -------------#
+        # ------------- YAML STUFF -------------
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
 
@@ -13,7 +21,7 @@ class form(commands.Cog):
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
     async def form(self, ctx):
-        embed=discord.Embed(color=0x47B781, description=f"<a:loading:864708067496296468> Iniciando...")
+        embed = discord.Embed(color=0x47B781, description=f"<a:loading:864708067496296468> Iniciando...")
         message = await ctx.send(ctx.author.mention, embed=embed)
 
         def check(m: discord.Message):  # m = discord.Message.
@@ -283,6 +291,3 @@ APORTE A COM: {aporte}
         else:
             await ctx.send('Ha ocurrido un error')
 
-
-def setup(bot):
-    bot.add_cog(form(bot))
