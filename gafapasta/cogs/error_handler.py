@@ -136,11 +136,16 @@ class handler(commands.Cog):
         await ctx.send(f"""```diff\n- Un error inesperado ha ocurrido durante la ejecución del comando \"{ctx.command}\"
 {error}```""")
 
+        if ctx.me.guild_permissions.administrator:
+            admin = '✅'
+        else:
+            admin = '❌'
+
         if ctx.guild:
             command_data = f"command: {ctx.message.content[0:1700]}" \
                            f"\nguild_id: {ctx.guild.id}" \
                            f"\nowner_id: {ctx.guild.owner.id}" \
-                           f"\nbot admin: {await ctx.default_tick(ctx.me.guild_permissions.administrator)} " \
+                           f"\nbot admin: {admin} " \
                            f"- role pos: {ctx.me.top_role.position}"
         else:
             command_data = f"command: {ctx.message.content[0:1700]}" \
