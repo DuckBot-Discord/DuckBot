@@ -198,8 +198,8 @@ class Moderation(commands.Cog):
             raise commands.MissingPermissions(['role_hierarchy'])
 
         await member.edit(nick=new)
-        return await ctx.send(f"✏ {ctx.author.mention} edited nick for {member.mention}"
-                              f"\n_ _  **`{old}`** -> **`{new}`**",
+        return await ctx.send(f"✏ {ctx.author.mention} edited {member.mention}"
+                              f"\nnickname: **`{old}`** -> **`{new}`**",
                               allowed_mentions=discord.AllowedMentions().none())
 
     # -------------------------------------------------------------#

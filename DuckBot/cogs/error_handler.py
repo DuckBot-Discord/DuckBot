@@ -128,14 +128,14 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(error or "Bad argument given!")
 
         elif isinstance(error, discord.HTTPException):
-            return await ctx.send("Oh no! An unexpected HTTP error occurred while handling this command! 😔"
-                                  "\nI've notified the developers about it. in the meantime, maybe try again?")
+            await ctx.send("Oh no! An unexpected HTTP error occurred while handling this command! 😔"
+                           "\nI've notified the developers about it. in the meantime, maybe try again?")
 
         elif isinstance(error, discord.Forbidden):
-            return await ctx.send("Oh no! It seems like I don't have permissions to perform that action!"
-                                  "\nThis may be due to me missing permissions in a specific channel, server"
-                                  "permissions, or an issue with role hierarchy. Try adjusting my permissions"
-                                  "for this server. \n(Note that I can't edit the server owner)")
+            await ctx.send("Oh no! It seems like I don't have permissions to perform that action!"
+                           "\nThis may be due to me missing permissions in a specific channel, server"
+                           "permissions, or an issue with role hierarchy. Try adjusting my permissions"
+                           "for this server. \n(Note that I can't edit the server owner)")
 
         error_channel = self.bot.get_channel(847943387083440128)
 
