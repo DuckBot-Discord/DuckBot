@@ -5,9 +5,9 @@ import re
 import typing
 import unicodedata
 
-import errors
 from discord.ext import commands, menus
 
+import errors
 
 class EmbedPageSource(menus.ListPageSource):
 
@@ -41,12 +41,10 @@ class General(commands.Cog):
     # .s <text>
     # resends the message as the bot
 
-    @commands.command(aliases=['s', 'send'], usage="<text>",
+    @commands.command(aliases=['s', 'send'],
                       help="Speak as if you were me. # URLs/Invites not allowed!")
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def say(self, ctx, *, msg: typing.Optional[str]):
-        if not msg:
-            await ctx.send(f"Error! empty. do: `{ctx.prefix}{ctx.command} <text>`")
+    async def say(self, ctx, *, msg):
 
         results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
                              msg)  # HTTP/HTTPS URL regex
@@ -78,16 +76,14 @@ class General(commands.Cog):
     # .a <TextChannel> <text>
     # sends the message in a channel
 
-    @commands.command(help="Echoes a message to another channel", aliases=['a', 'an', 'announce'],
-                      usage="<channel> <message>")
+    @commands.command(help="Echoes a message to another channel", aliases=['a', 'an', 'announce'])
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def echo(self, ctx, channel: discord.TextChannel = None, *, msg: str) -> discord.Message:
+    async def echo(self, ctx, channel: discord.TextChannel, *, msg: str) -> discord.Message:
         if channel.permissions_for(ctx.author).mention_everyone:
             if ctx.message.reference:
                 msg = ctx.message.reference.resolved.content
             return await channel.send(msg)
-
         else:
             if ctx.message.reference:
                 msg = ctx.message.reference.resolved.content
@@ -95,12 +91,11 @@ class General(commands.Cog):
 
     @commands.command(
         aliases=['e'],
-        usage="-reply- [new message] [--d|--s]",
+        usage="[reply] [new message] [--d|--s]",
         help="Quote a bot message to edit it. # Append --s at the end to supress embeds and --d to delete the message")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def edit(self, ctx, *, new_message: typing.Optional[str] = '--d'):
-        new = new_message
+    async def edit(self, ctx, *, new: typing.Optional[str] = '--d'):
         if ctx.message.reference:
             msg = ctx.message.reference.resolved
             if new.endswith("--s"):
@@ -110,11 +105,8 @@ class General(commands.Cog):
             else:
                 await msg.edit(content=new, suppress=False)
             await ctx.message.delete(delay=0.1)
-
         else:
-            await ctx.message.add_reaction('⚠')
-            await asyncio.sleep(3)
-            await ctx.message.delete(delay=0.1)
+            raise errors.NoQuotedMessage
 
     # .jumbo <Emoji>
     # makes emoji go big
@@ -171,10 +163,6 @@ class General(commands.Cog):
                       usage="<Minecraft username>")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def uuid(self, ctx, *, argument: typing.Optional[str] = None):
-        if not argument:
-            embed = discord.Embed(description="please specify a Minecraft Username to look up", color=ctx.me.color)
-            return await ctx.send(embed=embed)
-
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
             embed = discord.Embed(color=ctx.me.color)
             if cs.status == 204:

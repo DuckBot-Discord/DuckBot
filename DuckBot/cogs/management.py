@@ -78,7 +78,7 @@ class Management(commands.Cog, name='Bot Management'):
         await ctx.message.add_reaction('✅')
         await ctx.send(f"Activity changed to `Watching {text}` ")
 
-    @commands.command(help="Adds something to de to-do list", usage="<text>")
+    @commands.command(help="Adds something to de to-do list")
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def todo(self, ctx, *, message=None):
@@ -149,10 +149,10 @@ class Management(commands.Cog, name='Bot Management'):
     # ------------------------ EXTENSION MANAGEMENT ------------------------------#
     # ----------------------------------------------------------------------------#
 
-    @commands.command(help="Loads an extension", aliases=['le', 'lc', 'loadcog'], usage="<extension>")
+    @commands.command(help="Loads an extension", aliases=['le', 'lc', 'loadcog'])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def load(self, ctx, extension=""):
+    async def load(self, ctx, extension):
         embed = discord.Embed(color=ctx.me.color, description=f"⬆ {extension}")
         message = await ctx.send(embed=embed)
         try:
@@ -188,10 +188,10 @@ class Management(commands.Cog, name='Bot Management'):
                 await message.edit(embed=embed)
             raise e
 
-    @commands.command(help="Unloads an extension", aliases=['unl', 'ue', 'uc'], usage="<extension>")
+    @commands.command(help="Unloads an extension", aliases=['unl', 'ue', 'uc'])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def unload(self, ctx, extension=""):
+    async def unload(self, ctx, extension):
         embed = discord.Embed(color=ctx.me.color, description=f"⬇ {extension}")
         message = await ctx.send(embed=embed)
         try:
@@ -323,9 +323,9 @@ class Management(commands.Cog, name='Bot Management'):
     ###############################################################################
     ###############################################################################
 
-    @commands.command(help="Dms a user from any guild", aliases=['md', 'pm', 'id-dm'], usage="[ID]")
+    @commands.command(help="Dms a user from any guild", aliases=['md', 'pm', 'id-dm'])
     @commands.is_owner()
-    async def dm(self, ctx, member: discord.User, *, message=""):
+    async def dm(self, ctx, member: discord.User, *, message):
 
         if member.bot:
             await ctx.message.add_reaction('🤖')
