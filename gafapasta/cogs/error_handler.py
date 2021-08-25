@@ -10,7 +10,7 @@ class handler(commands.Cog):
     """🆘 manejar los errores 👀"""
     def __init__(self, bot):
         self.bot = bot
-        self.error_channel = 847943387083440128
+        self.error_channel = 880181130408636456
 
     @commands.Cog.listener('on_command_error')
     async def error_handler(self, ctx: commands.Context, error):

@@ -9,7 +9,7 @@ class handler(commands.Cog):
     """🆘 Handle them errors 👀"""
     def __init__(self, bot):
         self.bot = bot
-        self.error_channel = 847943387083440128
+        self.error_channel = 880181130408636456
 
     async def perms_error(self, ctx):
         await ctx.message.add_reaction('🚫')
