@@ -8,9 +8,9 @@ import unicodedata
 
 from typing import Optional
 from discord.ext import commands, menus
-from discord.ext.commands.core import command
 
 import errors
+
 
 class EmbedPageSource(menus.ListPageSource):
 
@@ -71,14 +71,17 @@ class General(commands.Cog):
         usage="<channel> <message_or_reply>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def echo(self, ctx: commands.Context, channel: discord.TextChannel, *, message_or_reply: str = None) -> discord.Message:
+    async def echo(self, ctx: commands.Context, channel: discord.TextChannel, *, message_or_reply: str = None)\
+            -> discord.Message:
         """"Echoes a message to another channel"""
         if not ctx.message.reference and not message_or_reply:
             raise commands.MissingRequiredArgument(
                 Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY))
         elif ctx.message.reference:
-            msg = ctx.message.reference.resolved
-        return await channel.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True))
+            message_or_reply = ctx.message.reference.resolved
+        return await channel.send(message_or_reply, allowed_mentions=discord.AllowedMentions(everyone=False,
+                                                                                             roles=False,
+                                                                                             users=True))
 
     @commands.command(
         aliases=['e'],
@@ -86,7 +89,7 @@ class General(commands.Cog):
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def edit(self, ctx, *, new: typing.Optional[str] = '--d'):
-        """Quote a bot message to edit it. # Append --s at the end to supress embeds and --d to delete the message"""
+        """Quote a bot message to edit it. # Append --s at the end to suppress embeds and --d to delete the message"""
         if ctx.message.reference:
             msg = ctx.message.reference.resolved
             if new.endswith("--s"):
@@ -166,7 +169,7 @@ class General(commands.Cog):
                 user = res["name"]
                 uuid = res["id"]
                 embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
-            await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)
 
     @commands.command(help="Makes the bot send an embed to a channel.", usage="")
     @commands.guild_only()
@@ -206,33 +209,21 @@ class General(commands.Cog):
             return
         else:
             if msg.content.lower() == "skip":
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_content = ""
             elif msg.content.lower() == "ping everyone":
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_content = "@everyone"
                 await announcement.edit(content=announcement_content, embed=announcement_embed)
             elif msg.content.lower() == "ping here":
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_content = "@here"
                 await announcement.edit(content=announcement_content, embed=announcement_embed)
             elif msg.content.lower() == "cancel":
                 await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                 return
             else:
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_content = msg.content
                 await announcement.edit(content=announcement_content, embed=announcement_embed)
 
@@ -249,19 +240,12 @@ class General(commands.Cog):
             return
         else:
             if msg.content.lower() == "skip":
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_embed.title = None
             elif msg.content.lower() == "cancel":
-                await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
-                return
+                return await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
             else:
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_embed.title = msg.content
                 await announcement.edit(embed=announcement_embed)
 
@@ -282,16 +266,10 @@ class General(commands.Cog):
             else:
                 if msg.content.lower() == "skip":
                     if not announcement_embed.title:
-                        try:
-                            await msg.delete()
-                        except:
-                            pass
+                        await msg.delete(delay=0)
                         await ctx.send("Title already skipped. you can't skip the description.", delete_after=5)
                     else:
-                        try:
-                            await msg.delete()
-                        except:
-                            pass
+                        await msg.delete(delay=0)
                         announcement_embed.description = None
                         iteration_amount = 1
 
@@ -299,10 +277,7 @@ class General(commands.Cog):
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
                 else:
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     announcement_embed.description = msg.content
                     await announcement.edit(embed=announcement_embed)
                     iteration_amount = 1
@@ -326,16 +301,10 @@ class General(commands.Cog):
                 return
             else:
                 if msg.content.lower() == "skip":
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     iteration_amount = 1
                 elif msg.content.lower() == "invisible":
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     announcement_embed.colour = 0x2F3136
                     await announcement.edit(embed=announcement_embed)
                     iteration_amount = 1
@@ -353,10 +322,7 @@ class General(commands.Cog):
                     await announcement.edit(embed=announcement_embed)
                     iteration_amount = 1
                 else:
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     await ctx.send("that's not a valid hex code!", delete_after=5)
 
         embed.clear_fields()
@@ -390,10 +356,7 @@ class General(commands.Cog):
                 return
             else:
                 if msg.content.lower() == "skip" or msg.content == "done":
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     iteration_amount = 1
 
                 elif msg.content.lower() == "cancel":
@@ -401,10 +364,7 @@ class General(commands.Cog):
                     return
 
                 elif re.match(r"^(((?s).{1,256})~((?s).{1,1024})~(yes|no| yes| no))$", msg.content.replace("\n", " ")):
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     if msg.content.split("~")[2].replace(" ", "") == "yes":
                         inl = True
                     else:
@@ -416,10 +376,7 @@ class General(commands.Cog):
                         await ctx.send("max amount of fields reached!", delete_after=5)
                         iteration_amount = 1
                 else:
-                    try:
-                        await msg.delete(delay=20)
-                    except:
-                        pass
+                    await msg.delete(delay=20)
                     embed.description = "4️⃣ **STEP FOUR: fields** " \
                                         "\n\nsomething went wrong! remember to add " \
                                         "the `~` to separate the values. " \
@@ -446,25 +403,16 @@ class General(commands.Cog):
             return
         else:
             if msg.content.lower() == "skip":
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
             elif msg.content.lower() == "cancel":
                 await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                 return
             elif msg.content.lower() == "default":
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.avatar.url)
                 await announcement.edit(embed=announcement_embed)
             else:
-                try:
-                    await msg.delete()
-                except:
-                    pass
+                await msg.delete(delay=0)
                 announcement_embed.set_footer(text=msg.content)
                 await announcement.edit(embed=announcement_embed)
 
@@ -488,10 +436,7 @@ class General(commands.Cog):
                     await message.edit(embed=discord.Embed(color=0xD7342A, title="Cancelled"))
                     return
                 elif msg.channel_mentions:
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     channel = msg.channel_mentions[0]
 
                     if channel.type == discord.ChannelType.text:
@@ -507,30 +452,18 @@ class General(commands.Cog):
                                     await message.edit(content=ctx.author.mention, embed=embed)
                                 iteration_amount = 1
                             else:
-                                try:
-                                    await msg.delete()
-                                except:
-                                    pass
+                                await msg.delete(delay=0)
                                 await ctx.send("I can't send messages to that channel. mention another channel",
                                                delete_after=5)
                         else:
-                            try:
-                                await msg.delete()
-                            except:
-                                pass
+                            await msg.delete(delay=0)
                             await ctx.send("You can't send messages to that channel. mention another channel",
                                            delete_after=5)
                     else:
-                        try:
-                            await msg.delete()
-                        except:
-                            pass
+                        await msg.delete(delay=0)
                         await ctx.send("Invalid channel", delete_after=5)
                 else:
-                    try:
-                        await msg.delete()
-                    except:
-                        pass
+                    await msg.delete(delay=0)
                     await ctx.send("Invalid channel", delete_after=5)
 
 
