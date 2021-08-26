@@ -461,12 +461,12 @@ class Moderation(commands.Cog):
             prefix = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
 
             def check(msg):
-                return msg.author == ctx.me or msg.content.startswith(prefix)
+                return (msg.author == ctx.me or msg.content.startswith(prefix)) and not msg.reference
 
             deleted = await ctx.channel.purge(limit=amount, check=check)
         else:
             def check(msg):
-                return msg.author == ctx.me
+                return (msg.author == ctx.me) and not msg.reference
 
             deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
         spammers = Counter(m.author.display_name for m in deleted)

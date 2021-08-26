@@ -363,10 +363,6 @@ class Management(commands.Cog, name='Bot Management'):
 
         try:
             await member.send(content=message, files=files)
-            try:
-                await ctx.message.delete()
-            except:
-                pass
         except:
             return await ctx.message.add_reaction('⚠')
 
@@ -374,7 +370,9 @@ class Management(commands.Cog, name='Bot Management'):
             await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.avatar.url,
                           files=files)
         except:
-            pass
+            await ctx.message.add_reaction('🤖')
+            await ctx.message.add_reaction('‼')
+        await ctx.message.add_reaction('💌')
 
     @commands.command()
     @commands.is_owner()
