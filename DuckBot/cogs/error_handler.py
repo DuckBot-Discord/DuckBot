@@ -146,9 +146,10 @@ class Handler(commands.Cog, name='Handler'):
         await self.bot.wait_until_ready()
 
         if ctx.guild:
-            command_data = f"command: {ctx.message.content[0:1700]}" \
+            command_data = f"by: {ctx.author.name} ({ctx.author.id})" \
+                           f"\ncommand: {ctx.message.content[0:1700]}" \
                            f"\nguild_id: {ctx.guild.id}" \
-                           f"\nowner_id: {ctx.guild.owner.id}" \
+                           f"\nowner: {ctx.guild.owner.name} ({ctx.guild.owner.id})" \
                            f"\nbot admin: {await ctx.default_tick(ctx.me.guild_permissions.administrator)} " \
                            f"- role pos: {ctx.me.top_role.position}"
         else:
