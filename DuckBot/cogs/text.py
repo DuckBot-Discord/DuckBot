@@ -409,7 +409,7 @@ class General(commands.Cog):
                 return
             elif msg.content.lower() == "default":
                 await msg.delete(delay=0)
-                announcement_embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.avatar.url)
+                announcement_embed.set_footer(text=f"Sent by {ctx.author}", icon_url=ctx.author.display_avatar.url)
                 await announcement.edit(embed=announcement_embed)
             else:
                 await msg.delete(delay=0)

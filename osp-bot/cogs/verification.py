@@ -9,6 +9,7 @@ import humanize
 import typing
 import yaml
 
+
 class AllEmbed(menus.ListPageSource):
     def __init__(self, data, per_page=20):
         super().__init__(data, per_page=per_page)
@@ -19,7 +20,7 @@ class AllEmbed(menus.ListPageSource):
         return embed
 
 
-class verification(commands.Cog):
+class Verification(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.daily_task.start()
@@ -110,7 +111,7 @@ class verification(commands.Cog):
                         try: await role_user.add_roles(BdayRoles)
                         except: pass
                         embed=discord.Embed(title=f"Today is {role_user}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
-                        embed.set_author(name=role_user, icon_url=role_user.avatar.url)
+                        embed.set_author(name=role_user, icon_url=role_user.display_avatar.url)
                         embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
 
                         try: await OverageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
@@ -141,7 +142,7 @@ class verification(commands.Cog):
                         try: await role_user.add_roles(BdayRoles)
                         except: pass
                         embed=discord.Embed(title=f"Today is {ctx.author}'s birthday!", description="Don't forget to wish them a happy birthday below!", color=0x0066ff)
-                        embed.set_author(name=role_user, icon_url=role_user.avatar.url)
+                        embed.set_author(name=role_user, icon_url=role_user.display_avatar.url)
                         embed.set_thumbnail(url="https://i.pinimg.com/originals/4f/b9/96/4fb996524beabfa60c7ca4394057bbc9.gif")
 
                         try: await UnderageChannel.send(f"🎉 {role_user.mention} 🎉", embed=embed)
@@ -374,8 +375,9 @@ class verification(commands.Cog):
             embed=discord.Embed(color = ctx.me.color, title=f"Birthday: {current_birthday.strftime('%B %d, %Y')} ({int((datetime.datetime.now().date() - current_birthday).days / 365.2425)} Y/O)")
         else:
             embed=discord.Embed(color = ctx.me.color, title=f"Birthday: not found...")
-        embed.set_author(name=member, icon_url=member.avatar.url)
+        embed.set_author(name=member, icon_url=member.display_avatar.url)
         await ctx.send(embed=embed)
 
+
 def setup(bot):
-    bot.add_cog(verification(bot))
+    bot.add_cog(Verification(bot))

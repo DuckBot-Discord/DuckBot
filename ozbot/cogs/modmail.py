@@ -54,7 +54,7 @@ class modmail(commands.Cog):
                 files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
 
         try:
-            await wh.send(content=message.content, username=message.author.name, avatar_url=message.author.avatar.url,
+            await wh.send(content=message.content, username=message.author.name, avatar_url=message.author.display_avatar.url,
                           files=files)
         except:
             return await message.add_reaction('⚠')
@@ -123,7 +123,7 @@ class modmail(commands.Cog):
             return await ctx.message.add_reaction('⚠')
 
         try:
-            await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.avatar.url,
+            await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.display_avatar.url,
                           files=files)
         except:
             pass

@@ -365,7 +365,7 @@ class text(commands.Cog):
     @helpers.is_osp_server()
     async def donate(self,ctx):
         embed=discord.Embed(title="**Thank you so much for supporting us!**", description="If applicable, please add a note saying it's for OSP so I can put it in the right bank account!", color=0x0066ff)
-        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
         embed.set_thumbnail(url="https://i.pinimg.com/originals/b9/27/e8/b927e82096e8f74e62b1666e727a694c.gif")
         embed.add_field(name="Donate using Venmo:", value="[Click Here to donate using Venmo](http://venmo.com/maxwellmandell)", inline=False)
         embed.add_field(name="Donate using CashApp:", value="[Click Here to donate using Cashapp](https://cash.app/obscuresorrowsproj)", inline=False)

@@ -55,7 +55,9 @@ class Events(commands.Cog):
             files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
 
         try:
-            await wh.send(content=message.content, username=message.author.name, avatar_url=message.author.avatar.url,
+            await wh.send(content=message.content,
+                          username=message.author.name,
+                          vatar_url=message.author.display_avatar.url,
                           files=files)
         except (discord.Forbidden, discord.HTTPException):
             return await message.add_reaction('⚠')
@@ -67,7 +69,9 @@ class Events(commands.Cog):
 
         channel = message.channel
         try:
-            user = self.bot.get_user(int(channel.topic)) or (await self.bot.fetch_user(int(channel.topic)))
+            user = self.bot.get_user(int(channel.topic)) or \
+                   await self.bot.fetch_user(int(channel.topic))
+
         except (HTTPException, UserNotFound):
             return await channel.send("could not find user.")
 
@@ -75,7 +79,8 @@ class Events(commands.Cog):
         if message.attachments:
             for attachment in message.attachments:
                 if attachment.size > 8388600:
-                    await message.author.send('Sent message without attachment! File size greater than 8 MB.')
+                    await message.author.send('Sent message without attachment! '
+                                              'File size greater than 8 MB.')
                     continue
                 files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
 
@@ -95,3 +100,12 @@ class Events(commands.Cog):
                 name=str(after),
                 reason=f"DuckBot ModMail Channel Update for {after.id}"
             )
+            wh = await get_webhook(channel)
+            embed = discord.Embed(title="ModMail user update!",
+                                  color=discord.Colour.blurple(),
+                                  timestamp=discord.utils.utcnow())
+            embed.add_field(name="Before:",
+                            value=str(before))
+            embed.add_field(name="After:",
+                            value=str(after))
+            await wh.send(embed=embed)

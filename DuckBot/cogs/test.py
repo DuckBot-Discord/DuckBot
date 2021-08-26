@@ -49,5 +49,5 @@ Region: {server.region}
 
                              **{member.name}**'s 🍌 is {round(size, 1)} cm
                              """
-        embed.set_author(icon_url=member.avatar.url, name=member)
+        embed.set_author(icon_url=member.display_avatar.url, name=member)
         await ctx.send(embed=embed)

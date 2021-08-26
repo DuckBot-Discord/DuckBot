@@ -4,20 +4,22 @@ from collections import Counter, defaultdict
 from discord.ext.menus.views import ViewMenuPages
 import helpers
 
+
 class Arguments(argparse.ArgumentParser):
     def error(self, message):
         raise RuntimeError(message)
 
+
 class banembed(menus.ListPageSource):
     def __init__(self, data, per_page=15):
         super().__init__(data, per_page=per_page)
-
 
     async def format_page(self, menu, entries):
         embed = discord.Embed(title=f"Server bans ({len(entries)})",
                               description="\n".join(entries))
         embed.set_footer(text=f"To unban do db.unban [entry]\nMore user info do db.baninfo [entry]")
         return embed
+
 
 class Confirm(menus.Menu):
     def remove__init__(self, msg):
@@ -43,12 +45,11 @@ class Confirm(menus.Menu):
         return self.result
 
 
-
 class moderation(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        #------------- YAML STUFF -------------#
+        # ------------- YAML STUFF -------------#
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
             staff_roles = []
@@ -57,7 +58,7 @@ class moderation(commands.Cog):
         self.staff_roles = staff_roles
         self.yaml_data = full_yaml
 
-    #--------------- FUNCTIONS ---------------#
+    # --------------- FUNCTIONS ---------------#
 
     async def perms_error(self, ctx):
         await ctx.message.add_reaction('🚫')
@@ -65,7 +66,8 @@ class moderation(commands.Cog):
         try:
             await ctx.message.delete()
             return
-        except: return
+        except:
+            return
 
     async def error_message(self, ctx, message):
         embed = discord.Embed(color=ctx.me.color)
@@ -75,7 +77,8 @@ class moderation(commands.Cog):
         try:
             await ctx.message.delete()
             return
-        except: return
+        except:
+            return
 
     # all the emoji are from the bots.gg discord server.
     # If your bot is in there, it'll be able to use them
@@ -102,33 +105,37 @@ class moderation(commands.Cog):
         if user.premium_since:
             emoji_flags = f"{emoji_flags} <:booster4:860644548887969832>"
         if flags['bug_hunter_level_2'] is True:
-            emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>" #not from bots.gg
+            emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>"  # not from bots.gg
         if flags['verified_bot_developer'] is True:
-            emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>" #not from bots.gg
+            emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>"  # not from bots.gg
         if emoji_flags == "": emoji_flags = None
         return emoji_flags
 
     @commands.command(help="Shows a user's avatar", alias=['avatar'])
     async def pfp(self, ctx, user: typing.Optional[discord.Member]):
         user = user or ctx.author
-        embed=discord.Embed(color=ctx.me.color)
-        embed.description=f"[PNG]({user.avatar.replace(format='png', size=2048).url}) **|** [JPG]({user.avatar.replace(format='jpg', size=2048).url}) **|** [WEBP]({user.avatar.replace(format='webp', size=2048).url})"
-        embed.set_image(url=user.avatar.url)
+        embed = discord.Embed(color=ctx.me.color)
+        embed.description = f"[PNG]({user.avatar.replace(format='png', size=2048).url}) **|** [JPG]({user.avatar.replace(format='jpg', size=2048).url}) **|** [WEBP]({user.avatar.replace(format='webp', size=2048).url})"
+        embed.set_image(url=user.display_avatar.url)
         await ctx.send(embed=embed)
 
-    @commands.command(aliases = ['userinfo', 'ui'],help="Shows information for a specified user")
+    @commands.command(aliases=['userinfo', 'ui'], help="Shows information for a specified user")
     @commands.has_permissions(manage_messages=True)
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         user = user or ctx.author
         # BADGES
         badges = self.get_user_badges(user)
-        if badges: badges = f"\n<:store_tag:860644620857507901>**Badges:**{badges}"
-        else: badges = ''
+        if badges:
+            badges = f"\n<:store_tag:860644620857507901>**Badges:**{badges}"
+        else:
+            badges = ''
         # USERID
         userid = f"\n<:greyTick:860644729933791283>**ID:** `{user.id}`"
         # NICKNAME
-        if user.nick: nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
-        else: nick = ""
+        if user.nick:
+            nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
+        else:
+            nick = ""
         # CREATION DATE
         date = f"<t:{round(user.created_at.timestamp())}:F>"
         rdate = f"<t:{round(user.created_at.timestamp())}:R>"
@@ -138,20 +145,24 @@ class moderation(commands.Cog):
             date = f"<t:{round(user.joined_at.timestamp())}:F>"
             rdate = f"<t:{round(user.joined_at.timestamp())}:R>"
             joined = f"\n<:joined:849392863557189633>**joined:** {date} ({rdate})"
-        else: joined = ""
+        else:
+            joined = ""
         # GUILD OWNER
         if user is ctx.guild.owner:
             owner = f"\n<:owner:860644790005399573>**Owner:** ✅"
-        else: owner = ""
+        else:
+            owner = ""
         # BOT
         if user.bot:
             bot = f"\n<:botTag:860645571076030525>**Bot:** ✅"
-        else: bot = ""
+        else:
+            bot = ""
         # BOOSTER SINCE
         if user.premium_since:
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
             boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
-        else: boost = ""
+        else:
+            boost = ""
 
         # Join Order
         order = f"\n<:moved:848312880666640394>**Join position:** `{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
@@ -159,7 +170,8 @@ class moderation(commands.Cog):
         if user.premium_since:
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
             boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
-        else: boost = ""
+        else:
+            boost = ""
         # ROLES
         roles = ""
         for role in user.roles:
@@ -168,29 +180,31 @@ class moderation(commands.Cog):
         if roles != "":
             roles = f"\n<:role:860644904048132137>**roles:** {roles}"
 
-        #BIRTHDAY
+        # BIRTHDAY
         current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', user.id)
         if current_birthday:
             now = discord.utils.now().date()
             delta = now - current_birthday
             age = int(delta.days / 365.2425)
             birthday = f"\n🎉**birthday:** `{current_birthday.strftime('%B %d, %Y')} ({age} Y/O)`"
-        else: birthday = ""
+        else:
+            birthday = ""
 
         # EMBED
-        embed = discord.Embed(color=ctx.me.color, description=f"""{nick}{badges}{owner}{bot}{userid}{created}{joined}{order}{birthday}{boost}{roles}""")
-        embed.set_author(name=user, icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
-        embed.set_thumbnail(url=user.avatar.url)
+        embed = discord.Embed(color=ctx.me.color,
+                              description=f"""{nick}{badges}{owner}{bot}{userid}{created}{joined}{order}{birthday}{boost}{roles}""")
+        embed.set_author(name=user,
+                         icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
+        embed.set_thumbnail(url=user.display_avatar.url)
         await ctx.send(embed=embed)
 
-
-#------------------------------------------------------------#
-#------------------------ KICK ------------------------------#
-#------------------------------------------------------------#
+    # ------------------------------------------------------------#
+    # ------------------------ KICK ------------------------------#
+    # ------------------------------------------------------------#
 
     @commands.command(help="kicks specified member")
     @commands.has_permissions(kick_members=True)
-    async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -206,24 +220,28 @@ class moderation(commands.Cog):
         if member.top_role <= ctx.author.top_role:
             if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
                 try:
-                    mem_embed=discord.Embed(description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**", color=ctx.me.color)
+                    mem_embed = discord.Embed(
+                        description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**",
+                        color=ctx.me.color)
                     if reason: mem_embed.set_footer(text=f'reason: {reason}')
                     await member.send(embed=mem_embed)
                     await member.kick(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ✅')
                     await ctx.send(embed=embed)
                 except discord.HTTPException:
                     await member.kick(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ❌')
                     await ctx.send(embed=embed)
             else:
@@ -237,13 +255,13 @@ class moderation(commands.Cog):
     async def kick_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
 
-#-----------------------------------------------------------#
-#------------------------ BAN ------------------------------#
-#-----------------------------------------------------------#
+    # -----------------------------------------------------------#
+    # ------------------------ BAN ------------------------------#
+    # -----------------------------------------------------------#
 
     @commands.command(help="Bans specified member")
     @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -259,24 +277,27 @@ class moderation(commands.Cog):
         if member.top_role <= ctx.author.top_role:
             if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
                 try:
-                    mem_embed=discord.Embed(description=f"A moderator has banned you from **{ctx.guild.name}**", color=ctx.me.color)
+                    mem_embed = discord.Embed(description=f"A moderator has banned you from **{ctx.guild.name}**",
+                                              color=ctx.me.color)
                     if reason: mem_embed.set_footer(text=f'reason: {reason}')
                     await member.send(embed=mem_embed)
                     await member.ban(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ✅')
                     await ctx.send(embed=embed)
                 except discord.HTTPException:
                     await member.ban(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ❌')
                     await ctx.send(embed=embed)
             else:
@@ -292,13 +313,13 @@ class moderation(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             await self.perms_error(ctx)
 
-#------------------------------------------------------------#
-#------------------------ NICK ------------------------------#
-#------------------------------------------------------------#
+    # ------------------------------------------------------------#
+    # ------------------------ NICK ------------------------------#
+    # ------------------------------------------------------------#
 
-    @commands.command(aliases = ['sn', 'nick'],help="Edits user's server nickname")
+    @commands.command(aliases=['sn', 'nick'], help="Edits user's server nickname")
     @commands.has_permissions(manage_messages=True, change_nickname=True)
-    async def setnick(self, ctx, member : typing.Optional[discord.Member], *, new : typing.Optional[str] = 'None'):
+    async def setnick(self, ctx, member: typing.Optional[discord.Member], *, new: typing.Optional[str] = 'None'):
         if member == None:
             if ctx.channel.permissions_for(ctx.author).manage_nicknames:
                 await ctx.send("`.nick [member] (newNick)` - You must specify a member", delete_after=10)
@@ -319,8 +340,10 @@ class moderation(commands.Cog):
                 await member.edit(nick=new)
                 await ctx.send(f"""✏ {ctx.author.mention} nick for {member}
 **`{old}`** -> **`{new}`**""")
-                try: await ctx.message.delete()
-                except discord.Forbidden: return
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    return
             except discord.Forbidden:
                 await self.error_message(ctx, 'Bot not high enough in role hierarchy')
                 return
@@ -337,8 +360,10 @@ class moderation(commands.Cog):
                 await member.edit(nick=new)
                 await ctx.send(f"""✏ {ctx.author.mention} edited nick for **{member}**
 **`{old}`** -> **`{new}`**""")
-                try: await ctx.message.delete()
-                except discord.Forbidden: return
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    return
             except discord.Forbidden:
                 await self.error_message(ctx, 'Bot not high enough in role hierarchy')
                 return
@@ -350,11 +375,12 @@ class moderation(commands.Cog):
             await self.error_message(ctx, f"""You can only change your own nick!
 > !nick {ctx.author.mention} `<new nick>`""")
             return
-        else: await self.perms_error(ctx)
+        else:
+            await self.perms_error(ctx)
 
-#-------------------------------------------------------------#
-#------------------------ PURGE ------------------------------#
-#-------------------------------------------------------------#
+    # -------------------------------------------------------------#
+    # ------------------------ PURGE ------------------------------#
+    # -------------------------------------------------------------#
 
     # Source Code Form:
     # command: https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/mod.py#L1181-L1408
@@ -460,6 +486,7 @@ class moderation(commands.Cog):
     async def remove_emoji(self, ctx, search=100):
         """Removes all messages containing custom emoji."""
         custom_emoji = re.compile(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>')
+
         def predicate(m):
             return custom_emoji.search(m.content)
 
@@ -547,6 +574,7 @@ class moderation(commands.Cog):
             predicates.append(lambda m: any(m.content.endswith(s) for s in args.ends))
 
         op = all if not args._or else any
+
         def predicate(m):
             r = op(p(m) for p in predicates)
             if args._not:
@@ -560,7 +588,7 @@ class moderation(commands.Cog):
         if args.search is None:
             args.search = 100
 
-        args.search = max(0, min(2000, args.search)) # clamp from 0-2000
+        args.search = max(0, min(2000, args.search))  # clamp from 0-2000
         await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
 
     @custom.command(name="readme")
@@ -594,7 +622,7 @@ class moderation(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def cleanup(self, ctx, amount: int=25):
+    async def cleanup(self, ctx, amount: int = 25):
         """
         Cleans up the bot's messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
         """
@@ -608,10 +636,11 @@ class moderation(commands.Cog):
 
         def check(msg):
             return msg.author == ctx.me
+
         if ctx.channel.permissions_for(ctx.me).manage_messages:
             deleted = await ctx.channel.purge(limit=amount, check=check)
         else:
-            deleted = await ctx.channel.purge(limit=amount, check=check, bulk = False)
+            deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
         spammers = Counter(m.author.display_name for m in deleted)
         deleted = len(deleted)
         messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
@@ -626,13 +655,13 @@ class moderation(commands.Cog):
         else:
             await ctx.send(to_send, delete_after=10)
 
-#------------------------------------------------------------#
-#------------------------ MUTE ------------------------------#
-#------------------------------------------------------------#
+    # ------------------------------------------------------------#
+    # ------------------------ MUTE ------------------------------#
+    # ------------------------------------------------------------#
     @commands.command(help="mutes member lol")
     @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
-    async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -645,28 +674,29 @@ class moderation(commands.Cog):
             return
         try:
             await member.add_roles(muterole)
-            mem_embed=discord.Embed(color=ctx.me.color)
+            mem_embed = discord.Embed(color=ctx.me.color)
             mem_embed.set_author(name=f"You've been muted by a moderator", icon_url='https://i.imgur.com/hKNGsMb.png')
             mem_embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...
+                embed = discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
 
-#-------------------------------------------------------------#
-#------------------------ UNMUTE -----------------------------#
-#-------------------------------------------------------------#
+    # -------------------------------------------------------------#
+    # ------------------------ UNMUTE -----------------------------#
+    # -------------------------------------------------------------#
 
     @commands.command(help="unmutes member...")
     @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
-    async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -679,29 +709,29 @@ class moderation(commands.Cog):
             return
         try:
             await member.remove_roles(muterole)
-            mem_embed=discord.Embed(color=ctx.me.color)
+            mem_embed = discord.Embed(color=ctx.me.color)
             mem_embed.set_author(name=f"You've been unmuted by a moderator", icon_url='https://i.imgur.com/m1MtOVS.png')
             mem_embed.set_image(url='https://i.imgur.com/23XECtg.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}
+                embed = discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
 
-
-#-----------------------------------------------------------------#
-#------------------------ DENYMEDIA ------------------------------#
-#-----------------------------------------------------------------#
+    # -----------------------------------------------------------------#
+    # ------------------------ DENYMEDIA ------------------------------#
+    # -----------------------------------------------------------------#
 
     @commands.command(aliases=['nomedia', 'noimages', 'denyimages', 'noimg', 'md', 'mediaban', 'nm', 'mb', 'mban'])
     @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
-    async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def denymedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -714,27 +744,30 @@ class moderation(commands.Cog):
             return
         try:
             await member.add_roles(muterole)
-            mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been denied permissions to send media by a moderator", icon_url='https://i.imgur.com/hKNGsMb.png')
+            mem_embed = discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been denied permissions to send media by a moderator",
+                                 icon_url='https://i.imgur.com/hKNGsMb.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pemrs to {member.mention}
+                embed = discord.Embed(description=f"""{ctx.author.mention} denied media pemrs to {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} denied media pemrs to {member.mention}""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} denied media pemrs to {member.mention}""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
 
-#-----------------------------------------------------------------#
-#------------------------ ALLOWMEDIA -----------------------------#
-#-----------------------------------------------------------------#
+    # -----------------------------------------------------------------#
+    # ------------------------ ALLOWMEDIA -----------------------------#
+    # -----------------------------------------------------------------#
 
-    @commands.command(aliases=['yesmedia', 'yesimages', 'allowimages', 'yesimg', 'ma', 'mediaunban', 'ym', 'mub', 'munban'])
+    @commands.command(
+        aliases=['yesmedia', 'yesimages', 'allowimages', 'yesimg', 'ma', 'mediaunban', 'ym', 'mub', 'munban'])
     @helpers.is_osp_server()
     @commands.has_permissions(manage_messages=True)
-    async def allowmedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def allowmedia(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -747,26 +780,28 @@ class moderation(commands.Cog):
             return
         try:
             await member.remove_roles(muterole)
-            mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been allowed permissions to send media by a moderator", icon_url='https://i.imgur.com/m1MtOVS.png')
+            mem_embed = discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been allowed permissions to send media by a moderator",
+                                 icon_url='https://i.imgur.com/m1MtOVS.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} returned media pemrs to {member.mention}
+                embed = discord.Embed(description=f"""{ctx.author.mention} returned media pemrs to {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} returned media pemrs to {member.mention}""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} returned media pemrs to {member.mention}""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
 
-#---------------------------------------------------------------#
-#------------------------ LOCKDOWN -----------------------------#
-#---------------------------------------------------------------#
+    # ---------------------------------------------------------------#
+    # ------------------------ LOCKDOWN -----------------------------#
+    # ---------------------------------------------------------------#
 
     @commands.command(aliases=['lock', 'ld'])
     @commands.has_permissions(manage_messages=True)
-    async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
+    async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason=None):
 
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -782,16 +817,20 @@ class moderation(commands.Cog):
         perms.send_messages = False
 
         if reason:
-            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'locked by {ctx.author} - {reason}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention} \n```reason: {reason}```", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                              reason=f'locked by {ctx.author} - {reason}')
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} has locked down {textchannel.mention} \n```reason: {reason}```",
+                color=ctx.me.color)
         else:
             await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'locked by {ctx.author}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention}", color=ctx.me.color)
+            embed = discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention}",
+                                  color=ctx.me.color)
         await textchannel.send(embed=embed)
 
-#-------------------------------------------------------------#
-#------------------------ UNLOCK -----------------------------#
-#-------------------------------------------------------------#
+    # -------------------------------------------------------------#
+    # ------------------------ UNLOCK -----------------------------#
+    # -------------------------------------------------------------#
 
     @lockdown.error
     async def clear_error(self, ctx, error):
@@ -799,7 +838,7 @@ class moderation(commands.Cog):
 
     @commands.command(aliases=['unlock', 'uld'])
     @commands.has_permissions(manage_messages=True)
-    async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
+    async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason=None):
 
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -815,20 +854,25 @@ class moderation(commands.Cog):
         perms.send_messages = True
 
         if reason:
-            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'unlocked by {ctx.author} - {reason}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention} \n```reason: {reason}```", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                              reason=f'unlocked by {ctx.author} - {reason}')
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} has unlocked {textchannel.mention} \n```reason: {reason}```",
+                color=ctx.me.color)
         else:
-            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'unlocked by {ctx.author}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention}", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                              reason=f'unlocked by {ctx.author}')
+            embed = discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention}",
+                                  color=ctx.me.color)
         await textchannel.send(embed=embed)
 
     @unlockdown.error
     async def clear_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
 
-#--------------------------------------------------------------------#
-#------------------------ MOVE MESSAGES -----------------------------#
-#--------------------------------------------------------------------#
+    # --------------------------------------------------------------------#
+    # ------------------------ MOVE MESSAGES -----------------------------#
+    # --------------------------------------------------------------------#
 
     @commands.command(help="moves messages to a different channel")
     @commands.has_permissions(manage_messages=True)
@@ -847,14 +891,15 @@ class moderation(commands.Cog):
             await self.error_message(ctx, "channel can't be this channel: .move <amount> <#channel>")
             ctx.command.reset_cooldown(ctx)
             return
-        if not channel.permissions_for(ctx.guild.me).manage_webhooks and not ctx.channel.permissions_for(ctx.me).manage_messages:
+        if not channel.permissions_for(ctx.guild.me).manage_webhooks and not ctx.channel.permissions_for(
+                ctx.me).manage_messages:
             await self.error_message(ctx, 'missing necessary permissions')
             ctx.command.reset_cooldown(ctx)
             return
         if amount == None:
-             await self.error_message(ctx, 'you must specify an amount: .move <amount> <#channel>')
-             ctx.command.reset_cooldown(ctx)
-             return
+            await self.error_message(ctx, 'you must specify an amount: .move <amount> <#channel>')
+            ctx.command.reset_cooldown(ctx)
+            return
         elif amount > 20:
             await self.error_message(ctx, 'you can only move 15 messages!')
             ctx.command.reset_cooldown(ctx)
@@ -866,20 +911,18 @@ class moderation(commands.Cog):
                 ctx.command.reset_cooldown(ctx)
                 return
 
-
         # Actual copying and pasting
 
-
         history = []
-        async for message in ctx.channel.history(limit = amount):
+        async for message in ctx.channel.history(limit=amount):
             history.append(message)
             await asyncio.sleep(0.001)
         history.reverse()
 
         try:
-            webhook = await channel.create_webhook(name = "DB-Move", reason = "created webhook for move command")
+            webhook = await channel.create_webhook(name="DB-Move", reason="created webhook for move command")
         except:
-            await ctx.send(f"i'm missing manage_webhooks permission in {channel.mention}",delete_after=5)
+            await ctx.send(f"i'm missing manage_webhooks permission in {channel.mention}", delete_after=5)
             ctx.command.reset_cooldown(ctx)
             return
 
@@ -889,22 +932,27 @@ class moderation(commands.Cog):
                 myfile = await file.to_file()
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, file = myfile, content = message.content, embed=embed)
+                    await webhook.send(username=message.author.display_name, avatar_url=message.author.display_avatar.url,
+                                       file=myfile, content=message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, file = myfile, content = message.content)
+                    await webhook.send(username=message.author.display_name, avatar_url=message.author.display_avatar.url,
+                                       file=myfile, content=message.content)
             else:
                 if message.embeds:
                     embed = message.embeds[0]
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, content = message.content, embed=embed)
+                    await webhook.send(username=message.author.display_name, avatar_url=message.author.display_avatar.url,
+                                       content=message.content, embed=embed)
                 else:
-                    await webhook.send(username = message.author.display_name, avatar_url = message.author.avatar.url, content = message.content)
-            try: await message.delete()
-            except: pass
+                    await webhook.send(username=message.author.display_name, avatar_url=message.author.display_avatar.url,
+                                       content=message.content)
+            try:
+                await message.delete()
+            except:
+                pass
             await asyncio.sleep(0.5)
 
         await webhook.delete()
         await ctx.send(f'moved {amount} messages to {channel.mention}')
-
 
 
 def setup(bot):

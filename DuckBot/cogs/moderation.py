@@ -599,7 +599,7 @@ class Moderation(commands.Cog):
      reason: {ban_entry.reason}
  created at: {date.strftime("%b %-d %Y at %-H:%M")} UTC
 ```""")
-        embed.set_author(name=ban_entry.user, icon_url=ban_entry.user.avatar.url)
+        embed.set_author(name=ban_entry.user, icon_url=ban_entry.user.display_avatar.url)
         await ctx.send(embed=embed)
 
 

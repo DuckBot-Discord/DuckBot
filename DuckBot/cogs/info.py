@@ -216,7 +216,7 @@ class MyHelp(commands.HelpCommand):
                                           f"\n+ {self.context.clean_prefix}help [category] - get information on a category "
                                           f"\n```",
                               timestamp=discord.utils.utcnow())
-        embed.set_author(name=self.context.author, icon_url=self.context.author.avatar.url)
+        embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
         all_cogs = []
         cog_index = []
         ignored_cogs = []
@@ -313,8 +313,8 @@ description: {command_help}
                                                                            f"bot.\n\ncheck it out at "
                                                                            f"https://charles-bot.com/ 💞")
             if not isinstance(charles, str):
-                embed.set_thumbnail(url=charles.avatar.url)
-            embed.set_author(icon_url=self.context.author.avatar.url, name=f"{self.context.author} - help page credits")
+                embed.set_thumbnail(url=charles.display_avatar.url)
+            embed.set_author(icon_url=self.context.author.display_avatar.url, name=f"{self.context.author} - help page credits")
             return await channel.send(embed=embed)
         await channel.send(
             f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔\ndo `{self.context.clean_prefix}help` for help with all commands")
@@ -405,7 +405,7 @@ class About(commands.Cog):
                                           f"\n> Try also `{ctx.prefix}source [command]`"
                                           f"\n> or `{ctx.prefix}source [command.subcommand]`")
 
-        embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.avatar.url)
+        embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.display_avatar.url)
         # statistics
         total_members = 0
         total_unique = len(self.bot.users)
@@ -586,8 +586,8 @@ DuckBot's top role position
         # EMBED
         embed = discord.Embed(color=ctx.me.color,
                               description=f"{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}")
-        embed.set_author(name=user, icon_url=user.avatar.url)
-        embed.set_thumbnail(url=user.avatar.url)
+        embed.set_author(name=user, icon_url=user.display_avatar.url)
+        embed.set_thumbnail(url=user.display_avatar.url)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=['perms'])
@@ -606,8 +606,8 @@ DuckBot's top role position
                 denied.append(await ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
 
         embed = discord.Embed(color=ctx.me.color)
-        embed.set_author(icon_url=target.avatar.url, name=target)
-        embed.set_footer(icon_url=target.avatar.url, text=f"{target.name}'s guild permissions")
+        embed.set_author(icon_url=target.display_avatar.url, name=target)
+        embed.set_footer(icon_url=target.display_avatar.url, text=f"{target.name}'s guild permissions")
         if allowed:
             embed.add_field(name="allowed", value="\n".join(allowed))
         if denied:

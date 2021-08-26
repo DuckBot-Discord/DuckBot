@@ -60,7 +60,7 @@ class tickets(commands.Cog):
 **Please describe your issue** _(custom emojis will display as `:emoji:` if they are not from this server!)_
 
 Take your time, you have 10 minutes to do this before this process is cancelled.""")
-        embed.set_author(name=f"{ctx.author.display_name}'s ticket", icon_url=ctx.author.avatar.url)
+        embed.set_author(name=f"{ctx.author.display_name}'s ticket", icon_url=ctx.author.display_avatar.url)
         embed.set_footer(text="Send \"cancel\" to cancel")
         await message.edit(content=ctx.author.mention, embed=embed)
 
@@ -98,7 +98,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
                 else:
                     embed.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
 
-            embed.set_author(name=f"{ctx.author.display_name}'s ticket", icon_url=ctx.author.avatar.url)
+            embed.set_author(name=f"{ctx.author.display_name}'s ticket", icon_url=ctx.author.display_avatar.url)
             embed.add_field(name="Do you want to open this ticket?", value="_ _")
             await message.edit(content=ctx.author.mention, embed=embed)
 
@@ -161,7 +161,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
                         embed.set_image(url=file.url)
 
                 embed.add_field(name="Actions:", value="🚪 Leave | 🔒 Close (staff-only)\n\".leave\" also works")
-                embed.set_author(name=f"{ctx.author.display_name}'s ticket", icon_url=ctx.author.avatar.url)
+                embed.set_author(name=f"{ctx.author.display_name}'s ticket", icon_url=ctx.author.display_avatar.url)
                 tickmsg = await ticketchannel.send(content=f"{ctx.author.mention} opened a ticket, {self.ticket_staff.mention}", embed=embed)
                 await tickmsg.add_reaction('🔒')
                 await tickmsg.add_reaction('🚪')
@@ -179,7 +179,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
 **Issue description:**
 {msg.content}
 """)
-                embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+                embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
                 await TicketLog.send(embed=embed)
             else:
                 await message.clear_reactions()
@@ -215,13 +215,13 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
         await ctx.channel.set_permissions(member, overwrite=perms, reason=f"{member.name} was added to a ticket")
         embed=discord.Embed(color=0x47B781, title=f"+ {member} added", description=f"""
 {ctx.author.mention} added {member.mention} to this ticket""")
-        embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await ctx.send(f"{member.mention} was added to this ticket", embed=embed)
         #LOG
         TicketLog = await self.get_webhook(self.ticket_log)
         logemb = discord.Embed(color=0x4286F4, title=f"{member} added to #{ctx.channel.name}", description= f"""
         {ctx.author.mention} added {member.mention} to {ctx.channel.mention}""")
-        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await TicketLog.send(embed=logemb)
         return
 
@@ -249,13 +249,13 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
         await ctx.channel.set_permissions(member, overwrite=perms, reason=f"{member.name} was removed from a ticket")
         embed=discord.Embed(color=0xD7342A, title=f"- {member} removed", description=f"""
 {ctx.author.mention} removed {member.mention} from this ticket""")
-        embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await ctx.send(f"{member.mention} removed from this ticket", embed=embed)
         #LOG
         TicketLog = await self.get_webhook(self.ticket_log)
         logemb = discord.Embed(color=0x47B781, title=f"{member} removed from #{ctx.channel.name}", description= f"""
         {ctx.author.mention} removed {member.mention} from {ctx.channel.mention}""")
-        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await TicketLog.send(embed=logemb)
         return
 
@@ -276,7 +276,7 @@ Take your time, you have 10 minutes to do this before this process is cancelled.
 
 You have 5 minutes to do so.""")
 
-        embed.set_author(name=f"{ctx.author} is leaving the ticket", icon_url=ctx.author.avatar.url)
+        embed.set_author(name=f"{ctx.author} is leaving the ticket", icon_url=ctx.author.display_avatar.url)
         embed.set_footer(text="Send \"no\" if you don't want to\nSend \"cancel\" to cancel")
         lmsg = await ctx.channel.send(ctx.author.mention, embed=embed)
 
@@ -323,11 +323,12 @@ You have 5 minutes to do so.""")
         if msg:
             if msg.content and msg.content.lower() != "no":
                 logemb.add_field(name="Reason:", value=msg.content)
-        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await TicketLog.send(embed=logemb)
 
-
-    @commands.command(help="Adds a member to a ticket", usage = "<member>", aliases=["addm", "am"])
+    @commands.command(help="Adds a member to a ticket",
+                      usage="<member>",
+                      aliases=["addm", "am"])
     @commands.guild_only()
     @helpers.is_osp_server()
     @commands.has_role(864737541726142474)
@@ -351,16 +352,15 @@ You have 5 minutes to do so.""")
         await ctx.channel.set_permissions(member, overwrite=perms, reason=f"{member.name} was added to a ticket")
         embed=discord.Embed(color=0x47B781, title=f"+ {member} added", description=f"""
 {ctx.author.mention} added {member.mention} to this ticket""")
-        embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await ctx.send(f"{member.mention} was added to this ticket", embed=embed)
         #LOG
         TicketLog = await self.get_webhook(self.ticket_log)
         logemb = discord.Embed(color=0x4286F4, title=f"{member} added to #{ctx.channel.name}", description= f"""
         {ctx.author.mention} added {member.mention} to {ctx.channel.mention}""")
-        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await TicketLog.send(embed=logemb)
         return
-
 
     @commands.command(aliases=["closeticket"])
     @commands.guild_only()
@@ -404,7 +404,7 @@ You have 5 minutes to do so.""")
         else:
             logemb = discord.Embed(color=0x4286F4, title=f"Ticket #{ctx.channel.name} closed", description= f"""
             {ctx.author.mention} closed ticket: {ctx.channel.mention}""")
-        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
+        logemb.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await TicketLog.send(embed=logemb)
         return
 

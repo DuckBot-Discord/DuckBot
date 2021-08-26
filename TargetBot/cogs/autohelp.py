@@ -82,7 +82,7 @@ class automod(commands.Cog):
 #            if is_sus == True:
 #                await message.delete()
 #                embed = discord.Embed(description=text, color = 0x2F3136)
-#                embed.set_author(name=message.author, icon_url=message.author.avatar.url)
+#                embed.set_author(name=message.author, icon_url=message.author.display_avatar.url)
 #                flagged_with = ""
 #                if spamming == True: flagged_with = flagged_with + " spamming,"
 #                if malware == True: flagged_with = flagged_with + " malware,"
@@ -94,7 +94,7 @@ class automod(commands.Cog):
 #                await message.channel.send(f"message by {message.author.mention} had a <:sus:853491206550061056> link", embed=embed)
 #
 #                regembed = discord.Embed(description=original_message, color = 0x2F3136)
-#                regembed.set_author(name=message.author, icon_url=message.author.avatar.url)
+#                regembed.set_author(name=message.author, icon_url=message.author.display_avatar.url)
 #                if is_very_sus == True: regembed.set_footer(text=f"""deemed very sus, user has been muted! | ID: {message.author.id}
 #dismiss case:
 #!unmute {message.author.id} case dismissed. link was not suspicious""")
