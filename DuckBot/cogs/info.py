@@ -96,6 +96,14 @@ class ServerInvite(discord.ui.View):
                                         url="https://discord.gg/TdRfGKg8Wh"))
 
 
+class InvMe(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me',
+                                        url="https://discord.com/api/oauth2/authorize?client_id="
+                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
+
+
 class InvSrc(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -342,7 +350,7 @@ class About(commands.Cog):
     async def invite(self, ctx):
         await ctx.send(
             embed=discord.Embed(description=f"[**<:invite:860644752281436171> invite me**]({self.bot.invite_url})",
-                                color=ctx.me.color))
+                                color=ctx.me.color), view=InvMe())
 
     @commands.command(help="Checks the bot's ping to Discord")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
