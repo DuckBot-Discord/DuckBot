@@ -84,3 +84,14 @@ class Events(commands.Cog):
         except (discord.Forbidden, discord.HTTPException):
             return await message.add_reaction('⚠')
 
+    @commands.Cog.listener('on_user_update')
+    async def on_mail_username_change(self, before: discord.User, after: discord.User):
+        if str(before) == str(after) or before.bot:
+            return
+        category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
+        channel = discord.utils.get(category.channels, topic=str(after.id))
+        if channel:
+            await channel.edit(
+                name=str(after),
+                reason=f"DuckBot ModMail Channel Update for {after.id}"
+            )
