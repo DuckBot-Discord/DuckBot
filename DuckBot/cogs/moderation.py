@@ -189,7 +189,8 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
     @commands.guild_only()
-    async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> typing.Optional[discord.Message]:
+    async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> typing.Optional[
+        discord.Message]:
         new = new or member.name
         old = member.display_name
         if len(new) > 32:
@@ -457,14 +458,16 @@ class Moderation(commands.Cog):
                 return
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
-            async def check(msg):
-                return msg.author == ctx.me or msg.content.startswith(
-                    await self.bot.get_pre(self.bot, msg, raw_prefix=True))
+            prefix = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
+
+            def check(msg):
+                return msg.author == ctx.me or msg.content.startswith(prefix)
 
             deleted = await ctx.channel.purge(limit=amount, check=check)
         else:
-            async def check(msg):
+            def check(msg):
                 return msg.author == ctx.me
+
             deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
         spammers = Counter(m.author.display_name for m in deleted)
         deleted = len(deleted)
