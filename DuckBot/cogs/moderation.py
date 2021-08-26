@@ -69,6 +69,42 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed, delete_after=5)
         await ctx.message.delete(delay=5)
 
+    @staticmethod
+    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None):
+        if limit > 2000:
+            return await ctx.send(f'Too many messages to search given ({limit}/2000)')
+
+        if before is None:
+            before = ctx.message
+        else:
+            before = discord.Object(id=before)
+
+        if after is not None:
+            after = discord.Object(id=after)
+
+        try:
+            await ctx.message.delete()
+            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
+        except discord.Forbidden:
+            return await ctx.send('I do not have permissions to delete messages.')
+        except discord.HTTPException as e:
+            return await ctx.send(f'Error: {e} (try a smaller search?)')
+
+        spammers = Counter(m.author.display_name for m in deleted)
+        deleted = len(deleted)
+        messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
+        if deleted:
+            messages.append('')
+            spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+            messages.extend(f'**{name}**: {count}' for name, count in spammers)
+
+        to_send = '\n'.join(messages)
+
+        if len(to_send) > 2000:
+            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
+        else:
+            await ctx.send(to_send, delete_after=10)
+
     # --------------------------------------------------------------#
     # ------------------------ PREFIX ------------------------------#
     # --------------------------------------------------------------#
@@ -225,42 +261,6 @@ class Moderation(commands.Cog):
 
         if ctx.invoked_subcommand is None:
             await self.do_removal(ctx, search, lambda e: not e.pinned)
-
-    @staticmethod
-    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None):
-        if limit > 2000:
-            return await ctx.send(f'Too many messages to search given ({limit}/2000)')
-
-        if before is None:
-            before = ctx.message
-        else:
-            before = discord.Object(id=before)
-
-        if after is not None:
-            after = discord.Object(id=after)
-
-        try:
-            await ctx.message.delete()
-            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
-        except discord.Forbidden:
-            return await ctx.send('I do not have permissions to delete messages.')
-        except discord.HTTPException as e:
-            return await ctx.send(f'Error: {e} (try a smaller search?)')
-
-        spammers = Counter(m.author.display_name for m in deleted)
-        deleted = len(deleted)
-        messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
-        if deleted:
-            messages.append('')
-            spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
-            messages.extend(f'**{name}**: {count}' for name, count in spammers)
-
-        to_send = '\n'.join(messages)
-
-        if len(to_send) > 2000:
-            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
-        else:
-            await ctx.send(to_send, delete_after=10)
 
     @remove.command(aliases=['embed'])
     async def embeds(self, ctx, search=100):

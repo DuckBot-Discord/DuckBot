@@ -32,7 +32,7 @@ class Events(commands.Cog):
             return
 
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
-        channel = discord.utils.get(category.channels, name=str(message.author.id))
+        channel = discord.utils.get(category.channels, topic=str(message.author.id))
         if not channel:
             await message.author.send(
                 "**Warning! This is DuckBot's ModMail thread.** \nThis conversation will be sent to the bot "
@@ -40,11 +40,11 @@ class Events(commands.Cog):
                 "Message edits are not saved! <:nickname:850914031953903626>**\nIf the message receives a ⚠ reaction, "
                 "there was an issue delivering the message.")
             channel = await category.create_text_channel(
-                name=str(message.author.id),
-                topic=f"{message.author}'s DMs",
+                name=f"{message.author}",
+                topic=str(message.author.id),
                 position=0,
                 reason="DuckBot ModMail"
-                )
+            )
         wh = await get_webhook(channel)
 
         files = []
@@ -67,7 +67,7 @@ class Events(commands.Cog):
 
         channel = message.channel
         try:
-            user = self.bot.get_user(int(channel.name)) or (await self.bot.fetch_user(int(channel.name)))
+            user = self.bot.get_user(int(channel.topic)) or (await self.bot.fetch_user(int(channel.topic)))
         except (HTTPException, UserNotFound):
             return await channel.send("could not find user.")
 

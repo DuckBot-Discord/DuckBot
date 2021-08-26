@@ -340,13 +340,14 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.is_owner()
     @commands.guild_only()
     async def dm(self, ctx, member: discord.Member, *, message=None):
-        if ctx.channel.category_id == 878123261525901342: return
+        if ctx.channel.category_id == 878123261525901342:
+            return
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
-        channel = discord.utils.get(category.channels, name=str(member.id))
+        channel = discord.utils.get(category.channels, topic=str(member.id))
         if not channel:
             channel = await category.create_text_channel(
-                name=str(member.id),
-                topic=f"{member}'s DMs",
+                name=f"{member}",
+                topic=str(member.id),
                 position=0,
                 reason="DuckBot ModMail"
             )
