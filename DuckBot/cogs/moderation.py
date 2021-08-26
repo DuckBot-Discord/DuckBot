@@ -457,7 +457,7 @@ class Moderation(commands.Cog):
                 return
 
         def check(msg):
-            return msg.author == ctx.me
+            return msg.author == ctx.me or msg.content.startswith(await self.bot.get_pre(self.bot, msg, raw_prefix=True))
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
             deleted = await ctx.channel.purge(limit=amount, check=check)
