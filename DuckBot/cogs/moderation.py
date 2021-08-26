@@ -456,12 +456,15 @@ class Moderation(commands.Cog):
                 await ctx.send("I need the `manage_messages` permission to perform a search greater than 25")
                 return
 
-        async def check(msg):
-            return msg.author == ctx.me or msg.content.startswith(await self.bot.get_pre(self.bot, msg, raw_prefix=True))
-
         if ctx.channel.permissions_for(ctx.me).manage_messages:
+            async def check(msg):
+                return msg.author == ctx.me or msg.content.startswith(
+                    await self.bot.get_pre(self.bot, msg, raw_prefix=True))
+
             deleted = await ctx.channel.purge(limit=amount, check=check)
         else:
+            async def check(msg):
+                return msg.author == ctx.me
             deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
         spammers = Counter(m.author.display_name for m in deleted)
         deleted = len(deleted)
