@@ -83,3 +83,4 @@ class Events(commands.Cog):
             await user.send(content=message.content, files=files)
         except (discord.Forbidden, discord.HTTPException):
             return await message.add_reaction('⚠')
+

@@ -19,6 +19,18 @@ def setup(bot):
     bot.add_cog(Management(bot))
 
 
+async def get_webhook(channel):
+    webhook_list = await channel.webhooks()
+    if webhook_list:
+        for hook in webhook_list:
+            if hook.token:
+                return hook
+            else:
+                continue
+    hook = await channel.create_webhook(name="DuckBot ModMail")
+    return hook
+
+
 def cleanup_code(content):
     """Automatically removes code blocks from the code."""
     # remove ```py\n```
@@ -324,59 +336,45 @@ class Management(commands.Cog, name='Bot Management'):
     ###############################################################################
     ###############################################################################
 
-    @commands.command(help="Dms a user from any guild", aliases=['md', 'pm', 'id-dm'])
+    @commands.command(aliases=['pm', 'message', 'direct'])
     @commands.is_owner()
-    async def dm(self, ctx, member: discord.User, *, message):
+    @commands.guild_only()
+    async def dm(self, ctx, member: discord.Member, *, message=None):
+        if ctx.channel.category_id == 878123261525901342: return
+        category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
+        channel = discord.utils.get(category.channels, name=str(member.id))
+        if not channel:
+            channel = await category.create_text_channel(
+                name=str(member.id),
+                topic=f"{member}'s DMs",
+                position=0,
+                reason="DuckBot ModMail"
+            )
 
-        if member.bot:
-            await ctx.message.add_reaction('🤖')
-            await asyncio.sleep(3)
+        wh = await get_webhook(channel)
+
+        files = []
+        if ctx.message.attachments:
+            for attachment in ctx.message.attachments:
+                if attachment.size > 8388600:
+                    await ctx.send('Sent message without attachment! File size greater than 8 MB.')
+                    continue
+                files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
+
+        try:
+            await member.send(content=message, files=files)
             try:
                 await ctx.message.delete()
-            except discord.Forbidden:
-                return
-            return
+            except:
+                pass
+        except:
+            return await ctx.message.add_reaction('⚠')
 
-        channel = self.bot.get_channel(830991980850446366)
         try:
-            await ctx.message.delete()
-        except discord.Forbidden:
+            await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.avatar.url,
+                          files=files)
+        except:
             pass
-        try:
-            if ctx.message.attachments:
-                file = ctx.message.attachments[0]
-                myfile = await file.to_file()
-                embed = discord.Embed(color=0x47B781)
-                if message:
-                    embed.add_field(
-                        name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**',
-                        value=message)
-                    await member.send(message, file=myfile)
-                else:
-                    embed.add_field(
-                        name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**',
-                        value='_ _')
-                    await member.send(file=myfile)
-                if ctx.message.attachments:
-                    file = ctx.message.attachments[0]
-                    spoiler = file.is_spoiler()
-                    if not spoiler and file.url.lower().endswith(('png', 'jpeg', 'jpg', 'gif', 'webp')):
-                        embed.set_image(url=file.url)
-                    elif spoiler:
-                        embed.add_field(name='Attachment', value=f'||[{file.filename}]({file.url})||', inline=False)
-                    else:
-                        embed.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
-                embed.set_footer(text=f'.dm {member.id}')
-                await channel.send(embed=embed)
-            else:
-                await member.send(message)
-                embed = discord.Embed(color=0x47B781)
-                embed.add_field(name=f'<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}**',
-                                value=message)
-                embed.set_footer(text=f'.dm {member.id}')
-                await channel.send(embed=embed)
-        except discord.Forbidden:
-            await ctx.send(f"{member}'s DMs are closed.")
 
     @commands.command()
     @commands.is_owner()
