@@ -102,7 +102,7 @@ soupsieve==2.2.1
 ssh-import-id==5.10
 supervisor==4.2.2
 systemd-python==234
-Twisted==18.9.0
+Twisted==20.3.0
 typing==3.7.4.3
 typing-extensions==3.10.0.0
 ubuntu-advantage-tools==20.3
