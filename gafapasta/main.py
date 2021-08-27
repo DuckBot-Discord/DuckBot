@@ -18,7 +18,7 @@ async def get_pre(bot, message):
         return commands.when_mentioned_or("devmc!")(bot,message)
     return commands.when_mentioned_or("mc!")(bot,message)
 
-bot = commands.Bot(command_prefix=get_pre, case_insensitive=True, intents=intents, owner_id=349373972103561218)
+bot = commands.Bot(command_prefix=get_pre, strip_after_prefix=True, case_insensitive=True, intents=intents, owner_id=349373972103561218)
 bot.load_extension('jishaku')
 
 async def create_db_pool():
