@@ -134,7 +134,7 @@ class General(commands.Cog):
         embed = discord.Embed(color=ctx.me.color,
                               title="Successfully locked emoji!",
                               description=f"**Restricted access of {emoji} to:**"
-                                          f"\n{', '.join(roles)}")
+                                          f"\n{', '.join([r.mention for r in roles])}")
         return await ctx.send(embed=embed)
 
     @emoji.command(name="unlock")
