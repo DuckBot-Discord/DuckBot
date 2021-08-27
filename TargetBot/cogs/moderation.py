@@ -690,7 +690,7 @@ async def cleanup(self, ctx, amount: int = 25):
             return
 
     if ctx.channel.permissions_for(ctx.me).manage_messages:
-        prefix = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
+        prefix = '!'
 
         def check(msg):
             return (msg.author == ctx.me or msg.content.startswith(prefix)) and not msg.reference
