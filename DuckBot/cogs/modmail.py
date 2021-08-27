@@ -64,7 +64,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def on_mail_reply(self, message):
-        if any((not message.guild, message.author.bot, message.channel.category_id != 878123261525901342)):
+        if any((not message.guild, message.author.bot)):
+            return
+        if message.channel.category_id != 878123261525901342:
             return
 
         channel = message.channel
