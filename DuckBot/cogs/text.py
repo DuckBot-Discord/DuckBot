@@ -123,10 +123,32 @@ class General(commands.Cog):
             await ctx.send(embed=embed)
 
     @emoji.command(name="lock")
+    @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_lock(self, ctx):
-        await ctx.send("not yet implemented sorry")
+    async def emoji_lock(self, ctx: commands.Context, emoji: discord.Emoji,
+                         roles: commands.Greedy[discord.Role]) -> discord.Message:
+        if emoji.guild_id != ctx.guild.id:
+            return await ctx.send("That emoji is from another server!")
+        await emoji.edit(roles=roles)
+        embed = discord.Embed(color=ctx.me.color,
+                              title="Successfully locked emoji!",
+                              description=f"**Restricted access of {emoji} to:**"
+                                          f"\n{', '.join(roles)}")
+        return await ctx.send(embed=embed)
+
+    @emoji.command(name="unlock")
+    @commands.guild_only()
+    @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
+    async def emoji_unlock(self, ctx: commands.Context, emoji: discord.Emoji) -> discord.Message:
+        if emoji.guild_id != ctx.guild.id:
+            return await ctx.send("That emoji is from another server!")
+        await emoji.edit(roles=[])
+        embed = discord.Embed(color=ctx.me.color,
+                              title="Successfully unlocked emoji!",
+                              description=f"**Allowed {emoji} to @everyone**")
+        return await ctx.send(embed=embed)
 
     @emoji.command(name="steal",
                    hidden=True,
