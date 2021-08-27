@@ -458,262 +458,249 @@ class Moderation(commands.Cog):
         else:
             await self.perms_error(ctx)
 
+    # -------------------------------------------------------------#
+    # ------------------------ PURGE ------------------------------#
+    # -------------------------------------------------------------#
 
-# -------------------------------------------------------------#
-# ------------------------ PURGE ------------------------------#
-# -------------------------------------------------------------#
+    @commands.group(aliases=['purge', 'clear', 'delete', 'clean'])
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def remove(self, ctx, search: typing.Optional[int] = 100):
+        """```yaml
+        Removes messages that meet a criteria. In order to use this command, you must have Manage Messages permissions.
 
-@commands.group(aliases=['purge', 'clear', 'delete', 'clean'])
-@commands.guild_only()
-@commands.has_permissions(manage_messages=True)
-@commands.bot_has_permissions(manage_messages=True)
-async def remove(self, ctx, search: typing.Optional[int] = 100):
-    """```yaml
-    Removes messages that meet a criteria. In order to use this command, you must have Manage Messages permissions.
+        Remember that the bot needs Manage Messages as well. These commands cannot be used in a private message.
 
-    Remember that the bot needs Manage Messages as well. These commands cannot be used in a private message.
+        When the command is done doing its work, you will get a message detailing which users got removed and how many messages got removed.
 
-    When the command is done doing its work, you will get a message detailing which users got removed and how many messages got removed.
+        Note: If ran without any sub-commands, it will remove all messages that are NOT pinned to the channel. use "remove all <amount>" to remove everything
+        ```
+        """
 
-    Note: If ran without any sub-commands, it will remove all messages that are NOT pinned to the channel. use "remove all <amount>" to remove everything
-    ```
-    """
+        if ctx.invoked_subcommand is None:
+            await self.do_removal(ctx, search, lambda e: not e.pinned)
 
-    if ctx.invoked_subcommand is None:
-        await self.do_removal(ctx, search, lambda e: not e.pinned)
+    @remove.command(aliases=['embed'])
+    async def embeds(self, ctx, search=100):
+        """Removes messages that have embeds in them."""
+        await self.do_removal(ctx, search, lambda e: len(e.embeds))
 
+    @remove.command()
+    async def files(self, ctx, search=100):
+        """Removes messages that have attachments in them."""
+        await self.do_removal(ctx, search, lambda e: len(e.attachments))
 
-@remove.command(aliases=['embed'])
-async def embeds(self, ctx, search=100):
-    """Removes messages that have embeds in them."""
-    await self.do_removal(ctx, search, lambda e: len(e.embeds))
+    @remove.command()
+    async def images(self, ctx, search=100):
+        """Removes messages that have embeds or attachments."""
+        await self.do_removal(ctx, search, lambda e: len(e.embeds) or len(e.attachments))
 
+    @remove.command(name='all')
+    async def remove_remove_all(self, ctx, search=100):
+        """Removes all messages."""
+        await self.do_removal(ctx, search, lambda e: True)
 
-@remove.command()
-async def files(self, ctx, search=100):
-    """Removes messages that have attachments in them."""
-    await self.do_removal(ctx, search, lambda e: len(e.attachments))
+    @remove.command()
+    async def user(self, ctx, member: discord.Member, search=100):
+        """Removes all messages by the member."""
+        await self.do_removal(ctx, search, lambda e: e.author == member)
 
+    @remove.command()
+    async def contains(self, ctx, *, text: str):
+        """Removes all messages containing a substring.
+        The substring must be at least 3 characters long.
+        """
+        if len(text) < 3:
+            await ctx.send('The substring length must be at least 3 characters.')
+        else:
+            await self.do_removal(ctx, 100, lambda e: text in e.content)
 
-@remove.command()
-async def images(self, ctx, search=100):
-    """Removes messages that have embeds or attachments."""
-    await self.do_removal(ctx, search, lambda e: len(e.embeds) or len(e.attachments))
+    @remove.command(name='bot', aliases=['bots'])
+    async def remove_bot(self, ctx, prefix: typing.Optional[str] = None, search=100):
+        """Removes a bot user's messages and messages with their optional prefix."""
 
+        def predicate(m):
+            return (m.webhook_id is None and m.author.bot) or (prefix and m.content.startswith(prefix))
 
-@remove.command(name='all')
-async def remove_remove_all(self, ctx, search=100):
-    """Removes all messages."""
-    await self.do_removal(ctx, search, lambda e: True)
+        await self.do_removal(ctx, search, predicate)
 
+    @remove.command(name='emoji', aliases=['emojis'])
+    async def remove_emoji(self, ctx, search=100):
+        """Removes all messages containing custom emoji."""
+        custom_emoji = re.compile(r'<a?:[a-zA-Z0-9_]+:([0-9]+)>')
 
-@remove.command()
-async def user(self, ctx, member: discord.Member, search=100):
-    """Removes all messages by the member."""
-    await self.do_removal(ctx, search, lambda e: e.author == member)
+        def predicate(m):
+            return custom_emoji.search(m.content)
 
+        await self.do_removal(ctx, search, predicate)
 
-@remove.command()
-async def contains(self, ctx, *, text: str):
-    """Removes all messages containing a substring.
-    The substring must be at least 3 characters long.
-    """
-    if len(text) < 3:
-        await ctx.send('The substring length must be at least 3 characters.')
-    else:
-        await self.do_removal(ctx, 100, lambda e: text in e.content)
+    @remove.command(name='reactions')
+    async def remove_reactions(self, ctx, search=100):
+        """Removes all reactions from messages that have them."""
 
+        if search > 2000:
+            return await ctx.send(f'Too many messages to search for ({search}/2000)')
 
-@remove.command(name='bot', aliases=['bots'])
-async def remove_bot(self, ctx, prefix: typing.Optional[str] = None, search=100):
-    """Removes a bot user's messages and messages with their optional prefix."""
+        total_reactions = 0
+        async for message in ctx.history(limit=search, before=ctx.message):
+            if len(message.reactions):
+                total_reactions += sum(r.count for r in message.reactions)
+                await message.clear_reactions()
 
-    def predicate(m):
-        return (m.webhook_id is None and m.author.bot) or (prefix and m.content.startswith(prefix))
+        await ctx.send(f'Successfully removed {total_reactions} reactions.')
 
-    await self.do_removal(ctx, search, predicate)
+    @remove.group()
+    async def custom(self, ctx, *, args: str):
+        """A more advanced purge command.
+        do "%PRE%help remove custom" for usage.
+        """
+        parser = Arguments(add_help=False, allow_abbrev=False)
+        parser.add_argument('--user', nargs='+')
+        parser.add_argument('--contains', nargs='+')
+        parser.add_argument('--starts', nargs='+')
+        parser.add_argument('--ends', nargs='+')
+        parser.add_argument('--or', action='store_true', dest='_or')
+        parser.add_argument('--not', action='store_true', dest='_not')
+        parser.add_argument('--emoji', action='store_true')
+        parser.add_argument('--bot', action='store_const', const=lambda m: m.author.bot)
+        parser.add_argument('--embeds', action='store_const', const=lambda m: len(m.embeds))
+        parser.add_argument('--files', action='store_const', const=lambda m: len(m.attachments))
+        parser.add_argument('--reactions', action='store_const', const=lambda m: len(m.reactions))
+        parser.add_argument('--search', type=int)
+        parser.add_argument('--after', type=int)
+        parser.add_argument('--before', type=int)
 
+        try:
+            args = parser.parse_args(shlex.split(args))
+        except Exception as e:
+            await ctx.send(str(e))
+            return
 
-@remove.command(name='emoji', aliases=['emojis'])
-async def remove_emoji(self, ctx, search=100):
-    """Removes all messages containing custom emoji."""
-    custom_emoji = re.compile(r'<a?:[a-zA-Z0-9_]+:([0-9]+)>')
+        predicates = []
+        if args.bot:
+            predicates.append(args.bot)
 
-    def predicate(m):
-        return custom_emoji.search(m.content)
+        if args.embeds:
+            predicates.append(args.embeds)
 
-    await self.do_removal(ctx, search, predicate)
+        if args.files:
+            predicates.append(args.files)
 
+        if args.reactions:
+            predicates.append(args.reactions)
 
-@remove.command(name='reactions')
-async def remove_reactions(self, ctx, search=100):
-    """Removes all reactions from messages that have them."""
+        if args.emoji:
+            custom_emoji = re.compile(r'<:(\w+):(\d+)>')
+            predicates.append(lambda m: custom_emoji.search(m.content))
 
-    if search > 2000:
-        return await ctx.send(f'Too many messages to search for ({search}/2000)')
+        if args.user:
+            users = []
+            converter = commands.MemberConverter()
+            for u in args.user:
+                try:
+                    user = await converter.convert(ctx, u)
+                    users.append(user)
+                except Exception as e:
+                    await ctx.send(str(e))
+                    return
 
-    total_reactions = 0
-    async for message in ctx.history(limit=search, before=ctx.message):
-        if len(message.reactions):
-            total_reactions += sum(r.count for r in message.reactions)
-            await message.clear_reactions()
+            predicates.append(lambda m: m.author in users)
 
-    await ctx.send(f'Successfully removed {total_reactions} reactions.')
+        if args.contains:
+            predicates.append(lambda m: any(sub in m.content for sub in args.contains))
 
+        if args.starts:
+            predicates.append(lambda m: any(m.content.startswith(s) for s in args.starts))
 
-@remove.group()
-async def custom(self, ctx, *, args: str):
-    """A more advanced purge command.
-    do "%PRE%help remove custom" for usage.
-    """
-    parser = Arguments(add_help=False, allow_abbrev=False)
-    parser.add_argument('--user', nargs='+')
-    parser.add_argument('--contains', nargs='+')
-    parser.add_argument('--starts', nargs='+')
-    parser.add_argument('--ends', nargs='+')
-    parser.add_argument('--or', action='store_true', dest='_or')
-    parser.add_argument('--not', action='store_true', dest='_not')
-    parser.add_argument('--emoji', action='store_true')
-    parser.add_argument('--bot', action='store_const', const=lambda m: m.author.bot)
-    parser.add_argument('--embeds', action='store_const', const=lambda m: len(m.embeds))
-    parser.add_argument('--files', action='store_const', const=lambda m: len(m.attachments))
-    parser.add_argument('--reactions', action='store_const', const=lambda m: len(m.reactions))
-    parser.add_argument('--search', type=int)
-    parser.add_argument('--after', type=int)
-    parser.add_argument('--before', type=int)
+        if args.ends:
+            predicates.append(lambda m: any(m.content.endswith(s) for s in args.ends))
 
-    try:
-        args = parser.parse_args(shlex.split(args))
-    except Exception as e:
-        await ctx.send(str(e))
-        return
+        op = all if not args._or else any
 
-    predicates = []
-    if args.bot:
-        predicates.append(args.bot)
+        def predicate(m):
+            r = op(p(m) for p in predicates)
+            if args._not:
+                return not r
+            return r
 
-    if args.embeds:
-        predicates.append(args.embeds)
+        if args.after:
+            if args.search is None:
+                args.search = 2000
 
-    if args.files:
-        predicates.append(args.files)
+        if args.search is None:
+            args.search = 100
 
-    if args.reactions:
-        predicates.append(args.reactions)
+        args.search = max(0, min(2000, args.search))  # clamp from 0-2000
+        await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
 
-    if args.emoji:
-        custom_emoji = re.compile(r'<:(\w+):(\d+)>')
-        predicates.append(lambda m: custom_emoji.search(m.content))
+    @custom.command(name="readme")
+    async def remove_custom_readme(self, ctx):
+        """A more advanced purge command.
+        This command uses a powerful "command line" syntax.
+        Most options support multiple values to indicate 'any' match.
+        If the value has spaces it must be quoted.
+        The messages are only deleted if all options are met unless
+        the --or flag is passed, in which case only if any is met.
 
-    if args.user:
-        users = []
-        converter = commands.MemberConverter()
-        for u in args.user:
-            try:
-                user = await converter.convert(ctx, u)
-                users.append(user)
-            except Exception as e:
-                await ctx.send(str(e))
+        The following options are valid.
+         --user: A mention or name of the user to remove.
+         --contains: A substring to search for in the message.
+         --starts: A substring to search if the message starts with.
+         --ends: A substring to search if the message ends with.
+         --search: Messages to search. Default 100. Max 2000.
+         --after: Messages after this message ID.
+         --before: Messages before this message ID.
+
+        Flag options (no arguments):
+         --bot: Check if it's a bot user.
+         --embeds: Checks for embeds.
+         --files: Checks for attachments.
+         --emoji: Checks for custom emoji.
+         --reactions: Checks for reactions.
+         --or: Use logical OR for ALL options.
+         --not: Use logical NOT for ALL options.
+        """
+        await ctx.send("hi")
+
+    @commands.command()
+    async def cleanup(self, ctx, amount: int = 25):
+        """
+        Cleans up the bots messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
+        """
+        if amount > 25:
+            if not ctx.channel.permissions_for(ctx.author).manage_messages:
+                await ctx.send("You must have `manage_messages` permission to perform a search greater than 25")
+                return
+            if not ctx.channel.permissions_for(ctx.me).manage_messages:
+                await ctx.send("I need the `manage_messages` permission to perform a search greater than 25")
                 return
 
-        predicates.append(lambda m: m.author in users)
+        if ctx.channel.permissions_for(ctx.me).manage_messages:
+            prefix = '!'
 
-    if args.contains:
-        predicates.append(lambda m: any(sub in m.content for sub in args.contains))
+            def check(msg):
+                return (msg.author == ctx.me or msg.content.startswith(prefix)) and not msg.reference
 
-    if args.starts:
-        predicates.append(lambda m: any(m.content.startswith(s) for s in args.starts))
+            deleted = await ctx.channel.purge(limit=amount, check=check)
+        else:
+            def check(msg):
+                return (msg.author == ctx.me) and not msg.reference
 
-    if args.ends:
-        predicates.append(lambda m: any(m.content.endswith(s) for s in args.ends))
+            deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
+        spammers = Counter(m.author.display_name for m in deleted)
+        deleted = len(deleted)
+        messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
+        if deleted:
+            messages.append('')
+            spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+            messages.extend(f'**{name}**: {count}' for name, count in spammers)
 
-    op = all if not args._or else any
-
-    def predicate(m):
-        r = op(p(m) for p in predicates)
-        if args._not:
-            return not r
-        return r
-
-    if args.after:
-        if args.search is None:
-            args.search = 2000
-
-    if args.search is None:
-        args.search = 100
-
-    args.search = max(0, min(2000, args.search))  # clamp from 0-2000
-    await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
-
-
-@custom.command(name="readme")
-async def remove_custom_readme(self, ctx):
-    """A more advanced purge command.
-    This command uses a powerful "command line" syntax.
-    Most options support multiple values to indicate 'any' match.
-    If the value has spaces it must be quoted.
-    The messages are only deleted if all options are met unless
-    the --or flag is passed, in which case only if any is met.
-
-    The following options are valid.
-     --user: A mention or name of the user to remove.
-     --contains: A substring to search for in the message.
-     --starts: A substring to search if the message starts with.
-     --ends: A substring to search if the message ends with.
-     --search: Messages to search. Default 100. Max 2000.
-     --after: Messages after this message ID.
-     --before: Messages before this message ID.
-
-    Flag options (no arguments):
-     --bot: Check if it's a bot user.
-     --embeds: Checks for embeds.
-     --files: Checks for attachments.
-     --emoji: Checks for custom emoji.
-     --reactions: Checks for reactions.
-     --or: Use logical OR for ALL options.
-     --not: Use logical NOT for ALL options.
-    """
-    await ctx.send("hi")
-
-
-@commands.command()
-async def cleanup(self, ctx, amount: int = 25):
-    """
-    Cleans up the bots messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
-    """
-    if amount > 25:
-        if not ctx.channel.permissions_for(ctx.author).manage_messages:
-            await ctx.send("You must have `manage_messages` permission to perform a search greater than 25")
-            return
-        if not ctx.channel.permissions_for(ctx.me).manage_messages:
-            await ctx.send("I need the `manage_messages` permission to perform a search greater than 25")
-            return
-
-    if ctx.channel.permissions_for(ctx.me).manage_messages:
-        prefix = '!'
-
-        def check(msg):
-            return (msg.author == ctx.me or msg.content.startswith(prefix)) and not msg.reference
-
-        deleted = await ctx.channel.purge(limit=amount, check=check)
-    else:
-        def check(msg):
-            return (msg.author == ctx.me) and not msg.reference
-
-        deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
-    spammers = Counter(m.author.display_name for m in deleted)
-    deleted = len(deleted)
-    messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
-    if deleted:
-        messages.append('')
-        spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
-        messages.extend(f'**{name}**: {count}' for name, count in spammers)
-
-    to_send = '\n'.join(messages)
-    if len(to_send) > 2000:
-        await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
-    else:
-        await ctx.send(to_send, delete_after=10)
+        to_send = '\n'.join(messages)
+        if len(to_send) > 2000:
+            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
+        else:
+            await ctx.send(to_send, delete_after=10)
 
     # ------------------------------------------------------------#
     # ------------------------ MUTE ------------------------------#
