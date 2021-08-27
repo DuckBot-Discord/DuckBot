@@ -49,7 +49,7 @@ class General(commands.Cog):
     @commands.check_any(commands.bot_has_permissions(send_messages=True), commands.is_owner())
     async def say(self, ctx: commands.context, *, msg: str) -> Optional[discord.Message]:
 
-        results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
+        results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+",
                              msg)  # HTTP/HTTPS URL regex
         results2 = re.findall(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?",
                               msg)  # Discord invite regex
@@ -61,7 +61,10 @@ class General(commands.Cog):
 
         await ctx.message.delete(delay=0)
 
-        return await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True), reference=ctx.message.reference)
+        return await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False,
+                                                                            roles=False,
+                                                                            users=True),
+                              reference=ctx.message.reference)
 
     # .a <TextChannel> <text>
     # sends the message in a channel
@@ -130,12 +133,15 @@ class General(commands.Cog):
                          roles: commands.Greedy[discord.Role]) -> discord.Message:
         if emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
-        await emoji.edit(roles=roles)
         embed = discord.Embed(color=ctx.me.color,
-                              title="Successfully locked emoji!",
                               description=f"**Restricted access of {emoji} to:**"
-                                          f"\n{', '.join([r.mention for r in roles])}")
-        return await ctx.send(embed=embed)
+                                          f"\n{', '.join([r.mention for r in roles])}"
+                                          f"\nTo unlock the emoji do `{ctx.clean_prefix} emoji unlock {emoji}`"
+                                          f"_Note that to do this you will need one of the roles the emoji has been "
+                                          f"restricted to. No, admin permissions don't bypass this lock._")
+        embed.set_footer()
+        await ctx.send(embed=embed)
+        await emoji.edit(roles=roles)
 
     @emoji.command(name="unlock")
     @commands.guild_only()
