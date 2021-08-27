@@ -32,7 +32,8 @@ class Fun(commands.Cog, name='Fun'):
 
         async with self.bot.session.get('https://aws.random.cat/meow') as r:
             if r.status != 200:
-                raise discord.HTTPException(r, ctx.message)
+                return await ctx.send("Something broke with the shitty ass cat api."
+                                      "\nIll migrate to r/cats soon...TM")
             res = await r.json()  # returns dict
 
         embed = discord.Embed(title='Here is a cat!', color=random.randint(0, 0xFFFFFF))
