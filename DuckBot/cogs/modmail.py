@@ -57,7 +57,7 @@ class Events(commands.Cog):
         try:
             await wh.send(content=message.content,
                           username=message.author.name,
-                          vatar_url=message.author.display_avatar.url,
+                          avatar_url=message.author.display_avatar.url,
                           files=files)
         except (discord.Forbidden, discord.HTTPException):
             return await message.add_reaction('⚠')
