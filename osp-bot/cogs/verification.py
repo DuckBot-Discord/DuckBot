@@ -337,6 +337,7 @@ class Verification(commands.Cog):
             mess = await ctx.send(f"Are you sure you want to delete **{member}**'s birthday from the database?")
             await mess.add_reaction("✅")
             await mess.add_reaction("❌")
+
             def reaction_check(reaction, user):
                 return user == ctx.author and str(reaction.emoji) in ['✅', '❌', '❓'] and reaction.message.id == mess.id
 
@@ -350,10 +351,10 @@ class Verification(commands.Cog):
 
     @bday.command(name="delid", help="deletes a birthday without checking if the ID exists", aliases=['remid'])
     async def bday_del_id(self, ctx, id: int):
-        if re.fullmatch("^\d{18}$", str(id)):
+        if re.fullmatch(r'^\d{18}$', str(id)):
             current_birthday = await self.bot.db.fetchval('SELECT birthdate FROM userinfo WHERE user_id = $1', id)
             if current_birthday:
-                def reaction_check(reaction, user):
+                def reaction_check(reaction: discord.Reaction, user: discord.User) -> bool:
                     return user == ctx.author and str(reaction.emoji) in ['✅', '❌', '❓'] and reaction.message.id == mess.id
                 mess = await ctx.send(f"Are you sure you want to delete **{id}**'s birthday from the database?")
                 await mess.add_reaction("✅")

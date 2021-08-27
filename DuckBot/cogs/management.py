@@ -339,7 +339,7 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.command(aliases=['pm', 'message', 'direct'])
     @commands.is_owner()
     @commands.guild_only()
-    async def dm(self, ctx: commands.Context, member: discord.Member, *, message=None):
+    async def dm(self, ctx: commands.Context, member: discord.User, *, message=None):
         if ctx.channel.category_id == 878123261525901342:
             return
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
