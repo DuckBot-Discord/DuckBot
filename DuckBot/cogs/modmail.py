@@ -47,12 +47,10 @@ class Events(commands.Cog):
             )
         wh = await get_webhook(channel)
 
-        files = []
-        for attachment in message.attachments:
-            if attachment.size > 8388600:
-                await message.author.send('Sent message without attachment! File size greater than 8 MB.')
-                continue
-            files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
+        files = [attachment.to_file(spoiler=attachment.is_spoiler()) for attachment in message.attachments if
+                 attachment.size < 8388600]
+        if not files and message.attachments:
+            await message.author.send("Some files couldn't be sent because they were over 8mb")
 
         try:
             await wh.send(content=message.content,
@@ -77,14 +75,10 @@ class Events(commands.Cog):
         except (HTTPException, UserNotFound):
             return await channel.send("could not find user.")
 
-        files = []
-        if message.attachments:
-            for attachment in message.attachments:
-                if attachment.size > 8388600:
-                    await message.author.send('Sent message without attachment! '
-                                              'File size greater than 8 MB.')
-                    continue
-                files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
+        files = [attachment.to_file(spoiler=attachment.is_spoiler()) for attachment in message.attachments if
+                 attachment.size < 8388600]
+        if not files and message.attachments:
+            await message.author.send("Some files couldn't be sent because they were over 8mb")
 
         try:
             await user.send(content=message.content, files=files)
