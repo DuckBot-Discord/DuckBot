@@ -138,7 +138,7 @@ class General(commands.Cog):
                                           f"\n{', '.join([r.mention for r in roles])}"
                                           f"\nTo unlock the emoji do `{ctx.clean_prefix} emoji unlock {emoji}`"
                                           f"_Note that to do this you will need one of the roles the emoji has been "
-                                          f"restricted to. No, admin permissions don't bypass this lock._")
+                                          f"restricted to. \nNo, admin permissions don't bypass this lock._")
         embed.set_footer()
         await ctx.send(embed=embed)
         await emoji.edit(roles=roles)
