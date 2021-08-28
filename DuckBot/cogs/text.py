@@ -60,7 +60,7 @@ class General(commands.Cog):
             await ctx.message.delete(delay=5)
 
         await ctx.message.delete(delay=0)
-        if ctx.channel.premissions_for(ctx.author).manage_messages:
+        if ctx.channel.permissions_for(ctx.author).manage_messages:
             allowed = True
         else:
             allowed = False
