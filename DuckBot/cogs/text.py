@@ -60,10 +60,14 @@ class General(commands.Cog):
             await ctx.message.delete(delay=5)
 
         await ctx.message.delete(delay=0)
+        if ctx.channel.premissions_for(ctx.author).manage_messages:
+            allowed = True
+        else:
+            allowed = False
 
         return await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False,
                                                                             roles=False,
-                                                                            users=True),
+                                                                            users=allowed),
                               reference=ctx.message.reference)
 
     # .a <TextChannel> <text>
