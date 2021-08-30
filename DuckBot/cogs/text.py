@@ -57,7 +57,7 @@ class General(commands.Cog):
             await ctx.send(
                 f"`Urls or invites aren't allowed!",
                 delete_after=5)
-            await ctx.message.delete(delay=5)
+            return await ctx.message.delete(delay=5)
 
         await ctx.message.delete(delay=0)
         if ctx.channel.permissions_for(ctx.author).manage_messages:
