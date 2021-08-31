@@ -9,7 +9,7 @@ from collections import Counter
 
 from discord.ext import commands, tasks, menus
 
-from helpers import time_formats as helpers
+from helpers import time_inputs as helpers
 
 
 def setup(bot):
