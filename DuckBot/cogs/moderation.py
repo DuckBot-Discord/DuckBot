@@ -619,7 +619,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
-    async def mute(self, ctx: commands.Context, member: discord.Member, reason: str):
+    async def mute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
         reason = reason or "No reason given"
         reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
         if not can_execute_action(ctx, ctx.author, member):
@@ -663,7 +663,7 @@ class Moderation(commands.Cog):
                 return await ctx.send("The muted role seems to have been deleted!"
                                       "\nRe-assign it with the `muterole add` command")
 
-            return await ctx.send(f"This guild's mute role is {role.mention}",
+            return await ctx.send(f"This server's mute role is {role.mention}",
                                   allowed_mentions=discord.AllowedMentions().none())
 
     @muterole.command(name="add", aliases=["set"])
