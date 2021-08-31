@@ -686,6 +686,7 @@ class Moderation(commands.Cog):
         return await ctx.send(f"**{ctx.author}** unmuted **{member}**"
                               f"\nReason: {only_reason}",
                               allowed_mentions=discord.AllowedMentions().none())
+
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
