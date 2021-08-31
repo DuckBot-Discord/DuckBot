@@ -639,7 +639,7 @@ class Moderation(commands.Cog):
             return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
 
         try:
-            await member.add_roles(role)
+            await member.add_roles(role, reason=reason)
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
 
