@@ -8,14 +8,17 @@ from collections import Counter
 from discord.ext import commands, menus
 
 
+def setup(bot):
+    bot.add_cog(Moderation(bot))
+
+
 class Arguments(argparse.ArgumentParser):
     def error(self, message):
         raise RuntimeError(message)
 
 
 def can_execute_action(ctx, user, target):
-    return user.id == ctx.bot.owner_id or \
-           user == ctx.guild.owner or \
+    return user == ctx.guild.owner or \
            user.top_role > target.top_role
 
 
@@ -574,7 +577,9 @@ class Moderation(commands.Cog):
         if number <= 0:
             embed = discord.Embed(
                 color=0xFF0000,
-                description=f"__number__ must be greater than 1\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`\n To get the number use the `{ctx.prefix}{ctx.command}` command")
+                description=f"__number__ must be greater than 1"
+                            f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
+                            f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
             await ctx.send(embed=embed)
             return
 
@@ -589,7 +594,9 @@ class Moderation(commands.Cog):
             ban_entry = bans[number]
         except IndexError:
             embed = discord.Embed(color=0xFF0000,
-                                  description=f"That member was not found. \nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`\n To get the number use the `{ctx.prefix}{ctx.command}` command")
+                                  description=f"That member was not found. "
+                                              f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
+                                              f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
             await ctx.send(embed=embed)
             return
 
@@ -604,6 +611,77 @@ class Moderation(commands.Cog):
         embed.set_author(name=ban_entry.user, icon_url=ban_entry.user.display_avatar.url)
         await ctx.send(embed=embed)
 
+    # --------------------------------------------------------------------------------#
+    # -------------------------------- MUTE STUFF ------------------------------------#
+    # --------------------------------------------------------------------------------#
 
-def setup(bot):
-    bot.add_cog(Moderation(bot))
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def mute(self, ctx: commands.Context, member: discord.Member, reason: str):
+        reason = reason or "No reason given"
+        reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
+        if not can_execute_action(ctx, ctx.author, member):
+            return await ctx.send("You're not high enough in role hierarchy to mute that member.")
+
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not mute_role:
+            return await ctx.send("You don't have a mute role assigned!"
+                                  "\n create one with the `muterole add` command")
+
+        role = ctx.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            return await ctx.send("It seems like the muted role isn't in this server!"
+                                  "\nRe-assign it with the `muterole set` command")
+
+        if role > ctx.me.top_role:
+            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+
+        try:
+            await member.add_roles(role)
+        except discord.Forbidden:
+            return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
+
+        await ctx.send("<:shut:744345896912945214>👌")
+
+    @commands.group(invoke_without_command=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def muterole(self, ctx: commands.Context):
+        if ctx.invoked_subcommand is None:
+
+            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+
+            if not mute_role:
+                return await ctx.send("You don't have a mute role assigned!"
+                                      "\n create one with the `muterole add` command")
+
+            role = ctx.guild.get_role(int(mute_role))
+            if not isinstance(role, discord.Role):
+                return await ctx.send("The muted role seems to have been deleted!"
+                                      "\nRe-assign it with the `muterole add` command")
+
+            return await ctx.send(f"This guild's mute role is {role.mention}",
+                                  allowed_mentions=discord.AllowedMentions().none())
+
+    @muterole.command(name="add", aliases=["set"])
+    async def muterole_add(self, ctx: commands.Context, role: discord.Role):
+        await self.bot.db.execute(
+            "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+            ctx.guild.id, role.id)
+
+        return await ctx.send(f"Updated the muted role to {role.mention}!",
+                              allowed_mentions=discord.AllowedMentions().none())
+
+    @muterole.command(name="remove", aliases=["unset"])
+    async def muterole_remove(self, ctx: commands.Context):
+        await self.bot.db.execute(
+            "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+            ctx.guild.id, None)
+
+        return await ctx.send(f"Removed this server's mute role!",
+                              allowed_mentions=discord.AllowedMentions().none())
