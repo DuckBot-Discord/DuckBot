@@ -656,6 +656,7 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+        only_reason=reason
         reason = reason or "No reason given"
         reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
         if not can_execute_action(ctx, ctx.author, member):
@@ -679,8 +680,12 @@ class Moderation(commands.Cog):
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to remove the `{role.name}` role")
 
-        await ctx.send("<:shut:744345896912945214>")
-
+        if not only_reason:
+            return await ctx.send(f"**{ctx.author}** unmuted **{member}**",
+                                  allowed_mentions=discord.AllowedMentions().none())
+        return await ctx.send(f"**{ctx.author}** unmuted **{member}**"
+                              f"\nReason: {only_reason}",
+                              allowed_mentions=discord.AllowedMentions().none())
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
