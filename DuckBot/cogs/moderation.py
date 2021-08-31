@@ -619,7 +619,8 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
-    async def mute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+    async def mute(self, ctx: commands.Context, member: discord.Member, reason: str = None) -> discord.Message:
+        only_reason = reason
         reason = reason or "No reason given"
         reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
         if not can_execute_action(ctx, ctx.author, member):
@@ -643,7 +644,42 @@ class Moderation(commands.Cog):
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
 
-        await ctx.send("<:shut:744345896912945214>👌")
+        if not only_reason:
+            return await ctx.send(f"**{ctx.author}** muted **{member}**",
+                                  allowed_mentions=discord.AllowedMentions().none())
+        return await ctx.send(f"**{ctx.author}** muted **{member}**"
+                              f"\nReason: {only_reason}",
+                              allowed_mentions=discord.AllowedMentions().none())
+
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+        reason = reason or "No reason given"
+        reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
+        if not can_execute_action(ctx, ctx.author, member):
+            return await ctx.send("You're not high enough in role hierarchy to mute that member.")
+
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not mute_role:
+            return await ctx.send("You don't have a mute role assigned!"
+                                  "\n create one with the `muterole add` command")
+
+        role = ctx.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            return await ctx.send("It seems like the muted role isn't in this server!"
+                                  "\nRe-assign it with the `muterole set` command")
+
+        if role > ctx.me.top_role:
+            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+
+        try:
+            await member.remove_roles(role, reason=reason)
+        except discord.Forbidden:
+            return await ctx.send(f"I don't seem to have permissions to remove the `{role.name}` role")
+
+        await ctx.send("<:shut:744345896912945214>")
 
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_roles=True)
