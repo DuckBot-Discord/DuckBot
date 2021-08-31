@@ -41,8 +41,8 @@ Region: {server.region}
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(manage_members=True)
-    @commands.bot_has_permissions(manage_members=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def mute(self, ctx: commands.Context, member: discord.Member, reason: str):
         reason = reason or "No reason given"
@@ -71,8 +71,8 @@ Region: {server.region}
         await ctx.send("<:shut:744345896912945214>👌")
 
     @commands.group(invoke_without_command=True)
-    @commands.has_permissions(manage_members=True)
-    @commands.bot_has_permissions(manage_members=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def muterole(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
