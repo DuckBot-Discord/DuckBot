@@ -1,5 +1,5 @@
 import typing, discord, asyncio, random, datetime, argparse, shlex, re, asyncpg, yaml, aiohttp
-from discord.ext import commands, tasks, timers, menus
+from discord.ext import commands, tasks, menus
 from collections import Counter, defaultdict
 import helpers
 
@@ -30,11 +30,12 @@ class Confirm(menus.Menu):
 
 class moderation(commands.Cog):
     """⚖ Moderation commands."""
+
     def __init__(self, bot):
         self.bot = bot
         self.autounmute.start()
 
-        #------------- YAML STUFF -------------#
+        # ------------- YAML STUFF -------------#
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
             staff_roles = []
@@ -70,8 +71,7 @@ class moderation(commands.Cog):
     async def wait_for_bot_ready(self):
         await self.bot.wait_until_ready()
 
-
-    #--------------- FUNCTIONS ---------------#
+    # --------------- FUNCTIONS ---------------#
 
     async def perms_error(self, ctx):
         await ctx.message.add_reaction('🚫')
@@ -79,7 +79,8 @@ class moderation(commands.Cog):
         try:
             await ctx.message.delete()
             return
-        except: return
+        except:
+            return
 
     async def error_message(self, ctx, message):
         embed = discord.Embed(color=ctx.me.color)
@@ -89,13 +90,16 @@ class moderation(commands.Cog):
         try:
             await ctx.message.delete()
             return
-        except: return
+        except:
+            return
 
     async def namecheck(self, argument):
         async with aiohttp.ClientSession() as cs:
             async with cs.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
-                if cs.status == 204: user = None
-                elif cs.status == 400: user = None
+                if cs.status == 204:
+                    user = None
+                elif cs.status == 400:
+                    user = None
                 else:
                     res = await cs.json()
                     user = res["name"]
@@ -126,25 +130,28 @@ class moderation(commands.Cog):
         if user.premium_since:
             emoji_flags = f"{emoji_flags} <:booster4:860644548887969832>"
         if flags['bug_hunter_level_2'] is True:
-            emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>" #not from bots.gg
+            emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>"  # not from bots.gg
         if flags['verified_bot_developer'] is True:
-            emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>" #not from bots.gg
+            emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>"  # not from bots.gg
         if emoji_flags == "": emoji_flags = None
         return emoji_flags
 
-
-    @commands.command(aliases = ['userinfo', 'ui'])
+    @commands.command(aliases=['userinfo', 'ui'])
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         if not user: user = ctx.author
         # BADGES
         badges = self.get_user_badges(user)
-        if badges: badges = f"\n<:store_tag:860644620857507901>**Badges:**{badges}"
-        else: badges = ''
+        if badges:
+            badges = f"\n<:store_tag:860644620857507901>**Badges:**{badges}"
+        else:
+            badges = ''
         # USERID
         userid = f"\n<:greyTick:860644729933791283>**ID:** `{user.id}`"
         # NICKNAME
-        if user.nick: nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
-        else: nick = ""
+        if user.nick:
+            nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
+        else:
+            nick = ""
         # CREATION DATE
         date = user.created_at.strftime("%b %-d %Y at %-H:%M")
         created = f"\n<:invite:860644752281436171>**Created:** `{date} UTC`"
@@ -152,20 +159,24 @@ class moderation(commands.Cog):
         if user.joined_at:
             date = user.joined_at.strftime("%b %-d %Y at %-H:%M")
             joined = f"\n<:joined:849392863557189633>**joined:** `{date} UTC`"
-        else: joined = ""
+        else:
+            joined = ""
         # GUILD OWNER
         if user is ctx.guild.owner:
             owner = f"\n<:owner:860644790005399573>**Owner:** <:check:314349398811475968>"
-        else: owner = ""
+        else:
+            owner = ""
         # BOT
         if user.bot:
             bot = f"\n<:botTag:860645571076030525>**Bot:** <:check:314349398811475968>"
-        else: bot = ""
+        else:
+            bot = ""
         # BOOSTER SINCE
         if user.premium_since:
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
             boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
-        else: boost = ""
+        else:
+            boost = ""
 
         # Join Order
         order = f"\n<:moved:848312880666640394>**Join position:** `{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
@@ -173,7 +184,8 @@ class moderation(commands.Cog):
         if user.premium_since:
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
             boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
-        else: boost = ""
+        else:
+            boost = ""
         # ROLES
         roles = ""
         for role in user.roles:
@@ -182,20 +194,20 @@ class moderation(commands.Cog):
         if roles != "":
             roles = f"\n<:role:860644904048132137>**roles:** {roles}"
         # EMBED
-        embed = discord.Embed(color=ctx.me.color, description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
-        embed.set_author(name=user, icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
+        embed = discord.Embed(color=ctx.me.color,
+                              description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
+        embed.set_author(name=user,
+                         icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
         embed.set_thumbnail(url=user.display_avatar.url)
         await ctx.send(embed=embed)
 
-
-
-#------------------------------------------------------------#
-#------------------------ KICK ------------------------------#
-#------------------------------------------------------------#
+    # ------------------------------------------------------------#
+    # ------------------------ KICK ------------------------------#
+    # ------------------------------------------------------------#
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
-    async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def kick(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -211,24 +223,28 @@ class moderation(commands.Cog):
         if member.top_role <= ctx.author.top_role:
             if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
                 try:
-                    mem_embed=discord.Embed(description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**", color=ctx.me.color)
+                    mem_embed = discord.Embed(
+                        description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**",
+                        color=ctx.me.color)
                     if reason: mem_embed.set_footer(text=f'reason: {reason}')
                     await member.send(embed=mem_embed)
                     await member.kick(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ✅')
                     await ctx.send(embed=embed)
                 except discord.HTTPException:
                     await member.kick(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} kicked {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ❌')
                     await ctx.send(embed=embed)
             else:
@@ -238,13 +254,13 @@ class moderation(commands.Cog):
             await self.error_message(ctx, 'Member is higher than you in role hierarchy')
             return
 
-#-----------------------------------------------------------#
-#------------------------ BAN ------------------------------#
-#-----------------------------------------------------------#
+    # -----------------------------------------------------------#
+    # ------------------------ BAN ------------------------------#
+    # -----------------------------------------------------------#
 
     @commands.command()
     @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def ban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -260,24 +276,28 @@ class moderation(commands.Cog):
         if member.top_role <= ctx.author.top_role:
             if member.guild_permissions.ban_members == False or member.guild_permissions.kick_members == False:
                 try:
-                    mem_embed=discord.Embed(description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**", color=ctx.me.color)
+                    mem_embed = discord.Embed(
+                        description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**",
+                        color=ctx.me.color)
                     if reason: mem_embed.set_footer(text=f'reason: {reason}')
                     await member.send(embed=mem_embed)
                     await member.ban(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ✅')
                     await ctx.send(embed=embed)
                 except discord.HTTPException:
                     await member.ban(reason=reason)
                     if reason:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
                     else:
-                        embed=discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""", color=ctx.me.color)
+                        embed = discord.Embed(description=f"""{ctx.author.mention} banned {member.mention}""",
+                                              color=ctx.me.color)
                     embed.set_footer(text=f'{member.id} | DM sent: ❌')
                     await ctx.send(embed=embed)
             else:
@@ -288,12 +308,12 @@ class moderation(commands.Cog):
             await self.error_message(ctx, 'Member is higher than you in role hierarchy')
             return
 
-#------------------------------------------------------------#
-#------------------------ NICK ------------------------------#
-#------------------------------------------------------------#
+    # ------------------------------------------------------------#
+    # ------------------------ NICK ------------------------------#
+    # ------------------------------------------------------------#
 
-    @commands.command(aliases = ['sn', 'nick'])
-    async def setnick(self, ctx, member : typing.Optional[discord.Member], *, new : typing.Optional[str] = 'None'):
+    @commands.command(aliases=['sn', 'nick'])
+    async def setnick(self, ctx, member: typing.Optional[discord.Member], *, new: typing.Optional[str] = 'None'):
         if member == None:
             if ctx.channel.permissions_for(ctx.author).manage_nicknames:
                 await ctx.send("`!nick [member] (newNick)` - You must specify a member", delete_after=10)
@@ -314,8 +334,10 @@ class moderation(commands.Cog):
                 await member.edit(nick=new)
                 await ctx.send(f"""✏ {ctx.author.mention} nick for {member}
 **`{old}`** -> **`{new}`**""")
-                try: await ctx.message.delete()
-                except discord.Forbidden: return
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    return
             except discord.Forbidden:
                 await self.error_message(ctx, 'Bot not high enough in role hierarchy')
                 return
@@ -332,8 +354,10 @@ class moderation(commands.Cog):
                 await member.edit(nick=new)
                 await ctx.send(f"""✏ {ctx.author.mention} edited nick for **{member}**
 **`{old}`** -> **`{new}`**""")
-                try: await ctx.message.delete()
-                except discord.Forbidden: return
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    return
             except discord.Forbidden:
                 await self.error_message(ctx, 'Bot not high enough in role hierarchy')
                 return
@@ -345,11 +369,12 @@ class moderation(commands.Cog):
             await self.error_message(ctx, f"""You can only change your own nick!
 > !nick {ctx.author.mention} `<new nick>`""")
             return
-        else: await self.perms_error(ctx)
+        else:
+            await self.perms_error(ctx)
 
-#-------------------------------------------------------------#
-#------------------------ PURGE ------------------------------#
-#-------------------------------------------------------------#
+    # -------------------------------------------------------------#
+    # ------------------------ PURGE ------------------------------#
+    # -------------------------------------------------------------#
 
     # Source Code Form:
     # command: https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/mod.py#L1181-L1408
@@ -465,6 +490,7 @@ class moderation(commands.Cog):
     async def remove_emoji(self, ctx, search=100):
         """Removes all messages containing custom emoji."""
         custom_emoji = re.compile(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>')
+
         def predicate(m):
             return custom_emoji.search(m.content)
 
@@ -552,6 +578,7 @@ class moderation(commands.Cog):
             predicates.append(lambda m: any(m.content.endswith(s) for s in args.ends))
 
         op = all if not args._or else any
+
         def predicate(m):
             r = op(p(m) for p in predicates)
             if args._not:
@@ -565,7 +592,7 @@ class moderation(commands.Cog):
         if args.search is None:
             args.search = 100
 
-        args.search = max(0, min(2000, args.search)) # clamp from 0-2000
+        args.search = max(0, min(2000, args.search))  # clamp from 0-2000
         await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
 
     @custom.command(name="readme")
@@ -597,12 +624,12 @@ class moderation(commands.Cog):
         """
         await ctx.send("hi")
 
-#------------------------------------------------------------#
-#------------------------ MUTE ------------------------------#
-#------------------------------------------------------------#
+    # ------------------------------------------------------------#
+    # ------------------------ MUTE ------------------------------#
+    # ------------------------------------------------------------#
 
     @commands.command()
-    async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def mute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -615,26 +642,28 @@ class moderation(commands.Cog):
             return
         try:
             await member.add_roles(muterole)
-            mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been muted by a staff member", icon_url='https://i.imgur.com/hKNGsMb.png')
+            mem_embed = discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been muted by a staff member",
+                                 icon_url='https://i.imgur.com/hKNGsMb.png')
             mem_embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...
+                embed = discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} muted {member.mention} indefinitely...""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
 
-#-------------------------------------------------------------#
-#------------------------ UNMUTE -----------------------------#
-#-------------------------------------------------------------#
+    # -------------------------------------------------------------#
+    # ------------------------ UNMUTE -----------------------------#
+    # -------------------------------------------------------------#
 
     @commands.command()
-    async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def unmute(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -647,23 +676,25 @@ class moderation(commands.Cog):
             return
         try:
             await member.remove_roles(muterole)
-            mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been unmuted by a staff member", icon_url='https://i.imgur.com/m1MtOVS.png')
+            mem_embed = discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been unmuted by a staff member",
+                                 icon_url='https://i.imgur.com/m1MtOVS.png')
             mem_embed.set_image(url='https://i.imgur.com/23XECtg.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}
+                embed = discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} unmuted {member.mention}""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
 
-#---------------------------------------------------------------#
-#------------------------ SELFMUTE -----------------------------#
-#---------------------------------------------------------------#
+    # ---------------------------------------------------------------#
+    # ------------------------ SELFMUTE -----------------------------#
+    # ---------------------------------------------------------------#
 
     @commands.command()
     @commands.guild_only()
@@ -688,7 +719,7 @@ class moderation(commands.Cog):
         if not confirm:
             return
 
-        urole= ctx.guild.get_role(self.yaml_data['MuteRole'])
+        urole = ctx.guild.get_role(self.yaml_data['MuteRole'])
         try:
             await ctx.author.add_roles(urole, reason=f"{ctx.author} ({ctx.author.id}) muted themselves for {delta}")
         except:
@@ -696,9 +727,11 @@ class moderation(commands.Cog):
 
         test_str = await self.bot.db.fetchrow('SELECT * FROM selfmutes WHERE member_id = $1', ctx.author.id)
         if not test_str:
-            await self.bot.db.execute('INSERT INTO selfmutes(member_id, end_time) VALUES ($1, $2)', ctx.author.id, duration.dt)
+            await self.bot.db.execute('INSERT INTO selfmutes(member_id, end_time) VALUES ($1, $2)', ctx.author.id,
+                                      duration.dt)
         else:
-            await self.bot.db.execute('UPDATE selfmutes SET end_time = $1 WHERE member_id = $2', duration.dt, ctx.author.id)
+            await self.bot.db.execute('UPDATE selfmutes SET end_time = $1 WHERE member_id = $2', duration.dt,
+                                      ctx.author.id)
 
         # in a command that adds new task in db
         if self.autounmute.is_running():
@@ -708,15 +741,13 @@ class moderation(commands.Cog):
 
         await ctx.send("<:shut:876856376842944582> 👍")
 
-
-
-#---------------------------------------------------------------#
-#------------------------ LOCKDOWN -----------------------------#
-#---------------------------------------------------------------#
+    # ---------------------------------------------------------------#
+    # ------------------------ LOCKDOWN -----------------------------#
+    # ---------------------------------------------------------------#
 
     @commands.command(aliases=['lock', 'ld'])
     @commands.has_permissions(manage_channels=True)
-    async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
+    async def lockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason=None):
 
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -732,16 +763,20 @@ class moderation(commands.Cog):
         perms.send_messages = False
 
         if reason:
-            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'locked by {ctx.author} - {reason}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention} \n```reason: {reason}```", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                              reason=f'locked by {ctx.author} - {reason}')
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} has locked down {textchannel.mention} \n```reason: {reason}```",
+                color=ctx.me.color)
         else:
             await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'locked by {ctx.author}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention}", color=ctx.me.color)
+            embed = discord.Embed(description=f"{ctx.author.mention} has locked down {textchannel.mention}",
+                                  color=ctx.me.color)
         await textchannel.send(embed=embed)
 
-#-------------------------------------------------------------#
-#------------------------ UNLOCK -----------------------------#
-#-------------------------------------------------------------#
+    # -------------------------------------------------------------#
+    # ------------------------ UNLOCK -----------------------------#
+    # -------------------------------------------------------------#
 
     @lockdown.error
     async def clear_error(self, ctx, error):
@@ -749,7 +784,7 @@ class moderation(commands.Cog):
 
     @commands.command(aliases=['unlock', 'uld'])
     @commands.has_permissions(manage_channels=True)
-    async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason = None):
+    async def unlockdown(self, ctx, textchannel: typing.Optional[discord.TextChannel], *, reason=None):
 
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
@@ -765,23 +800,28 @@ class moderation(commands.Cog):
         perms.send_messages = True
 
         if reason:
-            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'unlocked by {ctx.author} - {reason}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention} \n```reason: {reason}```", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                              reason=f'unlocked by {ctx.author} - {reason}')
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} has unlocked {textchannel.mention} \n```reason: {reason}```",
+                color=ctx.me.color)
         else:
-            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms, reason=f'unlocked by {ctx.author}')
-            embed=discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention}", color=ctx.me.color)
+            await textchannel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                              reason=f'unlocked by {ctx.author}')
+            embed = discord.Embed(description=f"{ctx.author.mention} has unlocked {textchannel.mention}",
+                                  color=ctx.me.color)
         await textchannel.send(embed=embed)
 
     @unlockdown.error
     async def clear_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure): await self.perms_error(ctx)
 
-#---------------------------------------------------------------#
-#------------------------ GameBan ------------------------------#
-#---------------------------------------------------------------#
+    # ---------------------------------------------------------------#
+    # ------------------------ GameBan ------------------------------#
+    # ---------------------------------------------------------------#
 
     @commands.command(aliases=['smpban', 'gban'])
-    async def GameBan(self, ctx, argument: typing.Optional[str] = 'invalid name', *, reason = None):
+    async def GameBan(self, ctx, argument: typing.Optional[str] = 'invalid name', *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -789,21 +829,22 @@ class moderation(commands.Cog):
         if name:
             if reason:
                 await self.console.send(f'ban {name} {reason}')
-                embed=discord.Embed(description=f"""{ctx.author.mention} banned **{name}** from the server
+                embed = discord.Embed(description=f"""{ctx.author.mention} banned **{name}** from the server
 ```reason: {reason}```""", color=ctx.me.color)
             else:
                 await self.console.send(f'ban {name}')
-                embed=discord.Embed(description=f"""{ctx.author.mention} banned **{name}** from the server""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} banned **{name}** from the server""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         else:
             await self.error_message(ctx, 'That username is invalid!')
 
-#-----------------------------------------------------------------#
-#------------------------ GameUnban ------------------------------#
-#-----------------------------------------------------------------#
+    # -----------------------------------------------------------------#
+    # ------------------------ GameUnban ------------------------------#
+    # -----------------------------------------------------------------#
 
     @commands.command(aliases=['smpunban', 'gunban'])
-    async def GameUnban(self, ctx, argument: typing.Optional[str] = 'invalid name', *, reason = None):
+    async def GameUnban(self, ctx, argument: typing.Optional[str] = 'invalid name', *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -811,21 +852,22 @@ class moderation(commands.Cog):
         if name:
             if reason:
                 await self.console.send(f'unban {name}')
-                embed=discord.Embed(description=f"""{ctx.author.mention} unbanned **{name}** from the server
+                embed = discord.Embed(description=f"""{ctx.author.mention} unbanned **{name}** from the server
 ```reason: {reason}```""", color=ctx.me.color)
             else:
                 await self.console.send(f'unban {name}')
-                embed=discord.Embed(description=f"""{ctx.author.mention} unbanned **{name}** from the server""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} unbanned **{name}** from the server""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         else:
             await self.error_message(ctx, 'That username is invalid!')
 
-#-------------------------------------------------------------#
-#------------------------ VCBAN ------------------------------#
-#-------------------------------------------------------------#
+    # -------------------------------------------------------------#
+    # ------------------------ VCBAN ------------------------------#
+    # -------------------------------------------------------------#
 
     @commands.command()
-    async def vcban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def vcban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -838,28 +880,33 @@ class moderation(commands.Cog):
             return
         try:
             await member.add_roles(vcbanrole)
-            try: await member.move_to(None)
-            except: pass
-            mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been VC-Banned by a staff member", icon_url='https://i.imgur.com/hKNGsMb.png')
+            try:
+                await member.move_to(None)
+            except:
+                pass
+            mem_embed = discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been VC-Banned by a staff member",
+                                 icon_url='https://i.imgur.com/hKNGsMb.png')
             mem_embed.set_image(url='https://i.imgur.com/hXbvCT4.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} VC-Banned {member.mention} indefinitely...
+                embed = discord.Embed(description=f"""{ctx.author.mention} VC-Banned {member.mention} indefinitely...
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} VC-Banned {member.mention} indefinitely...""", color=ctx.me.color)
+                embed = discord.Embed(
+                    description=f"""{ctx.author.mention} VC-Banned {member.mention} indefinitely...""",
+                    color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
 
-#--------------------------------------------------------------#
-#------------------------ UNVCBAN -----------------------------#
-#--------------------------------------------------------------#
+    # --------------------------------------------------------------#
+    # ------------------------ UNVCBAN -----------------------------#
+    # --------------------------------------------------------------#
 
     @commands.command()
-    async def vcunban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason = None):
+    async def vcunban(self, ctx, member: typing.Optional[discord.Member] = None, *, reason=None):
         if not any(role in self.staff_roles for role in ctx.author.roles):
             await self.perms_error(ctx)
             return
@@ -872,20 +919,21 @@ class moderation(commands.Cog):
             return
         try:
             await member.remove_roles(vcbanrole)
-            mem_embed=discord.Embed(color=ctx.me.color)
-            mem_embed.set_author(name=f"You've been VC-Unbanned by a staff member", icon_url='https://i.imgur.com/m1MtOVS.png')
+            mem_embed = discord.Embed(color=ctx.me.color)
+            mem_embed.set_author(name=f"You've been VC-Unbanned by a staff member",
+                                 icon_url='https://i.imgur.com/m1MtOVS.png')
             mem_embed.set_image(url='https://i.imgur.com/23XECtg.png')
             if reason: mem_embed.set_footer(text=f'reason: {reason}')
             await member.send(embed=mem_embed)
             if reason:
-                embed=discord.Embed(description=f"""{ctx.author.mention} VC-Unbanned {member.mention}
+                embed = discord.Embed(description=f"""{ctx.author.mention} VC-Unbanned {member.mention}
 ```reason: {reason}```""", color=ctx.me.color)
             else:
-                embed=discord.Embed(description=f"""{ctx.author.mention} VC-Unbanned {member.mention}""", color=ctx.me.color)
+                embed = discord.Embed(description=f"""{ctx.author.mention} VC-Unbanned {member.mention}""",
+                                      color=ctx.me.color)
             await ctx.send(embed=embed)
         except:
             await self.error_message(ctx, 'something went wrong...')
-
 
 
 def setup(bot):

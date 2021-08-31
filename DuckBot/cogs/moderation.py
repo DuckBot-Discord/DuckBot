@@ -1,11 +1,15 @@
 import argparse
+import datetime
+
 import discord
 import re
 import shlex
 import typing
 from collections import Counter
 
-from discord.ext import commands, menus
+from discord.ext import commands, tasks, menus
+
+from helpers import time_formats as helpers
 
 
 def setup(bot):
@@ -51,13 +55,41 @@ class BanEmbed(menus.ListPageSource):
         return embed
 
 
+class Confirm(menus.Menu):
+    def __init__(self, msg):
+        super().__init__(timeout=30.0, delete_message_after=True)
+        self.msg = msg
+        self.result = None
+
+    async def send_initial_message(self, ctx, channel):
+        return await channel.send(self.msg)
+
+    @menus.button('\N{WHITE HEAVY CHECK MARK}')
+    async def do_confirm(self, payload):
+        self.result = True
+        self.stop()
+
+    @menus.button('\N{CROSS MARK}')
+    async def do_deny(self, payload):
+        self.result = False
+        self.stop()
+
+    async def prompt(self, ctx):
+        await self.start(ctx, wait=True)
+        return self.result
+
+
 class Moderation(commands.Cog):
     """🔨Moderation commands! 👮‍♂️"""
 
     def __init__(self, bot):
         self.bot = bot
+        self.temporary_mutes.start()
 
-    # --------------- FUNCTIONS ---------------#
+    def cog_unload(self):
+        self.temporary_mutes.cancel()
+
+    # --------------- FUNCTIONS --------------- #
 
     @staticmethod
     async def perms_error(ctx):
@@ -107,6 +139,46 @@ class Moderation(commands.Cog):
             await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
         else:
             await ctx.send(to_send, delete_after=10)
+
+    # ------------ TASKS ---------- #
+
+    @tasks.loop()
+    async def temporary_mutes(self):
+        # if you don't care about keeping records of old tasks, remove this WHERE and change the UPDATE to DELETE
+        next_task = await self.bot.db.fetchrow('SELECT * FROM temporary_mutes ORDER BY end_time LIMIT 1')
+        # if no remaining tasks, stop the loop
+        if next_task is None:
+            self.temporary_mutes.cancel()
+            return
+
+        await discord.utils.sleep_until(next_task['end_time'])
+
+        guild: discord.Guild = self.bot.get_guild(next_task['guild_id'])
+
+        if guild:
+
+            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1',
+                                                   next_task['guild_id'])
+            if mute_role:
+
+                role = guild.get_role(int(mute_role))
+                if isinstance(role, discord.Role):
+
+                    if not role > guild.me.top_role:
+                        try:
+                            member = (guild.get_member(next_task['member_id']) or
+                                      await guild.fetch_member(next_task['member_id']))
+                            if member:
+                                await member.remove_roles(role)
+                        except(discord.Forbidden, discord.HTTPException):
+                            pass
+
+        await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
+                                  next_task['guild_id'], next_task['member_id'])
+
+    @temporary_mutes.before_loop
+    async def wait_for_bot_ready(self):
+        await self.bot.wait_until_ready()
 
     # --------------------------------------------------------------#
     # ------------------------ PREFIX ------------------------------#
@@ -230,8 +302,8 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
     @commands.guild_only()
-    async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> typing.Optional[
-        discord.Message]:
+    async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> \
+            typing.Optional[discord.Message]:
         new = new or member.name
         old = member.display_name
         if len(new) > 32:
@@ -518,7 +590,9 @@ class Moderation(commands.Cog):
             ban_entry = bans[number]
         except IndexError:
             embed = discord.Embed(color=0xFF0000,
-                                  description=f"That member was not found. \nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`\n To get the number use the `{ctx.prefix}{ctx.command}` command")
+                                  description=f"That member was not found. "
+                                              f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
+                                              f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
             await ctx.send(embed=embed)
             return
 
@@ -615,6 +689,8 @@ class Moderation(commands.Cog):
     # -------------------------------- MUTE STUFF ------------------------------------#
     # --------------------------------------------------------------------------------#
 
+    # Indefinitely mute member
+
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
@@ -651,12 +727,14 @@ class Moderation(commands.Cog):
                               f"\nReason: {only_reason}",
                               allowed_mentions=discord.AllowedMentions().none())
 
+    # Get mute role
+
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
-        only_reason=reason
+        only_reason = reason
         reason = reason or "No reason given"
         reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
         if not can_execute_action(ctx, ctx.author, member):
@@ -664,12 +742,12 @@ class Moderation(commands.Cog):
 
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
-            return await ctx.send("You don't have a mute role assigned!"
+            return await ctx.send("This server doesn't have a mute role!"
                                   "\n create one with the `muterole add` command")
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
-            return await ctx.send("It seems like the muted role isn't in this server!"
+            return await ctx.send("The muted role seems to have been deleted!"
                                   "\nRe-assign it with the `muterole set` command")
 
         if role > ctx.me.top_role:
@@ -687,6 +765,8 @@ class Moderation(commands.Cog):
                               f"\nReason: {only_reason}",
                               allowed_mentions=discord.AllowedMentions().none())
 
+    # Add mute role
+
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
@@ -697,16 +777,18 @@ class Moderation(commands.Cog):
             mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
 
             if not mute_role:
-                return await ctx.send("You don't have a mute role assigned!"
+                return await ctx.send("This server doesn't have a mute role!"
                                       "\n create one with the `muterole add` command")
 
             role = ctx.guild.get_role(int(mute_role))
             if not isinstance(role, discord.Role):
                 return await ctx.send("The muted role seems to have been deleted!"
-                                      "\nRe-assign it with the `muterole add` command")
+                                      "\nRe-assign it with the `muterole set` command")
 
             return await ctx.send(f"This server's mute role is {role.mention}",
                                   allowed_mentions=discord.AllowedMentions().none())
+
+    # Add mute role
 
     @muterole.command(name="add", aliases=["set"])
     async def muterole_add(self, ctx: commands.Context, role: discord.Role):
@@ -718,6 +800,8 @@ class Moderation(commands.Cog):
         return await ctx.send(f"Updated the muted role to {role.mention}!",
                               allowed_mentions=discord.AllowedMentions().none())
 
+    # Remove mute role
+
     @muterole.command(name="remove", aliases=["unset"])
     async def muterole_remove(self, ctx: commands.Context):
         await self.bot.db.execute(
@@ -727,3 +811,59 @@ class Moderation(commands.Cog):
 
         return await ctx.send(f"Removed this server's mute role!",
                               allowed_mentions=discord.AllowedMentions().none())
+
+    # self mutes
+
+    @commands.command()
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def selfmute(self, ctx, *, duration: helpers.ShortTime):
+        """Temporarily mutes yourself for the specified duration.
+        The duration must be in a short time form, e.g. 4h. Can
+        only mute yourself for a maximum of 24 hours and a minimum
+        of 5 minutes.
+        Do not ask a moderator to unmute you.
+        """
+        reason = "self mute"
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not mute_role:
+            return await ctx.send("This server doesn't have a mute role!")
+
+        role = ctx.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            return await ctx.send("It seems like the muted role was deleted, or I can't find it right now!")
+
+        if role > ctx.me.top_role:
+            return await ctx.send("I'm not high enough in role hierarchy to assign the muted role!")
+
+        created_at = ctx.message.created_at
+        if duration.dt > (created_at + datetime.timedelta(days=1)):
+            return await ctx.send('Duration is too long. Must be at most 24 hours.')
+
+        if duration.dt < (created_at + datetime.timedelta(minutes=5)):
+            return await ctx.send('Duration is too short. Must be at least 5 minutes.')
+
+        delta = helpers.human_timedelta(duration.dt, source=created_at)
+        warning = (f"Are you sure you want to be muted for {delta}? "
+                   f"**Don't ask the moderators to undo this!**")
+        confirm = await Confirm(warning).prompt(ctx)
+        if not confirm:
+            return
+
+        try:
+            await ctx.author.add_roles(role, reason=reason)
+        except discord.Forbidden:
+            return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
+
+        await self.bot.db.execute("INSERT INTO temporary_mutes(guild_id, member_id, reason, end_time) "
+                                  "VALUES ($1, $2, $3, $4) ON CONFLICT (guild_id, member_id) DO "
+                                  "UPDATE SET reason = $3, end_time = $4",
+                                  ctx.guild.id, ctx.author.id, reason, duration.dt)
+
+        # in a command that adds new task in db
+        if self.temporary_mutes.is_running():
+            self.temporary_mutes.restart()
+        else:
+            self.temporary_mutes.start()
+
+        await ctx.send("<:shut:876856376842944582> 👍")
