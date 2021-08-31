@@ -69,7 +69,7 @@ Here's some extra information about Minecraft usernames, accounts and how to fin
 
                 elif cs.status != 200: return await message.channel.send(f"{cs.status} - something went wrong...")
 
-                elif user.setstatus == discord.Status.online:
+                elif user.status == discord.Status.online:
                     await message.author.add_roles(message.guild.get_role(833843541872214056),message.guild.get_role(798698824738668605))
                     try: await message.author.remove_roles(message.guild.get_role(851593341409820722))
                     except: pass

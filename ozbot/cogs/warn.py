@@ -1,63 +1,83 @@
-import json, random, discord, aiohttp, typing, asyncio
+import aiohttp
+import asyncio
+import discord
+import json
+import random
+import typing
 from random import randint
+
 from discord.ext import commands
 
 
-class events(commands.Cog):
+class Events(commands.Cog):
     """events only, not much."""
+
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
-        if not before.bot: return
+        if not before.bot:
+            return
 
-##skyblock
-        if before.setstatus is discord.Status.online and after.setstatus is discord.Status.offline and before.id == 755309062555435070:
+        # skyblock
+        if before.status is discord.Status.online and after.status is discord.Status.offline and before.id == 755309062555435070:
             print("Skyblock went offline")
             await asyncio.sleep(120)
             print("checking...")
             user = self.bot.get_guild(706624339595886683).get_member(755309062555435070)
-            if user.setstatus == discord.Status.online: return
+            if user.status == discord.Status.online:
+                return
             else:
-                await self.bot.get_channel(799741426886901850).send("Skyblock has been offline for 2 minutes, y'all might want to check on that!")
-                await self.bot.get_channel(755309358967029801).send("It seems like the server went down! I've notified the staff about it. They'll fix it soon")
+                await self.bot.get_channel(799741426886901850).send(
+                    "Skyblock has been offline for 2 minutes, y'all might want to check on that!")
+                await self.bot.get_channel(755309358967029801).send(
+                    "It seems like the server went down! I've notified the staff about it. They'll fix it soon")
                 print("Skyblock is still offline")
 
-##creative
-        if before.setstatus is discord.Status.online and after.setstatus is discord.Status.offline and before.id == 764623648132300811:
+        # creative
+        if before.status is discord.Status.online and after.status is discord.Status.offline and before.id == 764623648132300811:
             print("Creative went offline")
             await asyncio.sleep(120)
             print("checking...")
             user = self.bot.get_guild(706624339595886683).get_member(764623648132300811)
-            if user.setstatus == discord.Status.online: return
+            if user.status == discord.Status.online:
+                return
             else:
-                await self.bot.get_channel(799741426886901850).send("Creative has been offline for 2 minutes, y'all might want to check on that!")
-                await self.bot.get_channel(764624072994062367).send("It seems like the server went down! I've notified the staff about it. They'll fix it soon")
+                await self.bot.get_channel(799741426886901850).send(
+                    "Creative has been offline for 2 minutes, y'all might want to check on that!")
+                await self.bot.get_channel(764624072994062367).send(
+                    "It seems like the server went down! I've notified the staff about it. They'll fix it soon")
                 print("Creative is still offline")
 
-##lobby
-        if before.setstatus is discord.Status.online and after.setstatus is discord.Status.offline and before.id == 755311461332418610:
+        # lobby
+        if before.status is discord.Status.online and after.status is discord.Status.offline and before.id == 755311461332418610:
             print("Lobby went offline")
             await asyncio.sleep(120)
             print("checking...")
             user = self.bot.get_guild(706624339595886683).get_member(755311461332418610)
-            if user.setstatus == discord.Status.online: return
+            if user.status == discord.Status.online:
+                return
             else:
-                await self.bot.get_channel(799741426886901850).send("Lobby has been offline for 2 minutes, y'all might want to check on that!")
-                await self.bot.get_channel(755311693042548806).send("It seems like the server went down! I've notified the staff about it. They'll fix it soon")
-                print("Lobby is still offline")\
+                await self.bot.get_channel(799741426886901850).send(
+                    "Lobby has been offline for 2 minutes, y'all might want to check on that!")
+                await self.bot.get_channel(755311693042548806).send(
+                    "It seems like the server went down! I've notified the staff about it. They'll fix it soon")
+                print("Lobby is still offline")
 
-##survival
-        if before.setstatus is discord.Status.online and after.setstatus is discord.Status.offline and before.id == 799749818062077962:
+                ##survival
+        if before.status is discord.Status.online and after.status is discord.Status.offline and before.id == 799749818062077962:
             print("survival went offline")
             await asyncio.sleep(120)
             print("checking...")
             user = self.bot.get_guild(706624339595886683).get_member(799749818062077962)
-            if user.setstatus == discord.Status.online: return
+            if user.status == discord.Status.online:
+                return
             else:
-                await self.bot.get_channel(799741426886901850).send("Survival has been offline for 2 minutes, y'all might want to check on that!")
-                await self.bot.get_channel(799483071069945866).send("It seems like the server went down! I've notified the staff about it. They'll fix it soon")
+                await self.bot.get_channel(799741426886901850).send(
+                    "Survival has been offline for 2 minutes, y'all might want to check on that!")
+                await self.bot.get_channel(799483071069945866).send(
+                    "It seems like the server went down! I've notified the staff about it. They'll fix it soon")
                 print("Survival is still offline")
 
     @commands.Cog.listener()
@@ -74,11 +94,13 @@ class events(commands.Cog):
                     if before.channel.id in chids: return
                 await textchannel.send("""
 !c tellraw @a ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"%s","color":"gold"},{"text":" joined VC","color":"yellow"}]
-"""%(member.display_name))
+""" % member.display_name)
                 channel = self.bot.get_channel(799483071069945866)
                 hooks = await channel.webhooks()
                 hook = hooks[0]
-                await hook.send(username = "VC bot", content=f"<:incomingarrow:800218133225930763> **{member.display_name}** joined VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
+                await hook.send(username="VC bot",
+                                content=f"<:incomingarrow:800218133225930763> **{member.display_name}** joined VC",
+                                avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
             elif after.channel == staffchat and before.channel != staffchat:
                 await textchannel.send(f"!c helpop {member.display_name} joined Staff-VC")
 
@@ -88,16 +110,16 @@ class events(commands.Cog):
                     if after.channel.id in chids: return
                 await textchannel.send("""
 !c tellraw @a ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"%s","color":"gold"},{"text":" left VC","color":"yellow"}]
-"""%(member.display_name))
+""" % member.display_name)
                 channel = self.bot.get_channel(799483071069945866)
                 hooks = await channel.webhooks()
                 hook = hooks[0]
-                await hook.send(username = "VC bot", content=f"<:outgoingarrow:800218133364867073> **{member.display_name}** left VC", avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
+                await hook.send(username="VC bot",
+                                content=f"<:outgoingarrow:800218133364867073> **{member.display_name}** left VC",
+                                avatar_url="https://cdn.discordapp.com/emojis/860330111377866774.png?v=1")
             elif before.channel == staffchat and after.channel != staffchat:
                 await textchannel.send(f"!c helpop {member.display_name} left Staff-VC")
 
 
-
-
 def setup(bot):
-    bot.add_cog(events(bot))
+    bot.add_cog(Events(bot))

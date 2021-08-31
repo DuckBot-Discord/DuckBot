@@ -89,3 +89,16 @@ class Fun(commands.Cog, name='Fun'):
         embed.set_footer(text='by inspirobot.me',
                          icon_url='https://inspirobot.me/website/images/inspirobot-dark-green.png')
         return await ctx.send(embed=embed)
+
+    @commands.command()
+    async def banana(self, ctx, member: discord.Member = None):
+        member = member or ctx.author
+        size = random.uniform(8, 25)
+        embed = discord.Embed(colour=0xFFCD71)
+        embed.description = f"""
+                             8{'=' * int(round(size/2, 0))}D
+
+                             **{member.name}**'s 🍌 is {round(size, 1)} cm
+                             """
+        embed.set_author(icon_url=member.display_avatar.url, name=member)
+        await ctx.send(embed=embed)
