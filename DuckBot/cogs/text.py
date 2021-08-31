@@ -78,8 +78,8 @@ class General(commands.Cog):
         usage="<channel> <message_or_reply>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def echo(self, ctx: commands.Context, channel: typing.Union[int, typing.Optional[discord.TextChannel]], *,
-                   message_or_reply: str = None) -> discord.Message:
+    async def echo(self, ctx: commands.Context, channel: typing.Union[discord.TextChannel, int], *, message_or_reply: str = None)\
+            -> discord.Message:
         """"Echoes a message to another channel"""
         if isinstance(channel, int):
             channel = self.bot.get_channel(channel)
