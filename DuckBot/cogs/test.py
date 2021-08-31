@@ -93,9 +93,10 @@ Region: {server.region}
 
     @muterole.command(name="add")
     async def muterole_add(self, ctx: commands.Context, role: discord.Role):
-        await self.bot.db.execute("INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
-                                  "ON CONFLICT (guild_id, muted_id) "
-                                  "DO UPDATE SET guild_id = $1, muted_id = $2", ctx.guild.id, role.id)
+        await self.bot.db.execute(
+            "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+            ctx.guild.id, role.id)
 
         return await ctx.send(f"This guild's mute role is {role.mention}",
                               allowed_mentions=discord.AllowedMentions().none())

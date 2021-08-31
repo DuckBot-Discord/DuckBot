@@ -112,25 +112,27 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def prefix(self, ctx, new: typing.Optional[str] = None):
-        """🎇NEW changes the bots prefix for this server.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
+    async def prefix(self, ctx: commands.Context,
+                     new: typing.Optional[str]) -> discord.Message:
+        """changes the bots prefix for this server.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
 
         old = await self.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+
         if not new:
-            old = old or 'db.'
-            await ctx.send(f"my prefix here is `{old}`")
-            return
+            return await ctx.send(f"my prefix here is `{(old or 'db.')}`")
 
         if len(new) > 10:
             return await ctx.send("Prefixes can only be up to 10 characters")
-        if not old:
-            await self.bot.db.execute('INSERT INTO prefixes(guild_id, prefix) VALUES ($1, $2)', ctx.guild.id, new)
-            await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
-        elif old != new:
-            await self.bot.db.execute('UPDATE prefixes SET prefix = $1 WHERE guild_id = $2', new, ctx.guild.id)
-            await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
+
+        if old != new:
+            await self.bot.db.execute(
+                "INSERT INTO prefixes(guild_id, prefix) VALUES ($1, $2) "
+                "ON CONFLICT (guild_id) DO UPDATE SET prefix = $2",
+                ctx.guild.id, new)
+
+            return await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
         else:
-            await ctx.send(f"`{new}` is already my prefix")
+            return await ctx.send(f"My prefix is already `{new}`!")
 
     # ------------------------------------------------------------#
     # ------------------------ KICK ------------------------------#
