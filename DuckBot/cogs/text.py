@@ -55,9 +55,9 @@ class General(commands.Cog):
                               msg)  # Discord invite regex
         if results or results2:
             await ctx.send(
-                f"`Urls or invites aren't allowed!",
-                delete_after=5)
-            await ctx.message.delete(delay=5)
+                f"hey, {ctx.author.mention}. Urls or invites aren't allowed!",
+                delete_after=10)
+            return await ctx.message.delete(delay=10)
 
         await ctx.message.delete(delay=0)
         if ctx.channel.permissions_for(ctx.author).manage_messages:
