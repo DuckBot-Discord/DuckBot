@@ -301,7 +301,7 @@ class Utility(commands.Cog):
                     unlocked.append(emoji)
                     await asyncio.sleep(1)
             await ctx.send(f"Done! Unlocked {len(unlocked)} emoji(s)"
-                           f"\n {' '.join(unlocked)}")
+                           f"\n {' '.join([str(em) for em in unlocked])}")
 
     @emoji.command(name="steal", hidden=True, aliases=['s'])
     @commands.is_owner()
