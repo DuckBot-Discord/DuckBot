@@ -142,11 +142,11 @@ class Utility(commands.Cog):
 
         for feature, label in all_features.items():
             enabled_features.append(f'{ctx.tick(True)} {label}')
-
+        nl = '\n'
         embed = discord.Embed(color=discord.Colour.blurple(),
                               title=ctx.guild.name,
-                              description=f"**Server ID:** {ctx.guild.id}"
-                                          f"\n**Owner** {ctx.guild.owner} ({ctx.guild.owner.id})")
+                              description=f"**<:rich_presence:658538493521166336> Features**"
+                                          f"{nl.join(enabled_features+disabled_features)}")
 
         embed.add_field(name="<:rich_presence:658538493521166336> Features",
                         value='\n'.join(enabled_features+disabled_features))
