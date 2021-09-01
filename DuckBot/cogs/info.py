@@ -601,9 +601,9 @@ DuckBot's top role position
         denied = []
         for perm in target.guild_permissions:
             if perm[1] is True:
-                allowed.append(await ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
+                allowed.append(ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
             elif perm[1] is False:
-                denied.append(await ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
+                denied.append(ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
 
         embed = discord.Embed(color=ctx.me.color)
         embed.set_author(icon_url=target.display_avatar.url, name=target)

@@ -22,7 +22,7 @@ initial_extensions = (
 class CustomContext(commands.Context):
 
     @staticmethod
-    async def tick(opt: bool, text:str=None) -> str:
+    def tick(opt: bool, text:str=None) -> str:
         ticks = {
             True: '<:greenTick:596576670815879169>',
             False: '<:redTick:596576672149667840>',
@@ -34,7 +34,7 @@ class CustomContext(commands.Context):
         return emoji
 
     @staticmethod
-    async def default_tick(opt: bool, text:str=None) -> str:
+    def default_tick(opt: bool, text:str=None) -> str:
         ticks = {
             True: '✅',
             False: '❌',
@@ -46,7 +46,7 @@ class CustomContext(commands.Context):
         return emoji
 
     @staticmethod
-    async def square_tick(opt: bool, text:str=None) -> str:
+    def square_tick(opt: bool, text:str=None) -> str:
         ticks = {
             True: '🟩',
             False: '🟥',
