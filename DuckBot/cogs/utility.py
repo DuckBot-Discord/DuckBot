@@ -150,7 +150,7 @@ class Utility(commands.Cog):
                         value='\n'.join(enabled_features), inline=True)
 
         embed.add_field(name="<:info:860295406349058068> General Info:",
-                        value=f"<:servers:870152102759006208> {guild.id}"
+                        value=f"🆔 {guild.id}"
                               f"\n<:owner_crown:845946530452209734> {guild.owner}"
                               f"\n👤 {len([m for m in guild.members if not m.bot])} "
                               f"(🤖 {len([m for m in guild.members if m.bot])})"
@@ -182,7 +182,7 @@ class Utility(commands.Cog):
 
         last_boost = max(guild.members, key=lambda m: m.premium_since or guild.created_at)
         if last_boost.premium_since is not None:
-            boost = f"\n<:booster4:585764446178246657> {last_boost} " \
+            boost = f"\n{last_boost}" \
                     f"\n╰ {discord.utils.format_dt(last_boost.premium_since, style='R')}"
         else:
             boost = "\n╰ No active boosters"
@@ -190,7 +190,7 @@ class Utility(commands.Cog):
         embed.add_field(name="<:booster4:860644548887969832> Boosts:",
                         value=f"Level: {guild.premium_tier}"
                               f"\nAmount: {guild.premium_subscription_count}"
-                              f"\n**Last booster:**{boost}")
+                              f"\n**<:booster4:860644548887969832> Last booster:**{boost}")
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
