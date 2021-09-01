@@ -155,7 +155,8 @@ class Utility(commands.Cog):
                               f"\n👤 {len([m for m in guild.members if not m.bot])} "
                               f"(🤖 {len([m for m in guild.members if m.bot])})"
                               f"\n╰ ➕ {guild.member_count}/{guild.max_members}"
-                              f"\n🌐 Server Region: {helper.get_server_region(guild)}")
+                              f"\n🌐 Server Region: {helper.get_server_region(guild)}"
+                              f"\n<:role:860644904048132137> Roles: {len(guild.roles)}")
 
         if guild.description:
             desc = guild.description
