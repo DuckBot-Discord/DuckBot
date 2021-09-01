@@ -228,6 +228,11 @@ class Utility(commands.Cog):
                     aliases=['em'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def emoji(self, ctx, custom_emojis: commands.Greedy[discord.PartialEmoji]):
+
+        if not custom_emojis:
+            raise commands.MissingRequiredArgument(
+                Parameter(name='custom_emojis', kind=Parameter.POSITIONAL_ONLY))
+
         if len(custom_emojis) > 5:
             raise commands.TooManyArguments()
 
