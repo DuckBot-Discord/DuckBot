@@ -867,7 +867,7 @@ class Moderation(commands.Cog):
                 await asyncio.sleep(1)
 
         ending_time = time.monotonic()
-        complete_time = (starting_time - ending_time) * 60000
+        complete_time = (ending_time - starting_time) * 1000 * 60
         await ctx.send(f"done! took {round(complete_time, 2)}")
 
     @muterole.command(name="delete")
