@@ -878,7 +878,12 @@ class Moderation(commands.Cog):
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
-            return await ctx.send("It seems like the muted role was deleted, or I can't find it right now!")
+            await self.bot.db.execute(
+                "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+                "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+                ctx.guild.id, None)
+
+            return await ctx.send("It seems like the muted role was already deleted, or I can't find it right now!")
 
         if role > ctx.me.top_role:
             return await ctx.send("I'm not high enough in role hierarchy to delete that role!")
@@ -950,6 +955,57 @@ class Moderation(commands.Cog):
             self.temporary_mutes.start()
 
         await ctx.send("<:shut:882382724382490644> 👍")
+
+    # Temp-mute
+
+    @commands.command()
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def tempmute(self, ctx, member: discord.Member, *, duration: helpers.ShortTime):
+        """Temporarily mutes a member for the specified duration.
+        The duration must be in a short time form, e.g. 4h. Can
+        """
+        reason = f"Temporary mute by {ctx.author} ({ctx.author.id})"
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not mute_role:
+            return await ctx.send("You don't have a mute role assigned!"
+                                  "\n create one with the `muterole create` command or add one with "
+                                  "the `muterole set` command if a muted role already exists.")
+
+        role = ctx.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            return await ctx.send("It seems like the muted role isn't in this server!"
+                                  "\nRe-assign it with the `muterole set` or `muterole create` command.")
+
+        if not can_execute_action(ctx, ctx.author, member):
+            return await ctx.send("You're not high enough in role hierarchy to do that!")
+
+        if role > ctx.me.top_role:
+            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+
+        created_at = ctx.message.created_at
+
+        if duration.dt < (created_at + datetime.timedelta(minutes=1)):
+            return await ctx.send('Duration is too short. Must be at least 1 minute.')
+
+        delta = helpers.human_timedelta(duration.dt, source=created_at)
+
+        try:
+            await member.add_roles(role, reason=reason)
+        except discord.Forbidden:
+            return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
+
+        await self.bot.db.execute("INSERT INTO temporary_mutes(guild_id, member_id, reason, end_time) "
+                                  "VALUES ($1, $2, $3, $4) ON CONFLICT (guild_id, member_id) DO "
+                                  "UPDATE SET reason = $3, end_time = $4",
+                                  ctx.guild.id, member.id, reason, duration.dt)
+
+        if self.temporary_mutes.is_running():
+            self.temporary_mutes.restart()
+        else:
+            self.temporary_mutes.start()
+
+        await ctx.send(f"**{ctx.author}** muted **{member}** for **{delta}**")
 
     @commands.Cog.listener('on_guild_channel_create')
     async def automatic_channel_update(self, channel):

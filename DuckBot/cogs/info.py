@@ -236,15 +236,15 @@ class MyHelp(commands.HelpCommand):
 
         embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}```")
 
-        embed.add_field(name="📰 Latest News - <t:1629668507:d> (<t:1629668507:R>)", value=f"""
+        embed.add_field(name="📰 Latest News - <t:1630462700:d> (<t:1630462700:R>)", value=f"""
 _ _
-> <:update:264184209617321984> **Updated to discord.py Version 2.0(BETA)**
-‍*If a command isn't working as intended, or not at all, DM me ({self.context.me.mention}) with the command you tried to execute and it will be fixed!* 💞
-
 > \U0001f518 **Added buttons to the help menu.**
 _Press on them to invite me!_ ❣
 
 > 🎓 **Added proper credits to the help command**
+
+> <:commands:861817699729145901> **NEW! Mute commands**
+_`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_
 """)
 
         embed.set_footer(text=f"Help command inspiration and credits at \"{self.context.clean_prefix}about\"")
