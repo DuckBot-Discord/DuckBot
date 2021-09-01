@@ -175,14 +175,12 @@ class Utility(commands.Cog):
 
         embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
                         value=f"Static: {len([e for e in guild.emojis if not e.animated])}/{guild.emoji_limit} "
-                              f"({len([e for e in guild.emojis if not e.animated and not e.available])} locked)"
-                              f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} "
-                              f"({len([e for e in guild.emojis if e.animated and not e.available])} locked)",
+                              f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} ",
                         inline=True)
 
         last_boost = max(guild.members, key=lambda m: m.premium_since or guild.created_at)
         if last_boost.premium_since is not None:
-            boost = f"Last Boost: {last_boost} ({discord.utils.format_dt(last_boost.premium_since, style='R')})"
+            boost = f"{last_boost} ({discord.utils.format_dt(last_boost.premium_since, style='R')})"
         else:
             boost = "No active boosters"
 
