@@ -866,6 +866,28 @@ class Moderation(commands.Cog):
         complete_time = (starting_time - ending_time) * 60000
         await ctx.send(f"done! took {round(complete_time, 2)}")
 
+    @commands.command(name="delete")
+    @commands.has_permissions(manage_messages=True)
+    async def muterole_delete(self, ctx: commands.Context):
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not mute_role:
+            return await ctx.send("This server doesn't have a mute role!")
+
+        role = ctx.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            return await ctx.send("It seems like the muted role was deleted, or I can't find it right now!")
+
+        if role > ctx.me.top_role:
+            return await ctx.send("I'm not high enough in role hierarchy to delete that role!")
+
+        try:
+            await role.delete(reason=f"Mute role deletion. Requested by {ctx.author} ({ctx.author.id})")
+        except discord.Forbidden:
+            return await ctx.send("I can't delete that role!")
+        except discord.HTTPException:
+            return await ctx.send("Something went wrong while deleting the muted role!")
+        await ctx.send("🚮")
+
     # self mutes
 
     @commands.command()
