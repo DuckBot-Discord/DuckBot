@@ -1,3 +1,4 @@
+import asyncio
 import re
 from inspect import Parameter
 
@@ -252,6 +253,11 @@ class Utility(commands.Cog):
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_lock(self, ctx: commands.Context, server_emoji: discord.Emoji,
                          roles: commands.Greedy[discord.Role]) -> discord.Message:
+        """
+        Locks an emoji to one or multiple roles. Input as many roles as you want in the "[roles]..." parameter.
+        Note: admin/owner DOES NOT bypass this lock, so be sure to have the role if you wish to unlock the emoji.
+        # If the role is removed and re-assigned, the locked emoji will not be visible until you restart your client.
+        """
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
         embed = discord.Embed(color=ctx.me.color,
@@ -264,11 +270,14 @@ class Utility(commands.Cog):
         await ctx.send(embed=embed)
         await server_emoji.edit(roles=roles)
 
-    @emoji.command(name="unlock")
+    @emoji.group(name="unlock", invoke_without_command=True)
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_unlock(self, ctx: commands.Context, server_emoji: discord.Emoji) -> discord.Message:
+        """
+        Unlocks a locked emoji.
+        """
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
         await server_emoji.edit(roles=[])
@@ -276,6 +285,23 @@ class Utility(commands.Cog):
                               title="Successfully unlocked emoji!",
                               description=f"**Allowed {server_emoji} to @everyone**")
         return await ctx.send(embed=embed)
+
+    @emoji_unlock.command(name = "all")
+    @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
+    async def emoji_unlock_all(self, ctx: commands.Context):
+        """
+        Unlocks all locked emojis in the current server.
+        """
+        async with ctx.typing():
+            unlocked = []
+            for emoji in ctx.guild.emojis:
+                if emoji.roles:
+                    await emoji.edit(roles=None, reason=f"Unlock all emoji requested by {ctx.author} ({ctx.author.id})")
+                    unlocked.append(emoji)
+                    await asyncio.sleep(1)
+            await ctx.send(f"Done! Unlocked {len(unlocked)} emoji(s)"
+                           f"\n {' '.join(unlocked)}")
 
     @emoji.command(name="steal", hidden=True, aliases=['s'])
     @commands.is_owner()
