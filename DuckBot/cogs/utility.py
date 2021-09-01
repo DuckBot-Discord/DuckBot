@@ -148,10 +148,7 @@ class Utility(commands.Cog):
                               description=f"**<:rich_presence:658538493521166336> Features**"
                                           f"{nl.join(enabled_features+disabled_features)}")
 
-        embed.add_field(name="<:rich_presence:658538493521166336> Features",
-                        value='\n'.join(enabled_features+disabled_features))
-
-        await ctx.send(len(embed.description))
+        await ctx.send(embed=embed)
 
         return
 
