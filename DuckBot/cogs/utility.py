@@ -116,22 +116,6 @@ class Utility(commands.Cog):
         disabled_features = []
         features = set(guild.features)
         all_features = {
-            'PARTNERED': 'Partnered',
-            'VERIFIED': 'Verified',
-            'DISCOVERABLE': 'Server Discovery',
-            'COMMUNITY': 'Community Server',
-            'FEATURABLE': 'Featured',
-            'WELCOME_SCREEN_ENABLED': 'Welcome Screen',
-            'INVITE_SPLASH': 'Invite Splash',
-            'VIP_REGIONS': 'VIP Voice Servers',
-            'VANITY_URL': 'Vanity Invite Url',
-            'COMMERCE': 'Commerce',
-            'LURKABLE': 'Lurkable',
-            'NEWS': 'News Channels',
-            'ANIMATED_ICON': 'Animated Icon',
-            'BANNER': 'Banner',
-        }
-        all_features2 = {
             'ANIMATED_ICON': 'Animated Server Icon',
             'BANNER': 'Server Banner',
             'COMMERCE': 'Commerce',
