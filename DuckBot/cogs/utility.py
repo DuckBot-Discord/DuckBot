@@ -116,35 +116,33 @@ class Utility(commands.Cog):
         disabled_features = []
         features = set(guild.features)
         all_features = {
+            'COMMUNITY': 'Community Server',
+            'VERIFIED': 'Verified',
+            'DISCOVERABLE': 'Discoverable',
+            'PARTNERED': 'Partnered',
+            'FEATURABLE': 'Featured',
+            'COMMERCE': 'Commerce',
+            'MONETIZATION_ENABLED': 'Monetization',
+            'NEWS': 'News Channels',
+            'PREVIEW_ENABLED': 'Preview Enabled',
+            'INVITE_SPLASH': 'Invite Splash',
+            'VANITY_URL': 'Vanity Invite URL',
             'ANIMATED_ICON': 'Animated Server Icon',
             'BANNER': 'Server Banner',
-            'COMMERCE': 'Commerce',
-            'COMMUNITY': 'Community Server',
-            'DISCOVERABLE': 'Discoverable',
-            'FEATURABLE': 'Featured',
-            'INVITE_SPLASH': 'Invite Splash',
-            'MEMBER_VERIFICATION_GATE_ENABLED': 'Membership Screening',
-            'MONETIZATION_ENABLED': 'Monetization',
             'MORE_EMOJI': 'More Emoji',
             'MORE_STICKERS': 'More Stickers',
-            'NEWS': 'News Channels',
-            'PARTNERED': 'Partnered',
-            'PREVIEW_ENABLED': 'Preview Enabled',
+            'WELCOME_SCREEN_ENABLED': 'Welcome Screen',
+            'MEMBER_VERIFICATION_GATE_ENABLED': 'Membership Screening',
+            'TICKETED_EVENTS_ENABLED': 'Ticketed Events',
+            'VIP_REGIONS': 'VIP Voice Regions',
             'PRIVATE_THREADS': 'Private Threads',
             'THREE_DAY_THREAD_ARCHIVE': '3 Day Thread Archive',
             'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
-            'TICKETED_EVENTS_ENABLED': 'Ticketed Events',
-            'VANITY_URL': 'Vanity Invite URL',
-            'VERIFIED': 'Verified',
-            'VIP_REGIONS': 'VIP Voice Regions',
-            'WELCOME_SCREEN_ENABLED': 'Welcome Screen'
         }
 
         for feature, label in all_features.items():
             if feature in features:
                 enabled_features.append(f'{ctx.default_tick(True)} {label}')
-            else:
-                disabled_features.append(f'{ctx.default_tick(None)} {label}')
 
         embed = discord.Embed(color=discord.Colour.blurple(),
                               title=ctx.guild.name,
