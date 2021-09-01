@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import datetime
 
 import discord
@@ -833,7 +834,33 @@ class Moderation(commands.Cog):
 
     @commands.has_permissions(manage_guild=True)
     @muterole.command(name="create")
-    async def muterole_create(self, ctx):
+    async def muterole_create(self, ctx: commands.Context):
+        estimated_time = (len(ctx.guild.channels) * 0.75)
+        await ctx.send(f"Creating Muted role, and applying it to all channels. "
+                       f"This may take awhile ETA: {estimated_time} seconds")
+        async with ctx.typing():
+            permissions = discord.Permissions(send_messages=False,
+                                              add_reactions=False,
+                                              connect=False,
+                                              speak=False)
+            role = await ctx.guild.create_role(name="Muted", colour=0xff4040, permissions=permissions,
+                                               reason=f"DuckBot mute-role creation. Requested "
+                                                      f"by {ctx.author} ({ctx.author.id})")
+            for channel in ctx.guild.channels:
+                perms = channel.overwrites_for(role)
+                perms.send_messages = False
+                perms.add_reactions = False
+                perms.connect = False
+                perms.speak = False
+                try:
+                    await channel.set_permissions(role, overwrite=perms,
+                                                  reason=f"DuckBot mute-role creation. Requested "
+                                                         f"by {ctx.author} ({ctx.author.id})")
+                except (discord.Forbidden, discord.HTTPException):
+                    continue
+                await asyncio.sleep(0.75)
+
+        await ctx.send("done!")
 
     # self mutes
 
