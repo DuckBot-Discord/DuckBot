@@ -166,7 +166,7 @@ class Utility(commands.Cog):
                               f"({len([e for e in guild.emojis if not e.animated and not e.available])} locked)"
                               f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit/2} "
                               f"({len([e for e in guild.emojis if e.animated and not e.available])} locked)",
-                        inline=False)
+                        inline=True)
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
