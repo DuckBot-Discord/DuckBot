@@ -1,3 +1,5 @@
+import discord
+from discord import VoiceRegion
 
 
 def get_perms(permissions):
@@ -77,3 +79,58 @@ def get_user_badges(user):
     if emoji_flags == "":
         emoji_flags = None
     return emoji_flags
+
+
+def get_server_region(guild: discord.Guild):
+
+    r = discord.VoiceRegion.us_central
+    region = guild.region
+
+    if region == VoiceRegion.amsterdam:
+        return "🇳🇱 Amsterdam"
+    if region == VoiceRegion.brazil:
+        return "🇧🇷 Brazil"
+    if region == VoiceRegion.dubai:
+        return "🇦🇪 Dubai"
+    if region == VoiceRegion.eu_central:
+        return "🇪🇺 EU central"
+    if region == VoiceRegion.eu_west:
+        return "🇪🇺 EU west"
+    if region == VoiceRegion.europe:
+        return "🇪🇺 Europe"
+    if region == VoiceRegion.frankfurt:
+        return "🇩🇪 Frankfurt"
+    if region == VoiceRegion.hongkong:
+        return "🇭🇰 Hong Kong"
+    if region == VoiceRegion.india:
+        return "🇮🇳 India"
+    if region == VoiceRegion.japan:
+        return "🇯🇵 Japan"
+    if region == VoiceRegion.london:
+        return "🇬🇧 London"
+    if region == VoiceRegion.russia:
+        return "🇷🇺 Russia"
+    if region == VoiceRegion.singapore:
+        return "🇸🇬 Singapore"
+    if region == VoiceRegion.southafrica:
+        return "🇿🇦 South Africa"
+    if region == VoiceRegion.south_korea:
+        return "🇰🇷 South Korea"
+    if region == VoiceRegion.sydney:
+        return "🇦🇺 Sydney"
+    if region == VoiceRegion.us_central:
+        return "🇺🇸 US Central"
+    if region == VoiceRegion.us_east:
+        return "🇺🇸 US East"
+    if region == VoiceRegion.us_south:
+        return "🇺🇸 US South"
+    if region == VoiceRegion.us_west:
+        return "🇺🇸 US West"
+    if region == VoiceRegion.vip_amsterdam:
+        return "🇳🇱🌟 VIP Amsterdam"
+    if region == VoiceRegion.vip_us_east:
+        return "🇺🇸🌟 VIP US East"
+    if region == VoiceRegion.vip_us_west:
+        return "🇺🇸🌟 VIP US West"
+    else:
+        return "⁉ Not Found"

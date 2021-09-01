@@ -150,11 +150,11 @@ class Utility(commands.Cog):
                         value='\n'.join(enabled_features), inline=True)
 
         embed.add_field(name="<:info:860295406349058068> General Info:",
-                        value=f"<:servers:870152102759006208> {ctx.guild.id}"
-                              f"\n<:owner_crown:845946530452209734> {ctx.guild.owner}"
-                              f"\n<:members:658538493470965787> {len([m for m in ctx.guild.members if not m.bot])} "
-                              f"(<:bot:858326864081715220> {len([m for m in ctx.guild.members if not m.bot])})"
-                              f"\n╰ total: {ctx.guild.member_count}")
+                        value=f"<:servers:870152102759006208> {guild.id}"
+                              f"\n<:owner_crown:845946530452209734> {guild.owner}"
+                              f"\n<:members:658538493470965787> {len([m for m in guild.members if not m.bot])} / {guild.max_members}"
+                              f"(<:bot:858326864081715220> {len([m for m in guild.members if not m.bot])})"
+                              f"\n╰ total: {guild.member_count}")
 
         if guild.description:
             desc = guild.description
@@ -167,10 +167,12 @@ class Utility(commands.Cog):
 
         embed.add_field(name="<:rich_presence:658538493521166336> Channels:",
                         value=f"<:voice:860330111377866774> {len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
-                              f"\n<:view_channel:854786097023549491> {len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
-                              f"\n<:category:882685952999428107> {len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
-                              f"\n<:stagechannel:824240882793447444> {len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
-                              f"\n<:threadnew:833432474347372564> {len(guild.threads)}",
+                              f"\n<:view_channel:854786097023549491> Channels: {len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
+                              f"\n<:category:882685952999428107> Categories: {len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
+                              f"\n<:stagechannel:824240882793447444> Stages: {len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
+                              f"\n<:threadnew:833432474347372564> Threads: {len(guild.threads)}"
+                              f"\n╰ (visible by me)"
+                              f"\n🌐 Region: {helper.get_server_region(guild)}",
                         inline=True)
 
         embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
@@ -180,14 +182,15 @@ class Utility(commands.Cog):
 
         last_boost = max(guild.members, key=lambda m: m.premium_since or guild.created_at)
         if last_boost.premium_since is not None:
-            boost = f"{last_boost} ({discord.utils.format_dt(last_boost.premium_since, style='R')})"
+            boost = f"\n<:boost4:585969531185528832> {last_boost} " \
+                    f"\n╰ {discord.utils.format_dt(last_boost.premium_since, style='R')}"
         else:
-            boost = "No active boosters"
+            boost = "\n╰ No active boosters"
 
         embed.add_field(name="<:booster4:860644548887969832> Boosts:",
                         value=f"Level: {guild.premium_tier}"
                               f"\nAmount: {guild.premium_subscription_count}"
-                              f"\nLast booster: {boost}")
+                              f"\n**Last booster:**{boost}")
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
@@ -210,13 +213,6 @@ Name: {server}
 Created: {discord.utils.format_dt(server.created_at, style="f")} ({discord.utils.format_dt(server.created_at, style='R')})
 Region: {server.region}
 <:members:858326990725709854> Max members: {server.max_members}
-<:bans:878324391958679592> Banned members: {bans or "missing permissions"}
-<:status_offline:596576752013279242> Statuses: <:status_online:596576749790429200> 4151 <:status_idle:596576773488115722> 3213 <:status_dnd:596576774364856321> 3307 <:status_streaming:596576747294818305> 0 <:status_offline:596576752013279242> 27186
-<:text_channel:876503902554578984> Channels: <:text_channel:876503902554578984> {len(server.text_channels)} <:voice_channel:876503909512933396> {len(server.voice_channels)}
-:sunglasses: Animated emojis: {len([x for x in server.emojis if x.animated])}/{server.emoji_limit}
-:sunglasses: Non animated emojis: {len([x for x in server.emojis if not x.animated])}/{server.emoji_limit}
-<:boost:858326699234164756> Level: {server.premium_tier}
-<:boost:858326699234164756> Boosts: {server.premium_subscription_count}
         """)
         await ctx.send(embed=embed)
 
