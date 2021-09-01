@@ -150,8 +150,11 @@ class Utility(commands.Cog):
                         value='\n'.join(enabled_features), inline=True)
 
         embed.add_field(name="<:info:860295406349058068> General Info:",
-                        value=f"**ID:** {ctx.guild.id}"
-                              f"\n**Owner:** {ctx.guild.owner}")
+                        value=f"<:servers:870152102759006208> {ctx.guild.id}"
+                              f"\n<:owner_crown:845946530452209734> {ctx.guild.owner}"
+                              f"\n<:members:658538493470965787> {len([m for m in ctx.guild.members if not m.bot])} "
+                              f"(<:bot:858326864081715220> {len([m for m in ctx.guild.members if not m.bot])})"
+                              f"\n╰ total: {ctx.guild.member_count}")
 
         if guild.description:
             desc = guild.description
@@ -176,6 +179,17 @@ class Utility(commands.Cog):
                               f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} "
                               f"({len([e for e in guild.emojis if e.animated and not e.available])} locked)",
                         inline=True)
+
+        last_boost = max(guild.members, key=lambda m: m.premium_since or guild.created_at)
+        if last_boost.premium_since is not None:
+            boost = f"Last Boost: {last_boost} ({discord.utils.format_dt(last_boost.premium_since, style='R')})"
+        else:
+            boost = "No active boosters"
+
+        embed.add_field(name="<:booster4:860644548887969832> Boosts:",
+                        value=f"Level: {guild.premium_tier}"
+                              f"\nAmount: {guild.premium_subscription_count}"
+                              f"\nLast booster: {boost}")
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
