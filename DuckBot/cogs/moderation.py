@@ -932,8 +932,8 @@ class Moderation(commands.Cog):
             return await ctx.send('Duration is too short. Must be at least 5 minutes.')
 
         delta = helpers.human_timedelta(duration.dt, source=created_at)
-        warning = (f"_Are you sure you want to be muted for {delta}?_"
-                   f"**__Don't ask the moderators to undo this!__**")
+        warning = (f"_Are you sure you want to mute yourself for **{delta}**?_"
+                   f"\n**__Don't ask the moderators to undo this!__**")
         confirm = await Confirm(warning).prompt(ctx)
         if not confirm:
             return
