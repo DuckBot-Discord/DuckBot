@@ -836,7 +836,7 @@ class Moderation(commands.Cog):
         if role > ctx.me.top_role:
             return await ctx.send("I'm not high enough in role hierarchy to assign the muted role!")
 
-        created_at = ctx.message.created_at.replace(tzinfo=None)
+        created_at = ctx.message.created_at
         if duration.dt > (created_at + datetime.timedelta(days=1)):
             return await ctx.send('Duration is too long. Must be at most 24 hours.')
 
