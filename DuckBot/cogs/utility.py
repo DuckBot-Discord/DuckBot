@@ -150,12 +150,10 @@ class Utility(commands.Cog):
                         value='\n'.join(enabled_features), inline=True)
 
         embed.add_field(name="<:info:860295406349058068> General Info:",
-                        value=f"**Server ID:**"
-                              f"\n{ctx.guild.id}"
-                              f"\n**Server Owner:**"
-                              f"\n**{ctx.guild.owner}**"
-                              f"\n**Owner ID:**"
-                              f"\n{ctx.guild.owner.id}")
+                        value=f"**ID:** ctx.guild.id}"
+                              f"\n**Owner:** {ctx.guild.owner}")
+
+        embed.set_thumbnail(url=guild.icon.url)
 
         await ctx.send(embed=embed)
 
