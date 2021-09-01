@@ -141,8 +141,10 @@ class Utility(commands.Cog):
         }
 
         for feature, label in all_features.items():
-            if feature in features
+            if feature in features:
                 enabled_features.append(f'{ctx.tick(True)} {label}')
+            else:
+                disabled_features.append(f'{ctx.tick(True)} {label}')
         nl = '\n'
         embed = discord.Embed(color=discord.Colour.blurple(),
                               title=ctx.guild.name,
