@@ -848,6 +848,10 @@ class Moderation(commands.Cog):
             role = await ctx.guild.create_role(name="Muted", colour=0xff4040, permissions=permissions,
                                                reason=f"DuckBot mute-role creation. Requested "
                                                       f"by {ctx.author} ({ctx.author.id})")
+            await self.bot.db.execute(
+                "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+                "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+                ctx.guild.id, role.id)
             for channel in ctx.guild.channels:
                 perms = channel.overwrites_for(role)
                 perms.send_messages = False
