@@ -282,7 +282,11 @@ class Utility(commands.Cog):
         if not emojis:
             raise errors.NoEmojisFound
 
-        emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+        try:
+            emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+        except IndexError:
+            return await ctx.send(f"Emoji out of index {index}/{len(emojis)}!"
+                                  f"\nIndex must be lower or equal to {len(emojis)}")
         file = await emoji.read()
         guild = self.bot.get_guild(831313673351593994)
         emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason="stolen emoji KEK")
@@ -305,21 +309,28 @@ class Utility(commands.Cog):
             emojis = custom_emoji.findall(ctx.message.reference.resolved.content)
             if not emojis:
                 raise errors.NoEmojisFound
-            emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+            try:
+                emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+            except IndexError:
+                return await ctx.send(f"Emoji out of index {index}/{len(emojis)}!"
+                                      f"\nIndex must be lower or equal to {len(emojis)}")
+
         if not emoji:
             raise commands.MissingRequiredArgument(
                 Parameter(name='emoji', kind=Parameter.POSITIONAL_ONLY))
 
-        emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
         file = await emoji.read()
         guild = ctx.guild
-        emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason=f"Cloned emoji, requested by {ctx.author}")
+        emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason=f"Cloned emoji, "
+                                                                                    f"requested by {ctx.author}")
         await ctx.send(f"Done! cloned {emoji}")
 
     @commands.command(help="Fetches the UUID of a minecraft user",
                       usage="<Minecraft username>")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def uuid(self, ctx: commands.Context, *, argument: typing.Optional[str] = None) -> typing.Optional[discord.Message]:
+    async def uuid(self, ctx: commands.Context, *, argument: typing.Optional[str] = None) \
+            -> typing.Optional[discord.Message]:
+
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
             embed = discord.Embed(color=ctx.me.color)
             if cs.status == 204:
