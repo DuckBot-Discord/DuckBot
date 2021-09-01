@@ -886,6 +886,10 @@ class Moderation(commands.Cog):
             return await ctx.send("I can't delete that role!")
         except discord.HTTPException:
             return await ctx.send("Something went wrong while deleting the muted role!")
+        await self.bot.db.execute(
+            "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+            ctx.guild.id, None)
         await ctx.send("🚮")
 
     # self mutes
