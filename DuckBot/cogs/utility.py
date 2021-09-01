@@ -151,7 +151,7 @@ class Utility(commands.Cog):
         embed.add_field(name="<:rich_presence:658538493521166336> Features",
                         value='\n'.join(enabled_features+disabled_features))
 
-        await ctx.send(embed=embed)
+        await ctx.send(len(embed.description), embed=embed)
 
         return
 
