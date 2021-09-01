@@ -162,9 +162,9 @@ class Utility(commands.Cog):
                         inline=False)
 
         embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
-                        value=f"Static: {len([e for e in guild.emojis if not e.animated])}/{guild.emoji_limit/2} "
+                        value=f"Static: {len([e for e in guild.emojis if not e.animated])}/{guild.emoji_limit} "
                               f"({len([e for e in guild.emojis if not e.animated and not e.available])} locked)"
-                              f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit/2} "
+                              f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} "
                               f"({len([e for e in guild.emojis if e.animated and not e.available])} locked)",
                         inline=True)
 
