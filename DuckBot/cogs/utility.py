@@ -152,9 +152,9 @@ class Utility(commands.Cog):
         embed.add_field(name="<:info:860295406349058068> General Info:",
                         value=f"<:servers:870152102759006208> {guild.id}"
                               f"\n<:owner_crown:845946530452209734> {guild.owner}"
-                              f"\n<:members:658538493470965787> {len([m for m in guild.members if not m.bot])} / {guild.max_members}"
+                              f"\n {len([m for m in guild.members if not m.bot])} "
                               f"(<:bot:858326864081715220> {len([m for m in guild.members if not m.bot])})"
-                              f"\n╰ total: {guild.member_count}"
+                              f"\n╰ {guild.member_count}/{guild.max_members}"
                               f"\n🌐 Server Region: {helper.get_server_region(guild)}")
 
         if guild.description:
