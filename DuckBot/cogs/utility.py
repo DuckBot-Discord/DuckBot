@@ -156,8 +156,8 @@ class Utility(commands.Cog):
         if guild.description:
             desc = guild.description
         else:
-            desc = "<:toggle_off:857842924544065536> Feature toggled off. " \
-                   "enable it in `community -> overview` in server settings!"
+            desc = "<:toggle_off:857842924544065536> Feature toggled off." \
+                   "\nEnable it in `community -> overview` in server settings!"
 
         embed.add_field(name="<:info:860295406349058068> Server description:",
                         value=desc, inline=False)
@@ -167,7 +167,7 @@ class Utility(commands.Cog):
                               f"\n<:view_channel:854786097023549491> {len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
                               f"\n<:category:882685952999428107> {len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
                               f"\n<:stagechannel:824240882793447444> {len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
-                              f"\n<:threadnew:833432474347372564> {len(guild.threads)} ({len(await guild.active_threads())} active)",
+                              f"\n<:threadnew:833432474347372564> {len(guild.threads)}",
                         inline=True)
 
         embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
@@ -179,8 +179,6 @@ class Utility(commands.Cog):
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
-        if guild.banner:
-            embed.set_image(url=ctx.guild.banner.url)
 
         await ctx.send(embed=embed)
 
