@@ -844,8 +844,8 @@ class Moderation(commands.Cog):
             return await ctx.send('Duration is too short. Must be at least 5 minutes.')
 
         delta = helpers.human_timedelta(duration.dt, source=created_at)
-        warning = (f"Are you sure you want to be muted for {delta}? "
-                   f"**Don't ask the moderators to undo this!**")
+        warning = (f"_Are you sure you want to be muted for {delta}?_"
+                   f"**__Don't ask the moderators to undo this!__**")
         confirm = await Confirm(warning).prompt(ctx)
         if not confirm:
             return
@@ -866,4 +866,4 @@ class Moderation(commands.Cog):
         else:
             self.temporary_mutes.start()
 
-        await ctx.send("<:shut:876856376842944582> 👍")
+        await ctx.send("<:shut:882382724382490644> 👍")
