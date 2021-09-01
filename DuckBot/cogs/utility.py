@@ -162,7 +162,7 @@ class Utility(commands.Cog):
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
-        if guild.bannner:
+        if guild.banner:
             embed.set_image(url=ctx.guild.banner.url)
 
         await ctx.send(embed=embed)
