@@ -238,13 +238,14 @@ class MyHelp(commands.HelpCommand):
 
         embed.add_field(name="📰 Latest News - <t:1630462700:d> (<t:1630462700:R>)", value=f"""
 _ _
-> \U0001f518 **Added buttons to the help menu.**
-_Press on them to invite me!_ ❣
-
 > 🎓 **Added proper credits to the help command**
 
 > <:commands:861817699729145901> **NEW! Mute commands**
 _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_
+
+> **📜 NEW! suggest command!**
+_If you want to suggest a feature, you can now do `{self.context.clean_prefix}suggest <text>`!_
+_You can still dm me ({self.context.me.mention}) if you want more communication._
 """)
 
         embed.set_footer(text=f"Help command inspiration and credits at \"{self.context.clean_prefix}about\"")
@@ -624,5 +625,22 @@ DuckBot's top role position
                                                  "approved. Keep your DMs with me open 💞")
         embed.add_field(name="Your suggestion:", value=f"```\n{suggestion}\n```")
         embed2 = discord.Embed(colour=ctx.me.color,
-                               title=f"Suggestion from {ctx.author}")
+                               title=f"Suggestion from {ctx.author}",
+                               description=f"```\n{suggestion}\n```")
+        embed2.set_footer(text=f"Sender ID: {ctx.author.id}")
+
+        if ctx.message.attachments:
+            file = ctx.message.attachments[0]
+            spoiler = file.is_spoiler()
+            if not spoiler and file.url.lower().endswith(('png', 'jpeg', 'jpg', 'gif', 'webp')):
+                embed.set_image(url=file.url)
+                embed2.set_image(url=file.url)
+            elif spoiler:
+                embed.add_field(name='Attachment', value=f'||[{file.filename}]({file.url})||', inline=False)
+                embed2.add_field(name='Attachment', value=f'||[{file.filename}]({file.url})||', inline=False)
+            else:
+                embed.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
+                embed2.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
+
+        await channel.send(embed=embed2)
         await ctx.send(embed=embed)
