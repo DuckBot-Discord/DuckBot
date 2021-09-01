@@ -131,6 +131,30 @@ class Utility(commands.Cog):
             'ANIMATED_ICON': 'Animated Icon',
             'BANNER': 'Banner',
         }
+        all_features2 = {
+            'ANIMATED_ICON': 'Animated Server Icon',
+            'BANNER': 'Server Banner',
+            'COMMERCE': 'Commerce',
+            'COMMUNITY': 'Community Server',
+            'DISCOVERABLE': 'Discoverable',
+            'FEATURABLE': 'Featured',
+            'INVITE_SPLASH': 'Invite Splash',
+            'MEMBER_VERIFICATION_GATE_ENABLED': 'Membership Screening',
+            'MONETIZATION_ENABLED': 'Monetization',
+            'MORE_EMOJI': 'More Emoji',
+            'MORE_STICKERS': 'More Stickers',
+            'NEWS': 'News Channels',
+            'PARTNERED': 'Partnered',
+            'PREVIEW_ENABLED': 'Preview Enabled',
+            'PRIVATE_THREADS': 'Private Threads',
+            'THREE_DAY_THREAD_ARCHIVE': '3 Day Thread Archive',
+            'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
+            'TICKETED_EVENTS_ENABLED': 'Ticketed Events',
+            'VANITY_URL': 'Vanity Invite URL',
+            'VERIFIED': 'Verified',
+            'VIP_REGIONS': 'VIP Voice Regions',
+            'WELCOME_SCREEN_ENABLED': 'Welcome Screen'
+        }
 
         for feature, label in all_features.items():
             if feature in features:
