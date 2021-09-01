@@ -1,4 +1,5 @@
 import re
+from inspect import Parameter
 
 import discord
 import typing
@@ -290,6 +291,31 @@ class Utility(commands.Cog):
         except discord.NotFound:
             pass
 
+    @emoji.command(name="clone")
+    @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
+    async def emoji_clone(self, ctx: commands.Context, emoji: typing.Optional[discord.Emoji], index: int = 1):
+        """
+        Clones an emoji into the current server.
+        To steal an emoji from someone else, quote their message to grab the emojis from there.
+        If the message has multiple emojis, input a number to specify the emoji, for example, doing "%PRE%emoji 5" will steal the 5th emoji from the message
+        """
+        if ctx.message.reference:
+            custom_emoji = re.compile(r"<a?:[a-zA-Z0-9_]+:[0-9]+>")
+            emojis = custom_emoji.findall(ctx.message.reference.resolved.content)
+            if not emojis:
+                raise errors.NoEmojisFound
+            emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+        if not emoji:
+            raise commands.MissingRequiredArgument(
+                Parameter(name='emoji', kind=Parameter.POSITIONAL_ONLY))
+
+        emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+        file = await emoji.read()
+        guild = ctx.guild
+        emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason=f"Cloned emoji, requested by {ctx.author}")
+        await ctx.send(f"Done! cloned {emoji}")
+
     @commands.command(help="Fetches the UUID of a minecraft user",
                       usage="<Minecraft username>")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -308,18 +334,3 @@ class Utility(commands.Cog):
                 embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
             return await ctx.send(embed=embed)
 
-    @commands.command(name='charinfo')
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def character_info(self, ctx, *, characters: str):
-        """Shows you information about a number of characters."""
-
-        def to_string(c):
-            digit = f'{ord(c):x}'
-            name = unicodedata.name(c, 'Name not found.')
-            return f'`\\U{digit:>08}`: {name} - **{c}** \N{EM DASH} ' \
-                   f'<http://www.fileformat.info/info/unicode/char/{digit}>'
-
-        msg = '\n'.join(map(to_string, characters))
-
-        menu = menus.MenuPages(EmbedPageSource(msg.split("\n"), per_page=20), delete_message_after=True)
-        await menu.start(ctx)
