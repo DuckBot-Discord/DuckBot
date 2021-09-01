@@ -1,8 +1,11 @@
+import re
+
 import discord
 import typing
 from discord.ext import commands
 
 from helpers import helper
+import errors
 
 
 def setup(bot):
@@ -18,7 +21,7 @@ class Utility(commands.Cog):
     @commands.guild_only()
     async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
         """
-        Shows a user's information
+        Shows a user's information. If not specified, shows your own.
         """
         user = user or ctx.author
         # BADGES
@@ -63,7 +66,7 @@ class Utility(commands.Cog):
             bot = ""
         # Join Order
         order = f"\n<:moved:848312880666640394>**Join position:** " \
-                f"`{sorted(ctx.guild.members, key=lambda u: u.joined_at).index(u) + 1}`"
+                f"`{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
 
         if user.premium_since:
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
@@ -88,7 +91,8 @@ class Utility(commands.Cog):
     @commands.guild_only()
     async def permissions(self, ctx: commands.Context, target: discord.Member = None) -> discord.Message:
         """
-        Shows a user's guild permissions
+        Shows a user's guild permissions.
+        Note: This does not take into account channel overwrites.
         """
         target = target or ctx.me
         allowed = []
@@ -109,9 +113,18 @@ class Utility(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(help="Shows you information about the server")
-    @commands.is_owner()
-    async def si(self, ctx: commands.Context):
-        guild = ctx.guild
+    @commands.guild_only()
+    async def si(self, ctx: commands.Context, guild_id: int = None):
+        """
+        Shows the current server's information.
+        """
+        if guild_id and await self.bot.is_owner(ctx.author):
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                return await ctx.send(f'Invalid Guild ID given.')
+        else:
+            guild = ctx.guild
+
         enabled_features = []
         features = set(guild.features)
         all_features = {
@@ -142,9 +155,9 @@ class Utility(commands.Cog):
         for feature, label in all_features.items():
             if feature in features:
                 enabled_features.append(f'{ctx.tick(True)} {label}')
-        nl = '\n'
+
         embed = discord.Embed(color=discord.Colour.blurple(),
-                              title=ctx.guild.name)
+                              title=guild.name)
 
         embed.add_field(name="<:rich_presence:658538493521166336> Features:",
                         value='\n'.join(enabled_features), inline=True)
@@ -197,3 +210,116 @@ class Utility(commands.Cog):
             embed.set_thumbnail(url=guild.icon.url)
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def avatar(self, ctx: commands.Context, user: discord.User = None):
+        """
+        Displays a user's avatar. If not specified, shows your own.
+        """
+        user: discord.Member = user or ctx.author
+        embed = discord.Embed(color=discord.Colour.blurple(),
+                              title=user, url=user.display_avatar.url)
+        embed.set_image(url=user.display_avatar.url)
+        await ctx.send(embed=embed)
+
+    @commands.group(help="Makes an emoji bigger and shows it's formatting",
+                    invoke_without_command=True,
+                    aliases=['em'])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def emoji(self, ctx, custom_emojis: commands.Greedy[discord.PartialEmoji]):
+        if len(custom_emojis) > 5:
+            raise commands.TooManyArguments()
+
+        for emoji in custom_emojis:
+            if emoji.animated:
+                emoticon = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
+            else:
+                emoticon = f"*`<`*`:{emoji.name}:{emoji.id}>`"
+            embed = discord.Embed(description=f"{emoticon}", color=ctx.me.color)
+            embed.set_image(url=emoji.url)
+            await ctx.send(embed=embed)
+
+    @emoji.command(name="lock")
+    @commands.guild_only()
+    @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
+    async def emoji_lock(self, ctx: commands.Context, emoji: discord.Emoji,
+                         roles: commands.Greedy[discord.Role]) -> discord.Message:
+        if emoji.guild_id != ctx.guild.id:
+            return await ctx.send("That emoji is from another server!")
+        embed = discord.Embed(color=ctx.me.color,
+                              description=f"**Restricted access of {emoji} to:**"
+                                          f"\n{', '.join([r.mention for r in roles])}"
+                                          f"\nTo unlock the emoji do `{ctx.clean_prefix} emoji unlock {emoji}`"
+                                          f"_Note that to do this you will need one of the roles the emoji has been "
+                                          f"restricted to. \nNo, admin permissions don't bypass this lock._")
+        embed.set_footer()
+        await ctx.send(embed=embed)
+        await emoji.edit(roles=roles)
+
+    @emoji.command(name="unlock")
+    @commands.guild_only()
+    @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
+    async def emoji_unlock(self, ctx: commands.Context, emoji: discord.Emoji) -> discord.Message:
+        if emoji.guild_id != ctx.guild.id:
+            return await ctx.send("That emoji is from another server!")
+        await emoji.edit(roles=[])
+        embed = discord.Embed(color=ctx.me.color,
+                              title="Successfully unlocked emoji!",
+                              description=f"**Allowed {emoji} to @everyone**")
+        return await ctx.send(embed=embed)
+
+    @emoji.command(name="steal", hidden=True, aliases=['s'])
+    @commands.is_owner()
+    async def emoji_steal(self, ctx, index: int = 1):
+        if not ctx.message.reference:
+            raise errors.NoQuotedMessage
+
+        custom_emoji = re.compile(r"<a?:[a-zA-Z0-9_]+:[0-9]+>")
+        emojis = custom_emoji.findall(ctx.message.reference.resolved.content)
+        if not emojis:
+            raise errors.NoEmojisFound
+
+        emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+        file = await emoji.read()
+        guild = self.bot.get_guild(831313673351593994)
+        emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason="stolen emoji KEK")
+        try:
+            await ctx.message.add_reaction(emoji)
+        except discord.NotFound:
+            pass
+
+    @commands.command(help="Fetches the UUID of a minecraft user",
+                      usage="<Minecraft username>")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def uuid(self, ctx: commands.Context, *, argument: typing.Optional[str] = None) -> typing.Optional[discord.Message]:
+        async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
+            embed = discord.Embed(color=ctx.me.color)
+            if cs.status == 204:
+                embed.add_field(name='⚠ ERROR ⚠', value=f"`{argument}` is not a minecraft username!")
+
+            elif cs.status == 400:
+                embed.add_field(name="⛔ ERROR ⛔", value="ERROR 400! Bad request.")
+            else:
+                res = await cs.json()
+                user = res["name"]
+                uuid = res["id"]
+                embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
+            return await ctx.send(embed=embed)
+
+    @commands.command(name='charinfo')
+    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    async def character_info(self, ctx, *, characters: str):
+        """Shows you information about a number of characters."""
+
+        def to_string(c):
+            digit = f'{ord(c):x}'
+            name = unicodedata.name(c, 'Name not found.')
+            return f'`\\U{digit:>08}`: {name} - **{c}** \N{EM DASH} ' \
+                   f'<http://www.fileformat.info/info/unicode/char/{digit}>'
+
+        msg = '\n'.join(map(to_string, characters))
+
+        menu = menus.MenuPages(EmbedPageSource(msg.split("\n"), per_page=20), delete_message_after=True)
+        await menu.start(ctx)
