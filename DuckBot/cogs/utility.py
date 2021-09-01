@@ -150,7 +150,7 @@ class Utility(commands.Cog):
                         value='\n'.join(enabled_features), inline=True)
 
         embed.add_field(name="<:info:860295406349058068> General Info:",
-                        value=f"**ID:** ctx.guild.id}"
+                        value=f"**ID:** {ctx.guild.id}"
                               f"\n**Owner:** {ctx.guild.owner}")
 
         embed.set_thumbnail(url=guild.icon.url)
