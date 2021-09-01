@@ -110,7 +110,7 @@ class Utility(commands.Cog):
 
     @commands.command(help="Shows you information about the server")
     @commands.is_owner()
-    async def si(self, ctx: commands.Context):
+    async def si(self, ctx: commands.Context, boolean: bool = None):
         guild = ctx.guild
         enabled_features = []
         disabled_features = []
@@ -144,7 +144,7 @@ class Utility(commands.Cog):
             if feature in features:
                 enabled_features.append(f'{ctx.tick(True)} {label}')
             else:
-                disabled_features.append(f'{ctx.tick(True)} {label}')
+                disabled_features.append(f'{ctx.tick(boolean)} {label}')
         nl = '\n'
         embed = discord.Embed(color=discord.Colour.blurple(),
                               title=ctx.guild.name,
