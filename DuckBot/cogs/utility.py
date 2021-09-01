@@ -197,23 +197,3 @@ class Utility(commands.Cog):
             embed.set_thumbnail(url=guild.icon.url)
 
         await ctx.send(embed=embed)
-
-        return
-
-        server = ctx.guild
-        if ctx.me.guild_permissions.ban_members:
-            bans = len(await server.bans())
-        else:
-            bans = None
-        embed = discord.Embed(title=f"Server info - {server}", description=f"""
-Name: {server}
-<:greyTick:860644729933791283> ID: {server.id}
-<:members:658538493470965787> Members: {len(server.members)} (:robot: {len([m for m in server.members if not m.bot])})
-:robot: Bots: {len([m for m in server.members if not m.bot])}
-<:owner_crown:845946530452209734> Owner: {server.owner}
-Created: {discord.utils.format_dt(server.created_at, style="f")} ({discord.utils.format_dt(server.created_at, style='R')})
-Region: {server.region}
-<:members:858326990725709854> Max members: {server.max_members}
-        """)
-        await ctx.send(embed=embed)
-
