@@ -613,3 +613,16 @@ DuckBot's top role position
         if denied:
             embed.add_field(name="denied", value="\n".join(denied))
         return await ctx.send(embed=embed)
+
+    @commands.command()
+    async def suggest(self, ctx: commands.Context, *, suggestion):
+        channel = self.bot.get_channel(882634213516521473)
+        embed = discord.Embed(colour=ctx.me.color,
+                              title="Suggestion successful!")
+        embed.add_field(name="Thank you!", value="Your suggestion has been sent to the moderators of duckbot! "
+                                                 "You will receive a Direct Message if your suggestion gets "
+                                                 "approved. Keep your DMs with me open 💞")
+        embed.add_field(name="Your suggestion:", value=f"```\n{suggestion}\n```")
+        embed2 = discord.Embed(colour=ctx.me.color,
+                               title=f"Suggestion from {ctx.author}")
+        await ctx.send(embed=embed)

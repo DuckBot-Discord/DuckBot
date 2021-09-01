@@ -328,7 +328,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int] = 100):
-        """```yaml
+        """
         Removes messages that meet a criteria. In order to use this command, you must have Manage Messages permissions.
 
         Remember that the bot needs Manage Messages as well. These commands cannot be used in a private message.
@@ -336,7 +336,7 @@ class Moderation(commands.Cog):
         When the command is done doing its work, you will get a message detailing which users got removed and how many messages got removed.
 
         Note: If ran without any sub-commands, it will remove all messages that are NOT pinned to the channel. use "remove all <amount>" to remove everything
-        ```
+        # Do "%PRE%help remove" for a list of sub-commands
         """
 
         if ctx.invoked_subcommand is None:
@@ -726,6 +726,15 @@ class Moderation(commands.Cog):
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
 
+        await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
+                                  ctx.guild.id, member.id)
+
+        # in a command that adds new task in db
+        if self.temporary_mutes.is_running():
+            self.temporary_mutes.restart()
+        else:
+            self.temporary_mutes.start()
+
         if not only_reason:
             return await ctx.send(f"**{ctx.author}** muted **{member}**",
                                   allowed_mentions=discord.AllowedMentions().none())
@@ -767,12 +776,22 @@ class Moderation(commands.Cog):
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to remove the `{role.name}` role")
 
+        await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
+                                  ctx.guild.id, member.id)
+
+        # in a command that adds new task in db
+        if self.temporary_mutes.is_running():
+            self.temporary_mutes.restart()
+        else:
+            self.temporary_mutes.start()
+
         if not only_reason:
-            return await ctx.send(f"**{ctx.author}** unmuted **{member}**",
-                                  allowed_mentions=discord.AllowedMentions().none())
-        return await ctx.send(f"**{ctx.author}** unmuted **{member}**"
-                              f"\nReason: {only_reason}",
-                              allowed_mentions=discord.AllowedMentions().none())
+            await ctx.send(f"**{ctx.author}** unmuted **{member}**",
+                           allowed_mentions=discord.AllowedMentions().none())
+        else:
+            await ctx.send(f"**{ctx.author}** unmuted **{member}**"
+                           f"\nReason: {only_reason}",
+                           allowed_mentions=discord.AllowedMentions().none())
 
     # Add mute role
 
