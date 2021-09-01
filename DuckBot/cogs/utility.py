@@ -223,11 +223,12 @@ class Utility(commands.Cog):
         embed.set_image(url=user.display_avatar.url)
         await ctx.send(embed=embed)
 
-    @commands.group(help="Makes an emoji bigger and shows it's formatting",
-                    invoke_without_command=True,
-                    aliases=['em'])
+    @commands.group(invoke_without_command=True, aliases=['em'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def emoji(self, ctx, custom_emojis: commands.Greedy[discord.PartialEmoji]):
+        """
+        Makes an emoji bigger and shows it's formatting
+        """
 
         if not custom_emojis:
             raise commands.MissingRequiredArgument(
@@ -249,31 +250,31 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_lock(self, ctx: commands.Context, emoji: discord.Emoji,
+    async def emoji_lock(self, ctx: commands.Context, server_emoji: discord.Emoji,
                          roles: commands.Greedy[discord.Role]) -> discord.Message:
-        if emoji.guild_id != ctx.guild.id:
+        if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
         embed = discord.Embed(color=ctx.me.color,
-                              description=f"**Restricted access of {emoji} to:**"
+                              description=f"**Restricted access of {server_emoji} to:**"
                                           f"\n{', '.join([r.mention for r in roles])}"
-                                          f"\nTo unlock the emoji do `{ctx.clean_prefix} emoji unlock {emoji}`"
+                                          f"\nTo unlock the emoji do `{ctx.clean_prefix} emoji unlock {server_emoji}`"
                                           f"_Note that to do this you will need one of the roles the emoji has been "
                                           f"restricted to. \nNo, admin permissions don't bypass this lock._")
         embed.set_footer()
         await ctx.send(embed=embed)
-        await emoji.edit(roles=roles)
+        await server_emoji.edit(roles=roles)
 
     @emoji.command(name="unlock")
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_unlock(self, ctx: commands.Context, emoji: discord.Emoji) -> discord.Message:
-        if emoji.guild_id != ctx.guild.id:
+    async def emoji_unlock(self, ctx: commands.Context, server_emoji: discord.Emoji) -> discord.Message:
+        if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
-        await emoji.edit(roles=[])
+        await server_emoji.edit(roles=[])
         embed = discord.Embed(color=ctx.me.color,
                               title="Successfully unlocked emoji!",
-                              description=f"**Allowed {emoji} to @everyone**")
+                              description=f"**Allowed {server_emoji} to @everyone**")
         return await ctx.send(embed=embed)
 
     @emoji.command(name="steal", hidden=True, aliases=['s'])
@@ -303,7 +304,7 @@ class Utility(commands.Cog):
     @emoji.command(name="clone")
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_clone(self, ctx: commands.Context, emoji: typing.Optional[discord.Emoji], index: int = 1):
+    async def emoji_clone(self, ctx: commands.Context, server_emoji: typing.Optional[discord.Emoji], index: int = 1):
         """
         Clones an emoji into the current server.
         To steal an emoji from someone else, quote their message to grab the emojis from there.
@@ -315,20 +316,20 @@ class Utility(commands.Cog):
             if not emojis:
                 raise errors.NoEmojisFound
             try:
-                emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
+                server_emoji = await commands.PartialEmojiConverter().convert(ctx, emojis[index - 1])
             except IndexError:
                 return await ctx.send(f"Emoji out of index {index}/{len(emojis)}!"
                                       f"\nIndex must be lower or equal to {len(emojis)}")
 
-        if not emoji:
+        if not server_emoji:
             raise commands.MissingRequiredArgument(
-                Parameter(name='emoji', kind=Parameter.POSITIONAL_ONLY))
+                Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
 
-        file = await emoji.read()
+        file = await server_emoji.read()
         guild = ctx.guild
-        emoji = await guild.create_custom_emoji(name=emoji.name, image=file, reason=f"Cloned emoji, "
-                                                                                    f"requested by {ctx.author}")
-        await ctx.send(f"Done! cloned {emoji}")
+        server_emoji = await guild.create_custom_emoji(name=server_emoji.name, image=file,
+                                                       reason=f"Cloned emoji, requested by {ctx.author}")
+        await ctx.send(f"Done! cloned {server_emoji}")
 
     @commands.command(help="Fetches the UUID of a minecraft user",
                       usage="<Minecraft username>")
