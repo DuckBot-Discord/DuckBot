@@ -61,15 +61,9 @@ class Utility(commands.Cog):
             bot = f"\n<:botTag:230105988211015680>**Bot:** <:check:314349398811475968>"
         else:
             bot = ""
-        # BOOSTER SINCE
-        if user.premium_since:
-            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
-            boost = f"\n<:booster4:585764446178246657>**Boosting since:** `{date} UTC`"
-        else:
-            boost = ""
-
         # Join Order
-        order = f"\n<:moved:848312880666640394>**Join position:** `{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
+        order = f"\n<:moved:848312880666640394>**Join position:** " \
+                f"`{sorted(ctx.guild.members, key=lambda u: u.joined_at).index(u) + 1}`"
 
         if user.premium_since:
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
@@ -118,7 +112,8 @@ class Utility(commands.Cog):
     @commands.is_owner()
     async def si(self, ctx):
         guild = ctx.guild
-        info = []
+        enabled_features = []
+        disabled_features = []
         features = set(guild.features)
         all_features = {
             'PARTNERED': 'Partnered',
@@ -138,14 +133,18 @@ class Utility(commands.Cog):
         }
 
         for feature, label in all_features.items():
-            info.append(f'{ctx.tick(feature in features)} {label}')
+            if feature in features:
+                enabled_features.append(f'{ctx.tick(True)} {label}')
+            else:
+                disabled_features.append(f'{ctx.tick(None)} {label}')
 
         embed = discord.Embed(color=discord.Colour.blurple(),
                               title=ctx.guild.name,
                               description=f"**Server ID:** {ctx.guild.id}"
                                           f"\n**Owner** {ctx.guild.owner} ({ctx.guild.owner.id})")
 
-        embed.add_field(name="<:rich_presence:658538493521166336> Features", value='\n'.join(info))
+        embed.add_field(name="<:rich_presence:658538493521166336> Features",
+                        value='\n'.join(enabled_features+disabled_features))
 
         await ctx.send(embed=embed)
 
