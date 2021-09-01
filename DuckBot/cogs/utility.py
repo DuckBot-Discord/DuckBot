@@ -154,7 +154,8 @@ class Utility(commands.Cog):
                               f"\n<:owner_crown:845946530452209734> {guild.owner}"
                               f"\n<:members:658538493470965787> {len([m for m in guild.members if not m.bot])} / {guild.max_members}"
                               f"(<:bot:858326864081715220> {len([m for m in guild.members if not m.bot])})"
-                              f"\n╰ total: {guild.member_count}")
+                              f"\n╰ total: {guild.member_count}"
+                              f"\n🌐 Server Region: {helper.get_server_region(guild)}")
 
         if guild.description:
             desc = guild.description
@@ -171,8 +172,7 @@ class Utility(commands.Cog):
                               f"\n<:category:882685952999428107> Categories: {len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
                               f"\n<:stagechannel:824240882793447444> Stages: {len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
                               f"\n<:threadnew:833432474347372564> Threads: {len(guild.threads)}"
-                              f"\n╰ (visible by me)"
-                              f"\n🌐 Region: {helper.get_server_region(guild)}",
+                              f"\n╰ (visible by me)",
                         inline=True)
 
         embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
@@ -182,7 +182,7 @@ class Utility(commands.Cog):
 
         last_boost = max(guild.members, key=lambda m: m.premium_since or guild.created_at)
         if last_boost.premium_since is not None:
-            boost = f"\n<:boost4:585969531185528832> {last_boost} " \
+            boost = f"\n<:booster4:585764446178246657> {last_boost} " \
                     f"\n╰ {discord.utils.format_dt(last_boost.premium_since, style='R')}"
         else:
             boost = "\n╰ No active boosters"
