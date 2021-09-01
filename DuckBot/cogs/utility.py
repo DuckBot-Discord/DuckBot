@@ -110,10 +110,9 @@ class Utility(commands.Cog):
 
     @commands.command(help="Shows you information about the server")
     @commands.is_owner()
-    async def si(self, ctx: commands.Context, boolean: bool = None):
+    async def si(self, ctx: commands.Context):
         guild = ctx.guild
         enabled_features = []
-        disabled_features = []
         features = set(guild.features)
         all_features = {
             'COMMUNITY': 'Community Server',
@@ -143,13 +142,20 @@ class Utility(commands.Cog):
         for feature, label in all_features.items():
             if feature in features:
                 enabled_features.append(f'{ctx.tick(True)} {label}')
-            else:
-                disabled_features.append(f'{ctx.tick(boolean)} {label}')
         nl = '\n'
         embed = discord.Embed(color=discord.Colour.blurple(),
-                              title=ctx.guild.name,
-                              description=f"**<:rich_presence:658538493521166336> Features**"
-                                          f"\n{nl.join(enabled_features+disabled_features)}")
+                              title=ctx.guild.name)
+
+        embed.add_field(name="<:rich_presence:658538493521166336> Features:",
+                        value='\n'.join(enabled_features), inline=True)
+
+        embed.add_field(name="<:info:860295406349058068> General Info:",
+                        value=f"**Server ID:**"
+                              f"\n{ctx.guild.id}"
+                              f"\n**Server Owner:**"
+                              f"\n**{ctx.guild.owner}**"
+                              f"\n**Owner ID:**"
+                              f"\n{ctx.guild.owner.id}")
 
         await ctx.send(embed=embed)
 
