@@ -696,6 +696,9 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def mute(self, ctx: commands.Context, member: discord.Member, reason: str = None) -> discord.Message:
+        """
+        Mutes a member indefinitely
+        """
         only_reason = reason
         reason = reason or "No reason given"
         reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
@@ -734,6 +737,9 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+        """
+        Unmutes a member
+        """
         only_reason = reason
         reason = reason or "No reason given"
         reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
@@ -790,8 +796,15 @@ class Moderation(commands.Cog):
 
     # Add mute role
 
+    @commands.has_permissions(manage_guild=True)
     @muterole.command(name="add", aliases=["set"])
-    async def muterole_add(self, ctx: commands.Context, role: discord.Role):
+    async def muterole_add(self, ctx: commands.Context, role: discord.Role = None):
+        """
+        Adds a pre-existing mute role for the bot to use
+        (You can also do "%PRE%muterole create" if you don't have a pre-existing mute role)
+        """
+        if not role:
+            await ctx.send_help()
         await self.bot.db.execute(
             "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
             "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
@@ -802,8 +815,14 @@ class Moderation(commands.Cog):
 
     # Remove mute role
 
+    @commands.has_permissions(manage_guild=True)
     @muterole.command(name="remove", aliases=["unset"])
     async def muterole_remove(self, ctx: commands.Context):
+        """
+        Unsets the mute role for the server,
+        note that this will NOT delete the role, but only remove it from the bot's database!
+        If you want to delete it, do "%PRE%muterole delete" instead
+        """
         await self.bot.db.execute(
             "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
             "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
@@ -811,6 +830,10 @@ class Moderation(commands.Cog):
 
         return await ctx.send(f"Removed this server's mute role!",
                               allowed_mentions=discord.AllowedMentions().none())
+
+    @commands.has_permissions(manage_guild=True)
+    @muterole.command(name="create")
+    async def muterole_create(self, ctx):
 
     # self mutes
 
@@ -867,3 +890,21 @@ class Moderation(commands.Cog):
             self.temporary_mutes.start()
 
         await ctx.send("<:shut:882382724382490644> 👍")
+
+    @commands.Cog.listener('on_guild_channel_create')
+    async def automatic_channel_update(self, channel):
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', channel.guild.id)
+        if not mute_role:
+            return
+        role = channel.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            return
+        if role > channel.guild.me.top_role:
+            return
+
+        perms = channel.overwrites_for(role)
+        perms.send_messages = False
+        perms.add_reactions = False
+        perms.connect = False
+        perms.speak = False
+        return await channel.set_permissions(role, overwrite=perms, reason="DuckBot automatic mute role permissions")
