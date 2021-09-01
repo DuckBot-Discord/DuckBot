@@ -866,7 +866,7 @@ class Moderation(commands.Cog):
         complete_time = (starting_time - ending_time) * 60000
         await ctx.send(f"done! took {round(complete_time, 2)}")
 
-    @commands.command(name="delete")
+    @muterole.command(name="delete")
     @commands.has_permissions(manage_messages=True)
     async def muterole_delete(self, ctx: commands.Context):
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
