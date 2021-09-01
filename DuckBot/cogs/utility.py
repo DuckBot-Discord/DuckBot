@@ -297,7 +297,7 @@ class Utility(commands.Cog):
             unlocked = []
             for emoji in ctx.guild.emojis:
                 if emoji.roles:
-                    await emoji.edit(roles=None, reason=f"Unlock all emoji requested by {ctx.author} ({ctx.author.id})")
+                    await emoji.edit(roles=[], reason=f"Unlock all emoji requested by {ctx.author} ({ctx.author.id})")
                     unlocked.append(emoji)
                     await asyncio.sleep(1)
             await ctx.send(f"Done! Unlocked {len(unlocked)} emoji(s)"
