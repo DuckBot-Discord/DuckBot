@@ -149,7 +149,7 @@ class Utility(commands.Cog):
         embed = discord.Embed(color=discord.Colour.blurple(),
                               title=ctx.guild.name,
                               description=f"**<:rich_presence:658538493521166336> Features**"
-                                          f"{nl.join(enabled_features+disabled_features)}")
+                                          f"\n{nl.join(enabled_features+disabled_features)}")
 
         await ctx.send(embed=embed)
 
