@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import datetime
+import time
 
 import discord
 import re
@@ -835,9 +836,10 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_guild=True)
     @muterole.command(name="create")
     async def muterole_create(self, ctx: commands.Context):
+        starting_time = time.monotonic()
         estimated_time = (len(ctx.guild.channels) * 0.75)
-        await ctx.send(f"Creating Muted role, and applying it to all channels. "
-                       f"This may take awhile ETA: {estimated_time} seconds")
+        await ctx.send(f"Creating Muted role, and applying it to all channels."
+                       f"\nThis may take awhile ETA: {estimated_time} seconds.")
         async with ctx.typing():
             permissions = discord.Permissions(send_messages=False,
                                               add_reactions=False,
@@ -858,9 +860,11 @@ class Moderation(commands.Cog):
                                                          f"by {ctx.author} ({ctx.author.id})")
                 except (discord.Forbidden, discord.HTTPException):
                     continue
-                await asyncio.sleep(0.75)
+                await asyncio.sleep(1)
 
-        await ctx.send("done!")
+        ending_time = time.monotonic()
+        complete_time = (starting_time - ending_time) * 60000
+        await ctx.send(f"done! took {round(complete_time, 2)}")
 
     # self mutes
 
