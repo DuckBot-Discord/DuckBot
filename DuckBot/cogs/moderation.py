@@ -25,7 +25,8 @@ class Arguments(argparse.ArgumentParser):
 
 def can_execute_action(ctx, user, target):
     return user == ctx.guild.owner or \
-           user.top_role > target.top_role
+           user.top_role > target.top_role or \
+           target.id != ctx.guild.owner_id
 
 
 class ActionReason(commands.Converter):
