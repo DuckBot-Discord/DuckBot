@@ -837,9 +837,8 @@ class Moderation(commands.Cog):
     @muterole.command(name="create")
     async def muterole_create(self, ctx: commands.Context):
         starting_time = time.monotonic()
-        estimated_time = (len(ctx.guild.channels) * 0.75)
         await ctx.send(f"Creating Muted role, and applying it to all channels."
-                       f"\nThis may take awhile ETA: {estimated_time} seconds.")
+                       f"\nThis may take awhile ETA: {len(ctx.guild.channels)} seconds.")
         async with ctx.typing():
             permissions = discord.Permissions(send_messages=False,
                                               add_reactions=False,
