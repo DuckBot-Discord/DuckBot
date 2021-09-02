@@ -68,7 +68,8 @@ class DuckBot(commands.Bot):
         super().__init__(
             intents=intents,
             command_prefix=self.get_pre,
-            case_insensitive=True
+            case_insensitive=True,
+            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help')
         )
         self.owner_id = 349373972103561218
 
@@ -86,6 +87,7 @@ class DuckBot(commands.Bot):
         self.persistent_views_added = False
         self.uptime = datetime.datetime.utcnow()
         self.last_rall = datetime.datetime.utcnow()
+        self.prefixes = {}
 
         self.session = aiohttp.ClientSession(loop=self.loop)
 
@@ -112,13 +114,14 @@ class DuckBot(commands.Bot):
             return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else self.PRE
         if not message.guild:
             return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else self.PRE
-        prefix = await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
+        try:
+            prefix = self.prefixes[message.guild.id]
+        except KeyError:
+            prefix = (await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)) or self.PRE
+            self.prefixes[message.guild.id] = prefix
+
         if await bot.is_owner(message.author) and bot.noprefix is True:
-            if prefix:
-                return commands.when_mentioned_or(prefix, "")(bot, message) if not raw_prefix else prefix
-            else:
-                return commands.when_mentioned_or(self.PRE, "")(bot, message) if not raw_prefix else self.PRE
-        prefix = prefix or self.PRE
+            return commands.when_mentioned_or(prefix, "")(bot, message) if not raw_prefix else prefix
         return commands.when_mentioned_or(prefix)(bot, message) if not raw_prefix else prefix
 
     async def get_context(self, message, *, cls=CustomContext):
@@ -131,8 +134,15 @@ class DuckBot(commands.Bot):
         logging.info('\033[0m')
         if not self.started:
             self.started = True
-            await self.wait_until_ready()
-            await self.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'))
+
+            values = await self.db.fetch("SELECT guild_id, prefix FROM prefixes")
+            for value in values:
+                self.prefixes[value['guild_id']] = value['prefix']
+            for guild in self.guilds:
+                try:
+                    self.prefixes[guild.id]
+                except KeyError:
+                    self.prefixes[guild.id] = self.PRE
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):

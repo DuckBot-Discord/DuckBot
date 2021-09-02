@@ -208,6 +208,8 @@ class Moderation(commands.Cog):
                 "ON CONFLICT (guild_id) DO UPDATE SET prefix = $2",
                 ctx.guild.id, new)
 
+            self.bot.prefixes[ctx.guild.id] = new
+
             return await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
         else:
             return await ctx.send(f"My prefix is already `{new}`!")
