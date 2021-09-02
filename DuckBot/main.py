@@ -66,7 +66,7 @@ class CustomContext(commands.Context):
                 embed.timestamp = discord.utils.utcnow()
 
         elif reply is False:
-            return await super().send(content=content, embed=embed, mention_author=mention_author, **kwargs)
+            return await self.send(content=content, embed=embed, mention_author=mention_author, **kwargs)
         else:
             return await self.reply(content=content, embed=embed, mention_author=mention_author, **kwargs)
 
