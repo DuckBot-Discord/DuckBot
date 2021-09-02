@@ -294,7 +294,7 @@ class Management(commands.Cog, name='Bot Management'):
                 embed_error = f"\n❌ {filename[:-3]} Execution error - Traceback" \
                               f"\n```py\n{traceback_string}\n```"
                 if not silent:
-                    target = ctx if not channel else ctx.author
+                    target = ctx if channel else ctx.author
                     if len(embed_error) > 2000:
                         await target.send(file=io.StringIO(embed_error))
                     else:
