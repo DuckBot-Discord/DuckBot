@@ -72,7 +72,7 @@ class CustomContext(commands.Context):
 
 
 class DuckBot(commands.Bot):
-    PRE: Final[str] = 'db.'
+    PRE: str = 'db.'
 
     def __init__(self) -> None:
         intents = discord.Intents.default()
