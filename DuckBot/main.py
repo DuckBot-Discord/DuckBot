@@ -65,7 +65,7 @@ class CustomContext(commands.Context):
                                  icon_url=self.author.display_avatar.url)
                 embed.timestamp = discord.utils.utcnow()
 
-        elif reply is True:
+        elif reply is False:
             return await super().send(content=content, embed=embed, mention_author=mention_author, **kwargs)
         else:
             return await self.reply(content=content, embed=embed, mention_author=mention_author, **kwargs)
@@ -130,8 +130,10 @@ class DuckBot(commands.Bot):
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
-            prefix = (await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1',
-                                             message.guild.id)) or self.PRE
+            prefix = await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
+            if not prefix:
+                prefix = self.PRE
+
             self.prefixes[message.guild.id] = prefix
 
         if await bot.is_owner(message.author) and bot.noprefix is True:
