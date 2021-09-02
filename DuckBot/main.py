@@ -22,7 +22,7 @@ initial_extensions = (
 class CustomContext(commands.Context):
 
     @staticmethod
-    def tick(opt: bool, text:str=None) -> str:
+    def tick(opt: bool, text: str = None) -> str:
         ticks = {
             True: '<:greenTick:596576670815879169>',
             False: '<:redTick:596576672149667840>',
@@ -34,7 +34,7 @@ class CustomContext(commands.Context):
         return emoji
 
     @staticmethod
-    def default_tick(opt: bool, text:str=None) -> str:
+    def default_tick(opt: bool, text: str = None) -> str:
         ticks = {
             True: '✅',
             False: '❌',
@@ -46,7 +46,7 @@ class CustomContext(commands.Context):
         return emoji
 
     @staticmethod
-    def square_tick(opt: bool, text:str=None) -> str:
+    def square_tick(opt: bool, text: str = None) -> str:
         ticks = {
             True: '🟩',
             False: '🟥',
@@ -56,6 +56,19 @@ class CustomContext(commands.Context):
         if text:
             return f"{emoji} {text}"
         return emoji
+
+    async def send(self, content: str = None, embed: discord.Embed = None, reply: bool = True,
+                   footer: bool = True, mention_author: bool = False, **kwargs):
+        if embed and footer is True:
+            if not embed.footer:
+                embed.set_footer(text=f"Requested by {self.author}",
+                                 icon_url=self.author.display_avatar.url)
+                embed.timestamp = discord.utils.utcnow()
+
+        elif reply is True:
+            return await super().send(content=content, embed=embed, mention_author=mention_author, **kwargs)
+        else:
+            return await self.reply(content=content, embed=embed, mention_author=mention_author, **kwargs)
 
 
 class DuckBot(commands.Bot):
@@ -117,7 +130,8 @@ class DuckBot(commands.Bot):
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
-            prefix = (await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)) or self.PRE
+            prefix = (await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1',
+                                             message.guild.id)) or self.PRE
             self.prefixes[message.guild.id] = prefix
 
         if await bot.is_owner(message.author) and bot.noprefix is True:
