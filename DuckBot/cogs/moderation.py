@@ -122,7 +122,7 @@ class Moderation(commands.Cog):
 
         try:
             await ctx.message.delete()
-            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
+            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate, reply=False)
         except discord.Forbidden:
             return await ctx.send('I do not have permissions to delete messages.')
         except discord.HTTPException as e:
@@ -139,9 +139,9 @@ class Moderation(commands.Cog):
         to_send = '\n'.join(messages)
 
         if len(to_send) > 2000:
-            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
+            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10, reply=False)
         else:
-            await ctx.send(to_send, delete_after=10)
+            await ctx.send(to_send, delete_after=10, reply=False)
 
     # ------------ TASKS ---------- #
 
@@ -543,12 +543,12 @@ class Moderation(commands.Cog):
             prefix = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
 
             def check(msg):
-                return (msg.author == ctx.me or msg.content.startswith(prefix)) and not msg.reference
+                return msg.author == ctx.me or msg.content.startswith(prefix)
 
             deleted = await ctx.channel.purge(limit=amount, check=check)
         else:
             def check(msg):
-                return (msg.author == ctx.me) and not msg.reference
+                return msg.author == ctx.me
 
             deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
         spammers = Counter(m.author.display_name for m in deleted)
@@ -561,9 +561,9 @@ class Moderation(commands.Cog):
 
         to_send = '\n'.join(messages)
         if len(to_send) > 2000:
-            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10)
+            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10, reply=False)
         else:
-            await ctx.send(to_send, delete_after=10)
+            await ctx.send(to_send, delete_after=10, reply=False)
 
     # ------------------------------------------------------------------------------#
     # --------------------------------- UNBAN --------------------------------------#
@@ -889,7 +889,7 @@ class Moderation(commands.Cog):
 
         ending_time = time.monotonic()
         complete_time = (ending_time - starting_time)
-        await ctx.send(f"done! took {round(complete_time, 2)} seconds")
+        await ctx.send(f"done! took {round(complete_time, 2)} seconds", reply=False)
 
     @muterole.command(name="delete")
     @commands.has_permissions(manage_messages=True)
