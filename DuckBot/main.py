@@ -69,6 +69,17 @@ class CustomContext(commands.Context):
         return await super().send(content=content, embed=embed, **kwargs) if not reply \
             else await self.reply(content=content, embed=embed, **kwargs)
 
+    async def edit(self, content: str = None, embed: discord.Embed = None,
+                   footer: bool = True, **kwargs):
+
+        if embed and footer is True:
+            if not embed.footer:
+                embed.set_footer(text=f"Requested by {self.author}",
+                                 icon_url=self.author.display_avatar.url)
+                embed.timestamp = discord.utils.utcnow()
+
+        return await super().edit(content=content, embed=embed, **kwargs)
+
 
 class DuckBot(commands.Bot):
     PRE: str = 'db.'
@@ -100,7 +111,7 @@ class DuckBot(commands.Bot):
         self.uptime = datetime.datetime.utcnow()
         self.last_rall = datetime.datetime.utcnow()
         self.prefixes = {}
-        self.allowed_mentions=discord.AllowedMentions(replied_user=False)
+
         self.session = aiohttp.ClientSession(loop=self.loop)
 
         for ext in initial_extensions:
