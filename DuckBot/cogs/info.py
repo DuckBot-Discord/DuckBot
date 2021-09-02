@@ -232,8 +232,8 @@ class MyHelp(commands.HelpCommand):
         self.context.bot.all_cogs = cog_index
         nl = '\n'
 
-        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}``````diff\n"
-                                                                              f"+ \"help [number]\""
+        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}``````diff"
+                                                                              f"\n! \"help [number]\""
                                                                               f"\n- to get help on"
                                                                               f"\n- a category by"
                                                                               f"\n- it's number."
