@@ -210,8 +210,10 @@ class MyHelp(commands.HelpCommand):
                                           "\n```diff"
                                           "\n- usage format: <required> [optional]"
                                           "\n- dont type these brackets when using the command!"
-                                          f"\n+ {self.context.clean_prefix}help [command] - get information on a command"
-                                          f"\n+ {self.context.clean_prefix}help [category] - get information on a category "
+                                          f"\n+ {self.context.clean_prefix}help [command] "
+                                          f"- get information on a command"
+                                          f"\n+ {self.context.clean_prefix}help [category] "
+                                          f"- get information on a category "
                                           f"\n```",
                               timestamp=discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
@@ -222,13 +224,10 @@ class MyHelp(commands.HelpCommand):
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
-            filtered = await self.filter_commands(commands, sort=True)
-            command_signatures = [self.get_command_name(c) for c in filtered]
-            if command_signatures:
-                num = f"{iterations}\U0000fe0f\U000020e3"
-                cog_index.append(cog.qualified_name)
-                all_cogs.append(f"{num} {cog.qualified_name}")
-                iterations += 1
+            num = f"{iterations}\U0000fe0f\U000020e3"
+            cog_index.append(cog.qualified_name)
+            all_cogs.append(f"{num} {cog.qualified_name}")
+            iterations += 1
         self.context.bot.all_cogs = cog_index
         nl = '\n'
 
@@ -397,10 +396,10 @@ class About(commands.Cog):
         """Tells you information about the bot itself."""
         information = await self.bot.application_info()
         embed = discord.Embed(color=discord.Colour.blurple(),
-                              description=f"[<:github:744345792172654643> source]({self.bot.repo}) | "
-                                          f"[<:invite:860644752281436171> invite me]({self.bot.invite_url}) | "
-                                          f"[<:topgg:870133913102721045> top.gg]({self.bot.vote_top_gg}) | "
-                                          f"[<:botsgg:870134146972938310> bots.gg]({self.bot.vote_bots_gg})"
+                              description=f"<:github:744345792172654643> [source]({self.bot.repo}) | "
+                                          f"<:invite:860644752281436171> [invite me]({self.bot.invite_url}) | "
+                                          f"<:topgg:870133913102721045> [top.gg]({self.bot.vote_top_gg}) | "
+                                          f"<:botsgg:870134146972938310> [bots.gg]({self.bot.vote_bots_gg})"
                                           f"\n> Try also `{ctx.prefix}source [command]`"
                                           f"\n> or `{ctx.prefix}source [command.subcommand]`")
 
