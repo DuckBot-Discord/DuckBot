@@ -95,11 +95,7 @@ class CustomContext(commands.Context):
         else:
             try:
                 return await self.reply(content=content, embed=embed, **kwargs)
-            except Exception as e:
-                try:
-                    await self.bot.get_channel(882634213516521473).send(f"```py\n{e.__traceback__}\n```")
-                except (discord.Forbidden, discord.HTTPException):
-                    pass
+            except discord.HTTPException:
                 return await super().send(content=content, embed=embed, **kwargs)
 
 
