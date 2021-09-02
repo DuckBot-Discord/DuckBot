@@ -210,7 +210,7 @@ class MyHelp(commands.HelpCommand):
                                           "\n```diff"
                                           "\n- usage format: <required> [optional]"
                                           "\n- dont type these brackets when using the command!"
-                                          f"\n+ {self.context.clean_prefix}help [command] "
+                                          f"\n+ {self.context.clean_prefix}help [command|subcommand] "
                                           f"- get information on a command"
                                           f"\n+ {self.context.clean_prefix}help [category|number] "
                                           f"- get information on a category"
