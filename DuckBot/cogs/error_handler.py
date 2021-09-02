@@ -112,6 +112,28 @@ class Handler(commands.Cog, name='Handler'):
             embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
 
+        elif isinstance(error, discord.ext.commands.errors.MaxConcurrencyReached):
+            embed = discord.Embed(color=0xD7342A, description=f"Please try again once you are done running the command")
+            embed.set_author(name='Command is alrady running!', icon_url='https://i.imgur.com/izRBtg9.png')
+
+            if error.per == BucketType.default:
+                per = ""
+            if error.per == BucketType.user:
+                per = "per user"
+            if error.per == BucketType.guild:
+                per = "per server"
+            if error.per == BucketType.channel:
+                per = "per channel"
+            if error.per == BucketType.member:
+                per = "per member"
+            if error.per == BucketType.category:
+                per = "per category"
+            if error.per == BucketType.role:
+                per = "per role"
+
+            embed.set_footer(text=f"limit is {error.number} command(s) running {per}")
+            return await ctx.send(embed=embed)
+
         elif isinstance(error, errors.NoQuotedMessage):
             return await ctx.send("<:reply:824240882488180747> Missing reply!")
 

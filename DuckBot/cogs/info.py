@@ -208,7 +208,7 @@ class MyHelp(commands.HelpCommand):
                               description=f"**Total Commands:** {len(list(self.context.bot.commands))} | **Usable by "
                                           f"you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))} "
                                           "\n```diff"
-                                          "\n- usage format: <required> [optional]"
+                                          "\n- usage format: <required> [optional=default value]..."
                                           "\n- dont type these brackets when using the command!"
                                           f"\n+ {self.context.clean_prefix}help [command|subcommand] "
                                           f"- get information on a command"
