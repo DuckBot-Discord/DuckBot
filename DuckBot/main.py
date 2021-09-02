@@ -59,6 +59,7 @@ class CustomContext(commands.Context):
 
     async def send(self, content: str = None, embed: discord.Embed = None, reply: bool = True,
                    footer: bool = True, mention_author: bool = False, **kwargs):
+
         if embed and footer is True:
             if not embed.footer:
                 embed.set_footer(text=f"Requested by {self.author}",
@@ -67,6 +68,17 @@ class CustomContext(commands.Context):
 
         return await super().send(content=content, embed=embed, mention_author=mention_author, **kwargs) if not reply \
             else await self.reply(content=content, embed=embed, mention_author=mention_author, **kwargs)
+
+    async def edit(self, content: str = None, embed: discord.Embed = None,
+                   footer: bool = True, mention_author: bool = False, **kwargs):
+
+        if embed and footer is True:
+            if not embed.footer:
+                embed.set_footer(text=f"Requested by {self.author}",
+                                 icon_url=self.author.display_avatar.url)
+                embed.timestamp = discord.utils.utcnow()
+
+        return await super().edit(content=content, embed=embed, mention_author=mention_author, **kwargs)
 
 
 class DuckBot(commands.Bot):
