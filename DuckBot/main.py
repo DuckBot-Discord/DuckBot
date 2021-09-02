@@ -116,9 +116,8 @@ class DuckBot(commands.Bot):
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
-            prefix = await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', message.guild.id)
-            if not prefix:
-                prefix = self.PRE
+            prefix = (await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1',
+                                             message.guild.id)) or self.PRE
 
             self.prefixes[message.guild.id] = prefix
 
@@ -138,8 +137,9 @@ class DuckBot(commands.Bot):
             self.started = True
 
             values = await self.db.fetch("SELECT guild_id, prefix FROM prefixes")
+
             for value in values:
-                self.prefixes[value['guild_id']] = value['prefix']
+                self.prefixes[value['guild_id']] = (value['prefix'] or self.PRE)
             for guild in self.guilds:
                 try:
                     self.prefixes[guild.id]
