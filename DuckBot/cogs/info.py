@@ -507,7 +507,7 @@ class About(commands.Cog):
         embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
 > We store your `server id` for purpose of custom prefixes.
 
-> when a command error happens, we get the following data for troubleshooting purposes: 
+> when a command error happens, we get the following data for troubleshooting purposes:
 ```yaml
 The command executed
 The server id, and server owner id

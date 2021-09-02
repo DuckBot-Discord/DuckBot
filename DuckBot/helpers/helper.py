@@ -50,35 +50,39 @@ def get_perms(permissions):
     return perms
 
 
-def get_user_badges(user):
-    author_flags = user.public_flags
-    flags = dict(author_flags)
-    emoji_flags = ""
-    if flags['staff'] is True:
-        emoji_flags = f"{emoji_flags} <:staff:314068430787706880>"
-    if flags['partner'] is True:
-        emoji_flags = f"{emoji_flags} <:partnernew:754032603081998336>"
-    if flags['hypesquad'] is True:
-        emoji_flags = f"{emoji_flags} <:hypesquad:314068430854684672>"
-    if flags['bug_hunter'] is True:
-        emoji_flags = f"{emoji_flags} <:bughunter:585765206769139723>"
-    if flags['hypesquad_bravery'] is True:
-        emoji_flags = f"{emoji_flags} <:bravery:585763004218343426>"
-    if flags['hypesquad_brilliance'] is True:
-        emoji_flags = f"{emoji_flags} <:brilliance:585763004495298575>"
-    if flags['hypesquad_balance'] is True:
-        emoji_flags = f"{emoji_flags} <:balance:585763004574859273>"
-    if flags['early_supporter'] is True:
-        emoji_flags = f"{emoji_flags} <:supporter:585763690868113455>"
+def get_user_badges(user, bot: bool = False):
+    flags = dict(user.public_flags)
+
+    if bot is True:
+        return True if flags['verified_bot'] else False
+
+    base_flags = {
+    'staff': '<:staff:314068430787706880>',
+    'partner': '<:partnernew:754032603081998336>',
+    'hypesquad': '<:hypesquad:314068430854684672>',
+    'bug_hunter': '<:hypesquad:314068430854684672>',
+    'hypesquad_bravery': '<:bravery:585763004218343426>',
+    'hypesquad_brilliance': '<:brilliance:585763004495298575>',
+    'hypesquad_balance': '<:balance:585763004574859273>',
+    'early_supporter': '<:supporter:585763690868113455>',
+    'bug_hunter_level_2': '<:bughunter_gold:850843414953984041>',
+    'verified_bot_developer': '<:earlybotdev:850843591756349450>',
+    'premium_since': '<:nitro:314068430611415041>',
+    'discord_certified_moderator': '<:certified_moderator:851224958825660497>'
+    }
+
+
     if user.premium_since:
-        emoji_flags = f"{emoji_flags} <:booster4:585764446178246657>"
-    if flags['bug_hunter_level_2'] is True:
-        emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>"  # not from bots.gg
-    if flags['verified_bot_developer'] is True:
-        emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>"  # not from bots.gg
-    if emoji_flags == "":
-        emoji_flags = None
-    return emoji_flags
+        flags['premium_since'] = True
+    else:
+        flags['premium_since'] = False
+
+    user_flags = []
+    for flag, emoji in base_flags.items():
+        if flags[flag]:
+            user_flags.append(emoji)
+
+    return ' '.join(user_flags) if user_flags else None
 
 
 def get_server_region(guild: discord.Guild):
