@@ -221,12 +221,14 @@ class MyHelp(commands.HelpCommand):
         cog_index = []
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
         iterations = 1
+        self.context.bot.enumerated_cogs = []
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
             num = f"{iterations}\U0000fe0f\U000020e3"
             cog_index.append(cog.qualified_name)
             all_cogs.append(f"{num} {cog.qualified_name}")
+            self.context.bot.enumerated_cogs.append(cog.qualified_name)
             iterations += 1
         self.context.bot.all_cogs = cog_index
         nl = '\n'
@@ -301,7 +303,7 @@ description: {command_help}
 
     async def send_error_message(self, error):
         channel = self.get_destination()
-        cmd = error[19:][:-8]
+        cmd = [item[::-1] for item in (error.split('"', 1)[-1])[::-1].split('"', 1)][::-1][0]
         if cmd.lower() == 'credits':
             charles = self.context.bot.get_user(505532526257766411) or "Charles#5244"
             dutchy = self.context.bot.get_user(171539705043615744) or "Dutchy#6127"
@@ -312,10 +314,17 @@ description: {command_help}
                                                                            f"https://charles-bot.com/ 💞")
             if not isinstance(charles, str):
                 embed.set_thumbnail(url=charles.display_avatar.url)
-            embed.set_author(icon_url=self.context.author.display_avatar.url, name=f"{self.context.author} - help page credits")
+            embed.set_author(icon_url=self.context.author.display_avatar.url,
+                             name=f"{self.context.author} - help page credits")
             return await channel.send(embed=embed)
-        await channel.send(
-            f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔\ndo `{self.context.clean_prefix}help` for help with all commands")
+
+        if cmd.isdigit():
+            try:
+                await self.context.send_help(self.context.bot.enumerated_cogs[int(cmd) - 1])
+            except KeyError:
+                pass
+        await channel.send(f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔"
+                           f"\ndo `{self.context.clean_prefix}help` for help with all commands")
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):

@@ -129,8 +129,9 @@ class DuckBot(commands.Bot):
         self.uptime = datetime.datetime.utcnow()
         self.last_rall = datetime.datetime.utcnow()
         self.prefixes = {}
-        self.allowed_mentions=discord.AllowedMentions(replied_user=False)
+        self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
+        self.enumerated_cogs = []
 
         for ext in initial_extensions:
             self._load_extension(ext)
