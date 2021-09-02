@@ -221,15 +221,14 @@ class MyHelp(commands.HelpCommand):
         cog_index = []
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
         iterations = 1
-        self.context.bot.enumerated_cogs = []
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
             num = f"{iterations}\U0000fe0f\U000020e3"
             cog_index.append(cog.qualified_name)
             all_cogs.append(f"{num} {cog.qualified_name}")
-            self.context.bot.enumerated_cogs.append(cog.qualified_name)
             iterations += 1
+        self.context.bot.first_help_sent = True
         self.context.bot.all_cogs = cog_index
         nl = '\n'
 
@@ -319,12 +318,16 @@ description: {command_help}
             return await channel.send(embed=embed)
 
         if cmd.isdigit():
-            try:
-                await self.context.send_help(self.context.bot.enumerated_cogs[int(cmd) - 1])
-            except KeyError:
-                pass
+            if self.context.bot.first_help_sent is True:
+                try:
+                    return await self.context.send_help(self.context.bot.all_commands[int(cmd) - 1])
+                except IndexError:
+                    pass
+            else:
+                return await channel.send(f"Whoops! I don't have the list of categories loaded 😔"
+                                          f"do `{self.context.clean_prefix}help` to load it! 💞")
         await channel.send(f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔"
-                           f"\ndo `{self.context.clean_prefix}help` for help with all commands")
+                           f"\ndo `{self.context.clean_prefix}help` for a list of available commands! 💞")
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):

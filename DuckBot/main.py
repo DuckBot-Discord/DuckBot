@@ -131,7 +131,7 @@ class DuckBot(commands.Bot):
         self.prefixes = {}
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.enumerated_cogs = []
+        self.first_help_sent = False
 
         for ext in initial_extensions:
             self._load_extension(ext)
