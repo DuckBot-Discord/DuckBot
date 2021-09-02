@@ -208,10 +208,10 @@ class Utility(commands.Cog):
             'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
         }
         boosting_level_emojis = {
-            '0': '<:Level0_guild:883081706918252604 >',
-            '1': '<:Level1_guild:883072977430794240 >',
-            '2': '<:Level2_guild:883073003984916491 >',
-            '3': '<:Level3_guild:883073034817245234 >'
+            '0': '<:Level0_guild:883081706918252604>',
+            '1': '<:Level1_guild:883072977430794240>',
+            '2': '<:Level2_guild:883073003984916491>',
+            '3': '<:Level3_guild:883073034817245234>'
         }
 
         for feature, label in all_features.items():
