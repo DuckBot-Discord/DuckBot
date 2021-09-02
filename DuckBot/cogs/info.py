@@ -212,8 +212,8 @@ class MyHelp(commands.HelpCommand):
                                           "\n- dont type these brackets when using the command!"
                                           f"\n+ {self.context.clean_prefix}help [command] "
                                           f"- get information on a command"
-                                          f"\n+ {self.context.clean_prefix}help [category] "
-                                          f"- get information on a category "
+                                          f"\n+ {self.context.clean_prefix}help [category|number] "
+                                          f"- get information on a category"
                                           f"\n```",
                               timestamp=discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
