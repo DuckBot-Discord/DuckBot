@@ -66,7 +66,7 @@ class CustomContext(commands.Context):
                 embed.timestamp = discord.utils.utcnow()
 
         return await super().send(content=content, embed=embed, mention_author=mention_author, **kwargs) if not reply \
-            else self.reply(content=content, embed=embed, mention_author=mention_author, **kwargs)
+            else await self.reply(content=content, embed=embed, mention_author=mention_author, **kwargs)
 
 
 class DuckBot(commands.Bot):
