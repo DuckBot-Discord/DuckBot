@@ -108,17 +108,17 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.bot_has_permissions(add_reactions=True)
     async def maintenance(self, ctx, state: typing.Optional[str] = None):
         if state == 'on':
-            await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
+            await ctx.message.add_reaction(ctx.toggle(True))
             self.bot.maintenance = True
         elif state == 'off':
-            await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
+            await ctx.message.add_reaction(ctx.toggle(False))
             self.bot.maintenance = False
         else:
             if not self.bot.maintenance:
-                await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
+                await ctx.message.add_reaction(ctx.toggle(True))
                 self.bot.maintenance = True
             elif self.bot.maintenance:
-                await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
+                await ctx.message.add_reaction(ctx.toggle(False))
                 self.bot.maintenance = False
 
     @commands.command(aliases=['sp'], help="toggles no-prefix mode on or off",
@@ -127,17 +127,17 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.bot_has_permissions(add_reactions=True)
     async def silentprefix(self, ctx, state: typing.Optional[str] = None):
         if state == 'on':
-            await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
+            await ctx.message.add_reaction(ctx.toggle(True))
             self.bot.noprefix = True
         elif state == 'off':
-            await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
+            await ctx.message.add_reaction(ctx.toggle(False))
             self.bot.noprefix = False
         else:
             if not self.bot.noprefix:
-                await ctx.message.add_reaction('<:toggle_on:857842924729270282>')
+                await ctx.message.add_reaction(ctx.toggle(True))
                 self.bot.noprefix = True
             elif self.bot.noprefix:
-                await ctx.message.add_reaction('<:toggle_off:857842924544065536>')
+                await ctx.message.add_reaction(ctx.toggle(False))
                 self.bot.noprefix = False
 
     # ----------------------------------------------------------------------------#

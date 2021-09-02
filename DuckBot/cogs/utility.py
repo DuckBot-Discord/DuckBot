@@ -18,10 +18,64 @@ class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=['userinfo', 'ui', 'whois', 'whoami'])
+    @commands.command(aliases=['uinfo', 'ui', 'whois', 'whoami'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
-    async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
+    async def userinfo(self, ctx: commands.Context, member: typing.Optional[discord.Member]):
+        """
+        Shows a user's information. If not specified, shows your own.
+        """
+        member = member or ctx.author
+
+        embed = discord.Embed(color=(member.color if member.color != discord.Colour.default() else ctx.me.color))
+        embed.set_author(name=member, icon_url=member.display_avatar.url)
+        embed.set_thumbnail(url=member.display_avatar.url)
+
+        embed.add_field(name="<:info:860295406349058068> General information",
+                        value=
+                        f"**ID:** {member.id}"
+                        f"\n**Name:** {member.name}"
+                        f"\n╰ **Nick:** {(member.nick or '✖')}"
+                        f"\n**Owner:** {ctx.tick(member == member.guild.owner)} • "
+                        f"**Bot:** {ctx.tick(member.bot)}", inline=True)
+
+        embed.add_field(name="<:store_tag:658538492409806849> Badges",
+                        value=(helper.get_user_badges(member) or "No Badges"), inline=True)
+
+        embed.add_field(name="<:invite:860644752281436171> Created At",
+                        value=f"╰ {discord.utils.format_dt(member.created_at, style='f')} "
+                              f"({discord.utils.format_dt(member.created_at, style='R')})",
+                        inline=False)
+
+        embed.add_field(name="<:joined:849392863557189633> Created At",
+                        value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
+                               f"({discord.utils.format_dt(member.joined_at, style='R')})"
+                               f"\n\u200b \u200b \u200b \u200b ╰ <:moved:848312880666640394> **Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}") \
+                            if member else "Could not get data",
+                        inline=False)
+
+        perms = helper.get_perms(member.guild_permissions)
+        if perms:
+            embed.add_field(name="<:store_tag:658538492409806849> Staff Perms",
+                            value=f"`{'` `'.join(perms)}`", inline=False)
+
+        roles = [r.mention for r in member.roles if r != ctx.guild.default_role]
+        if roles:
+            embed.add_field(name="<:role:808826577785716756>**Roles:** Roles",
+                            value=" ".join(roles), inline=False)
+
+        if member.premium_since:
+            embed.add_field(name="<:booster4:860644548887969832> Boosting since:",
+                            value=f"╰ {discord.utils.format_dt(member.premium_since, style='f')} "
+                                  f"({discord.utils.format_dt(member.premium_since, style='R')})",
+                            inline=False)
+
+        return await ctx.send(embed=embed)
+
+    @commands.command(hidden=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.guild_only()
+    async def old_uinfo(self, ctx, user: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
@@ -286,7 +340,7 @@ class Utility(commands.Cog):
                               description=f"**Allowed {server_emoji} to @everyone**")
         return await ctx.send(embed=embed)
 
-    @emoji_unlock.command(name = "all")
+    @emoji_unlock.command(name="all")
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_unlock_all(self, ctx: commands.Context):
@@ -376,4 +430,3 @@ class Utility(commands.Cog):
                 uuid = res["id"]
                 embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
             return await ctx.send(embed=embed)
-

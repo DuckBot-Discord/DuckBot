@@ -696,7 +696,7 @@ class Moderation(commands.Cog):
 
     # Indefinitely mute member
 
-    @commands.command()
+    @commands.command(aliases=['stfu', 'shut', 'silence'])
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
