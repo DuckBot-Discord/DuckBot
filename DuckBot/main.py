@@ -70,7 +70,7 @@ class CustomContext(commands.Context):
             else await self.reply(content=content, embed=embed, mention_author=mention_author, **kwargs)
 
     async def edit(self, content: str = None, embed: discord.Embed = None,
-                   footer: bool = True, mention_author: bool = False, **kwargs):
+                   footer: bool = True, allowed_mentions: discord.AllowedMentions = discord.AllowedMentions(replied_user=False), **kwargs):
 
         if embed and footer is True:
             if not embed.footer:
@@ -78,7 +78,7 @@ class CustomContext(commands.Context):
                                  icon_url=self.author.display_avatar.url)
                 embed.timestamp = discord.utils.utcnow()
 
-        return await super().edit(content=content, embed=embed, mention_author=mention_author, **kwargs)
+        return await super().edit(content=content, embed=embed, allowed_mentions=allowed_mentions, **kwargs)
 
 
 class DuckBot(commands.Bot):
