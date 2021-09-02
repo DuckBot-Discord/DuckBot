@@ -232,7 +232,10 @@ class MyHelp(commands.HelpCommand):
         self.context.bot.all_cogs = cog_index
         nl = '\n'
 
-        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}```")
+        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}```"
+                                                                              f"do `help NUM`"
+                                                                              f"\nto get help"
+                                                                              f"\bby index.")
 
         embed.add_field(name="📰 Latest News - <t:1630508600:d> (<t:1630508600:R>)", value=f"""
 _ _
@@ -311,7 +314,7 @@ description: {command_help}
                                                                            f"**{dutchy}**'s **{charles}** "
                                                                            f"bot.\n\ncheck it out at "
                                                                            f"https://charles-bot.com/ 💞")
-            if not isinstance(charles, str):
+            if isinstance(charles, (discord.User, discord.Member)):
                 embed.set_thumbnail(url=charles.display_avatar.url)
             embed.set_author(icon_url=self.context.author.display_avatar.url,
                              name=f"{self.context.author} - help page credits")
