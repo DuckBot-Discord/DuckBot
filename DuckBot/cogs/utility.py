@@ -222,7 +222,7 @@ class Utility(commands.Cog):
         embed = discord.Embed(color=discord.Colour.blurple(),
                               title=user, url=user.display_avatar.url)
         embed.set_image(url=user.display_avatar.url)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, footer=False)
 
     @commands.group(invoke_without_command=True, aliases=['em'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
