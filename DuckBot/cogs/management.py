@@ -103,23 +103,6 @@ class Management(commands.Cog, name='Bot Management'):
         await channel.send(embed=embed)
         await ctx.message.add_reaction('✅')
 
-    @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
-        if before.channel is None and after.channel is not None:
-            if after.channel.guild.id == 841298004929806336:
-                text_channel = self.bot.get_channel(841298004929806340)
-                await text_channel.send(
-                    f'<:joined:849392863557189633> {member.name} **joined** __{after.channel.name}__!')
-        if before.channel is not None and after.channel is not None:
-            if before.channel.guild.id == 841298004929806336 and before.channel.id != after.channel.id:
-                text_channel = self.bot.get_channel(841298004929806340)
-                await text_channel.send(
-                    f'<:moved:848312880666640394> {member.name} **has been moved to** __{after.channel.name}__!')
-        if before.channel is not None and after.channel is None:
-            if before.channel.guild.id == 841298004929806336:
-                text_channel = self.bot.get_channel(841298004929806340)
-                await text_channel.send(f'<:left:849392885785821224> {member.name} **left** __{before.channel.name}__!')
-
     @commands.command(aliases=['mm'], help="puts the bot under maintenance", usage="[on|off]")
     @commands.is_owner()
     @commands.bot_has_permissions(add_reactions=True)
@@ -166,7 +149,7 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def load(self, ctx, extension):
         embed = discord.Embed(color=ctx.me.color, description=f"⬆ {extension}")
-        message = await ctx.send(embed=embed)
+        message = await ctx.send(embed=embed, footer=False)
         try:
             self.bot.load_extension("cogs.{}".format(extension))
             await asyncio.sleep(0.5)
@@ -206,7 +189,7 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def unload(self, ctx, extension):
         embed = discord.Embed(color=ctx.me.color, description=f"⬇ {extension}")
-        message = await ctx.send(embed=embed)
+        message = await ctx.send(embed=embed, footer=False)
         try:
             self.bot.unload_extension("cogs.{}".format(extension))
             await asyncio.sleep(0.5)
@@ -228,7 +211,7 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reload(self, ctx, extension=""):
         embed = discord.Embed(color=ctx.me.color, description=f"🔃 {extension}")
-        message = await ctx.send(embed=embed)
+        message = await ctx.send(embed=embed, footer=False)
         try:
             self.bot.reload_extension("cogs.{}".format(extension))
             await asyncio.sleep(0.5)
@@ -284,14 +267,14 @@ class Management(commands.Cog, name='Bot Management'):
                 cogs_list = f"{cogs_list} \n🔃 {filename[:-3]}"
 
         embed = discord.Embed(color=ctx.me.color, description=cogs_list)
-        message = await ctx.send(embed=embed)
+        message = await ctx.send(embed=embed, footer=False)
 
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):
                 try:
                     self.bot.reload_extension("cogs.{}".format(filename[:-3]))
                     to_send = f"{to_send} \n✅ {filename[:-3]}"
-                except:
+                except Exception:
                     first_reload_failed_extensions.append(filename)
 
         for filename in first_reload_failed_extensions:
@@ -308,14 +291,15 @@ class Management(commands.Cog, name='Bot Management'):
             except discord.ext.commands.ExtensionFailed as e:
                 traceback_string = "".join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))
                 to_send = f"{to_send} \n❌ {filename[:-3]} - Execution error"
-                embed_error = discord.Embed(color=ctx.me.color,
-                                            description=f"\n❌ {filename[:-3]} Execution error - Traceback"
-                                                        f"\n```\n{traceback_string}\n```")
+                embed_error = f"\n❌ {filename[:-3]} Execution error - Traceback" \
+                              f"\n```py\n{traceback_string}\n```"
                 if not silent:
-                    if not channel:
-                        await ctx.author.send(embed=embed_error)
+                    target = ctx if not channel else ctx.author
+                    if len(embed_error) > 2000:
+                        await target.send(file=io.StringIO(embed_error))
                     else:
-                        await ctx.send(embed=embed_error)
+                        await target.send(embed_error)
+
                 err = True
 
         await asyncio.sleep(0.4)
