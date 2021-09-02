@@ -207,6 +207,12 @@ class Utility(commands.Cog):
             'THREE_DAY_THREAD_ARCHIVE': '3 Day Thread Archive',
             'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
         }
+        boosting_level_emojis = {
+            '0': '<:Level0_guild:883081706918252604 >',
+            '1': '<:Level1_guild:883072977430794240 >',
+            '2': '<:Level2_guild:883073003984916491 >',
+            '3': '<:Level3_guild:883073034817245234 >'
+        }
 
         for feature, label in all_features.items():
             if feature in features:
@@ -258,8 +264,8 @@ class Utility(commands.Cog):
             boost = "\n╰ No active boosters"
 
         embed.add_field(name="<:booster4:860644548887969832> Boosts:",
-                        value=f"Level: {guild.premium_tier}"
-                              f"\nAmount: {guild.premium_subscription_count}"
+                        value=f"{boosting_level_emojis[str(guild.premium_tier)]} Level: {guild.premium_tier}"
+                              f"\n╰ Amount: {guild.premium_subscription_count}"
                               f"\n**<:booster4:860644548887969832> Last booster:**{boost}")
 
         if guild.icon:
