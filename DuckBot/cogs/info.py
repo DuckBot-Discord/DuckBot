@@ -233,9 +233,10 @@ class MyHelp(commands.HelpCommand):
         nl = '\n'
 
         embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}``````fix\n"
-                                                                              f"do \"help NUM\" to"
-                                                                              f"\nhelp get help by"
-                                                                              f"\nindex number.\n```")
+                                                                              f"do \"help [number]\""
+                                                                              f"\nto help get help"
+                                                                              f"\nby index number."
+                                                                              f"\n```")
 
         embed.add_field(name="📰 Latest News - <t:1630508600:d> (<t:1630508600:R>)", value=f"""
 _ _
