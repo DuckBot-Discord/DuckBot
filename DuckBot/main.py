@@ -90,8 +90,17 @@ class CustomContext(commands.Context):
                                  icon_url=self.author.display_avatar.url)
                 embed.timestamp = discord.utils.utcnow()
 
-        return await super().send(content=content, embed=embed, **kwargs) if not reply \
-            else await self.reply(content=content, embed=embed, **kwargs)
+        if reply:
+            return await super().send(content=content, embed=embed, **kwargs)
+        else:
+            try:
+                return await self.reply(content=content, embed=embed, **kwargs)
+            except Exception as e:
+                try:
+                    await self.bot.get_channel(882634213516521473).send(f"```py\n{e.__traceback__}\n```")
+                except (discord.Forbidden, discord.HTTPException):
+                    pass
+                return await super().send(content=content, embed=embed, **kwargs)
 
 
 class DuckBot(commands.Bot):
