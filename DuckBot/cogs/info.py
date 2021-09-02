@@ -320,7 +320,7 @@ description: {command_help}
         if cmd.isdigit():
             if self.context.bot.first_help_sent is True:
                 try:
-                    return await self.context.send_help(self.context.bot.all_commands[int(cmd) - 1])
+                    return await self.context.send_help(self.context.bot.all_cogs[int(cmd) - 1])
                 except IndexError:
                     pass
             else:
