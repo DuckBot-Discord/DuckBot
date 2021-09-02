@@ -325,7 +325,7 @@ description: {command_help}
                     pass
             else:
                 return await channel.send(f"Whoops! I don't have the list of categories loaded 😔"
-                                          f"do `{self.context.clean_prefix}help` to load it! 💞")
+                                          f"\nDo `{self.context.clean_prefix}help` to load it! 💞")
         await channel.send(f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔"
                            f"\ndo `{self.context.clean_prefix}help` for a list of available commands! 💞")
 
