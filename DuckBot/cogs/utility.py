@@ -114,7 +114,7 @@ class Utility(commands.Cog):
             embed.add_field(name="denied", value="\n".join(denied))
         return await ctx.send(embed=embed)
 
-    @commands.command(help="Shows you information about the server")
+    @commands.command(aliases=["serverinfo"])
     @commands.guild_only()
     async def si(self, ctx: commands.Context, guild_id: int = None):
         """
