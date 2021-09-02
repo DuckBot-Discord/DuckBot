@@ -247,8 +247,8 @@ _ _
 _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_
 
 > **📜 NEW! suggest command!**
-_If you want to suggest a feature, you can now do `{self.context.clean_prefix}suggest <text>`!_
-_You can still dm me ({self.context.me.mention}) if you want more communication._
+_If you want to suggest a feature, you can now do `{self.context.clean_prefix}suggest <suggestion>`!_
+_You can still dm me ({self.context.me.mention}) if you want a more normal communication with my developers._
 """)
 
         embed.set_footer(text=f"Help command inspiration and credits at \"{self.context.clean_prefix}about\"")
