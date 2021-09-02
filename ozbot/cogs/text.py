@@ -1,7 +1,9 @@
-import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, itertools, contextlib, datetime
+import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, \
+    itertools, contextlib, datetime
 from discord.ext import commands, menus
 from discord.ext.commands import Paginator as CommandPaginator
 from jishaku.models import copy_context_with
+
 
 class Duckinator(menus.MenuPages):
     def __init__(self, source):
@@ -103,6 +105,7 @@ class HelpMenu(Duckinator):
 
         self.bot.loop.create_task(go_back_to_current_page())
 
+
 class GroupHelpPageSource(menus.ListPageSource):
     def __init__(self, group, commands, *, prefix):
         super().__init__(entries=commands, per_page=6)
@@ -116,8 +119,10 @@ class GroupHelpPageSource(menus.ListPageSource):
 
         for command in commands:
             signature = f'{command.qualified_name} {command.signature}'
-            if command.help: command_help = command.help.replace("%PRE%", self.prefix)
-            else: command_help = 'No help given...'
+            if command.help:
+                command_help = command.help.replace("%PRE%", self.prefix)
+            else:
+                command_help = 'No help given...'
             embed.add_field(name=signature, value=f"```yaml\n{command_help}```", inline=False)
 
         maximum = self.get_max_pages()
@@ -127,25 +132,26 @@ class GroupHelpPageSource(menus.ListPageSource):
         embed.set_footer(text=f'Use "{self.prefix}help command" for more info on a command.')
         return embed
 
+
 class MyHelp(commands.HelpCommand):
     # Formatting
     def get_minimal_command_signature(self, command):
         return '%s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
 
     def get_command_name(self, command):
-        return '%s' % (command.qualified_name)
+        return '%s' % command.qualified_name
 
-   # !help
+    # !help
     async def send_bot_help(self, mapping):
         embed = discord.Embed(color=discord.Colour.blurple(), title=f"ℹ {self.context.me.name} help",
-        description=f"""
+                              description=f"""
 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))}
 ```diff
 - usage format: <required> [optional]
 + {self.context.clean_prefix}help [command] - get information on a command
 + {self.context.clean_prefix}help [category] - get information on a category
 ```""")
-        ignored_cogs=['helpcog']
+        ignored_cogs = ['helpcog']
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs: continue
             filtered = await self.filter_commands(commands, sort=True)
@@ -164,21 +170,25 @@ class MyHelp(commands.HelpCommand):
         else:
             embed_like.description = command.help or '```yaml\nNo help found...\n```'
 
-  # !help <command>
+    # !help <command>
     async def send_command_help(self, command):
         alias = command.aliases
-        if command.help: command_help = command.help.replace("%PRE%", self.context.clean_prefix)
-        else: command_help = 'No help given...'
+        if command.help:
+            command_help = command.help.replace("%PRE%", self.context.clean_prefix)
+        else:
+            command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=discord.Colour.blurple(), title=f"information about: {self.context.clean_prefix}{command}",
-            description=f"""
+            embed = discord.Embed(color=discord.Colour.blurple(),
+                                  title=f"information about: {self.context.clean_prefix}{command}",
+                                  description=f"""
 ```yaml
       usage: {self.get_minimal_command_signature(command)}
     aliases: {', '.join(alias)}
 description: {command_help}
 ```""")
         else:
-            embed = discord.Embed(color=discord.Colour.blurple(), title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(color=discord.Colour.blurple(),
+                                  title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
@@ -189,7 +199,6 @@ description: {command_help}
         entries = cog.get_commands()
         menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix))
         await menu.start(self.context)
-
 
     async def send_group_help(self, group):
         subcommands = group.commands
@@ -204,21 +213,19 @@ description: {command_help}
         menu = HelpMenu(source)
         await menu.start(self.context)
 
-
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
             await ctx.send(embed=discord.Embed(color=discord.Colour.blurple(), description=str(error.original)))
 
 
-
 class text(commands.Cog):
     """📝 Text commands"""
+
     def __init__(self, bot):
         self.bot = bot
         help_command = MyHelp()
         help_command.cog = self
         bot.help_command = help_command
-
 
     words = ['nothing', 'nothing']
     with open(r'files/banned-words.yaml') as file:
@@ -248,9 +255,9 @@ class text(commands.Cog):
         else:
             if ctx.message.reference:
                 reply = ctx.message.reference.resolved
-                await reply.reply(msg, allowed_mentions = discord.AllowedMentions(everyone = False))
+                await reply.reply(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
             else:
-                await ctx.send(msg, allowed_mentions = discord.AllowedMentions(everyone = False))
+                await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
 
     @commands.command(aliases=['a', 'an'])
     @commands.has_permissions(manage_messages=True)
@@ -267,13 +274,32 @@ class text(commands.Cog):
             else:
                 if ctx.message.reference:
                     msg = ctx.message.reference.resolved.content
-                await channel.send(msg, allowed_mentions = discord.AllowedMentions(everyone = False))
-
-
+                await channel.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False))
 
     @commands.command(aliases=['e'])
-    async def edit(self, ctx, *, new : typing.Optional[str] = '--d'):
-            if ctx.author.guild_permissions.manage_messages == False:
+    async def edit(self, ctx, *, new: typing.Optional[str] = '--d'):
+        if ctx.author.guild_permissions.manage_messages == False:
+            await ctx.message.add_reaction('🚫')
+            await asyncio.sleep(3)
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                return
+            return
+        if ctx.message.reference:
+            msg = ctx.message.reference.resolved
+            try:
+                if new.endswith("--s"):
+                    await msg.edit(content="{}".format(new[:-3]), suppress=True)
+                elif new.endswith('--d'):
+                    await msg.edit(content=None, suppress=True)
+                else:
+                    await msg.edit(content=new, suppress=False)
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    return
+            except discord.Forbidden:
                 await ctx.message.add_reaction('🚫')
                 await asyncio.sleep(3)
                 try:
@@ -281,39 +307,26 @@ class text(commands.Cog):
                 except discord.Forbidden:
                     return
                 return
-            if ctx.message.reference:
-                msg = ctx.message.reference.resolved
-                try:
-                    if new.endswith("--s"): await msg.edit(content="{}".format(new[:-3]), suppress=True)
-                    elif new.endswith('--d'): await msg.edit(content=None, suppress=True)
-                    else: await msg.edit(content=new, suppress=False)
-                    try: await ctx.message.delete()
-                    except discord.Forbidden:
-                        return
-                except discord.Forbidden:
-                    await ctx.message.add_reaction('🚫')
-                    await asyncio.sleep(3)
-                    try:
-                        await ctx.message.delete()
-                    except discord.Forbidden:
-                        return
-                    return
-            else:
-                await ctx.message.add_reaction('⚠')
-                await asyncio.sleep(3)
-                try:
-                    await ctx.message.delete()
-                except discord.Forbidden:
-                    return
+        else:
+            await ctx.message.add_reaction('⚠')
+            await asyncio.sleep(3)
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                return
 
-    @commands.command(aliases = ['source', 'code'])
+    @commands.command(aliases=['source', 'code'])
     async def sourcecode(self, ctx):
-        embed=discord.Embed(title="", description="**[Here's my source code](https://github.com/LeoCx1000/discord-bots)**", color=ctx.me.color)
+        embed = discord.Embed(title="",
+                              description="**[Here's my source code](https://github.com/LeoCx1000/discord-bots)**",
+                              color=ctx.me.color)
         await ctx.send(embed=embed)
 
-    @commands.command(aliases = ['getroles', 'buyrole'])
+    @commands.command(aliases=['getroles', 'buyrole'])
     async def patreon(self, ctx):
-        embed=discord.Embed(title="", description="**Purchase a role at [patreon.com/OZ_SMP](https://www.patreon.com/OZ_SMP)**", color=ctx.me.color)
+        embed = discord.Embed(title="",
+                              description="**Purchase a role at [patreon.com/OZ_SMP](https://www.patreon.com/OZ_SMP)**",
+                              color=ctx.me.color)
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -324,14 +337,16 @@ class text(commands.Cog):
         end = time.perf_counter()
         await asyncio.sleep(0.7)
         duration = (end - start) * 1000
-        embed = discord.Embed(title='', description=f'**websocket:** `{(self.bot.latency * 1000):.2f}ms` \n**message:** `{duration:.2f}ms`', color=ctx.me.color)
+        embed = discord.Embed(title='',
+                              description=f'**websocket:** `{(self.bot.latency * 1000):.2f}ms` \n**message:** `{duration:.2f}ms`',
+                              color=ctx.me.color)
         await message.edit(embed=embed)
 
     @commands.command()
     async def uuid(self, ctx, *, argument: typing.Optional[str] = ''):
         async with aiohttp.ClientSession() as cs:
             async with cs.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
-                embed = discord.Embed(color = ctx.me.color)
+                embed = discord.Embed(color=ctx.me.color)
                 if cs.status == 204:
                     embed.add_field(name='⚠ ERROR ⚠', value=f"`{argument}` is not a minecraft username!")
 
@@ -344,6 +359,7 @@ class text(commands.Cog):
                     embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
 
                 await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(text(bot))

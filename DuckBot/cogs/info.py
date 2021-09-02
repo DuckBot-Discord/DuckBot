@@ -232,10 +232,10 @@ class MyHelp(commands.HelpCommand):
         self.context.bot.all_cogs = cog_index
         nl = '\n'
 
-        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}```"
-                                                                              f"do `help NUM`"
-                                                                              f"\nto get help"
-                                                                              f"\bby index.")
+        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}``````fix"
+                                                                              f"do \"help NUM\" to"
+                                                                              f"\n help get help by"
+                                                                              f"\n index number.\n```")
 
         embed.add_field(name="📰 Latest News - <t:1630508600:d> (<t:1630508600:R>)", value=f"""
 _ _
