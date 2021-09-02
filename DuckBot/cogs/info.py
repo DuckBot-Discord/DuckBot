@@ -219,7 +219,7 @@ class MyHelp(commands.HelpCommand):
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
         all_cogs = []
         cog_index = []
-        ignored_cogs = []
+        ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
         iterations = 1
         for cog, commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs:
