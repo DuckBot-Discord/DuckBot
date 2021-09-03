@@ -3,6 +3,7 @@ import os
 
 # Async stuff seperate
 import asyncpg
+import asyncpraw
 from dotenv import load_dotenv
 
 # Local imports always at bottom
@@ -31,5 +32,10 @@ if __name__ == '__main__':
     TOKEN = os.getenv('DISCORD_TOKEN')
 
     bot = DuckBot()
+    bot.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
+                                  client_secret=os.getenv('ASYNC_PRAW_CS'),
+                                  user_agent=os.getenv('ASYNC_PRAW_UA'),
+                                  username=os.getenv('ASYNC_PRAW_UN'),
+                                  password=os.getenv('ASYNC_PRAW_PA'))
     bot.db = bot.loop.run_until_complete(create_db_pool())
     bot.run(TOKEN, reconnect=True)
