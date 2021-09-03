@@ -411,8 +411,8 @@ class Moderation(commands.Cog):
 
     @remove.command(name="custom")
     async def remove_custom(self, ctx, *, args: str):
-        """A more advanced purge command.
-        do "%PRE%remove help" for usage.
+        """A more advanced purge command, with a command-line-like syntax.
+        # Do "%PRE%remove help" for usage.
         """
         parser = Arguments(add_help=False, allow_abbrev=False)
         parser.add_argument('--user', nargs='+')
