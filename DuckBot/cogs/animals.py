@@ -96,9 +96,20 @@ class Fun(commands.Cog, name='Fun'):
         size = random.uniform(8, 25)
         embed = discord.Embed(colour=0xFFCD71)
         embed.description = f"""
-                             8{'=' * int(round(size/2, 0))}D
+                             8{'=' * int(round(size / 2, 0))}D
 
                              **{member.name}**'s 🍌 is {round(size, 1)} cm
                              """
         embed.set_author(icon_url=member.display_avatar.url, name=member)
+        await ctx.send(embed=embed)
+
+
+    @commands.command()
+    async def meme(self, ctx):
+        meme = await (await self.bot.reddit.subreddit("memes")).random()
+        embed = discord.Embed(color=discord.Color.random(), title=meme.title,
+                              description=f"<:upvote:274492025678856192> {meme.score} "
+                                          f"({meme.upvote_ratio * 100}%)",
+                              url=f"https://reddit.com{meme.permalink}")
+        embed.set_image(url=meme.url)
         await ctx.send(embed=embed)
