@@ -172,7 +172,7 @@ class GroupHelpPageSource(menus.ListPageSource):
         self.prefix = prefix
         if isinstance(group, discord.ext.commands.Group):
             self.title = f"{group} {group.clean_params}"
-            self.description = f"```yaml\n{(self.group.help or 'No help given...')}```"
+            self.description = f"```yaml\n{(self.group.help or 'No help given...').replace('%PRE%', self.prefix)}```"
         else:
             self.title = f'{self.group.qualified_name} Commands'
             self.description = self.group.description
