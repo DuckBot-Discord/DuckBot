@@ -1084,18 +1084,16 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
     async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
-                       duration_reset: typing.Union[typing.Literal['reset', 'r'], helpers.ShortTime]) -> discord.Message:
+                       duration: typing.Optional[helpers.ShortTime]) -> discord.Message:
         """
         Sets the channel slow mode to a delay between 1s and 6h.
         # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
-        # To reset, do "%PRE%slowmode reset"
+        # To reset the slowmode, send command without specifying a duration.
         """
 
         channel = channel or ctx.channel
 
-        duration = duration_reset
-
-        if isinstance(duration, str):
+        if not duration:
             await channel.edit(slowmode_delay=0)
             return await ctx.send(f"Messages in **{channel.name}** can now be sent without slow mode")
 
