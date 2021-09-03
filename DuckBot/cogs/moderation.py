@@ -801,41 +801,34 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
-    async def muterole(self, ctx: commands.Context):
+    async def muterole(self, ctx: commands.Context, new_role: discord.Role = None):
+        """
+        Manages the current mute role. If no role is specified, shows the current mute role.
+        """
         if ctx.invoked_subcommand is None:
+            if new_role:
+                await self.bot.db.execute(
+                    "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+                    "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+                    ctx.guild.id, new_role.id)
+
+                return await ctx.send(f"Updated the muted role to {new_role.mention}!",
+                                      allowed_mentions=discord.AllowedMentions().none())
 
             mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
 
             if not mute_role:
                 return await ctx.send("This server doesn't have a mute role!"
-                                      "\n create one with the `muterole add` command")
+                                      "\n create one with the `muterole [new_role]` command")
 
             role = ctx.guild.get_role(int(mute_role))
             if not isinstance(role, discord.Role):
                 return await ctx.send("The muted role seems to have been deleted!"
-                                      "\nRe-assign it with the `muterole set` command")
+                                      "\nRe-assign it with the `muterole [new_role]` command")
 
-            return await ctx.send(f"This server's mute role is {role.mention}",
+            return await ctx.send(f"This server's mute role is {role.mention}"
+                                  f"\nChange it with the `muterole [new_role]` command",
                                   allowed_mentions=discord.AllowedMentions().none())
-
-    # Add mute role
-
-    @commands.has_permissions(manage_guild=True)
-    @muterole.command(name="add", aliases=["set"])
-    async def muterole_add(self, ctx: commands.Context, role: discord.Role = None):
-        """
-        Adds a pre-existing mute role for the bot to use
-        (You can also do "%PRE%muterole create" if you don't have a pre-existing mute role)
-        """
-        if not role:
-            await ctx.send_help()
-        await self.bot.db.execute(
-            "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
-            "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
-            ctx.guild.id, role.id)
-
-        return await ctx.send(f"Updated the muted role to {role.mention}!",
-                              allowed_mentions=discord.AllowedMentions().none())
 
     # Remove mute role
 

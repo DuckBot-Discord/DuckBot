@@ -170,8 +170,12 @@ class GroupHelpPageSource(menus.ListPageSource):
         super().__init__(entries=commands, per_page=6)
         self.group = group
         self.prefix = prefix
-        self.title = f'{self.group.qualified_name} Commands'
-        self.description = self.group.description
+        if isinstance(group, discord.ext.commands.Group):
+            self.title = f"{group} {group.clean_params}"
+            self.description = f"```yaml\n{(self.group.help or 'No help given...')}```"
+        else:
+            self.title = f'{self.group.qualified_name} Commands'
+            self.description = self.group.description
 
     async def format_page(self, menu, commands):
         embed = discord.Embed(title=self.title, description=self.description, colour=discord.Colour.blurple())
