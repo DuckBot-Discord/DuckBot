@@ -162,6 +162,12 @@ class Handler(commands.Cog, name='Handler'):
                            "permissions, or an issue with role hierarchy. Try adjusting my permissions"
                            "for this server. \n(Note that I can't edit the server owner)")
 
+        elif isinstance(error, commands.NoPrivateMessage):
+            return await ctx.send("This command does not work inside DMs")
+
+        elif isinstance(error, commands.PrivateMessageOnly):
+            return await ctx.send("This command only works inside DMs")
+
         error_channel = self.bot.get_channel(self.error_channel)
 
         traceback_string = "".join(traceback.format_exception(
