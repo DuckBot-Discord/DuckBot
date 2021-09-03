@@ -1069,3 +1069,19 @@ class Moderation(commands.Cog):
         await channel.set_permissions(ctx.guild.default_role, overwrite=perms,
                                       reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
         await ctx.message.add_reaction('🔓')
+
+    @commands.command()
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
+                       duration: helpers.ShortTime) -> discord.Message:
+        channel = channel or ctx.channel
+
+        created_at = ctx.message.created_at
+        delta: datetime.timedelta = duration.dt > (created_at + datetime.timedelta(hours=6))
+        if delta:
+            return await ctx.send('Duration is too long. Must be at most 6 hours.')
+        await channel.edit(slowmode_delay=int(delta.seconds))
+
+        human_delay = helpers.human_timedelta(duration.dt, source=created_at)
+        await ctx.send(f"Messages in **{channel.name}** can now be sent **every {human_delay}**")
