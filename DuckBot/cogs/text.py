@@ -68,7 +68,8 @@ class General(commands.Cog):
         return await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False,
                                                                             roles=False,
                                                                             users=allowed),
-                              reference=ctx.message.reference)
+                              reference=ctx.message.reference,
+                              reply=False)
 
     # .a <TextChannel> <text>
     # sends the message in a channel
