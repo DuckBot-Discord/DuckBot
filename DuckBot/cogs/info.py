@@ -171,7 +171,7 @@ class GroupHelpPageSource(menus.ListPageSource):
         self.group = group
         self.prefix = prefix
         if isinstance(group, discord.ext.commands.Group):
-            self.title = f"{group} {group.clean_params}"
+            self.title = self.get_minimal_command_signature(group)
             self.description = f"```yaml\n{(self.group.help or 'No help given...').replace('%PRE%', self.prefix)}```"
         else:
             self.title = f'{self.group.qualified_name} Commands'
@@ -194,6 +194,9 @@ class GroupHelpPageSource(menus.ListPageSource):
 
         embed.set_footer(text=f'Use "{self.prefix}help command" for more info on a command.')
         return embed
+
+    def get_minimal_command_signature(self, group):
+        return '%s%s %s' % (self.prefix, group.qualified_name, group.signature)
 
 
 class MyHelp(commands.HelpCommand):
