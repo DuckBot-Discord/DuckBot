@@ -118,18 +118,20 @@ class Handler(commands.Cog, name='Handler'):
 
             if error.per == BucketType.default:
                 per = ""
-            if error.per == BucketType.user:
+            elif error.per == BucketType.user:
                 per = "per user"
-            if error.per == BucketType.guild:
+            elif error.per == BucketType.guild:
                 per = "per server"
-            if error.per == BucketType.channel:
+            elif error.per == BucketType.channel:
                 per = "per channel"
-            if error.per == BucketType.member:
+            elif error.per == BucketType.member:
                 per = "per member"
-            if error.per == BucketType.category:
+            elif error.per == BucketType.category:
                 per = "per category"
-            if error.per == BucketType.role:
+            elif error.per == BucketType.role:
                 per = "per role"
+            else:
+                per = ""
 
             embed.set_footer(text=f"limit is {error.number} command(s) running {per}")
             return await ctx.send(embed=embed)
