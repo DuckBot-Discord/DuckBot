@@ -1034,3 +1034,38 @@ class Moderation(commands.Cog):
         perms.connect = False
         perms.speak = False
         return await channel.set_permissions(role, overwrite=perms, reason="DuckBot automatic mute role permissions")
+
+    @commands.command(aliases=['lock', 'ld'])
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def lockdown(self, ctx, channel: typing.Optional[discord.TextChannel]):
+        channel = channel or ctx.channel
+
+        perms = channel.overwrites_for(ctx.me)
+        perms.send_messages = True
+        perms.add_reactions = True
+
+        await channel.set_permissions(ctx.me, overwrite=perms,
+                                      reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
+
+        perms = channel.overwrites_for(ctx.guild.default_role)
+        perms.send_messages = False
+        perms.add_reactions = False
+
+        await channel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                      reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
+        await ctx.message.add_reaction('🔒')
+
+    @commands.command(aliases=['unlockdown', 'uld'])
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def unlock(self, ctx, channel: typing.Optional[discord.TextChannel]):
+        channel = channel or ctx.channel
+
+        perms = channel.overwrites_for(ctx.guild.default_role)
+        perms.send_messages = None
+        perms.add_reactions = None
+
+        await channel.set_permissions(ctx.guild.default_role, overwrite=perms,
+                                      reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
+        await ctx.message.add_reaction('🔓')
