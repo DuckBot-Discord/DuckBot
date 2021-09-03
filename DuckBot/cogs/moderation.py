@@ -1084,7 +1084,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
     async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
-                       duration: typing.Optional[helpers.ShortTime]) -> discord.Message:
+                       duration: helpers.ShortTime = None) -> discord.Message:
         """
         Sets the channel slow mode to a delay between 1s and 6h.
         # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
