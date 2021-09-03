@@ -103,7 +103,6 @@ class Fun(commands.Cog, name='Fun'):
         embed.set_author(icon_url=member.display_avatar.url, name=member)
         await ctx.send(embed=embed)
 
-
     @commands.command()
     async def meme(self, ctx):
         meme = await (await self.bot.reddit.subreddit("memes")).random()
