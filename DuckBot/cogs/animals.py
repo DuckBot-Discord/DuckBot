@@ -105,6 +105,9 @@ class Fun(commands.Cog, name='Fun'):
 
     @commands.command()
     async def meme(self, ctx):
+        """
+        Sends a random meme from reddit.com/r/memes
+        """
         meme = await (await self.bot.reddit.subreddit("memes")).random()
         embed = discord.Embed(color=discord.Color.random(), title=meme.title,
                               description=f"<:upvote:274492025678856192> {meme.score} "
