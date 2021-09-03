@@ -1090,13 +1090,14 @@ class Moderation(commands.Cog):
         # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
         # To reset, do "%PRE%slowmode reset"
         """
+
+        channel = channel or ctx.channel
+
         duration = duration_reset
 
         if isinstance(duration, str):
             await channel.edit(slowmode_delay=0)
             return await ctx.send(f"Messages in **{channel.name}** can now be sent without slow mode")
-
-        channel = channel or ctx.channel
 
         created_at = ctx.message.created_at
         delta: datetime.timedelta = duration.dt > (created_at + datetime.timedelta(hours=6))
