@@ -338,8 +338,8 @@ description: {command_help}
             else:
                 return await channel.send(f"Whoops! I don't have the list of categories loaded 😔"
                                           f"\nDo `{self.context.clean_prefix}help` to load it! 💞")
-        await channel.send(f"Sorry, i couldn't find a command named \"{cmd[:50]}\" 😔"
-                           f"\ndo `{self.context.clean_prefix}help` for a list of available commands! 💞")
+        await channel.send(f"{error}"
+                           f"\nDo `{self.context.clean_prefix}help` for a list of available commands! 💞")
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
