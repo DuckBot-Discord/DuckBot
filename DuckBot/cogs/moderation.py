@@ -520,7 +520,7 @@ class Moderation(commands.Cog):
          --or: Use logical OR for ALL options.
          --not: Use logical NOT for ALL options.
         """
-        await ctx.send("hi")
+        await ctx.send_help()
 
     @commands.command()
     async def cleanup(self, ctx, amount: int = 25):
