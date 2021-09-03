@@ -1081,7 +1081,8 @@ class Moderation(commands.Cog):
         delta: datetime.timedelta = duration.dt > (created_at + datetime.timedelta(hours=6))
         if delta:
             return await ctx.send('Duration is too long. Must be at most 6 hours.')
-        await channel.edit(slowmode_delay=int(delta.seconds))
+        seconds = (ctx.message.created_at - duration).seconds
+        await channel.edit(slowmode_delay=int(seconds))
 
         human_delay = helpers.human_timedelta(duration.dt, source=created_at)
         await ctx.send(f"Messages in **{channel.name}** can now be sent **every {human_delay}**")
