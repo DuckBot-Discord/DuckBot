@@ -1039,6 +1039,11 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
     async def lockdown(self, ctx, channel: typing.Optional[discord.TextChannel]):
+        """
+        Locks down the channel
+        (Revokes permissions for @everyone to send messages and add reactions)
+
+        """
         channel = channel or ctx.channel
 
         perms = channel.overwrites_for(ctx.me)
@@ -1060,6 +1065,10 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
     async def unlock(self, ctx, channel: typing.Optional[discord.TextChannel]):
+        """
+        Unlocks the channel
+        (Resets permissions for @everyone to send messages and add reactions)
+        """
         channel = channel or ctx.channel
 
         perms = channel.overwrites_for(ctx.guild.default_role)
@@ -1068,13 +1077,17 @@ class Moderation(commands.Cog):
 
         await channel.set_permissions(ctx.guild.default_role, overwrite=perms,
                                       reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
-        await ctx.message.add_reaction('🔓')
+        return await ctx.message.add_reaction('🔓')
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
     async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
                        duration: helpers.ShortTime) -> discord.Message:
+        """
+        Sets the channel slow mode to a delay between 1s and 6h.
+        # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
+        """
         channel = channel or ctx.channel
 
         created_at = ctx.message.created_at
@@ -1085,4 +1098,17 @@ class Moderation(commands.Cog):
         await channel.edit(slowmode_delay=int(seconds))
 
         human_delay = helpers.human_timedelta(duration.dt, source=created_at)
-        await ctx.send(f"Messages in **{channel.name}** can now be sent **every {human_delay}**")
+        return await ctx.send(f"Messages in **{channel.name}** can now be sent **every {human_delay}**")
+
+    @commands.command(name="reset")
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def slowmode_reset(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel]) \
+            -> discord.Message:
+        """
+        Resets the channel's slow mode.
+        """
+        channel = channel or ctx.channel
+
+        await channel.edit(slowmode_delay=0)
+        return await ctx.send(f"Messages in **{channel.name}** can now be sent without slow mode")
