@@ -6,6 +6,7 @@ from typing import Final, List, Optional
 
 import aiohttp
 import discord
+import typing
 from discord.ext import commands
 from discord.ext.commands.errors import (
     ExtensionAlreadyLoaded,
@@ -82,7 +83,11 @@ class CustomContext(commands.Context):
         return emoji
 
     async def send(self, content: str = None, embed: discord.Embed = None,
-                   reply: bool = True, footer: bool = True, **kwargs):
+                   reply: bool = True, footer: bool = True, reference: typing.Union[discord.Message,
+                                                                                    discord.MessageReference] = None,
+                   **kwargs):
+        if reply is True and not reference:
+            reference = self.message
 
         if embed and footer is True:
             if not embed.footer:
@@ -90,13 +95,10 @@ class CustomContext(commands.Context):
                                  icon_url=self.author.display_avatar.url)
                 embed.timestamp = discord.utils.utcnow()
 
-        if reply is False:
-            return await super().send(content=content, embed=embed, **kwargs)
-        else:
-            try:
-                return await self.reply(content=content, embed=embed, **kwargs)
-            except discord.HTTPException:
-                return await super().send(content=content, embed=embed, **kwargs)
+        try:
+            return await super().send(content=content, embed=embed, reference=reference, **kwargs)
+        except discord.HTTPException:
+            return await super().send(content=content, embed=embed, reference=None, **kwargs)
 
 
 class DuckBot(commands.Bot):
