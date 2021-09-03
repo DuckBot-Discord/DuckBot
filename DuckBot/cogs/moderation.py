@@ -89,6 +89,11 @@ class Moderation(commands.Cog):
         self.bot = bot
         self.temporary_mutes.start()
 
+    async def cog_check(self, ctx):
+        if not ctx.guild:
+            raise commands.NoPrivateMessage
+        return True
+
     def cog_unload(self):
         self.temporary_mutes.cancel()
 
@@ -184,7 +189,6 @@ class Moderation(commands.Cog):
         await self.bot.wait_until_ready()
 
     @commands.command()
-    @commands.guild_only()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def prefix(self, ctx: commands.Context,
                      new: typing.Optional[str]) -> discord.Message:
@@ -246,7 +250,6 @@ class Moderation(commands.Cog):
             return
 
     @commands.command(help="Bans a member from the server")
-    @commands.guild_only()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     async def ban(self, ctx, user: typing.Union[discord.Member, discord.User], *, reason: typing.Optional[str] = None):
@@ -289,7 +292,6 @@ class Moderation(commands.Cog):
     @commands.command(aliases=['sn', 'nick'])
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
-    @commands.guild_only()
     async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> \
             typing.Optional[discord.Message]:
         """
@@ -308,7 +310,6 @@ class Moderation(commands.Cog):
                               allowed_mentions=discord.AllowedMentions().none())
 
     @commands.group(aliases=['purge', 'clear', 'delete', 'clean'])
-    @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int] = 100):
@@ -586,7 +587,7 @@ class Moderation(commands.Cog):
     # -------------------------------- BAN LIST ------------------------------------#
     # ------------------------------------------------------------------------------#
 
-    @commands.command(help="Gets a list of bans in the server")
+    @commands.command(help="Gets the current guild's list of bans")
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
@@ -611,6 +612,10 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def baninfo(self, ctx, number: typing.Optional[int]):
+        """
+        Information about a ban from the list of bans.
+        For the list of bans do %PRE%bans
+        """
         if not ctx.channel.permissions_for(ctx.me).ban_members:
             await ctx.send("i'm missing the ban_members permission :pensive:")
             return
@@ -677,10 +682,9 @@ class Moderation(commands.Cog):
     @commands.command(aliases=['stfu', 'shut', 'silence'])
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
     async def mute(self, ctx: commands.Context, member: discord.Member, reason: str = None) -> discord.Message:
         """
-        Mutes a member indefinitely
+        Mutes a member indefinitely.
         """
         only_reason = reason
         reason = reason or "No reason given"
@@ -727,7 +731,6 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
     async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
         """
         Unmutes a member
@@ -778,7 +781,6 @@ class Moderation(commands.Cog):
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
     async def muterole(self, ctx: commands.Context, new_role: discord.Role = None):
         """
         Manages the current mute role. If no role is specified, shows the current mute role.
@@ -871,7 +873,7 @@ class Moderation(commands.Cog):
         await ctx.send(f"done! took {round(complete_time, 2)} seconds")
 
     @muterole.command(name="delete")
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_permissions(manage_guild=True)
     async def muterole_delete(self, ctx: commands.Context):
         """
         Deletes the server's mute role if it exists.
@@ -912,9 +914,9 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
     async def selfmute(self, ctx, *, duration: helpers.ShortTime):
-        """Temporarily mutes yourself for the specified duration.
+        """
+        Temporarily mutes yourself for the specified duration.
         Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
         You can only mute yourself for a maximum of 24 hours and a minimum of 5 minutes.
         note: # Do not ask a moderator to unmute you.
@@ -967,12 +969,14 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
     async def tempmute(self, ctx, member: discord.Member, *, duration: helpers.ShortTime):
-        """Temporarily mutes a member for the specified duration.
+        """
+        Temporarily mutes a member for the specified duration.
         # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
         """
+
         reason = f"Temporary mute by {ctx.author} ({ctx.author.id})"
+
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
             return await ctx.send("You don't have a mute role assigned!"
@@ -1038,14 +1042,18 @@ class Moderation(commands.Cog):
         return await channel.set_permissions(role, overwrite=perms, reason="DuckBot automatic mute role permissions")
 
     @commands.command(aliases=['lock', 'ld'])
-    @commands.has_permissions(manage_channels=True)
-    @commands.bot_has_permissions(manage_channels=True)
-    async def lockdown(self, ctx, channel: typing.Optional[discord.TextChannel]):
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def lockdown(self, ctx, channel: typing.Optional[discord.TextChannel], role=typing.Optional[discord.Role]):
         """
-        Locks down the channel
-        (Revokes permissions for @everyone to send messages and add reactions)
+        Locks down the channel. Optionally, you can specify a channel and role to lock lock down.
+        Channel: You and the bot must have manage roles permission in the channel.
+        Role: The specified role must be lower than yours and the bots top role.
         """
-        channel = channel or ctx.channel
+
+        role = role if role and role < ctx.me.top_role and role < ctx.author.top_role else ctx.guild.default_role
+
+        channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(ctx.me).manage_roles else ctx.channel
 
         perms = channel.overwrites_for(ctx.me)
         perms.send_messages = True
@@ -1054,31 +1062,36 @@ class Moderation(commands.Cog):
         await channel.set_permissions(ctx.me, overwrite=perms,
                                       reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
 
-        perms = channel.overwrites_for(ctx.guild.default_role)
+        perms = channel.overwrites_for(role)
         perms.send_messages = False
         perms.add_reactions = False
 
-        await channel.set_permissions(ctx.guild.default_role, overwrite=perms,
-                                      reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
-        await ctx.message.add_reaction('🔒')
+        await channel.set_permissions(role, overwrite=perms,
+                                      reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
+        await ctx.send(f"Locked down **{channel.name}** for **{role.name}**")
 
     @commands.command(aliases=['unlockdown', 'uld'])
-    @commands.has_permissions(manage_channels=True)
-    @commands.bot_has_permissions(manage_channels=True)
-    async def unlock(self, ctx, channel: typing.Optional[discord.TextChannel]):
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def unlock(self, ctx, channel: typing.Optional[discord.TextChannel], role: typing.Optional[discord.Role]):
         """
-        Unlocks the channel
-        (Resets permissions for @everyone to send messages and add reactions)
+        Unlocks the channel. Optionally, you can specify a channel and role to lock lock down.
+        Channel: You must have manage roles permission, and the bot must do so too.
+        Role: The specified role must be lower than yours and the bots top role.
         """
-        channel = channel or ctx.channel
+
+        role = role if role and role < ctx.me.top_role and role < ctx.author.top_role else ctx.guild.default_role
+
+        channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(ctx.me).manage_roles else ctx.channel
 
         perms = channel.overwrites_for(ctx.guild.default_role)
         perms.send_messages = None
         perms.add_reactions = None
 
-        await channel.set_permissions(ctx.guild.default_role, overwrite=perms,
-                                      reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
-        return await ctx.message.add_reaction('🔓')
+        await channel.set_permissions(role, overwrite=perms,
+                                      reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
+
+        await ctx.send(f"Unlocked **{channel.name}** for **{role.name}**")
 
     @commands.command(usage="[channel] <duration|reset>")
     @commands.has_permissions(manage_channels=True)
@@ -1086,12 +1099,13 @@ class Moderation(commands.Cog):
     async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
                        duration: helpers.ShortTime = None) -> discord.Message:
         """
-        Sets the channel slow mode to a delay between 1s and 6h.
-        # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
-        # To reset the slowmode, send command without specifying a duration.
+        Sets the current slow mode to a delay between 1s and 6h. If specified, sets it for another channel.
+        # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s.
+        # To reset the slow mode, execute command without specifying a duration.
+        Channel: You must have manage channel permission, and the bot must do so too.
         """
 
-        channel = channel or ctx.channel
+        channel = channel if channel and channel.permissions_for(ctx.author).manage_channels and channel.permissions_for(ctx.me).manage_channels else ctx.channel
 
         if not duration:
             await channel.edit(slowmode_delay=0)
