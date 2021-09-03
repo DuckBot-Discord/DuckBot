@@ -183,10 +183,6 @@ class Moderation(commands.Cog):
     async def wait_for_bot_ready(self):
         await self.bot.wait_until_ready()
 
-    # --------------------------------------------------------------#
-    # ------------------------ PREFIX ------------------------------#
-    # --------------------------------------------------------------#
-
     @commands.command()
     @commands.guild_only()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
@@ -213,10 +209,6 @@ class Moderation(commands.Cog):
             return await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
         else:
             return await ctx.send(f"My prefix is already `{new}`!")
-
-    # ------------------------------------------------------------#
-    # ------------------------ KICK ------------------------------#
-    # ------------------------------------------------------------#
 
     @commands.command(help="Kicks a member from the server")
     @commands.has_permissions(kick_members=True)
@@ -252,10 +244,6 @@ class Moderation(commands.Cog):
         else:
             await self.error_message(ctx, 'Member is higher than you in role hierarchy')
             return
-
-    # -----------------------------------------------------------#
-    # ------------------------ BAN ------------------------------#
-    # -----------------------------------------------------------#
 
     @commands.command(help="Bans a member from the server")
     @commands.guild_only()
@@ -298,17 +286,15 @@ class Moderation(commands.Cog):
 
         await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason or ''}")
 
-    # ------------------------------------------------------------#
-    # ------------------------ NICK ------------------------------#
-    # ------------------------------------------------------------#
-
-    @commands.command(help="Sets yours or someone else's nick # leave empty to remove nick", aliases=['sn', 'nick'],
-                      usage="<member> [new nick]")
+    @commands.command(aliases=['sn', 'nick'])
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
     @commands.guild_only()
     async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> \
             typing.Optional[discord.Message]:
+        """
+        Removes someone's nickname. Don't send a new nickname to remove it.
+        """
         new = new or member.name
         old = member.display_name
         if len(new) > 32:
@@ -320,10 +306,6 @@ class Moderation(commands.Cog):
         return await ctx.send(f"✏ {ctx.author.mention} edited {member.mention}"
                               f"\nnickname: **`{old}`** -> **`{new}`**",
                               allowed_mentions=discord.AllowedMentions().none())
-
-    # -------------------------------------------------------------#
-    # ------------------------ PURGE ------------------------------#
-    # -------------------------------------------------------------#
 
     @commands.group(aliases=['purge', 'clear', 'delete', 'clean'])
     @commands.guild_only()
@@ -848,6 +830,14 @@ class Moderation(commands.Cog):
     @muterole.command(name="create")
     async def muterole_create(self, ctx: commands.Context):
         starting_time = time.monotonic()
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+
+        role = ctx.guild.get_role(int(mute_role))
+        if isinstance(role, discord.Role):
+            return await ctx.send("This server already has a mute role!"
+                                  f"\nDelete or remove it first:"
+                                  f"\n`{ctx.clean_prefix}{ctx.command} [remove|delete]`")
+
         await ctx.send(f"Creating Muted role, and applying it to all channels."
                        f"\nThis may take awhile ETA: {len(ctx.guild.channels)} seconds.")
         async with ctx.typing():
@@ -878,11 +868,14 @@ class Moderation(commands.Cog):
 
         ending_time = time.monotonic()
         complete_time = (ending_time - starting_time)
-        await ctx.send(f"done! took {round(complete_time, 2)} seconds", reply=False)
+        await ctx.send(f"done! took {round(complete_time, 2)} seconds")
 
     @muterole.command(name="delete")
     @commands.has_permissions(manage_messages=True)
     async def muterole_delete(self, ctx: commands.Context):
+        """
+        Deletes the server's mute role if it exists.
+        """
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
             return await ctx.send("This server doesn't have a mute role!")
@@ -894,10 +887,14 @@ class Moderation(commands.Cog):
                 "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
                 ctx.guild.id, None)
 
-            return await ctx.send("It seems like the muted role was already deleted, or I can't find it right now!")
+            return await ctx.send("It seems like the muted role was already deleted, or I can't find it right now!"
+                                  "\n I removed it from my database. If the mute role still exists, delete it manually.")
 
         if role > ctx.me.top_role:
             return await ctx.send("I'm not high enough in role hierarchy to delete that role!")
+
+        if role > ctx.author.top_role:
+            return await ctx.send("You're not high enough in role hierarchy to delete that role!")
 
         try:
             await role.delete(reason=f"Mute role deletion. Requested by {ctx.author} ({ctx.author.id})")
@@ -918,7 +915,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     async def selfmute(self, ctx, *, duration: helpers.ShortTime):
         """Temporarily mutes yourself for the specified duration.
-        The duration must be in a short time form, e.g. 4h.
+        Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
         You can only mute yourself for a maximum of 24 hours and a minimum of 5 minutes.
         note: # Do not ask a moderator to unmute you.
         """
@@ -973,7 +970,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     async def tempmute(self, ctx, member: discord.Member, *, duration: helpers.ShortTime):
         """Temporarily mutes a member for the specified duration.
-        The duration must be in a short time form, e.g. 4h. Can
+        # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
         """
         reason = f"Temporary mute by {ctx.author} ({ctx.author.id})"
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
@@ -1018,7 +1015,12 @@ class Moderation(commands.Cog):
         await ctx.send(f"**{ctx.author}** muted **{member}** for **{delta}**")
 
     @commands.Cog.listener('on_guild_channel_create')
-    async def automatic_channel_update(self, channel):
+    async def automatic_channel_update(self, channel: discord.abc.GuildChannel) -> None:
+        """
+        Adds mute overwrites to any newly created channels.
+        """
+        if not channel.permissions_for(channel.guild.me).manage_channels:
+            return
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', channel.guild.id)
         if not mute_role:
             return
@@ -1042,7 +1044,6 @@ class Moderation(commands.Cog):
         """
         Locks down the channel
         (Revokes permissions for @everyone to send messages and add reactions)
-
         """
         channel = channel or ctx.channel
 
@@ -1079,15 +1080,22 @@ class Moderation(commands.Cog):
                                       reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
         return await ctx.message.add_reaction('🔓')
 
-    @commands.group(invoke_without_command=True)
+    @commands.command(usage="[channel] <duration|reset>")
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
     async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
-                       duration: helpers.ShortTime) -> discord.Message:
+                       duration_reset: typing.Union[typing.Literal['reset', 'r'], helpers.ShortTime]) -> discord.Message:
         """
         Sets the channel slow mode to a delay between 1s and 6h.
         # Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
+        # To reset, do "%PRE%slowmode reset"
         """
+        duration = duration_reset
+
+        if isinstance(duration, str):
+            await channel.edit(slowmode_delay=0)
+            return await ctx.send(f"Messages in **{channel.name}** can now be sent without slow mode")
+
         channel = channel or ctx.channel
 
         created_at = ctx.message.created_at
@@ -1099,16 +1107,3 @@ class Moderation(commands.Cog):
 
         human_delay = helpers.human_timedelta(duration.dt, source=created_at)
         return await ctx.send(f"Messages in **{channel.name}** can now be sent **every {human_delay}**")
-
-    @commands.command(name="reset")
-    @commands.has_permissions(manage_channels=True)
-    @commands.bot_has_permissions(manage_channels=True)
-    async def slowmode_reset(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel]) \
-            -> discord.Message:
-        """
-        Resets the channel's slow mode.
-        """
-        channel = channel or ctx.channel
-
-        await channel.edit(slowmode_delay=0)
-        return await ctx.send(f"Messages in **{channel.name}** can now be sent without slow mode")
