@@ -331,46 +331,42 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int] = 100):
         """
-        Removes messages that meet a criteria. In order to use this command, you must have Manage Messages permissions.
+        Removes messages that meet a criteria.
 
-        Remember that the bot needs Manage Messages as well. These commands cannot be used in a private message.
-
-        When the command is done doing its work, you will get a message detailing which users got removed and how many messages got removed.
-
-        Note: If ran without any sub-commands, it will remove all messages that are NOT pinned to the channel. use "remove all <amount>" to remove everything
-        # Do "%PRE%help remove" for a list of sub-commands
+        Note: If ran without any sub-commands, it will remove all messages that are NOT pinned to the channel.
+        Use "remove all <amount>" to remove all messages, including pinned.
         """
 
         if ctx.invoked_subcommand is None:
             await self.do_removal(ctx, search, lambda e: not e.pinned)
 
-    @remove.command(aliases=['embed'])
-    async def embeds(self, ctx, search=100):
+    @remove.command(name="embeds", aliases=['embed'])
+    async def remove_embeds(self, ctx, search=100):
         """Removes messages that have embeds in them."""
         await self.do_removal(ctx, search, lambda e: len(e.embeds))
 
-    @remove.command()
-    async def files(self, ctx, search=100):
+    @remove.command(name="files", aliases=["attachments"])
+    async def remove_files(self, ctx, search=100):
         """Removes messages that have attachments in them."""
         await self.do_removal(ctx, search, lambda e: len(e.attachments))
 
-    @remove.command()
-    async def images(self, ctx, search=100):
+    @remove.command(name="images")
+    async def remove_images(self, ctx, search=100):
         """Removes messages that have embeds or attachments."""
         await self.do_removal(ctx, search, lambda e: len(e.embeds) or len(e.attachments))
 
     @remove.command(name='all')
-    async def remove_remove_all(self, ctx, search=100):
+    async def remove_all(self, ctx, search=100):
         """Removes all messages."""
         await self.do_removal(ctx, search, lambda e: True)
 
-    @remove.command()
-    async def user(self, ctx, member: discord.Member, search=100):
+    @remove.command(name="user")
+    async def remove_user(self, ctx, member: discord.Member, search=100):
         """Removes all messages by the member."""
         await self.do_removal(ctx, search, lambda e: e.author == member)
 
-    @remove.command()
-    async def contains(self, ctx, *, text: str):
+    @remove.command(name="contains", aliases=["has"])
+    async def remove_contains(self, ctx, *, text: str):
         """Removes all messages containing a substring.
         The substring must be at least 3 characters long.
         """
@@ -413,10 +409,10 @@ class Moderation(commands.Cog):
 
         await ctx.send(f'Successfully removed {total_reactions} reactions.')
 
-    @remove.group()
-    async def custom(self, ctx, *, args: str):
+    @remove.command(name="custom")
+    async def remove_custom(self, ctx, *, args: str):
         """A more advanced purge command.
-        do "%PRE%help remove custom" for usage.
+        do "%PRE%help remove help" for usage.
         """
         parser = Arguments(add_help=False, allow_abbrev=False)
         parser.add_argument('--user', nargs='+')
@@ -497,7 +493,7 @@ class Moderation(commands.Cog):
         args.search = max(0, min(2000, args.search))  # clamp from 0-2000
         await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
 
-    @custom.command(name="readme")
+    @remove.command(name="help", hidden=True)
     async def remove_custom_readme(self, ctx):
         """A more advanced purge command.
         This command uses a powerful "command line" syntax.
