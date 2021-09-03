@@ -12,3 +12,7 @@ class HigherRole(commands.CheckFailure):
 
 class NoQuotedMessage(commands.CheckFailure):
     pass
+
+
+class WaitForCancelled(commands.CheckFailure):
+    pass

@@ -90,7 +90,7 @@ class CustomContext(commands.Context):
                                  icon_url=self.author.display_avatar.url)
                 embed.timestamp = discord.utils.utcnow()
 
-        if reply:
+        if reply is False:
             return await super().send(content=content, embed=embed, **kwargs)
         else:
             try:
