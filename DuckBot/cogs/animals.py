@@ -144,7 +144,7 @@ class Fun(commands.Cog, name='Fun'):
                               f"\nA: {random.choice(_8ball_answers)}")
 
     @commands.command()
-    async def choose(self, ctx: commands.Context, choices: commands.Greedy[str]):
+    async def choose(self, ctx: commands.Context, *choices: str):
         """
         Chooses one random word from the list of choices you input.
         If you want multi-word choices, use "Quotes for it" "Like so"
