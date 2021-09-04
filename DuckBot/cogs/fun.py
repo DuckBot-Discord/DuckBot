@@ -198,16 +198,19 @@ class Fun(commands.Cog, name='Fun'):
     async def wikipedia(self, ctx, *, search: str):
         """ Searches on wikipedia, and shows the 10 best returns """
         async with ctx.typing():
-
             async with aiowiki.Wiki.wikipedia('en') as w:
                 hyperlinked_titles = [f"[{p.title}]({(await p.urls()).view})" for p in (await w.opensearch(search))]
 
-            iterations = 0
+            iterations = 1
             enumerated_titles = []
             for title_hyperlink in hyperlinked_titles:
-                enumerated_titles.append(f"{iterations}\U0000fe0f\U000020e3 {title_hyperlink}")
+                enumerated_titles.append(f"{iterations}) {title_hyperlink}")
                 iterations += 1
 
-            await ctx.send(embed=discord.Embed(title="Here are the top 10 results:",
-                                               description='\n'.join(enumerated_titles),
-                                               colour=discord.Colour.random()))
+            embed = discord.Embed(description='\n'.join(enumerated_titles),
+                                  colour=discord.Colour.random())
+            embed.set_author(icon_url="https://upload.wikimedia.org/wikipedia/en/thumb/8/80/"
+                                      "Wikipedia-logo-v2.svg/512px-Wikipedia-logo-v2.svg.png",
+                             name="Here are the top 10 results:",
+                             url="https://en.wikipedia.org/")
+            return await ctx.send(embed=embed)
