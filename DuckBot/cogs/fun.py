@@ -209,5 +209,5 @@ class Fun(commands.Cog, name='Fun'):
                 iterations += 1
 
             await ctx.send(embed=discord.Embed(title="Here are the top 10 results:",
-                                               description=,
+                                               description='\n'.join(enumerated_titles),
                                                colour=discord.Colour.random()))
