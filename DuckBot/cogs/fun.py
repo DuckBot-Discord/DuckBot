@@ -176,11 +176,11 @@ class Fun(commands.Cog, name='Fun'):
         ]))
 
     @commands.command()
-    async def roll(self, ctx: commands.Context, number: int > 0 = None):
+    async def roll(self, ctx: commands.Context, number: int = None) -> discord.Message:
         """
         Rolls a VirtualDice™ or, if specified, sends a random number
         """
-        number = number > 0 if number else number
+        number = number if number and number > 0 else None
         if not number:
             dices = ['<:dice_1:883581027744907304>',
                      '<:dice_2:883581054626177105>',
@@ -189,4 +189,4 @@ class Fun(commands.Cog, name='Fun'):
                      '<:dice_5:883581129360285726>',
                      '<:dice_6:883581159412490250>']
             return ctx.send(random.choice(dices))
-        return await random.randint(0, number)
+        return await ctx.send(random.randint(0, number))
