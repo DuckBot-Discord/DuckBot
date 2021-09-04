@@ -188,5 +188,5 @@ class Fun(commands.Cog, name='Fun'):
                      '<:dice_4:883581104026681365>',
                      '<:dice_5:883581129360285726>',
                      '<:dice_6:883581159412490250>']
-            return ctx.send(random.choice(dices))
+            return await ctx.send(random.choice(dices))
         return await ctx.send(random.randint(0, number))
