@@ -52,10 +52,10 @@ class Fun(commands.Cog, name='Fun'):
         while 'i.redd.it' not in post.url:
             post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
-        embed = discord.Embed(color=discord.Color.random(), title=post.title,
-                              description=f"<:upvote:274492025678856192> {post.score} "
-                                          f"({post.upvote_ratio * 100}%)",
-                              url=f"https://reddit.com{post.permalink}")
+        embed = discord.Embed(color=discord.Color.random(),
+                              description=f"[{post.title}](https://reddit.com{post.permalink})"
+                                          f"\n<:upvote:274492025678856192> {post.score} "
+                                          f"({post.upvote_ratio * 100}%)")
         embed.set_image(url=post.url)
         return embed
 
