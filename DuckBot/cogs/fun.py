@@ -168,7 +168,7 @@ class Fun(commands.Cog, name='Fun'):
         return await ctx.send(random.choice(choices),
                               allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.command(aliases=['cf', 'flip'])
+    @commands.command(aliases=['cf', 'flip', 'coin'])
     async def coinFlip(self, ctx: commands.Context) -> discord.Message:
         """ Flips a VirtualCoin™ """
         return await ctx.send(random.choice([
@@ -176,7 +176,7 @@ class Fun(commands.Cog, name='Fun'):
             '<:tails:883577184273461268> Tails!'
         ]))
 
-    @commands.command()
+    @commands.command(aliases=['RandomNumber'])
     async def roll(self, ctx: commands.Context, number: typing.Optional[int]) -> discord.Message:
         """
         Rolls a VirtualDice™ or, if specified, sends a random number
