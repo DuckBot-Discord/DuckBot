@@ -43,7 +43,7 @@ class Fun(commands.Cog, name='Fun'):
     def __init__(self, bot):
         self.bot = bot
 
-    async def reddit(self, subreddit: str) -> discord.Embed:
+    async def reddit(self, subreddit: str, title: bool = True) -> discord.Embed:
         post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
         while 'i.redd.it' not in post.url or post.over_18:
@@ -53,6 +53,7 @@ class Fun(commands.Cog, name='Fun'):
                               description=f"🌐 [Original reddit post](https://reddit.com{post.permalink}) | "
                                           f"<:upvote:274492025678856192> {post.score} "
                                           f"({post.upvote_ratio * 100}%)")
+        embed.title = post.title if title is True else None
         embed.set_image(url=post.url)
         return embed
 
