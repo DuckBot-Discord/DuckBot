@@ -242,7 +242,7 @@ class Moderation(commands.Cog):
             return await ctx.send(f"That is not one of my prefixes!")
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    @prefixes.command()
+    @prefixes.command(name="clear", aliases=['delall'])
     async def prefixes_clear(self, ctx):
         """ Clears the bots prefixes, resetting it to default. """
         await self.bot.db.execute(
