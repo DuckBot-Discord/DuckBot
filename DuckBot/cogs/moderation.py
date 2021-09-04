@@ -188,31 +188,59 @@ class Moderation(commands.Cog):
     async def wait_for_bot_ready(self):
         await self.bot.wait_until_ready()
 
-    @commands.command()
+    @commands.group(invoke_without_command=True, aliases=['prefix'])
+    async def prefixes(self, ctx: commands.Context):
+        """ Lists all the bots prefixes. """
+        prefixes = await self.bot.get_pre(self.bot, ctx.message)
+        embed = discord.Embed(title="Here are my prefixes:",
+                              description='\n'.join(prefixes),
+                              color=ctx.me.color)
+        return await ctx.send(embed=embed)
+
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def prefix(self, ctx: commands.Context,
-                     new: typing.Optional[str]) -> discord.Message:
-        """changes the bots prefix for this server.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
+    @prefixes.command(name="add")
+    async def prefixes_add(self, ctx: commands.Context,
+                           new: str) -> discord.Message:
+        """Adds a prefix to the bots prefixes.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
 
-        old = await self.bot.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-
-        if not new:
-            return await ctx.send(f"my prefix here is `{(old or 'db.')}`")
+        old = list(await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True))
 
         if len(new) > 10:
             return await ctx.send("Prefixes can only be up to 10 characters")
 
-        if old != new:
+        if new not in old:
+            old.append(new)
             await self.bot.db.execute(
                 "INSERT INTO prefixes(guild_id, prefix) VALUES ($1, $2) "
                 "ON CONFLICT (guild_id) DO UPDATE SET prefix = $2",
-                ctx.guild.id, new)
+                ctx.guild.id, old)
 
-            self.bot.prefixes[ctx.guild.id] = new
+            self.bot.prefixes[ctx.guild.id] = old
 
-            return await ctx.send(f"**Prefix changed:**\n`{old}` ➡ `{new}`")
+            return await ctx.send(f"**Successfully added `{new}`**\nMy prefixes are: `{'`, `'.join(old)}`")
         else:
-            return await ctx.send(f"My prefix is already `{new}`!")
+            return await ctx.send(f"That is already one of my prefixes!")
+
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    @prefixes.command(name="remove", aliases=['delete'])
+    async def prefixes_remove(self, ctx: commands.Context,
+                              prefix: str) -> discord.Message:
+        """Removes a prefix from the bots prefixes.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
+
+        old = list(await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True))
+
+        if prefix in old:
+            old.remove(prefix)
+            await self.bot.db.execute(
+                "INSERT INTO prefixes(guild_id, prefix) VALUES ($1, $2) "
+                "ON CONFLICT (guild_id) DO UPDATE SET prefix = $2",
+                ctx.guild.id, old)
+
+            self.bot.prefixes[ctx.guild.id] = old
+
+            return await ctx.send(f"**Successfully removed `{prefix}`**\nMy prefixes are: `{'`, `'.join(old)}`")
+        else:
+            return await ctx.send(f"That is not one of my prefixes!")
 
     @commands.command(help="Kicks a member from the server")
     @commands.has_permissions(kick_members=True)
@@ -1053,7 +1081,8 @@ class Moderation(commands.Cog):
 
         role = role if role and role < ctx.me.top_role and role < ctx.author.top_role else ctx.guild.default_role
 
-        channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(ctx.me).manage_roles else ctx.channel
+        channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(
+            ctx.me).manage_roles else ctx.channel
 
         perms = channel.overwrites_for(ctx.me)
         perms.send_messages = True
@@ -1082,7 +1111,8 @@ class Moderation(commands.Cog):
 
         role = role if role and role < ctx.me.top_role and role < ctx.author.top_role else ctx.guild.default_role
 
-        channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(ctx.me).manage_roles else ctx.channel
+        channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(
+            ctx.me).manage_roles else ctx.channel
 
         perms = channel.overwrites_for(ctx.guild.default_role)
         perms.send_messages = None
@@ -1105,7 +1135,8 @@ class Moderation(commands.Cog):
         Channel: You must have manage channel permission, and the bot must do so too.
         """
 
-        channel = channel if channel and channel.permissions_for(ctx.author).manage_channels and channel.permissions_for(ctx.me).manage_channels else ctx.channel
+        channel = channel if channel and channel.permissions_for(
+            ctx.author).manage_channels and channel.permissions_for(ctx.me).manage_channels else ctx.channel
 
         if not duration:
             await channel.edit(slowmode_delay=0)

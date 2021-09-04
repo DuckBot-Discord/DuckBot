@@ -102,7 +102,7 @@ class CustomContext(commands.Context):
 
 
 class DuckBot(commands.Bot):
-    PRE: str = 'db.'
+    PRE: tuple = ('db.', )
 
     def __init__(self) -> None:
         intents = discord.Intents.default()
@@ -155,9 +155,9 @@ class DuckBot(commands.Bot):
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
-            return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else self.PRE
+            return commands.when_mentioned_or(*self.PRE)(bot, message) if not raw_prefix else self.PRE
         if not message.guild:
-            return commands.when_mentioned_or(self.PRE)(bot, message) if not raw_prefix else self.PRE
+            return commands.when_mentioned_or(*self.PRE)(bot, message) if not raw_prefix else self.PRE
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
@@ -167,8 +167,8 @@ class DuckBot(commands.Bot):
             self.prefixes[message.guild.id] = prefix
 
         if await bot.is_owner(message.author) and bot.noprefix is True:
-            return commands.when_mentioned_or(prefix, "")(bot, message) if not raw_prefix else prefix
-        return commands.when_mentioned_or(prefix)(bot, message) if not raw_prefix else prefix
+            return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
+        return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
