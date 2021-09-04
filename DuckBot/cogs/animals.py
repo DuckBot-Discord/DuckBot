@@ -1,8 +1,5 @@
+import asyncio
 import random
-from typing import (
-    Optional
-)
-
 import discord
 from discord.ext import commands
 
@@ -53,17 +50,15 @@ class Fun(commands.Cog, name='Fun'):
             post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
         embed = discord.Embed(color=discord.Color.random(),
-                              description=f"[Original reddit post](https://reddit.com{post.permalink}) | "
+                              description=f"🌐 [Original reddit post](https://reddit.com{post.permalink}) | "
                                           f"<:upvote:274492025678856192> {post.score} "
                                           f"({post.upvote_ratio * 100}%)")
         embed.set_image(url=post.url)
         return embed
 
-    # CAT
-    # Sends a pic of a cat
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def cat(self, ctx: commands.Context) -> Optional[discord.Message]:
+    async def cat(self, ctx: commands.Context) -> discord.Message:
         """ Sends a random cat image """
         async with ctx.typing():
             await ctx.send(embed=await self.reddit('cats'))
@@ -147,8 +142,10 @@ class Fun(commands.Cog, name='Fun'):
         """
         Vaguely answers your question.
         """
-        return await ctx.send(f"Q: {question[0:1800]}"
-                              f"\nA: {random.choice(_8ball_answers)}")
+        async with ctx.typing():
+            await asyncio.sleep(0.5)
+            return await ctx.send(f"**Q: {question[0:1800]}**"
+                                  f"\nA: {random.choice(_8ball_answers)}")
 
     @commands.command()
     async def choose(self, ctx: commands.Context, *choices: str):
