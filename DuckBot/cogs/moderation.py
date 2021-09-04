@@ -242,6 +242,16 @@ class Moderation(commands.Cog):
         else:
             return await ctx.send(f"That is not one of my prefixes!")
 
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    @prefixes.command()
+    async def prefixes_clear(self, ctx):
+        """ Clears the bots prefixes, resetting it to default. """
+        await self.bot.db.execute(
+            "INSERT INTO prefixes(guild_id, prefix) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET prefix = $2",
+            ctx.guild.id, None)
+        return await ctx.send("**Cleared prefixes!**")
+
     @commands.command(help="Kicks a member from the server")
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, kick_members=True)
@@ -547,7 +557,7 @@ class Moderation(commands.Cog):
                 return
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
-            prefix = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
+            prefix = tuple(await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True))
 
             def check(msg):
                 return msg.author == ctx.me or msg.content.startswith(prefix)
