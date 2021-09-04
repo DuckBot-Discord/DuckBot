@@ -249,6 +249,7 @@ class Moderation(commands.Cog):
             "INSERT INTO prefixes(guild_id, prefix) VALUES ($1, $2) "
             "ON CONFLICT (guild_id) DO UPDATE SET prefix = $2",
             ctx.guild.id, None)
+        self.bot.prefixes[ctx.guild.id] = [None, ]
         return await ctx.send("**Cleared prefixes!**")
 
     @commands.command(help="Kicks a member from the server")

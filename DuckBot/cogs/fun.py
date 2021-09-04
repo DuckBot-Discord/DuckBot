@@ -211,6 +211,6 @@ class Fun(commands.Cog, name='Fun'):
                                   colour=discord.Colour.random())
             embed.set_author(icon_url="https://upload.wikimedia.org/wikipedia/en/thumb/8/80/"
                                       "Wikipedia-logo-v2.svg/512px-Wikipedia-logo-v2.svg.png",
-                             name="Here are the top 10 results:",
+                             name="Here are the top 10 Wikipedia results:",
                              url="https://en.wikipedia.org/")
             return await ctx.send(embed=embed)
