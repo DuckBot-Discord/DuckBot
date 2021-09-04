@@ -6,6 +6,31 @@ from typing import (
 import discord
 from discord.ext import commands
 
+_8ball_good = ['It is certain',
+               'It is decidedly so',
+               'Without a doubt',
+               'Yes - definitely',
+               'You may rely on it',
+               'As I see it, yes',
+               'Most likely',
+               'Outlook good',
+               'Yes',
+               'Signs point to yes']
+
+_8ball_meh = ['Reply hazy, try again',
+              'Ask again later',
+              'Better not tell you now',
+              'Cannot predict now',
+              'Concentrate and ask again']
+
+_8ball_bad = ['Don\'t count on it',
+              'My reply is no',
+              'My sources say no',
+              'Outlook not so good',
+              'Very doubtful']
+
+_8ball_answers = _8ball_good + _8ball_meh + _8ball_bad
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
@@ -21,44 +46,35 @@ class Fun(commands.Cog, name='Fun'):
     def __init__(self, bot):
         self.bot = bot
 
+    async def reddit(self, subreddit: str) -> discord.Embed:
+        post = await (await self.bot.reddit.subreddit(subreddit)).random()
+        embed = discord.Embed(color=discord.Color.random(), title=post.title,
+                              description=f"<:upvote:274492025678856192> {post.score} "
+                                          f"({post.upvote_ratio * 100}%)",
+                              url=f"https://reddit.com{post.permalink}")
+        embed.set_image(url=post.url)
+        return embed
+
     # CAT
     # Sends a pic of a cat
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def cat(self, ctx: commands.Context) -> Optional[discord.Message]:
-        """
-        Sends a random cat image
-        """
+        """ Sends a random cat image """
+        await ctx.send(embed=await self.reddit('cats'))
 
-        async with self.bot.session.get('https://aws.random.cat/meow') as r:
-            if r.status != 200:
-                return await ctx.send("Something broke with the shitty ass cat api."
-                                      "\nIll migrate to r/cats soon...TM")
-            res = await r.json()  # returns dict
-
-        embed = discord.Embed(title='Here is a cat!', color=random.randint(0, 0xFFFFFF))
-        embed.set_image(url=res["file"])
-        embed.set_footer(text='by random.cat',
-                         icon_url='https://purr.objects-us-east-1.dream.io/static/img/random.cat-logo.png')
-        return await ctx.send(embed=embed)
-
-    @commands.command(help="Sends a random dog image")
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def dog(self, ctx: commands.Context) -> discord.Message:
-        async with self.bot.session.get('https://dog.ceo/api/breeds/image/random') as r:
-            if r.status != 200:
-                raise discord.HTTPException
+        """ Sends a random dog image """
+        await ctx.send(embed=await self.reddit('dog'))
 
-            res = await r.json()
-
-        embed = discord.Embed(title='Here is a dog!', color=random.randint(0, 0xFFFFFF))
-        embed.set_image(url=res["message"])
-        embed.set_footer(text='by dog.ceo', icon_url='https://i.imgur.com/wJSeh2G.png')
-        return await ctx.send(embed=embed)
-
-    @commands.command(help="Sends a random duck image")
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def duck(self, ctx: commands.Context) -> discord.Message:
+        """
+        Sends a random duck image
+        """
         async with self.bot.session.get('https://random-d.uk/api/random?format=json') as r:
             if r.status != 200:
                 raise discord.HTTPException
@@ -70,14 +86,20 @@ class Fun(commands.Cog, name='Fun'):
         embed.set_footer(text='by random-d.uk', icon_url='https://avatars2.githubusercontent.com/u/38426912')
         return await ctx.send(embed=embed)
 
-    @commands.command(help="Try it and see...")
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     async def tias(self, ctx: commands.Context) -> discord.Message:
+        """
+        Try it and see...
+        """
         return await ctx.send("https://tryitands.ee/")
 
-    @commands.command(help="shows a funny \"inspirational\" image")
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def inspireme(self, ctx) -> discord.Message:
+        """
+        shows a funny "inspirational" image from inspirobot.me
+        """
         async with self.bot.session.get('http://inspirobot.me/api?generate=true') as r:
             if r.status != 200:
                 raise discord.HTTPException
@@ -92,6 +114,9 @@ class Fun(commands.Cog, name='Fun'):
 
     @commands.command()
     async def banana(self, ctx, member: discord.Member = None):
+        """
+        Measures your banana 😏
+        """
         member = member or ctx.author
         size = random.uniform(8, 25)
         embed = discord.Embed(colour=0xFFCD71)
@@ -106,12 +131,24 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command()
     async def meme(self, ctx):
         """
-        Sends a random meme from reddit.com/r/memes
+        Sends a random meme from reddit.com/r/memes.
         """
-        meme = await (await self.bot.reddit.subreddit("memes")).random()
-        embed = discord.Embed(color=discord.Color.random(), title=meme.title,
-                              description=f"<:upvote:274492025678856192> {meme.score} "
-                                          f"({meme.upvote_ratio * 100}%)",
-                              url=f"https://reddit.com{meme.permalink}")
-        embed.set_image(url=meme.url)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=await self.reddit('memes'))
+
+    @commands.command(name="8ball")
+    async def _8ball(self, ctx, *, question):
+        """
+        Vaguely answers your question.
+        """
+        return await ctx.send(f"Q: {question[0:1800]}"
+                              f"\nA: {random.choice(_8ball_answers)}")
+
+    @commands.command()
+    async def choose(self, ctx: commands.Context, choices: commands.Greedy[str]):
+        """
+        Chooses one random word from the list of choices you input.
+        If you want multi-word choices, use "Quotes for it" "Like so"
+        """
+        if len(choices) < 2:
+            return await ctx.send("You must input at least 2 choices")
+        return await ctx.send(random.choice(choices))

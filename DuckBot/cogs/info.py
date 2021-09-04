@@ -248,14 +248,16 @@ class MyHelp(commands.HelpCommand):
 
         embed.add_field(name="📰 Latest News - <t:1630508600:d> (<t:1630508600:R>)", value=f"""
 _ _
-> 🎓 **Added proper credits to the help command**
-
 > <:commands:861817699729145901> **NEW! Mute commands**
 _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_
 
 > **📜 NEW! suggest command!**
 _If you want to suggest a feature, you can now do `{self.context.clean_prefix}suggest <suggestion>`!_
 _You can still dm me ({self.context.me.mention}) if you want a more normal communication with my developers._
+
+> **😂 New fun commands added to the Fun category!**
+`meme`, `choose`, `coinFlip`, `randomNumber`, `8ball`
+
 """)
 
         embed.set_footer(text=f"Help command inspiration and credits at \"{self.context.clean_prefix}about\"")
