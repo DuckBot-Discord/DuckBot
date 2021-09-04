@@ -176,7 +176,7 @@ class Fun(commands.Cog, name='Fun'):
             '<:tails:883577184273461268> Tails!'
         ]))
 
-    @commands.command(aliases=['RandomNumber'])
+    @commands.command(aliases=['RandomNumber', 'dice'])
     async def roll(self, ctx: commands.Context, number: typing.Optional[int]) -> discord.Message:
         """
         Rolls a VirtualDice™ or, if specified, sends a random number
