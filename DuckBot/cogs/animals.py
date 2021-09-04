@@ -155,4 +155,5 @@ class Fun(commands.Cog, name='Fun'):
         """
         if len(choices) < 2:
             return await ctx.send("You must input at least 2 choices")
-        return await ctx.send(random.choice(choices))
+        return await ctx.send(random.choice(choices),
+                              allowed_mentions=discord.AllowedMentions().none())

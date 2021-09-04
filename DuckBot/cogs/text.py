@@ -65,7 +65,7 @@ class General(commands.Cog):
         else:
             allowed = False
 
-        return await ctx.send(msg, allowed_mentions=discord.AllowedMentions(everyone=False,
+        return await ctx.send(msg[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False,
                                                                             roles=False,
                                                                             users=allowed),
                               reference=ctx.message.reference,
@@ -89,7 +89,7 @@ class General(commands.Cog):
                 Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY))
         elif ctx.message.reference:
             message_or_reply = ctx.message.reference.resolved
-        return await channel.send(message_or_reply, allowed_mentions=discord.AllowedMentions(everyone=False,
+        return await channel.send(message_or_reply[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False,
                                                                                              roles=False,
                                                                                              users=True))
 
