@@ -126,7 +126,6 @@ class Moderation(commands.Cog):
             after = discord.Object(id=after)
 
         try:
-            await ctx.message.delete()
             deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate, reply=False)
         except discord.Forbidden:
             return await ctx.send('I do not have permissions to delete messages.')
@@ -544,7 +543,7 @@ class Moderation(commands.Cog):
         await ctx.send_help(ctx.command)
 
     @commands.command()
-    async def cleanup(self, ctx, amount: int = 25):
+    async def cleanup(self, ctx: commands.Context, amount: int = 25):
         """
         Cleans up the bots messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
         """
@@ -562,12 +561,12 @@ class Moderation(commands.Cog):
             def check(msg):
                 return msg.author == ctx.me or msg.content.startswith(prefix)
 
-            deleted = await ctx.channel.purge(limit=amount, check=check)
+            deleted = await ctx.channel.purge(limit=amount, check=check, before=ctx.message.created_at)
         else:
             def check(msg):
                 return msg.author == ctx.me
 
-            deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False)
+            deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False, before=ctx.message.created_at)
         spammers = Counter(m.author.display_name for m in deleted)
         deleted = len(deleted)
         messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
