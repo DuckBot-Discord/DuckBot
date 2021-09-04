@@ -557,7 +557,7 @@ class Moderation(commands.Cog):
                 return
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
-            prefix = tuple(await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True))
+            prefix = tuple(await self.bot.get_pre(self.bot, ctx.message))
 
             def check(msg):
                 return msg.author == ctx.me or msg.content.startswith(prefix)
