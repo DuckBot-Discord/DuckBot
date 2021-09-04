@@ -48,6 +48,10 @@ class Fun(commands.Cog, name='Fun'):
 
     async def reddit(self, subreddit: str) -> discord.Embed:
         post = await (await self.bot.reddit.subreddit(subreddit)).random()
+
+        while 'i.redd.it' not in post.url:
+            post = await (await self.bot.reddit.subreddit(subreddit)).random()
+
         embed = discord.Embed(color=discord.Color.random(), title=post.title,
                               description=f"<:upvote:274492025678856192> {post.score} "
                                           f"({post.upvote_ratio * 100}%)",
@@ -61,13 +65,15 @@ class Fun(commands.Cog, name='Fun'):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def cat(self, ctx: commands.Context) -> Optional[discord.Message]:
         """ Sends a random cat image """
-        await ctx.send(embed=await self.reddit('cats'))
+        async with ctx.typing():
+            await ctx.send(embed=await self.reddit('cats'))
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def dog(self, ctx: commands.Context) -> discord.Message:
         """ Sends a random dog image """
-        await ctx.send(embed=await self.reddit('dog'))
+        async with ctx.typing():
+            await ctx.send(embed=await self.reddit('dog'))
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -133,7 +139,8 @@ class Fun(commands.Cog, name='Fun'):
         """
         Sends a random meme from reddit.com/r/memes.
         """
-        await ctx.send(embed=await self.reddit('memes'))
+        async with ctx.typing():
+            await ctx.send(embed=await self.reddit('memes'))
 
     @commands.command(name="8ball")
     async def _8ball(self, ctx, *, question):
