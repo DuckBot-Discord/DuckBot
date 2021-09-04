@@ -1,6 +1,7 @@
 import asyncio
 import random
 import discord
+import typing
 from discord.ext import commands
 
 _8ball_good = ['It is certain',
@@ -176,7 +177,7 @@ class Fun(commands.Cog, name='Fun'):
         ]))
 
     @commands.command()
-    async def roll(self, ctx: commands.Context, number: int = None) -> discord.Message:
+    async def roll(self, ctx: commands.Context, number: typing.Optional[int]) -> discord.Message:
         """
         Rolls a VirtualDice™ or, if specified, sends a random number
         """
