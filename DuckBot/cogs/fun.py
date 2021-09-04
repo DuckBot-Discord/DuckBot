@@ -98,7 +98,7 @@ class Fun(commands.Cog, name='Fun'):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def inspireme(self, ctx) -> discord.Message:
+    async def inspireme(self, ctx: commands.Context) -> discord.Message:
         """
         shows a funny "inspirational" image from inspirobot.me
         """
@@ -115,7 +115,7 @@ class Fun(commands.Cog, name='Fun'):
         return await ctx.send(embed=embed)
 
     @commands.command()
-    async def banana(self, ctx, member: discord.Member = None):
+    async def banana(self, ctx: commands.Context, member: discord.Member = None) -> discord.Message:
         """
         Measures your banana 😏
         """
@@ -128,26 +128,26 @@ class Fun(commands.Cog, name='Fun'):
                              **{member.name}**'s 🍌 is {round(size, 1)} cm
                              """
         embed.set_author(icon_url=member.display_avatar.url, name=member)
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.command()
-    async def meme(self, ctx):
+    async def meme(self, ctx: commands.Context) -> discord.Message:
         """
         Sends a random meme from reddit.com/r/memes.
         """
         async with ctx.typing():
-            await ctx.send(embed=await self.reddit('memes'))
+            return await ctx.send(embed=await self.reddit('memes'))
 
     @commands.command()
-    async def aww(self, ctx):
+    async def aww(self, ctx: commands.Context) -> discord.Message:
         """
         Sends cute pic from r/aww
         """
         async with ctx.typing():
-            await ctx.send(embed=await self.reddit('aww'))
+            return await ctx.send(embed=await self.reddit('aww'))
 
     @commands.command(name="8ball")
-    async def _8ball(self, ctx, *, question):
+    async def _8ball(self, ctx: commands.Context, *, question: str) -> discord.Message:
         """
         Vaguely answers your question.
         """
@@ -157,7 +157,7 @@ class Fun(commands.Cog, name='Fun'):
                                   f"\nA: {random.choice(_8ball_answers)}")
 
     @commands.command()
-    async def choose(self, ctx: commands.Context, *choices: str):
+    async def choose(self, ctx: commands.Context, *choices: str) -> discord.Message:
         """
         Chooses one random word from the list of choices you input.
         If you want multi-word choices, use "Quotes for it" "Like so"
@@ -168,9 +168,25 @@ class Fun(commands.Cog, name='Fun'):
                               allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['cf', 'flip'])
-    async def coinFlip(self, ctx):
+    async def coinFlip(self, ctx: commands.Context) -> discord.Message:
         """ Flips a VirtualCoin™ """
-        await ctx.send(random.choice([
+        return await ctx.send(random.choice([
             '<:heads:883577184499953734> Heads!',
             '<:tails:883577184273461268> Tails!'
         ]))
+
+    @commands.command()
+    async def roll(self, ctx: commands.Context, number: int > 0 = None):
+        """
+        Rolls a VirtualDice™ or, if specified, sends a random number
+        """
+        number = number > 0 if number else number
+        if not number:
+            dices = ['<:dice_1:883581027744907304>',
+                     '<:dice_2:883581054626177105>',
+                     '<:dice_3:883581082803511336>',
+                     '<:dice_4:883581104026681365>',
+                     '<:dice_5:883581129360285726>',
+                     '<:dice_6:883581159412490250>']
+            return ctx.send(random.choice(dices))
+        return await random.randint(0, number)
