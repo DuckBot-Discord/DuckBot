@@ -1,5 +1,7 @@
 import asyncio
 import random
+
+import aiowiki as aiowiki
 import discord
 import typing
 from discord.ext import commands
@@ -191,3 +193,21 @@ class Fun(commands.Cog, name='Fun'):
                      '<:dice_6:883581159412490250>']
             return await ctx.send(random.choice(dices))
         return await ctx.send(random.randint(0, number))
+
+    @commands.command(aliases=['wiki'])
+    async def wikipedia(self, ctx, *, search: str):
+        """ Searches on wikipedia, and shows the 10 best returns """
+        async with ctx.typing():
+
+            async with aiowiki.Wiki.wikipedia('en') as w:
+                hyperlinked_titles = [f"[{p.title}]({(await p.urls()).view})" for p in (await w.opensearch(search))]
+
+            iterations = 0
+            enumerated_titles = []
+            for title_hyperlink in hyperlinked_titles:
+                enumerated_titles.append(f"{iterations}\U0000fe0f\U000020e3 {title_hyperlink}")
+                iterations += 1
+
+            await ctx.send(embed=discord.Embed(title="Here are the top 10 results:",
+                                               description=,
+                                               colour=discord.Colour.random()))
