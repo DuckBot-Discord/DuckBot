@@ -390,11 +390,15 @@ class Utility(commands.Cog):
     @emoji.command(name="clone")
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_clone(self, ctx: commands.Context, server_emoji: typing.Optional[discord.Emoji], index: int = 1):
+    async def emoji_clone(self, ctx: commands.Context,
+                          server_emoji: typing.Optional[typing.Union[discord.Embed,
+                                                                     discord.PartialEmoji]],
+                          index: int = 1):
         """
         Clones an emoji into the current server.
-        To steal an emoji from someone else, quote their message to grab the emojis from there.
-        If the message has multiple emojis, input a number to specify the emoji, for example, doing "%PRE%emoji 5" will steal the 5th emoji from the message
+        # To steal an emoji from someone else, quote their message to grab the emojis from there.
+        # If the quoted message has multiple emojis, input an index number to specify the emoji, for example, doing "%PRE%emoji 5" will steal the 5th emoji from the message.
+        None: Index is only for when stealing emojis from other people.
         """
         if ctx.message.reference:
             custom_emoji = re.compile(r"<a?:[a-zA-Z0-9_]+:[0-9]+>")
