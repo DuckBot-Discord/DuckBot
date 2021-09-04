@@ -166,3 +166,11 @@ class Fun(commands.Cog, name='Fun'):
             return await ctx.send("You must input at least 2 choices")
         return await ctx.send(random.choice(choices),
                               allowed_mentions=discord.AllowedMentions().none())
+
+    @commands.command(aliases=['cf', 'flip'])
+    async def coinFlip(self, ctx):
+        """ Flips a VirtualCoin™ """
+        await ctx.send(random.choice([
+            '<:heads:883577184499953734> Heads!',
+            '<:tails:883577184273461268> Tails!'
+        ]))
