@@ -190,9 +190,9 @@ class Moderation(commands.Cog):
     @commands.group(invoke_without_command=True, aliases=['prefix'])
     async def prefixes(self, ctx: commands.Context) -> discord.Message:
         """ Lists all the bots prefixes. """
-        prefixes = (await self.bot.get_pre(self.bot, ctx.message)).remove(ctx.me.mention)
+        prefixes = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
         embed = discord.Embed(title="Here are my prefixes:",
-                              description='\n'.join(prefixes),
+                              description=ctx.me.mention + '\n' + '\n'.join(prefixes),
                               color=ctx.me.color)
         return await ctx.send(embed=embed)
 
