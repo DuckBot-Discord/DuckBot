@@ -185,8 +185,7 @@ class DuckBot(commands.Bot):
             values = await self.db.fetch("SELECT guild_id, prefix FROM prefixes")
 
             for value in values:
-                value = value if value[0] else self.PRE
-                self.prefixes[value['guild_id']] = (value['prefix'] or self.PRE)
+                self.prefixes[value['guild_id']] = ((value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
             for guild in self.guilds:
                 try:
                     self.prefixes[guild.id]
