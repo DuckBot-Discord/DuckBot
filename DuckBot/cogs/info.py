@@ -240,8 +240,7 @@ class MyHelp(commands.HelpCommand):
                                 value=f"{cog.description or 'No description given...'}\n`{val}`\n _ \u200b _",
                                 inline=False)
 
-        channel = self.get_destination()
-        await channel.send(embed=embed, view=InvSrc())
+        await self.context.send(embed=embed, view=InvSrc())
 
     def common_command_formatting(self, embed_like, command):
         embed_like.title = self.get_command_signature(command)
@@ -272,8 +271,7 @@ description: {command_help}
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
-        channel = self.get_destination()
-        await channel.send(embed=embed)
+        await self.context.send(embed=embed)
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
@@ -294,9 +292,8 @@ description: {command_help}
         await menu.start(self.context)
 
     async def send_error_message(self, error):
-        channel = self.get_destination()
-        await channel.send(f"{error}"
-                           f"\nDo `{self.context.clean_prefix}help` for a list of available commands! 💞")
+        await self.context.send(f"{error}"
+                                f"\nDo `{self.context.clean_prefix}help` for a list of available commands! 💞")
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
