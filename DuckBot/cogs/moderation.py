@@ -914,6 +914,7 @@ class Moderation(commands.Cog):
     @muterole.command(name="create")
     async def muterole_create(self, ctx: commands.Context):
         starting_time = time.monotonic()
+
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
 
         role = ctx.guild.get_role(int(mute_role))
@@ -922,6 +923,7 @@ class Moderation(commands.Cog):
 
         await ctx.send(f"Creating Muted role, and applying it to all channels."
                        f"\nThis may take awhile ETA: {len(ctx.guild.channels)} seconds.")
+
         async with ctx.typing():
             permissions = discord.Permissions(send_messages=False,
                                               add_reactions=False,
@@ -934,6 +936,8 @@ class Moderation(commands.Cog):
                 "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
                 "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
                 ctx.guild.id, role.id)
+
+            modified = 0
             for channel in ctx.guild.channels:
                 perms = channel.overwrites_for(role)
                 perms.send_messages = False
@@ -944,13 +948,15 @@ class Moderation(commands.Cog):
                     await channel.set_permissions(role, overwrite=perms,
                                                   reason=f"DuckBot mute-role creation. Requested "
                                                          f"by {ctx.author} ({ctx.author.id})")
+                    modified += 1
                 except (discord.Forbidden, discord.HTTPException):
                     continue
                 await asyncio.sleep(1)
 
             ending_time = time.monotonic()
             complete_time = (ending_time - starting_time)
-            await ctx.send(f"done! took {round(complete_time, 2)} seconds")
+            await ctx.send(f"done! took {round(complete_time, 2)} seconds"
+                           f"\nSet permissions for {modified} channel{'' if modified == 1 else 's'}!")
 
     @muterole.command(name="delete")
     @commands.has_permissions(manage_guild=True)
@@ -1005,6 +1011,7 @@ class Moderation(commands.Cog):
             if not isinstance(role, discord.Role):
                 raise errors.MuteRoleNotFound
 
+            modified = 0
             for channel in ctx.guild.channels:
                 perms = channel.overwrites_for(role)
                 perms.send_messages = False
@@ -1015,13 +1022,15 @@ class Moderation(commands.Cog):
                     await channel.set_permissions(role, overwrite=perms,
                                                   reason=f"DuckBot mute-role creation. Requested "
                                                          f"by {ctx.author} ({ctx.author.id})")
+                    modified += 1
                 except (discord.Forbidden, discord.HTTPException):
                     continue
                 await asyncio.sleep(1)
 
             ending_time = time.monotonic()
             complete_time = (ending_time - starting_time)
-            await ctx.send(f"done! took {round(complete_time, 2)} seconds")
+            await ctx.send(f"done! took {round(complete_time, 2)} seconds"
+                           f"\nSet permissions for {modified} channel{'' if modified == 1 else 's'}!")
 
     # self mutes
 
