@@ -13,6 +13,8 @@ from discord.ext import commands, tasks, menus
 
 from helpers import time_inputs as helpers
 
+import errors
+
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
@@ -780,13 +782,11 @@ class Moderation(commands.Cog):
 
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
-            return await ctx.send("You don't have a mute role assigned!"
-                                  "\n create one with the `muterole add` command")
+            raise errors.MuteRoleNotFound
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
-            return await ctx.send("It seems like the muted role isn't in this server!"
-                                  "\nRe-assign it with the `muterole set` command")
+            raise errors.MuteRoleNotFound
 
         if role > ctx.me.top_role:
             return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
@@ -829,13 +829,11 @@ class Moderation(commands.Cog):
 
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
-            return await ctx.send("This server doesn't have a mute role!"
-                                  "\n create one with the `muterole add` command")
+            raise errors.MuteRoleNotFound
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
-            return await ctx.send("The muted role seems to have been deleted!"
-                                  "\nRe-assign it with the `muterole set` command")
+            raise errors.MuteRoleNotFound
 
         if role > ctx.me.top_role:
             return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
@@ -884,13 +882,11 @@ class Moderation(commands.Cog):
             mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
 
             if not mute_role:
-                return await ctx.send("This server doesn't have a mute role!"
-                                      "\n create one with the `muterole [new_role]` command")
+                raise errors.MuteRoleNotFound
 
             role = ctx.guild.get_role(int(mute_role))
             if not isinstance(role, discord.Role):
-                return await ctx.send("The muted role seems to have been deleted!"
-                                      "\nRe-assign it with the `muterole [new_role]` command")
+                raise errors.MuteRoleNotFound
 
             return await ctx.send(f"This server's mute role is {role.mention}"
                                   f"\nChange it with the `muterole [new_role]` command",
@@ -922,9 +918,7 @@ class Moderation(commands.Cog):
 
         role = ctx.guild.get_role(int(mute_role))
         if isinstance(role, discord.Role):
-            return await ctx.send("This server already has a mute role!"
-                                  f"\nDelete or remove it first:"
-                                  f"\n`{ctx.clean_prefix}{ctx.command} [remove|delete]`")
+            raise errors.MuteRoleNotFound
 
         await ctx.send(f"Creating Muted role, and applying it to all channels."
                        f"\nThis may take awhile ETA: {len(ctx.guild.channels)} seconds.")
@@ -954,19 +948,20 @@ class Moderation(commands.Cog):
                     continue
                 await asyncio.sleep(1)
 
-        ending_time = time.monotonic()
-        complete_time = (ending_time - starting_time)
-        await ctx.send(f"done! took {round(complete_time, 2)} seconds")
+            ending_time = time.monotonic()
+            complete_time = (ending_time - starting_time)
+            await ctx.send(f"done! took {round(complete_time, 2)} seconds")
 
     @muterole.command(name="delete")
     @commands.has_permissions(manage_guild=True)
     async def muterole_delete(self, ctx: commands.Context):
         """
         Deletes the server's mute role if it exists.
+        # If you want to keep the role but not
         """
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
-            return await ctx.send("This server doesn't have a mute role!")
+            raise errors.MuteRoleNotFound
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
@@ -976,7 +971,7 @@ class Moderation(commands.Cog):
                 ctx.guild.id, None)
 
             return await ctx.send("It seems like the muted role was already deleted, or I can't find it right now!"
-                                  "\n I removed it from my database. If the mute role still exists, delete it manually.")
+                                  "\n I removed it from my database. If the mute role still exists, delete it manually")
 
         if role > ctx.me.top_role:
             return await ctx.send("I'm not high enough in role hierarchy to delete that role!")
@@ -987,7 +982,7 @@ class Moderation(commands.Cog):
         try:
             await role.delete(reason=f"Mute role deletion. Requested by {ctx.author} ({ctx.author.id})")
         except discord.Forbidden:
-            return await ctx.send("I can't delete that role!")
+            return await ctx.send("I can't delete that role! But I deleted it from my database")
         except discord.HTTPException:
             return await ctx.send("Something went wrong while deleting the muted role!")
         await self.bot.db.execute(
@@ -995,6 +990,38 @@ class Moderation(commands.Cog):
             "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
             ctx.guild.id, None)
         await ctx.send("🚮")
+
+    @muterole.command(name="fix")
+    @commands.has_permissions(manage_guild=True)
+    async def muterole_fix(self, ctx: commands.Context):
+        async with ctx.typing():
+            starting_time = time.monotonic()
+            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+
+            if not mute_role:
+                raise errors.MuteRoleNotFound
+
+            role = ctx.guild.get_role(int(mute_role))
+            if not isinstance(role, discord.Role):
+                raise errors.MuteRoleNotFound
+
+            for channel in ctx.guild.channels:
+                perms = channel.overwrites_for(role)
+                perms.send_messages = False
+                perms.add_reactions = False
+                perms.connect = False
+                perms.speak = False
+                try:
+                    await channel.set_permissions(role, overwrite=perms,
+                                                  reason=f"DuckBot mute-role creation. Requested "
+                                                         f"by {ctx.author} ({ctx.author.id})")
+                except (discord.Forbidden, discord.HTTPException):
+                    continue
+                await asyncio.sleep(1)
+
+            ending_time = time.monotonic()
+            complete_time = (ending_time - starting_time)
+            await ctx.send(f"done! took {round(complete_time, 2)} seconds")
 
     # self mutes
 
@@ -1010,11 +1037,11 @@ class Moderation(commands.Cog):
         reason = "self mute"
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
-            return await ctx.send("This server doesn't have a mute role!")
+            raise errors.MuteRoleNotFound
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
-            return await ctx.send("It seems like the muted role was deleted, or I can't find it right now!")
+            raise errors.MuteRoleNotFound
 
         if role > ctx.me.top_role:
             return await ctx.send("I'm not high enough in role hierarchy to assign the muted role!")
@@ -1065,14 +1092,11 @@ class Moderation(commands.Cog):
 
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
-            return await ctx.send("You don't have a mute role assigned!"
-                                  "\n create one with the `muterole create` command or add one with "
-                                  "the `muterole set` command if a muted role already exists.")
+            raise errors.MuteRoleNotFound
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
-            return await ctx.send("It seems like the muted role isn't in this server!"
-                                  "\nRe-assign it with the `muterole set` or `muterole create` command.")
+            raise errors.MuteRoleNotFound
 
         if not can_execute_action(ctx, ctx.author, member):
             return await ctx.send("You're not high enough in role hierarchy to do that!")

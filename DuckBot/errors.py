@@ -16,3 +16,7 @@ class NoQuotedMessage(commands.CheckFailure):
 
 class WaitForCancelled(commands.CheckFailure):
     pass
+
+
+class MuteRoleNotFound(commands.CheckFailure):
+    pass

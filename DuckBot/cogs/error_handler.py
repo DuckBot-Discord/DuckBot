@@ -139,6 +139,11 @@ class Handler(commands.Cog, name='Handler'):
         elif isinstance(error, errors.NoQuotedMessage):
             return await ctx.send("<:reply:824240882488180747> Missing reply!")
 
+        elif isinstance(error, errors.MuteRoleNotFound):
+            return await ctx.send("This server doesn't have a mute role, or it was deleted!"
+                                  "\nAssign it with `muterole [new_role]` command, "
+                                  "or can create it with the `muterole create` command")
+
         elif isinstance(error, errors.NoEmojisFound):
             return await ctx.send("I couldn't find any emojis there.")
 
