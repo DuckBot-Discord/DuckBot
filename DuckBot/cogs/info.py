@@ -223,8 +223,9 @@ class MyHelp(commands.HelpCommand):
                                           f"\n``````diff"
                                           f"\n- Usage: <required argument> [optional argument]"
                                           f"\n- [optional that accepts a list of arguments]..."
-                                          f"\n```",
-                              timestamp=discord.utils.utcnow())
+                                          f"\n```"
+                                          f"**The news section now has its own command! `{self.context.clean_prefix}news`**"
+                                          f"Check it out and see the latest things added to {self.context.me.display_name}! 💞")
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
 
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
@@ -516,3 +517,21 @@ DuckBot's top role position
 
         await channel.send(embed=embed2)
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def news(self, ctx):
+        embed = discord.Embed(color=ctx.me.color)
+        embed.add_field(name="📰 Latest News - <t:1630792260:d> (<t:1630792260:R>)",
+                        value=f"> <:commands:861817699729145901> **NEW! Mute commands**"
+                              f"\n_`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
+                              f"\n"
+                              f"\n> **😂 New fun commands added to the Fun category!**"
+                              f"\n`meme`, `choose`, `coinFlip`, `roll`, `8ball`, `wikipedia`"
+                              f"\n"
+                              f"\n> **👷 Added support for multiple prefixes:**"
+                              f"\nNow you can do `prefix add`, `prefix remove` and `prefix clear` 💞"
+                              f"\n"
+                              f"\n> 🆘 **The old new help command is back!!!**"
+                              f"\nTo make it easier to read at a glance, the old help command is back! "
+                              f"And with it, this new command, `news`."
+                              f"\n_Note that the source code for the old help command is now under `old/CharlesHelp.py`")
