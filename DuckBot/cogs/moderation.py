@@ -425,7 +425,7 @@ class Moderation(commands.Cog):
         def check(m: discord.Message):
             return m.flags.has_thread
 
-        deleted = await ctx.channel.purge(search=search, check=check)
+        deleted = await ctx.channel.purge(limit=search, check=check)
         thread_ids = [m.id for m in deleted]
         if not thread_ids:
             return await ctx.send("No threads found!")
