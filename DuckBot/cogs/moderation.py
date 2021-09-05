@@ -436,7 +436,7 @@ class Moderation(commands.Cog):
                 thread = self.bot.get_channel(thread_id)
                 if isinstance(thread, discord.Thread):
                     await thread.delete()
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.5)
 
             spammers = Counter(m.author.display_name for m in deleted)
             deleted = len(deleted)
@@ -460,17 +460,18 @@ class Moderation(commands.Cog):
     @remove.command(name='reactions')
     async def remove_reactions(self, ctx, search=100):
         """Removes all reactions from messages that have them."""
+        async with ctx.typing():
+            if search > 2000:
+                return await ctx.send(f'Too many messages to search for ({search}/2000)')
 
-        if search > 2000:
-            return await ctx.send(f'Too many messages to search for ({search}/2000)')
+            total_reactions = 0
+            async for message in ctx.history(limit=search, before=ctx.message):
+                if len(message.reactions):
+                    total_reactions += sum(r.count for r in message.reactions)
+                    await message.clear_reactions()
+                    await asyncio.sleep(0.5)
 
-        total_reactions = 0
-        async for message in ctx.history(limit=search, before=ctx.message):
-            if len(message.reactions):
-                total_reactions += sum(r.count for r in message.reactions)
-                await message.clear_reactions()
-
-        await ctx.send(f'Successfully removed {total_reactions} reactions.')
+            await ctx.send(f'Successfully removed {total_reactions} reactions.')
 
     @remove.command(name="custom")
     async def remove_custom(self, ctx, *, args: str):
