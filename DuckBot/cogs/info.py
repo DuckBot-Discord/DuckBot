@@ -221,18 +221,22 @@ class MyHelp(commands.HelpCommand):
                                           f"\n+ {self.context.clean_prefix}help [category] "
                                           f"- get information on a category"
                                           f"\n``````diff"
-                                          f"\n- Usage: <required> [optional]... <- multiple",
+                                          f"\n- Usage: <required> [optional]... <- multiple"
+                                          f"\n```",
                               timestamp=discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
 
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
         for cog, commands in mapping.items():
-            if cog is None or cog.qualified_name in ignored_cogs: continue
+            if cog is None or cog.qualified_name in ignored_cogs:
+                continue
             filtered = await self.filter_commands(commands, sort=True)
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
                 val = "`, `".join(command_signatures)
-                embed.add_field(name=cog.qualified_name, value=f"{cog.description or 'No description given...'}\n`{val}`", inline=True)
+                embed.add_field(name=cog.qualified_name,
+                                value=f"{cog.description or 'No description given...'}\n`{val}`",
+                                inline=False)
 
         channel = self.get_destination()
         await channel.send(embed=embed, view=InvSrc())
