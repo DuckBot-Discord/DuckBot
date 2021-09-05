@@ -524,18 +524,20 @@ DuckBot's top role position
         """
         embed = discord.Embed(color=ctx.me.color)
         embed.add_field(name="📰 Latest News - <t:1630816000:d> (<t:1630816000:R>)",
-                        value=f"> <:commands:861817699729145901> **NEW! Mute commands**"
-                              f"\n_`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
+                        value=f"\u200b"
+                              f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
+                              f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
                               f"\n"
                               f"\n> **😂 New fun commands added to the Fun category!**"
-                              f"\n`meme`, `choose`, `coinFlip`, `roll`, `8ball`, `wikipedia`"
+                              f"\n> `meme`, `choose`, `coinFlip`, `roll`, `8ball`, `wikipedia`"
                               f"\n"
                               f"\n> **👷 Added support for multiple prefixes:**"
-                              f"\nNow you can do `prefix add`, `prefix remove` and `prefix clear` 💞"
+                              f"\n> Now you can do `prefix add`, `prefix remove` and `prefix clear` 💞"
                               f"\n"
                               f"\n> 🆘 **The old new help command is back!!!**"
-                              f"\nTo make it easier to read at a glance, the old help command is back! "
+                              f"\n> To make it easier to read at a glance, the old help command is back! "
                               f"And with it, this new command, `news`."
-                              f"\n_Note that the source code for the old help "
-                              f"command is now under `cogs/OldCharlesHelp.pyi`")
+                              f"\n> _Note that the source code for the old help "
+                              f"command is still [here](https://github.com/LeoCx1000/"
+                              f"discord-bots/blob/master/DuckBot/cogs/OldCharlesHelp.pyi)_")
         await ctx.send(embed=embed)
