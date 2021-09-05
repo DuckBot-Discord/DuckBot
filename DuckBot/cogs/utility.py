@@ -1,13 +1,15 @@
 import asyncio
 import re
-from inspect import Parameter
-
-import discord
 import typing
+import unicodedata
+import discord
+
+from inspect import Parameter
+from typing import Optional
 from discord.ext import commands, menus
 
-from helpers import helper
 import errors
+from helpers import helper
 
 
 def setup(bot):
