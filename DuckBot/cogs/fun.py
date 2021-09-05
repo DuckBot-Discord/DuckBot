@@ -46,7 +46,7 @@ class Fun(commands.Cog, name='Fun'):
     def __init__(self, bot):
         self.bot = bot
 
-    async def reddit(self, subreddit: str, title: bool = True) -> discord.Embed:
+    async def reddit(self, subreddit: str, title: bool = False) -> discord.Embed:
         post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
         while 'i.redd.it' not in post.url or post.over_18:
