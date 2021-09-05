@@ -213,19 +213,17 @@ class MyHelp(commands.HelpCommand):
     async def send_bot_help(self, mapping):
         embed = discord.Embed(color=discord.Colour.blurple())
         embed.description = (
-            f"**Total Commands:** {len(list(self.context.bot.commands))} | **Usable by "
-            f"you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))} "
-            "\n```diff"
+            "```diff"
             f"\n+ {self.context.clean_prefix}help [command] - get information on a command"
-            f"\n``````diff"
             f"\n+ {self.context.clean_prefix}help [category] - get information on a category"
             f"\n``````diff"
             f"\n- Usage: <required argument> [optional argument]"
             f"\n- [optional that accepts a list of arguments]..."
             f"\n``````fix"
             f"\nLatest commands: \"meme\", \"remove threads\"```"
-            f"\n> **The news section now has its own command! `{self.context.clean_prefix}news`**"
-            f"\n> Check it out and see the latest things added to {self.context.me.display_name}! 💞"
+            f"\n> **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by "
+            f"you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))} "
+            f"\n> **Do `{self.context.clean_prefix}news` to see the latest changes to {self.context.me.display_name}**"
             f"\n"
             f"\n **Here is a list of all my command categories, with their associated commands:**")
 
