@@ -223,9 +223,12 @@ class MyHelp(commands.HelpCommand):
                                           f"\n``````diff"
                                           f"\n- Usage: <required argument> [optional argument]"
                                           f"\n- [optional that accepts a list of arguments]..."
-                                          f"\n```"
-                                          f"\n> **The news section now has its own command! `{self.context.clean_prefix}news`**"
-                                          f"\nCheck it out and see the latest things added to {self.context.me.display_name}! 💞")
+                                          f"\n``````fix"
+                                          f"\nLatest commands: \"meme\", \"remove threads\"```"
+                                          f"\n> **The news section now has its own command! "
+                                          f"`{self.context.clean_prefix}news`**"
+                                          f"\n> Check it out and see the latest things added "
+                                          f"to {self.context.me.display_name}! 💞")
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
 
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
@@ -523,7 +526,7 @@ DuckBot's top role position
         Shows the latest changes of the bot.
         """
         embed = discord.Embed(color=ctx.me.color)
-        embed.add_field(name="📰 Latest News - <t:1630816000:d> (<t:1630816000:R>)",
+        embed.add_field(name="📰 Latest News - <t:1630855555:d> (<t:1630855555:R>)",
                         value=f"\u200b"
                               f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
                               f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
@@ -539,5 +542,8 @@ DuckBot's top role position
                               f"And with it, this new command, `news`."
                               f"\n> _Note that the source code for the old help "
                               f"command is still [here](https://github.com/LeoCx1000/"
-                              f"discord-bots/blob/master/DuckBot/cogs/OldCharlesHelp.pyi)_")
+                              f"discord-bots/blob/master/DuckBot/cogs/OldCharlesHelp.pyi)_"
+                              f"\n"
+                              f"\n> **🗑 New! `remove threads` command!**"
+                              f"\n> Deletes all messages with threads, and their associated threads.")
         await ctx.send(embed=embed)
