@@ -119,35 +119,36 @@ class Moderation(commands.Cog):
         if limit > 2000:
             return await ctx.send(f'Too many messages to search given ({limit}/2000)')
 
-        if before is None:
-            before = ctx.message
-        else:
-            before = discord.Object(id=before)
+        async with ctx.typing():
+            if before is None:
+                before = ctx.message
+            else:
+                before = discord.Object(id=before)
 
-        if after is not None:
-            after = discord.Object(id=after)
+            if after is not None:
+                after = discord.Object(id=after)
 
-        try:
-            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
-        except discord.Forbidden:
-            return await ctx.send('I do not have permissions to delete messages.')
-        except discord.HTTPException as e:
-            return await ctx.send(f'Error: {e} (try a smaller search?)')
+            try:
+                deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
+            except discord.Forbidden:
+                return await ctx.send('I do not have permissions to delete messages.')
+            except discord.HTTPException as e:
+                return await ctx.send(f'Error: {e} (try a smaller search?)')
 
-        spammers = Counter(m.author.display_name for m in deleted)
-        deleted = len(deleted)
-        messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
-        if deleted:
-            messages.append('')
-            spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
-            messages.extend(f'**{name}**: {count}' for name, count in spammers)
+            spammers = Counter(m.author.display_name for m in deleted)
+            deleted = len(deleted)
+            messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
+            if deleted:
+                messages.append('')
+                spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+                messages.extend(f'**{name}**: {count}' for name, count in spammers)
 
-        to_send = '\n'.join(messages)
+            to_send = '\n'.join(messages)
 
-        if len(to_send) > 2000:
-            await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10, reply=False)
-        else:
-            await ctx.send(to_send, delete_after=10, reply=False)
+            if len(to_send) > 2000:
+                await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10, reply=False)
+            else:
+                await ctx.send(to_send, delete_after=10, reply=False)
 
     # ------------ TASKS ---------- #
 
@@ -419,40 +420,42 @@ class Moderation(commands.Cog):
 
     @remove.command(name='threads', aliases=['thread'])
     async def remove_threads(self, ctx, search: int = 100):
-        if search > 2000:
-            return await ctx.send(f'Too many messages to search given ({search}/2000)')
+        async with ctx.typing():
+            if search > 2000:
+                return await ctx.send(f'Too many messages to search given ({search}/2000)')
 
-        def check(m: discord.Message):
-            return m.flags.has_thread
+            def check(m: discord.Message):
+                return m.flags.has_thread
 
-        deleted = await ctx.channel.purge(limit=search, check=check)
-        thread_ids = [m.id for m in deleted]
-        if not thread_ids:
-            return await ctx.send("No threads found!")
+            deleted = await ctx.channel.purge(limit=search, check=check)
+            thread_ids = [m.id for m in deleted]
+            if not thread_ids:
+                return await ctx.send("No threads found!")
 
-        for thread_id in thread_ids:
-            thread = self.bot.get_channel(thread_id)
-            if isinstance(thread, discord.Thread):
-                await thread.delete()
+            for thread_id in thread_ids:
+                thread = self.bot.get_channel(thread_id)
+                if isinstance(thread, discord.Thread):
+                    await thread.delete()
+                    await asyncio.sleep(1)
 
-        spammers = Counter(m.author.display_name for m in deleted)
-        deleted = len(deleted)
-        messages = [f'{deleted} message'
-                    f'{" and its associated thread was" if deleted == 1 else "s and their associated messages were"} '
-                    f'removed.']
+            spammers = Counter(m.author.display_name for m in deleted)
+            deleted = len(deleted)
+            messages = [f'{deleted} message'
+                        f'{" and its associated thread was" if deleted == 1 else "s and their associated messages were"} '
+                        f'removed.']
 
-        if deleted:
-            messages.append('')
-            spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
-            messages.extend(f'**{name}**: {count}' for name, count in spammers)
+            if deleted:
+                messages.append('')
+                spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+                messages.extend(f'**{name}**: {count}' for name, count in spammers)
 
-        to_send = '\n'.join(messages)
+            to_send = '\n'.join(messages)
 
-        if len(to_send) > 2000:
-            await ctx.send(f'Successfully removed {deleted} messages and their associated threads.',
-                           delete_after=10, reply=False)
-        else:
-            await ctx.send(to_send, delete_after=10, reply=False)
+            if len(to_send) > 2000:
+                await ctx.send(f'Successfully removed {deleted} messages and their associated threads.',
+                               delete_after=10, reply=False)
+            else:
+                await ctx.send(to_send, delete_after=10, reply=False)
 
     @remove.command(name='reactions')
     async def remove_reactions(self, ctx, search=100):
