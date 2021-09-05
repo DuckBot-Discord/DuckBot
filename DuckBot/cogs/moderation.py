@@ -1091,7 +1091,9 @@ class Moderation(commands.Cog):
         Role: The specified role must be lower than yours and the bots top role.
         """
 
-        role = role if role and role < ctx.me.top_role and role < ctx.author.top_role else ctx.guild.default_role
+        role = role or ctx.guild.default_role
+        if role > ctx.me.top_role and not ctx.author == ctx.guild.owner:
+            await ctx.send(":x: The specified role is above your top role!")
 
         channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(
             ctx.me).manage_roles else ctx.channel
@@ -1121,7 +1123,9 @@ class Moderation(commands.Cog):
         Role: The specified role must be lower than yours and the bots top role.
         """
 
-        role = role if role and role < ctx.me.top_role and role < ctx.author.top_role else ctx.guild.default_role
+        role = role or ctx.guild.default_role
+        if role > ctx.me.top_role and not ctx.author == ctx.guild.owner:
+            await ctx.send(":x: The specified role is above your top role!")
 
         channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(
             ctx.me).manage_roles else ctx.channel
@@ -1135,7 +1139,7 @@ class Moderation(commands.Cog):
 
         await ctx.send(f"Unlocked **{channel.name}** for **{role.name}**")
 
-    @commands.command(usage="[channel] <duration|reset>")
+    @commands.command(aliases=['sm', 'cooldown'])
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
     async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
