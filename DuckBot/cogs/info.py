@@ -224,8 +224,8 @@ class MyHelp(commands.HelpCommand):
                                           f"\n- Usage: <required argument> [optional argument]"
                                           f"\n- [optional that accepts a list of arguments]..."
                                           f"\n```"
-                                          f"**The news section now has its own command! `{self.context.clean_prefix}news`**"
-                                          f"Check it out and see the latest things added to {self.context.me.display_name}! 💞")
+                                          f"\n> **The news section now has its own command! `{self.context.clean_prefix}news`**"
+                                          f"\nCheck it out and see the latest things added to {self.context.me.display_name}! 💞")
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
 
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
