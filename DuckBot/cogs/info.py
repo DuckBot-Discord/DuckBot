@@ -519,8 +519,11 @@ DuckBot's top role position
 
     @commands.command()
     async def news(self, ctx):
+        """
+        Shows the latest changes of the bot.
+        """
         embed = discord.Embed(color=ctx.me.color)
-        embed.add_field(name="📰 Latest News - <t:1630792260:d> (<t:1630792260:R>)",
+        embed.add_field(name="📰 Latest News - <t:1630816000:d> (<t:1630816000:R>)",
                         value=f"> <:commands:861817699729145901> **NEW! Mute commands**"
                               f"\n_`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
                               f"\n"
@@ -535,3 +538,4 @@ DuckBot's top role position
                               f"And with it, this new command, `news`."
                               f"\n_Note that the source code for the old help "
                               f"command is now under `cogs/OldCharlesHelp.pyi`")
+        await ctx.send(embed=embed)
