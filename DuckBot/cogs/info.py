@@ -227,7 +227,7 @@ class MyHelp(commands.HelpCommand):
             f"\n> **The news section now has its own command! `{self.context.clean_prefix}news`**"
             f"\n> Check it out and see the latest things added to {self.context.me.display_name}! 💞"
             f"\n"
-            f"\n **Here is a list of all my command categories, with their associated commands:")
+            f"\n **Here is a list of all my command categories, with their associated commands:**")
 
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
 
