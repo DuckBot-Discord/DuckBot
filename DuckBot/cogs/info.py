@@ -221,7 +221,8 @@ class MyHelp(commands.HelpCommand):
                                           f"\n+ {self.context.clean_prefix}help [category] "
                                           f"- get information on a category"
                                           f"\n``````diff"
-                                          f"\n- Usage: <required> [optional]... <- multiple"
+                                          f"\n- Usage: <required argument> [optional argument]"
+                                          f"\n- [optional that accepts a list of arguments]..."
                                           f"\n```",
                               timestamp=discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
