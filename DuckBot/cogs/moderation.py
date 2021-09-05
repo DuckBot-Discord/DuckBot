@@ -437,8 +437,9 @@ class Moderation(commands.Cog):
 
         spammers = Counter(m.author.display_name for m in deleted)
         deleted = len(deleted)
-        messages = [f'{deleted} message{"" if deleted == 1 else "s"} and '
-                    f'{" its associated thread was" if deleted == 1 else " their associated threads were"} removed.']
+        messages = [f'{deleted} message'
+                    f'{" and its associated thread was" if deleted == 1 else "s and their associated messages were"} '
+                    f'removed.']
 
         if deleted:
             messages.append('')
