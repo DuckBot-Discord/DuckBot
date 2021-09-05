@@ -21,7 +21,9 @@ async def get_webhook(channel):
 
 
 class Events(commands.Cog):
-    """How did you get here 🤨"""
+    """
+    🤨 Commands and functions to manage DuckBot's DMs with users.
+    """
 
     def __init__(self, bot):
         self.bot = bot

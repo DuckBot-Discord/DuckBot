@@ -83,7 +83,9 @@ class Confirm(menus.Menu):
 
 
 class Moderation(commands.Cog):
-    """🔨Moderation commands! 👮‍♂️"""
+    """
+    🔨 Commands to facilitate server moderation, and all utilities for admins and mods.
+    """
 
     def __init__(self, bot):
         self.bot = bot

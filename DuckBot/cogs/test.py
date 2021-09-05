@@ -9,7 +9,10 @@ def setup(bot):
 
 
 class Test(commands.Cog):
-    """🧪 Test commands. 💀 May not work or not be what you think they'll be."""
+    """
+    🧪 Test commands. 💀 These may not work, or not be what you think they will.
+    Remember that these commands are all a work in progress, and they may or may not ever be released
+    """
 
     def __init__(self, bot):
         self.bot = bot

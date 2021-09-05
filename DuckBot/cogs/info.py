@@ -237,7 +237,7 @@ class MyHelp(commands.HelpCommand):
             if command_signatures:
                 val = "`, `".join(command_signatures)
                 embed.add_field(name=f"Category: {cog.qualified_name}",
-                                value=f"{cog.description or 'No description given...'}\n\n`{val}`\n _ \u200b _",
+                                value=f"{cog.description or 'No description given...'}\n`{val}`\n _ \u200b _",
                                 inline=False)
 
         channel = self.get_destination()
@@ -304,7 +304,9 @@ description: {command_help}
 
 
 class About(commands.Cog):
-    """😮 Bot information."""
+    """
+    😮 Commands related to the bot itself, that have the only purpose to show information.
+    """
 
     def __init__(self, bot):
         self.bot = bot

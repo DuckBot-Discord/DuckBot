@@ -38,7 +38,7 @@ def setup(bot):
 
 class Fun(commands.Cog, name='Fun'):
     """
-    🤪 Fun commands!
+    🤪 General entertainment commands, and all other commands that don't fit within other categories.
     """
 
     __slots__ = ('bot',)

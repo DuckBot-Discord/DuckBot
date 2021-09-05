@@ -25,7 +25,7 @@ class EmbedPageSource(menus.ListPageSource):
 
 class Utility(commands.Cog):
     """
-    💬 Utility commands. 👷
+    💬 Text and utility commands, mostly to display information about a server.
     """
 
     def __init__(self, bot):
@@ -101,11 +101,11 @@ class Utility(commands.Cog):
                                                                                                      users=True))
 
     @commands.command(
-        aliases=['e'],
+        aliases=['e', 'edit'],
         usage="[new message] [--d|--s]")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def edit(self, ctx, *, new: typing.Optional[str] = '--d'):
+    async def edit_message(self, ctx, *, new: typing.Optional[str] = '--d'):
         """Quote a bot message to edit it.
         # Append --s at the end to suppress embeds and --d to delete the message
         """
@@ -179,7 +179,7 @@ class Utility(commands.Cog):
     @commands.command(hidden=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
-    async def old_uinfo(self, ctx, user: typing.Optional[discord.Member]):
+    async def old_userinfo(self, ctx, user: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
@@ -273,9 +273,9 @@ class Utility(commands.Cog):
             embed.add_field(name="denied", value="\n".join(denied))
         return await ctx.send(embed=embed)
 
-    @commands.command(aliases=["serverinfo"])
+    @commands.command(aliases=["si"])
     @commands.guild_only()
-    async def si(self, ctx: commands.Context, guild_id: int = None):
+    async def serverinfo(self, ctx: commands.Context, guild_id: int = None):
         """
         Shows the current server's information.
         """
@@ -526,12 +526,14 @@ class Utility(commands.Cog):
                                                        reason=f"Cloned emoji, requested by {ctx.author}")
         await ctx.send(f"Done! cloned {server_emoji}")
 
-    @commands.command(help="Fetches the UUID of a minecraft user",
-                      usage="<Minecraft username>")
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def uuid(self, ctx: commands.Context, *, argument: typing.Optional[str] = None) \
+    async def minecraft_uuid(self, ctx: commands.Context, *, username: str) \
             -> typing.Optional[discord.Message]:
-
+        """
+        Fetches the UUID of a minecraft user from the mojang API
+        """
+        argument = username
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
             embed = discord.Embed(color=ctx.me.color)
             if cs.status == 204:
@@ -549,7 +551,7 @@ class Utility(commands.Cog):
     @commands.command(name="commands")
     async def _commands(self, ctx: commands.Context) -> discord.Message:
         """
-        Shows all the my commands, even the ones you can't run.
+        Shows all the bot commands, even the ones you can't run.
         """
 
         ignored_cogs = ("Bot Management", "Jishaku")
@@ -566,4 +568,4 @@ class Utility(commands.Cog):
 
         return await ctx.send(embed=discord.Embed(color=ctx.me.color,
                                                   title=f"Here are ALL my commands ({len(shown_commands)})",
-                                                  description=f"```\n{all_commands}\n```"))
+                                                  description=f"```fix\n{all_commands}\n```"))

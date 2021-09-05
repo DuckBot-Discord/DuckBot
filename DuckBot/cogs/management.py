@@ -42,7 +42,9 @@ def cleanup_code(content):
 
 
 class Management(commands.Cog, name='Bot Management'):
-    """🤖Management stuff. Ignore this"""
+    """
+    🤖 Commands meant for the bot developers to manage the bots functionalities. Not meant for general use.
+    """
 
     def __init__(self, bot):
         self.bot = bot

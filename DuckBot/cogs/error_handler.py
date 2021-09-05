@@ -14,7 +14,7 @@ def setup(bot):
 
 class Handler(commands.Cog, name='Handler'):
     """
-    🆘 Handle them errors 👀
+    🆘 Handle them errors 👀 How did you manage to get a look at this category????
     """
 
     def __init__(self, bot):
