@@ -1110,7 +1110,7 @@ class Moderation(commands.Cog):
 
         await channel.set_permissions(role, overwrite=perms,
                                       reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
-        await ctx.send(f"Locked down **{channel.name}** for **{role.name}**")
+        await ctx.send(f"Locked down **{channel.name}** for **{role.name}**", allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['unlockdown', 'uld'])
     @commands.has_permissions(manage_roles=True)
@@ -1135,7 +1135,7 @@ class Moderation(commands.Cog):
         await channel.set_permissions(role, overwrite=perms,
                                       reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
 
-        await ctx.send(f"Unlocked **{channel.name}** for **{role.name}**")
+        await ctx.send(f"Unlocked **{channel.name}** for **{role.name}**", allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(usage="[channel] <duration|reset>")
     @commands.has_permissions(manage_channels=True)
