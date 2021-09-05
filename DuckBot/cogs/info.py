@@ -236,8 +236,8 @@ class MyHelp(commands.HelpCommand):
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
                 val = "`, `".join(command_signatures)
-                embed.add_field(name=cog.qualified_name,
-                                value=f"{cog.description or 'No description given...'}\n`{val}`",
+                embed.add_field(name=f"Category: {cog.qualified_name}",
+                                value=f"{cog.description or 'No description given...'}\n\n`{val}`\n _ \u200b _",
                                 inline=False)
 
         channel = self.get_destination()
