@@ -27,6 +27,7 @@ class Utility(commands.Cog):
     """
     💬 Utility commands. 👷
     """
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -71,8 +72,8 @@ class Utility(commands.Cog):
             allowed = False
 
         return await ctx.send(msg[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False,
-                                                                            roles=False,
-                                                                            users=allowed),
+                                                                                    roles=False,
+                                                                                    users=allowed),
                               reference=ctx.message.reference,
                               reply=False)
 
@@ -84,7 +85,8 @@ class Utility(commands.Cog):
         usage="<channel> <message_or_reply>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def echo(self, ctx: commands.Context, channel: typing.Union[discord.TextChannel, int], *, message_or_reply: str = None)\
+    async def echo(self, ctx: commands.Context, channel: typing.Union[discord.TextChannel, int], *,
+                   message_or_reply: str = None) \
             -> discord.Message:
         """"Echoes a message to another channel"""
         if isinstance(channel, int):
@@ -95,8 +97,8 @@ class Utility(commands.Cog):
         elif ctx.message.reference:
             message_or_reply = ctx.message.reference.resolved
         return await channel.send(message_or_reply[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False,
-                                                                                             roles=False,
-                                                                                             users=True))
+                                                                                                     roles=False,
+                                                                                                     users=True))
 
     @commands.command(
         aliases=['e'],
@@ -151,8 +153,9 @@ class Utility(commands.Cog):
         embed.add_field(name="<:joined:849392863557189633> Created At",
                         value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
-                               f"\n\u200b \u200b \u200b \u200b ╰ <:moved:848312880666640394> **Join Position:** {sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}") \
-                            if member else "Could not get data",
+                               f"\n\u200b \u200b \u200b \u200b ╰ <:moved:848312880666640394> **Join Position:** "
+                               f"{sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}")
+                        if member else "Could not get data",
                         inline=False)
 
         perms = helper.get_perms(member.guild_permissions)
@@ -233,7 +236,8 @@ class Utility(commands.Cog):
         # ROLES
         roles = ""
         for role in user.roles:
-            if role is ctx.guild.default_role: continue
+            if role is ctx.guild.default_role:
+                continue
             roles = f"{roles} {role.mention}"
         if roles != "":
             roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
