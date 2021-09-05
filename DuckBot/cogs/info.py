@@ -534,4 +534,5 @@ DuckBot's top role position
                               f"\n> 🆘 **The old new help command is back!!!**"
                               f"\nTo make it easier to read at a glance, the old help command is back! "
                               f"And with it, this new command, `news`."
-                              f"\n_Note that the source code for the old help command is now under `old/CharlesHelp.py`")
+                              f"\n_Note that the source code for the old help "
+                              f"command is now under `cogs/OldCharlesHelp.pyi`")
