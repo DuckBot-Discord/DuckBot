@@ -207,8 +207,11 @@ class Moderation(commands.Cog):
 
         old = list(await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True))
 
-        if len(new) > 10:
-            return await ctx.send("Prefixes can only be up to 10 characters")
+        if len(new) > 50:
+            return await ctx.send("Prefixes can only be up to 50 characters!")
+
+        if len(old) > 30:
+            return await ctx.send("You can only have up to 20 prefixes!")
 
         if new not in old:
             old.append(new)
