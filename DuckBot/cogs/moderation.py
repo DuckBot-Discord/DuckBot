@@ -418,6 +418,8 @@ class Moderation(commands.Cog):
 
         await self.do_removal(ctx, search, predicate)
 
+    @commands.has_permissions(manage_threads=True)
+    @commands.bot_has_permissions(manage_threads=True)
     @remove.command(name='threads', aliases=['thread'])
     async def remove_threads(self, ctx, search: int = 100):
         async with ctx.typing():
