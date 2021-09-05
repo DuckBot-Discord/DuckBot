@@ -221,7 +221,7 @@ class MyHelp(commands.HelpCommand):
             f"\n- [optional that accepts a list of arguments]..."
             f"\n``````fix"
             f"\nLatest commands: \"meme\", \"remove threads\"```"
-            f"> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by "
+            f"\n> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by "
             f"you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))} "
             f"\n> 📰 **Do `{self.context.clean_prefix}news` to see the latest "
             f"additions to {self.context.me.display_name}**📰 "
