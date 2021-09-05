@@ -88,7 +88,7 @@ class Moderation(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.temporary_mutes.start()
 
     async def cog_check(self, ctx):
@@ -128,7 +128,7 @@ class Moderation(commands.Cog):
             after = discord.Object(id=after)
 
         try:
-            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate, reply=False)
+            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
         except discord.Forbidden:
             return await ctx.send('I do not have permissions to delete messages.')
         except discord.HTTPException as e:
@@ -416,6 +416,42 @@ class Moderation(commands.Cog):
             return custom_emoji.search(m.content)
 
         await self.do_removal(ctx, search, predicate)
+
+    @remove.command(name='threads', aliases=['thread'])
+    async def remove_threads(self, ctx, search: int = 100):
+        if search > 2000:
+            return await ctx.send(f'Too many messages to search given ({search}/2000)')
+
+        def check(m: discord.Message):
+            return m.flags.has_thread
+
+        deleted = await ctx.channel.purge(search=search, check=check)
+        thread_ids = [m.id for m in deleted]
+        if not thread_ids:
+            return await ctx.send("No threads found!")
+
+        for thread_id in thread_ids:
+            thread = self.bot.get_channel(thread_id)
+            if isinstance(thread, discord.Thread):
+                await thread.delete()
+
+        spammers = Counter(m.author.display_name for m in deleted)
+        deleted = len(deleted)
+        messages = [f'{deleted} message{"" if deleted == 1 else "s"} and '
+                    f'{" its associated thread was" if deleted == 1 else " their associated threads were"} removed.']
+
+        if deleted:
+            messages.append('')
+            spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+            messages.extend(f'**{name}**: {count}' for name, count in spammers)
+
+        to_send = '\n'.join(messages)
+
+        if len(to_send) > 2000:
+            await ctx.send(f'Successfully removed {deleted} messages and their associated threads.',
+                           delete_after=10, reply=False)
+        else:
+            await ctx.send(to_send, delete_after=10, reply=False)
 
     @remove.command(name='reactions')
     async def remove_reactions(self, ctx, search=100):
@@ -1165,3 +1201,18 @@ class Moderation(commands.Cog):
 
         human_delay = helpers.human_timedelta(duration.dt, source=created_at)
         return await ctx.send(f"Messages in **{channel.name}** can now be sent **every {human_delay}**")
+
+    @commands.command()
+    async def archive(self, ctx, channel: typing.Optional[discord.Thread], *, reason: str = None):
+        """
+        Archives the current thread, or any thread mentioned.
+        # Optionally, input a reason to be displayed in the message.
+        """
+        channel = channel or ctx.channel
+        if not isinstance(channel, discord.Thread):
+            return await ctx.send("That's not a thread!")
+
+        await channel.send(f"Thread archived by **{ctx.author}**"
+                           f"\n{f'**With reason:** {reason}' if reason else ''}")
+        await channel.edit(archived=True)
+
