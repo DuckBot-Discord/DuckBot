@@ -215,51 +215,25 @@ class MyHelp(commands.HelpCommand):
                               description=f"**Total Commands:** {len(list(self.context.bot.commands))} | **Usable by "
                                           f"you (here):** {len(await self.filter_commands(list(self.context.bot.commands), sort=True))} "
                                           "\n```diff"
-                                          "\n- usage format: <required> [optional=default value]..."
-                                          "\n- dont type these brackets when using the command!"
-                                          f"\n+ {self.context.clean_prefix}help [command|subcommand] "
+                                          f"\n+ {self.context.clean_prefix}help [command] "
                                           f"- get information on a command"
-                                          f"\n+ {self.context.clean_prefix}help [category|number] "
+                                          f"\n``````diff"
+                                          f"\n+ {self.context.clean_prefix}help [category] "
                                           f"- get information on a category"
-                                          f"\n```",
+                                          f"\n``````diff"
+                                          f"\n- Usage: <required> [optional]... <- multiple",
                               timestamp=discord.utils.utcnow())
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
-        all_cogs = []
-        cog_index = []
+
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
-        iterations = 1
         for cog, commands in mapping.items():
-            if cog is None or cog.qualified_name in ignored_cogs:
-                continue
-            num = f"{iterations}\U0000fe0f\U000020e3"
-            cog_index.append(cog.qualified_name)
-            all_cogs.append(f"{num} {cog.qualified_name}")
-            iterations += 1
-        self.context.bot.first_help_sent = True
-        self.context.bot.all_cogs = cog_index
-        nl = '\n'
+            if cog is None or cog.qualified_name in ignored_cogs: continue
+            filtered = await self.filter_commands(commands, sort=True)
+            command_signatures = [self.get_command_name(c) for c in filtered]
+            if command_signatures:
+                val = "`, `".join(command_signatures)
+                embed.add_field(name=cog.qualified_name, value=f"{cog.description or 'No description given...'}\n`{val}`", inline=True)
 
-        embed.add_field(name=f"Available categories [{len(all_cogs)}]", value=f"```fix\n{nl.join(all_cogs)}``````diff"
-                                                                              f"\n! \"help [number]\""
-                                                                              f"\n- to get help on"
-                                                                              f"\n- a category by"
-                                                                              f"\n- it's number."
-                                                                              f"\n```")
-
-        embed.add_field(name="📰 Latest News - <t:1630792260:d> (<t:1630792260:R>)", value=f"""
-_ _
-> <:commands:861817699729145901> **NEW! Mute commands**
-_`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_
-
-> **😂 New fun commands added to the Fun category!**
-`meme`, `choose`, `coinFlip`, `roll`, `8ball`, `wikipedia`
-
-> **👷 Added support for multiple prefixes:**
-Now you can do `prefix add`, `prefix remove` and `prefix clear` 💞
-
-""")
-
-        embed.set_footer(text=f"Help command inspiration and credits at \"{self.context.clean_prefix}about\"")
         channel = self.get_destination()
         await channel.send(embed=embed, view=InvSrc())
 
@@ -315,30 +289,6 @@ description: {command_help}
 
     async def send_error_message(self, error):
         channel = self.get_destination()
-        cmd = [item[::-1] for item in (error.split('"', 1)[-1])[::-1].split('"', 1)][::-1][0]
-        if cmd.lower() == 'credits':
-            charles = self.context.bot.get_user(505532526257766411) or "Charles#5244"
-            dutchy = self.context.bot.get_user(171539705043615744) or "Dutchy#6127"
-            embed = discord.Embed(color=self.context.me.color, description=f"The main page of the help command was "
-                                                                           f"not designed by me. It is inspired by "
-                                                                           f"**{dutchy}**'s **{charles}** "
-                                                                           f"bot.\n\ncheck it out at "
-                                                                           f"https://charles-bot.com/ 💞")
-            if isinstance(charles, (discord.User, discord.Member)):
-                embed.set_thumbnail(url=charles.display_avatar.url)
-            embed.set_author(icon_url=self.context.author.display_avatar.url,
-                             name=f"{self.context.author} - help page credits")
-            return await channel.send(embed=embed)
-
-        if cmd.isdigit():
-            if self.context.bot.first_help_sent is True:
-                try:
-                    return await self.context.send_help(self.context.bot.all_cogs[int(cmd) - 1])
-                except IndexError:
-                    pass
-            else:
-                return await channel.send(f"Whoops! I don't have the list of categories loaded 😔"
-                                          f"\nDo `{self.context.clean_prefix}help` to load it! 💞")
         await channel.send(f"{error}"
                            f"\nDo `{self.context.clean_prefix}help` for a list of available commands! 💞")
 
