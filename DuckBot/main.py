@@ -87,7 +87,7 @@ class CustomContext(commands.Context):
                                                                                     discord.MessageReference] = None,
                    **kwargs):
         if reply is True and not reference:
-            reference = self.message
+            reference = self.message.reference or self.message
 
         if embed and footer is True:
             if not embed.footer:

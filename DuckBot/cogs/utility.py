@@ -29,7 +29,7 @@ class Utility(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
 
     @commands.command(name='charinfo')
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
@@ -88,9 +88,14 @@ class Utility(commands.Cog):
     async def echo(self, ctx: commands.Context, channel: typing.Union[discord.TextChannel, int], *,
                    message_or_reply: str = None) \
             -> discord.Message:
-        """"Echoes a message to another channel"""
-        if isinstance(channel, int):
+        """"
+        Echoes a message to another channel
+        # If a message is quoted, it will echo the quoted message's content.
+        """
+        if isinstance(channel, int) and self.bot.is_owner(ctx.author):
             channel = self.bot.get_channel(channel)
+        if not channel:
+            raise commands.MissingRequiredArgument(Parameter(name='channel', kind=Parameter.POSITIONAL_ONLY))
         if not ctx.message.reference and not message_or_reply:
             raise commands.MissingRequiredArgument(
                 Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY))
@@ -124,7 +129,7 @@ class Utility(commands.Cog):
     @commands.command(aliases=['uinfo', 'ui', 'whois', 'whoami'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
-    async def userinfo(self, ctx: commands.Context, member: typing.Optional[discord.Member]):
+    async def userinfo(self, ctx: commands.Context, *, member: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
@@ -135,12 +140,11 @@ class Utility(commands.Cog):
         embed.set_thumbnail(url=member.display_avatar.url)
 
         embed.add_field(name="<:info:860295406349058068> General information",
-                        value=
-                        f"**ID:** {member.id}"
-                        f"\n**Name:** {member.name}"
-                        f"\n╰ **Nick:** {(member.nick or '✖')}"
-                        f"\n**Owner:** {ctx.tick(member == member.guild.owner)} • "
-                        f"**Bot:** {ctx.tick(member.bot)}", inline=True)
+                        value=f"**ID:** {member.id}"
+                              f"\n**Name:** {member.name}"
+                              f"\n╰ **Nick:** {(member.nick or '✖')}"
+                              f"\n**Owner:** {ctx.tick(member == member.guild.owner)} • "
+                              f"**Bot:** {ctx.tick(member.bot)}", inline=True)
 
         embed.add_field(name="<:store_tag:658538492409806849> Badges",
                         value=(helper.get_user_badges(member) or "No Badges"), inline=True)
@@ -179,7 +183,7 @@ class Utility(commands.Cog):
     @commands.command(hidden=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
-    async def old_userinfo(self, ctx, user: typing.Optional[discord.Member]):
+    async def old_userinfo(self, ctx, *, user: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
