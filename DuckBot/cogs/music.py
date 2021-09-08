@@ -125,57 +125,57 @@ class Music(commands.Cog):
             return
 
         if isinstance(error, NoVoiceChannel):
-            embed = discord.Embed(color=0xFF0000)
-            embed.description = "No suitable voice channel was provided."
+            embed = discord.Embed(color=0xD7332A)
+            embed.description = "I'm not connected to a voice channel!"
             return await ctx.send(embed=embed)
 
         if isinstance(error, AlreadyConnectedToChannel):
-            embed = discord.Embed(color=0xFF0000)
-            embed.description = "Already connected to a voice channel."
+            embed = discord.Embed(color=0xD7332A)
+            embed.description = "I'm already connected to a voice channel!"
             return await ctx.send(embed=embed)
 
         if isinstance(error, QueueIsEmpty):
-            embed = discord.Embed(color=0xFF0000)
-            embed.description = "There are no tracks in the queue."
+            embed = discord.Embed(color=0xD7332A)
+            embed.description = "There are no tracks in the queue!"
             return await ctx.send(embed=embed)
 
         if isinstance(error, PlayerIsAlreadyPaused):
-            embed = discord.Embed(color=0xFF0000)
-            embed.description = "The current track is already paused."
+            embed = discord.Embed(color=0xD7332A)
+            embed.description = "The current track is already paused!"
             return await ctx.send(embed=embed)
 
         if isinstance(error, NoMoreTracks):
-            embed = discord.Embed(color=0xFF0000)
-            embed.description = "There are no more tracks in the queue."
+            embed = discord.Embed(color=0xD7332A)
+            embed.description = "There are no more tracks in the queue!"
             await ctx.send(embed=embed)
 
         if isinstance(error, InvalidRepeatMode):
-            embed = discord.Embed(color=0xFF0000)
+            embed = discord.Embed(color=0xD7332A)
             embed.description = "Available loop modes: `true` and `false`."
             await ctx.send(embed=embed)
 
         if isinstance(error, NoCurrentTrack):
-            embed = discord.Embed(color=0xFF0000)
+            embed = discord.Embed(color=0xD7332A)
             embed.description = "There is no track currently playing."
             await ctx.send(embed=embed)
 
         if isinstance(error, FullVoiceChannel):
-            embed = discord.Embed(color=0xFF0000)
+            embed = discord.Embed(color=0xD7332A)
             embed.description = f'I can\'t join {ctx.author.voice.channel.mention}, because it\'s full.'
             await ctx.send(embed=embed)
 
         if isinstance(error, NoPerms):
-            embed = discord.Embed(color=0xFF0000)
+            embed = discord.Embed(color=0xD7332A)
             embed.description = "I don't have permissions to `CONNECT` or `SPEAK`."
             await ctx.send(embed=embed)
 
         if isinstance(error, NoConnection):
-            embed = discord.Embed(color=0xFF0000)
+            embed = discord.Embed(color=0xD7332A)
             embed.description = "You must be connected to a voice channel to use voice commands."
             await ctx.send(embed=embed)
 
         if isinstance(error, PlayerIsNotPaused):
-            embed = discord.Embed(color=0xFF0000)
+            embed = discord.Embed(color=0xD7332A)
             embed.description = "The current track is not paused."
             return await ctx.send(embed=embed)
 
@@ -204,7 +204,7 @@ class Music(commands.Cog):
             await ctx.guild.change_voice_state(channel=ctx.author.voice.channel)
         else:
             if int(player.channel_id) != ctx.author.voice.channel.id:
-                embed = discord.Embed(color=0xFF0000)
+                embed = discord.Embed(color=0xD7332A)
                 embed.description = f'{ctx.author.mention}, you must be in {player.channel.mention} for this session.'
                 await ctx.send(embed=embed)
                 raise IncorrectChannelError()
@@ -269,11 +269,11 @@ class Music(commands.Cog):
         results = await player.node.get_tracks(query)
 
         # Results could be None if Lavalink returns an invalid response (non-JSON/non-200 (OK)).
-        # ALternatively, resullts['tracks'] could be an empty array if the query yielded no tracks.
+        # Alternatively, results['tracks'] could be an empty array if the query yielded no tracks.
         if not results or not results['tracks']:
-            embedVar = discord.Embed(colour=0xFF0000)
-            embedVar.description = 'No songs were found with that query. Please try again.'
-            return await ctx.send(embed=embedVar)
+            embed_var = discord.Embed(colour=0xD7332A)
+            embed_var.description = 'No songs were found with that query. Please try again.'
+            return await ctx.send(embed=embed_var)
 
         embed = discord.Embed(color=discord.Color.blurple())
 
@@ -284,20 +284,21 @@ class Music(commands.Cog):
         #   NO_MATCHES      - query yielded no results
         #   LOAD_FAILED     - most likely, the video encountered an exception during loading.
         if results['loadType'] == 'NO_MATCHES':
-            embedVar = discord.Embed(colour=0xFF0000)
-            embedVar.description = 'No songs were found with that query. Please try again.'
-            return await ctx.send(embed=embedVar)
+            embed_var = discord.Embed(colour=0xD7332A)
+            embed_var.description = 'No songs were found with that query. Please try again.'
+            return await ctx.send(embed=embed_var)
         if results['loadType'] == 'LOAD_FAILED':
-            embedVar = discord.Embed(colour=0xFF0000)
-            embedVar.description = 'Failed loading your song.'
-            return await ctx.send(embed=embedVar)
+            embed_var = discord.Embed(colour=0xD7332A)
+            embed_var.description = 'Failed loading your song.'
+            return await ctx.send(embed=embed_var)
         if results['loadType'] == 'PLAYLIST_LOADED':
             tracks = results['tracks']
 
             for track in tracks:
                 player.add(requester=ctx.author, track=track)
 
-            embed.description = f'Queued [{results["tracks"][0]["info"]["title"]}]({results["tracks"][0]["info"]["uri"]}) with {len(tracks)} songs.'
+            embed.description = f'Queued [{results["tracks"][0]["info"]["title"]}]' \
+                                f'({results["tracks"][0]["info"]["uri"]}) with {len(tracks)} songs.'
         else:
             track = results['tracks'][0]
             embed.description = f'Queued [{track["info"]["title"]}]({track["info"]["uri"]}) - [{ctx.author.mention}]'
@@ -315,7 +316,7 @@ class Music(commands.Cog):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "I'm not connected to any voice channels."
             return await ctx.send(embed=embed)
 
@@ -336,7 +337,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -361,7 +362,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -386,7 +387,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -409,7 +410,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -432,7 +433,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -457,7 +458,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -478,54 +479,33 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
     @commands.command(name="loop")
-    async def loop_command(self, ctx, mode: str = None):
+    async def loop_command(self, ctx, mode: bool = None):
         """Starts/Stops looping your currently playing track"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.is_connected:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "I'm not connected to any voice channels."
             return await ctx.send(embed=embed)
 
-        if mode is None:
-            if player.repeat == False:
-                embed = discord.Embed(color=0x5865f2)
-                embed.description = f"Current loop mode: `false`."
-                return await ctx.send(embed=embed)
-            if player.repeat == True:
-                embed = discord.Embed(color=0x5865f2)
-                embed.description = f"Current loop mode: `true`."
-                return await ctx.send(embed=embed)
-
-        if mode.lower() not in ("true", "false"):
-            raise InvalidRepeatMode
-
-        if self.is_privileged(ctx) == 'DJ':
-            if mode.lower() == 'true':
-                player.set_repeat(True)
-            if mode.lower() == 'false':
-                player.set_repeat(False)
-
+        if not mode:
             embed = discord.Embed(color=0x5865f2)
-            embed.description = f"The DJ has set loop mode to `{mode.upper()}`."
+            embed.description = f"Current loop mode: `{player.repeat}`."
             return await ctx.send(embed=embed)
 
-        if self.is_privileged(ctx) == 'ADMIM':
-            if mode.lower() == 'true':
-                player.set_repeat(True)
-            if mode.lower() == 'false':
-                player.set_repeat(False)
+        if self.is_privileged(ctx) in ('DJ', 'ADMIM'):
+            player.set_repeat(mode)
 
             embed = discord.Embed(color=0x5865f2)
-            embed.description = f"An Admin has set loop mode to `{mode.upper()}`."
+            embed.description = f"The {self.is_privileged(ctx)} has set loop mode to `{mode}`."
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -535,22 +515,20 @@ class Music(commands.Cog):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
-            embed = discord.Embed(colour=0xFF0000)
-            embed.description = "I'm not connected to any voice channels "
-            return await ctx.send(embed=embed)
+            raise NoVoiceChannel()
 
         if len(player.queue) == 0:
-            embed = discord.Embed(colour=0xFF0000)
-            embed.description = 'Empty queue'
-            return await ctx.send(embed=embed)
+            raise QueueIsEmpty()
 
         info = [
-            f'**Now Playing:** \n[{player.current.title}]({player.current.uri}) | Requested by: {player.current.requester.mention} \n**Upcoming:**']
+            f'**Now Playing:** \n[{player.current.title}]({player.current.uri}) | '
+            f'Requested by: {player.current.requester.mention} \n**Upcoming:**']
         index = 0
         for x in player.queue:
             index += 1
             info.append(
-                f'`{index}.` [{x.title.upper()}]({x.uri}) - {str(dt.timedelta(milliseconds=int(x.duration)))} | Requested by: {x.requester.mention}')
+                f'`{index}.` [{x.title.upper()}]({x.uri}) - {str(dt.timedelta(milliseconds=int(x.duration)))} '
+                f'| Requested by: {x.requester.mention}')
         pages = QueueMenu(entries=info)
         paginator = menus.MenuPages(source=pages, timeout=None, delete_message_after=True)
 
@@ -573,7 +551,7 @@ class Music(commands.Cog):
                         inline=True)
         embed.add_field(name='Requested By:', value=f'{player.current.requester.mention}\n_ \u200b _', inline=True)
         if len(player.queue) > 0:
-            embed.add_field(name='Next Track:', value=(f'**[{player.queue[0].title.upper()}]({player.queue[0].uri})**'),
+            embed.add_field(name='Next Track:', value=f'**[{player.queue[0].title.upper()}]({player.queue[0].uri})**',
                             inline=False)
             embed.add_field(name="Artist:", value=f'{player.queue[0].author}\n_ \u200b _', inline=True)
             embed.add_field(name='Duration:',
@@ -587,22 +565,16 @@ class Music(commands.Cog):
     async def restart_command(self, ctx):
         """Restarts the current track in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
-        if self.is_privileged(ctx) == 'DJ':
+        if self.is_privileged(ctx) in ('DJ', 'ADMIN'):
             if not player.current:
                 raise NoCurrentTrack()
             await player.seek(0)
             embed = discord.Embed(color=0x5865f2)
-            embed.description = "The DJ has restarted the current track."
+            embed.description = f"The {self.is_privileged(ctx)} has restarted the current track."
             return await ctx.send(embed=embed)
-        if self.is_privileged(ctx) == 'ADMIN':
-            if len(player.queue) == 0:
-                raise NoCurrentTrack()
-            await player.seek(0)
-            embed = discord.Embed(color=0x5865f2)
-            embed.description = "An Admin has restarted the current track."
-            return await ctx.send(embed=embed)
+
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -610,7 +582,7 @@ class Music(commands.Cog):
     async def seek_command(self, ctx, position: str):
         """Skips to the specified timestamp in the currently playing track"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
-        if self.is_privileged(ctx) == 'DJ':
+        if self.is_privileged(ctx) in ('DJ', 'ADMIN'):
             if not player.current:
                 raise NoCurrentTrack()
             if not (match := re.match(TIME_REGEX, position)):
@@ -621,23 +593,12 @@ class Music(commands.Cog):
                 secs = int(match.group(1))
             await player.seek(secs * 1000)
             embed = discord.Embed(color=0x5865f2)
-            embed.description = f"The DJ has seeked the current track to {position}."
+            embed.description = f"The {self.is_privileged(ctx)} has seeked the current track to {position}."
+
             return await ctx.send(embed=embed)
-        if self.is_privileged(ctx) == 'ADMIN':
-            if not player.current:
-                raise NoCurrentTrack()
-            if not (match := re.match(TIME_REGEX, position)):
-                raise InvalidTimeString
-            if match.group(3):
-                secs = (int(match.group(1)) * 60) + (int(match.group(3)))
-            else:
-                secs = int(match.group(1))
-            await player.seek(secs * 1000)
-            embed = discord.Embed(color=0x5865f2)
-            embed.description = f"An Admin has seeked the current track to {position}."
-            return await ctx.send(embed=embed)
+
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
@@ -647,7 +608,7 @@ class Music(commands.Cog):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "I'm not connected to any voice channels "
             return await ctx.send(embed=embed)
 
@@ -658,7 +619,7 @@ class Music(commands.Cog):
 
         if self.is_privileged(ctx) == 'DJ':
             if not 0 < volume < 101:
-                embed = discord.Embed(color=0xFF0000)
+                embed = discord.Embed(color=0xD7332A)
                 embed.description = 'Please enter a value between 1 and 100.'
                 return await ctx.send(embed=embed)
 
@@ -669,7 +630,7 @@ class Music(commands.Cog):
 
         if self.is_privileged(ctx) == 'ADMIN':
             if not 0 < volume < 101:
-                embed = discord.Embed(color=0xFF0000)
+                embed = discord.Embed(color=0xD7332A)
                 embed.description = 'Please enter a value between 1 and 100.'
                 return await ctx.send(embed=embed)
 
@@ -679,7 +640,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         else:
-            embed = discord.Embed(colour=0xFF0000)
+            embed = discord.Embed(colour=0xD7332A)
             embed.description = "Only the DJ or an Admin can perform this action."
             return await ctx.send(embed=embed)
 
