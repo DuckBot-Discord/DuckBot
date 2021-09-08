@@ -125,10 +125,8 @@ class Fun(commands.Cog, name='Fun'):
         member = member or ctx.author
         size = random.uniform(8, 25)
         embed = discord.Embed(colour=0xFFCD71)
-        embed.description = (f"8{'=' * int(round(size, 0))}D\n\n" 
-                                               f"**{member.name}**'s 🍌 is {round(size, 1)} cm")
-        
-embed.set_author(icon_url=member.display_avatar.url, name=member)
+        embed.description = (f"8{'=' * int(round(size, 0))}D\n\n**{member.name}**'s 🍌 is {round(size, 1)} cm")        
+        embed.set_author(icon_url=member.display_avatar.url, name=member)
         return await ctx.send(embed=embed)
 
     @commands.command()
