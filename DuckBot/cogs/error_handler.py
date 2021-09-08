@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 import errors
-from cogs import music_cog
+from cogs import music as music_cog
 
 
 def setup(bot):
