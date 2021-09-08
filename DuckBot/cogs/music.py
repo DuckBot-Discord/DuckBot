@@ -1,3 +1,12 @@
+"""
+How to get this misic cog to work:
+1)  Install lavalink: pip install -U git+https://github.com/Devoxin/Lavalink.py@dev
+2) In your bot constructor, enable sebug events
+   bot = commands.Bot(enable_debug_events = True, *args, **kwargs)
+3) Modify line 22 and 25
+4) Enjoy your new d.py 2.0 music cog 
+"""
+
 import re
 import zlib
 import json
@@ -7,8 +16,14 @@ import lavalink
 import datetime as dt
 from discord.ext import commands, menus
 
+# Your node credentials: [host, port, password, region,  etc]
+# Note: lava.link is a free host. Up to you if you want to use a free lavalink host.
+# Note, it has some limitations. Like 100 songs in queue at most.
 lavalink_node_settings = ['lava.link', 80, 'anything as a password', 'eu', 'default-node']
+
+# Yout bot's ID, as self.bot.user.id does not work beore the bot is ready.
 bot_user_id = 788278464474120202
+
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
 
