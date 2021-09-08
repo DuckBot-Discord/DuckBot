@@ -83,11 +83,10 @@ class CustomContext(commands.Context):
         return emoji
 
     async def send(self, content: str = None, embed: discord.Embed = None,
-                   reply: bool = True, footer: bool = True, reference: typing.Union[discord.Message,
-                                                                                    discord.MessageReference] = None,
-                   **kwargs):
-        if reply is True and not reference:
-            reference = self.message.reference or self.message
+                   reply: bool = True, footer: bool = True,
+                   reference: typing.Union[discord.Message, discord.MessageReference] = None, **kwargs):
+
+        reference = reference or self.message.reference or self.message
 
         if embed and footer is True:
             if not embed.footer:
@@ -115,6 +114,7 @@ class DuckBot(commands.Bot):
             activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'),
             enable_debug_events=True
         )
+
         self.owner_id = 349373972103561218
 
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()
@@ -177,8 +177,8 @@ class DuckBot(commands.Bot):
 
     # Event based
     async def on_ready(self) -> None:
-        logging.info("\033[42m======[ BOT ONLINE! ]=======")
-        logging.info("Logged in as " + self.user.name)
+        logging.info("\033[42m======[ BOT ONLINE! ]=======\033[0m")
+        logging.info("\033[42mLogged in as " + self.user.name + "\033[0m")
         logging.info('\033[0m')
         if not self.started:
             self.started = True
