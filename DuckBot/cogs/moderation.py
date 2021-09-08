@@ -355,7 +355,7 @@ class Moderation(commands.Cog):
                               f"\nnickname: **`{old}`** -> **`{new}`**",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.group(aliases=['purge', 'clear', 'delete', 'clean'])
+    @commands.group(aliases=['purge', 'delete'])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int] = 100):
