@@ -112,7 +112,8 @@ class DuckBot(commands.Bot):
             intents=intents,
             command_prefix=self.get_pre,
             case_insensitive=True,
-            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help')
+            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'),
+            enable_debug_events=True
         )
         self.owner_id = 349373972103561218
 
