@@ -13,6 +13,11 @@ url_rx = re.compile(r'https?://(?:www\.)?.+')
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
 
 
+def setup(bot):
+    bot.add_cog(SocketFix(bot))
+    bot.add_cog(Music(bot))
+
+
 class FullVoiceChannel(commands.CommandError):
     pass
 
@@ -680,6 +685,9 @@ class Music(commands.Cog):
 
 
 class SocketFix(commands.Cog):
+    """
+    Class to dispatch socket events
+    """
     def __init__(self, bot):
         self.bot = bot
 
@@ -706,8 +714,3 @@ class SocketFix(commands.Cog):
 
         msg = json.loads(msg)
         self.bot.dispatch('socket_custom_receive', msg)
-
-
-def setup(bot):
-    bot.add_cog(Music(bot))
-    bot.add_cog(SocketFix(bot))
