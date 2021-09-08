@@ -545,7 +545,7 @@ class Music(commands.Cog):
             return await ctx.send(embed=embed)
 
         info = [
-            f'**Now Playing:** \n[{player.current.title}]({player.current.uri}) | Requested by: {player.current.requester.mention} \n\n\n**Upcoming:**']
+            f'**Now Playing:** \n[{player.current.title}]({player.current.uri}) | Requested by: {player.current.requester.mention} \n**Upcoming:**']
         index = 0
         for x in player.queue:
             index += 1
