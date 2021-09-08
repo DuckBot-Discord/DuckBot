@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 import errors
+from cogs import music_cog
 
 
 def setup(bot):
@@ -25,16 +26,21 @@ class Handler(commands.Cog, name='Handler'):
     async def error_handler(self, ctx: commands.Context, error):
         error = getattr(error, "original", error)
 
-        if hasattr(ctx.command, 'on_error'):
-            return
-
-        cog = ctx.cog
-        if cog:
-            if cog._get_overridden_method(cog.cog_command_error) is not None:
-                return
-
         ignored = (
             commands.CommandNotFound,
+            music_cog.FullVoiceChannel,
+            music_cog.IncorrectChannelError,
+            music_cog.AlreadyConnectedToChannel,
+            music_cog.NoVoiceChannel,
+            music_cog.QueueIsEmpty,
+            music_cog.NoCurrentTrack,
+            music_cog.PlayerIsAlreadyPaused,
+            music_cog.PlayerIsNotPaused,
+            music_cog.NoMoreTracks,
+            music_cog.InvalidRepeatMode,
+            music_cog.InvalidTimeString,
+            music_cog.NoPerms,
+            music_cog.NoConnection
         )
         if isinstance(error, ignored):
             return
