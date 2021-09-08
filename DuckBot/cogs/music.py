@@ -7,6 +7,8 @@ import lavalink
 import datetime as dt
 from discord.ext import commands, menus
 
+lavalink_node_settings = ['lava.link', 80, 'anything as a password', 'eu', 'default-node']
+bot_user_id = 788278464474120202
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
 
@@ -88,9 +90,8 @@ class Music(commands.Cog):
         self.bot = bot
 
         if not hasattr(bot, 'lavalink'):  # This ensures the client isn't overwritten during cog reloads.
-            bot.lavalink = lavalink.Client(786550035952173107)
-            bot.lavalink.add_node('lava.link', 80, 'anything as a password', 'eu',
-                                  'default-node')  # Host, Port, Password, Region, Name
+            bot.lavalink = lavalink.Client(bot_user_id)
+            bot.lavalink.add_node(*lavalink_node_settings)  # Host, Port, Password, Region, Name
             bot.add_listener(bot.lavalink.voice_update_handler, 'on_socket_custom_receive')
 
         lavalink.add_event_hook(self.track_hook)
