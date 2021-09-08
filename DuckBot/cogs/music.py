@@ -269,7 +269,7 @@ class Music(commands.Cog):
 
         if player._user_data['dj'] == ctx.author:
             return 'DJ'
-        if ctx.author.guild_permissions.administrator:
+        if ctx.author.guild_permissions.administrator or ctx.author.id in ctx.bot.owner_ids:
             return 'ADMIN'
         else:
             return False
