@@ -92,12 +92,7 @@ class Handler(commands.Cog, name='Handler'):
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
             separator = (' ' * (len(command.split(missing)[0]) - 1))
             indicator = ('^' * (len(missing) + 2))
-
-            logging.info(f"`{separator}`  `{indicator}`")
-            logging.info(error.param)
-
-            return await ctx.send(
-                f"```{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
+            return await ctx.send(f"```\n{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
 
         elif isinstance(error, commands.errors.PartialEmojiConversionFailure):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
