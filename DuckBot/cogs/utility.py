@@ -565,7 +565,7 @@ class Utility(commands.Cog):
                 yield str_list[i:i + n]
 
         shown_commands = [c.name for c in self.bot.commands if c.cog_name not in ignored_cogs]
-        ml = max([len(c.name) for c in self.bot.commands if c.cog_name not in ignored_cogs])
+        ml = max([len(c.name) for c in self.bot.commands if c.cog_name not in ignored_cogs]) + 1
 
         all_commands = list(divide_chunks(shown_commands, 3))
         all_commands = '\n'.join([''.join([f"{x}{' ' * (ml - len(x))}" for x in c]).strip() for c in all_commands])
