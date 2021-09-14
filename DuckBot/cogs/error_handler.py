@@ -40,7 +40,8 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.InvalidRepeatMode,
             music_cog.InvalidTimeString,
             music_cog.NoPerms,
-            music_cog.NoConnection
+            music_cog.NoConnection,
+            commands.CheckFailure
         )
         if isinstance(error, ignored):
             return
