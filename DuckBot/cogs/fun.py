@@ -68,15 +68,19 @@ class Fun(commands.Cog, name='Fun'):
 
             iterations: int = 1
             options = []
+            emojis = []
             for option in post.poll_data.options:
                 num = f"{iterations}\U0000fe0f\U000020e3"
                 options.append(f"{num} {option.text}")
+                emojis.append(num)
                 iterations += 1
+                if iterations > 9:
+                    iterations = 1
 
             embed = discord.Embed(color=discord.Color.random(),
                                   description='\n'.join(options))
             embed.title = post.title if title is True else None
-            return embed
+            return embed, emojis
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -161,7 +165,10 @@ class Fun(commands.Cog, name='Fun'):
         Sends a random meme from reddit.com/r/WouldYouRather.
         """
         async with ctx.typing():
-            return await ctx.send(embed=await self.reddit('WouldYouRather', embed_type='POLL', title=True))
+            poll: tuple = await self.reddit('WouldYouRather', embed_type='POLL', title=True)
+            message = await ctx.send(embed=poll[0])
+            for reaction in poll[1]:
+                await message.add_reaction(reaction)
 
     @commands.command()
     async def aww(self, ctx: commands.Context) -> discord.Message:
