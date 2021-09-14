@@ -46,19 +46,37 @@ class Fun(commands.Cog, name='Fun'):
     def __init__(self, bot):
         self.bot = bot
 
-    async def reddit(self, subreddit: str, title: bool = False) -> discord.Embed:
+    async def reddit(self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE') -> discord.Embed:
+
         post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
-        while 'i.redd.it' not in post.url or post.over_18:
-            post = await (await self.bot.reddit.subreddit(subreddit)).random()
+        if embed_type == 'IMAGE':
+            while 'i.redd.it' not in post.url or post.over_18:
+                post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
-        embed = discord.Embed(color=discord.Color.random(),
-                              description=f"🌐 [Original reddit post](https://reddit.com{post.permalink}) | "
-                                          f"<:upvote:274492025678856192> {post.score} "
-                                          f"({post.upvote_ratio * 100}%)")
-        embed.title = post.title if title is True else None
-        embed.set_image(url=post.url)
-        return embed
+            embed = discord.Embed(color=discord.Color.random(),
+                                  description=f"🌐 [Original reddit post](https://reddit.com{post.permalink}) | "
+                                              f"<:upvote:274492025678856192> {post.score} "
+                                              f"({post.upvote_ratio * 100}%)")
+            embed.title = post.title if title is True else None
+            embed.set_image(url=post.url)
+            return embed
+
+        if embed_type == 'POLL':
+            while not post.poll_data or post.over_18:
+                post = await (await self.bot.reddit.subreddit(subreddit)).random()
+
+            iterations: int = 1
+            options = []
+            for option in post.poll_data.options:
+                num = f"{iterations}\U0000fe0f\U000020e3"
+                options.append(f"{num} {option.text}")
+                iterations += 1
+
+            embed = discord.Embed(color=discord.Color.random(),
+                                  description='\n'.join(options))
+            embed.title = post.title if title is True else None
+            return embed
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -125,7 +143,7 @@ class Fun(commands.Cog, name='Fun'):
         member = member or ctx.author
         size = random.uniform(8, 25)
         embed = discord.Embed(colour=0xFFCD71)
-        embed.description = (f"8{'=' * int(round(size, 0))}D\n\n**{member.name}**'s 🍌 is {round(size, 1)} cm")        
+        embed.description = f"8{'=' * int(round(size, 0))}D\n\n**{member.name}**'s 🍌 is {round(size, 1)} cm"
         embed.set_author(icon_url=member.display_avatar.url, name=member)
         return await ctx.send(embed=embed)
 
@@ -135,7 +153,15 @@ class Fun(commands.Cog, name='Fun'):
         Sends a random meme from reddit.com/r/memes.
         """
         async with ctx.typing():
-            return await ctx.send(embed=await self.reddit('memes'))
+            return await ctx.send(embed=await self.reddit(random.choice(['memes', 'dankmemes'])))
+
+    @commands.command(aliases=['wyr'])
+    async def would_you_rather(self, ctx: commands.Context) -> discord.Message:
+        """
+        Sends a random meme from reddit.com/r/WouldYouRather.
+        """
+        async with ctx.typing():
+            return await ctx.send(embed=await self.reddit('WouldYouRather', embed_type='POLL'))
 
     @commands.command()
     async def aww(self, ctx: commands.Context) -> discord.Message:
