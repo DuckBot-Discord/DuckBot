@@ -518,12 +518,12 @@ DuckBot's top role position
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def news(self, ctx):
+    async def news(self, ctx: commands.Context):
         """
         Shows the latest changes of the bot.
         """
         embed = discord.Embed(color=ctx.me.color)
-        embed.add_field(name="📰 Latest News - <t:1630855555:d> (<t:1630855555:R>)",
+        embed.add_field(name="📰 Latest News - <t:1631593960:d> (<t:1631593960:R>)",
                         value=f"\u200b"
                               f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
                               f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
@@ -542,5 +542,8 @@ DuckBot's top role position
                               f"discord-bots/blob/master/DuckBot/cogs/OldCharlesHelp.pyi)_"
                               f"\n"
                               f"\n> **🗑 New! `remove threads` command!**"
-                              f"\n> Deletes all messages with threads, and their associated threads.")
+                              f"\n> Deletes all messages with threads, and their associated threads."
+                              f"\n"
+                              f"\n> **📜 New! Would you rather command!**"
+                              f"\ndo `{ctx.clean_prefix}wyr` or `{ctx.clean_prefix}would_you_rather` ⚖")
         await ctx.send(embed=embed)
