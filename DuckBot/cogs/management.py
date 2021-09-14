@@ -468,7 +468,7 @@ class Management(commands.Cog, name='Bot Management'):
 
         self.bot.blacklist[user.id] = True
 
-        return await ctx.send("👌")
+        return await ctx.send(f"Added **{user}** to the blacklist")
 
     @blacklist.command(name="remove", aliases=['r', 'rm'])
     async def blacklist_remove(self, ctx: commands.Context,
@@ -478,13 +478,12 @@ class Management(commands.Cog, name='Bot Management'):
         """
 
         await self.bot.db.execute(
-            "INSERT INTO blacklist(user_id, is_blacklisted) VALUES ($1, $2) "
-            "ON CONFLICT (user_id) DO UPDATE SET is_blacklisted = $2",
-            user.id, False)
+            "DELETE FROM blacklist where user_id = $1",
+            user.id)
 
         self.bot.blacklist[user.id] = False
 
-        return await ctx.send("👌")
+        return await ctx.send(f"Removed **{user}** from the blacklist")
 
     @blacklist.command(name='check', aliases=['c'])
     async def blacklist_check(self, ctx: commands.Context, user: discord.User):
