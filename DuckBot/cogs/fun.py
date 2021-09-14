@@ -161,7 +161,7 @@ class Fun(commands.Cog, name='Fun'):
         Sends a random meme from reddit.com/r/WouldYouRather.
         """
         async with ctx.typing():
-            return await ctx.send(embed=await self.reddit('WouldYouRather', embed_type='POLL'))
+            return await ctx.send(embed=await self.reddit('WouldYouRather', embed_type='POLL', title=True))
 
     @commands.command()
     async def aww(self, ctx: commands.Context) -> discord.Message:
