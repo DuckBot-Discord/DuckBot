@@ -415,8 +415,6 @@ class About(commands.Cog):
         embed.add_field(name='Process', value=f'{memory_usage:.2f} MiB\n{cpu_usage:.2f}% CPU')
         embed.add_field(name='Bot servers',
                         value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(avg) / len(avg), 2)}%")
-        embed.add_field(name='Help command',
-                        value=f"The help command's main page is inspired by another bot's - Do `{ctx.clean_prefix}help credits` for more info 💞")
         embed.add_field(name='Command info:',
                         value=f"**Last reboot:**\n{self.get_bot_uptime()}\n**Last command reload:**\n{self.get_bot_last_rall()}")
 
