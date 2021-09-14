@@ -101,7 +101,7 @@ class CustomContext(commands.Context):
 
 
 class DuckBot(commands.Bot):
-    PRE: tuple = ('db.', )
+    PRE: tuple = ('db.',)
 
     def __init__(self) -> None:
         intents = discord.Intents.default()
@@ -132,6 +132,7 @@ class DuckBot(commands.Bot):
         self.uptime = datetime.datetime.utcnow()
         self.last_rall = datetime.datetime.utcnow()
         self.prefixes = {}
+        self.blacklist = {}
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.first_help_sent = False
@@ -193,6 +194,10 @@ class DuckBot(commands.Bot):
                 except KeyError:
                     self.prefixes[guild.id] = self.PRE
 
+            values = await self.db.fetch("SELECT user_id, is_blacklisted FROM blacklist")
+            for value in values:
+                self.blacklist[value['user_id']] = (value['is_blacklisted'] or False)
+
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):
             return
@@ -207,3 +212,11 @@ class DuckBot(commands.Bot):
                                                f"\n For a list of commands do`{prefix[0]}help` 💞")
 
         await self.process_commands(message)
+
+    def blacklist(self, ctx: commands.Context):
+        try:
+            return self.blacklist[ctx.author.id] is False
+        except KeyError:
+            return True
+
+    super().add_check(blacklist)

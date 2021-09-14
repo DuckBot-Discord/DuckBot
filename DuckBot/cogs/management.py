@@ -448,3 +448,51 @@ class Management(commands.Cog, name='Bot Management'):
             else:
                 self._last_result = ret
                 await ctx.send(f'```py\n{value}{ret}\n```')
+
+    @commands.group(invoke_without_command=True, aliases=['bl'])
+    @commands.is_owner()
+    async def blacklist(self, ctx: commands.Context) -> discord.Message:
+        """ Blacklist management commands """
+        if ctx.invoked_subcommand is None:
+            return
+
+    @blacklist.command(name="add", aliases=['a'])
+    async def blacklist_add(self, ctx: commands.Context,
+                            user: discord.User) -> discord.Message:
+        """ adds a user to the bot blacklist """
+
+        await self.bot.db.execute(
+            "INSERT INTO blacklist(user_id, is_blacklisted) VALUES ($1, $2) "
+            "ON CONFLICT (user_id) DO UPDATE SET is_blacklisted = $2",
+            user.id, True)
+
+        self.bot.blacklist[user.id] = True
+
+        return await ctx.send("👌")
+
+    @blacklist.command(name="remove", aliases=['r', 'rm'])
+    async def blacklist_remove(self, ctx: commands.Context,
+                               user: discord.User) -> discord.Message:
+        """
+        removes a user from the bot blacklist
+        """
+
+        await self.bot.db.execute(
+            "INSERT INTO blacklist(user_id, is_blacklisted) VALUES ($1, $2) "
+            "ON CONFLICT (user_id) DO UPDATE SET is_blacklisted = $2",
+            user.id, False)
+
+        self.bot.blacklist[user.id] = False
+
+        return await ctx.send("👌")
+
+    @blacklist.command(name='check', aliases=['c'])
+    async def blacklist_check(self, ctx: commands.Context, user: discord.User):
+        """
+        Checks a user's blacklist status
+        """
+        try:
+            status = self.bot.blacklist[user.id]
+        except KeyError:
+            status = False
+        return await ctx.send(f"**{user}** {'is' if status is True else 'is not'} blacklisted")
