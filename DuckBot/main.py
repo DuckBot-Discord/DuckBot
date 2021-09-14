@@ -83,10 +83,14 @@ class CustomContext(commands.Context):
         return emoji
 
     async def send(self, content: str = None, embed: discord.Embed = None,
-                   reply: bool = True, footer: bool = True,
+                   reply: bool = True, footer: bool = True, embed_text: bool = True,
                    reference: typing.Union[discord.Message, discord.MessageReference] = None, **kwargs):
 
         reference = reference or self.message.reference or self.message
+
+        if embed_text is True and not embed:
+            embed = discord.Embed(description=content)
+            content = None
 
         if embed and footer is True:
             if not embed.footer:
@@ -94,11 +98,14 @@ class CustomContext(commands.Context):
                                  icon_url=self.author.display_avatar.url)
                 embed.timestamp = discord.utils.utcnow()
 
+        if embed:
+            if embed.color == discord.Color.default():
+                embed.color = self.me.color if self.me.color != discord.Color.default() else discord.Color.blurple()
+
         try:
             return await super().send(content=content, embed=embed, reference=reference, **kwargs)
         except discord.HTTPException:
             return await super().send(content=content, embed=embed, reference=None, **kwargs)
-
 
 class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)

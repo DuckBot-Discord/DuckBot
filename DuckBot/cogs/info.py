@@ -345,7 +345,7 @@ class About(commands.Cog):
         pings.append(typing_ms)
 
         start = time.perf_counter()
-        message = await ctx.send("🏓 pong!")
+        message = await ctx.send("🏓 pong!", embed_text=False)
         end = time.perf_counter()
         message_ms = (end - start) * 1000
         pings.append(message_ms)

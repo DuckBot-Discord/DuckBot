@@ -457,6 +457,7 @@ class Management(commands.Cog, name='Bot Management'):
             return
 
     @blacklist.command(name="add", aliases=['a'])
+    @commands.is_owner()
     async def blacklist_add(self, ctx: commands.Context,
                             user: discord.User) -> discord.Message:
         """ adds a user to the bot blacklist """
@@ -471,6 +472,7 @@ class Management(commands.Cog, name='Bot Management'):
         return await ctx.send(f"Added **{user}** to the blacklist")
 
     @blacklist.command(name="remove", aliases=['r', 'rm'])
+    @commands.is_owner()
     async def blacklist_remove(self, ctx: commands.Context,
                                user: discord.User) -> discord.Message:
         """
@@ -486,6 +488,7 @@ class Management(commands.Cog, name='Bot Management'):
         return await ctx.send(f"Removed **{user}** from the blacklist")
 
     @blacklist.command(name='check', aliases=['c'])
+    @commands.is_owner()
     async def blacklist_check(self, ctx: commands.Context, user: discord.User):
         """
         Checks a user's blacklist status

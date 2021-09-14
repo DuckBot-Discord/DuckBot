@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 # Local imports always at bottom
 from main import DuckBot
+import errors
 
 os.environ['JISHAKU_HIDE'] = 'True'
 
@@ -40,14 +41,18 @@ if __name__ == '__main__':
                                   password=os.getenv('ASYNC_PRAW_PA'))
     bot.db = bot.loop.run_until_complete(create_db_pool())
 
+    @bot.check
     def blacklist(ctx: commands.Context):
-        if ctx.author.id in bot.owner_ids:
-            return True
         try:
-            return bot.blacklist[ctx.author.id] is False
+            is_blacklisted = bot.blacklist[ctx.author.id]
         except KeyError:
-            return True
+            is_blacklisted = False
+        if ctx.author.id == bot.owner_id:
+            is_blacklisted = False
 
-    bot.add_check(blacklist)
+        if is_blacklisted is False:
+            return True
+        else:
+            raise errors.UserBlacklisted
 
     bot.run(TOKEN, reconnect=True)

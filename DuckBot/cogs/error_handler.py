@@ -41,7 +41,7 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.InvalidTimeString,
             music_cog.NoPerms,
             music_cog.NoConnection,
-            commands.CheckFailure
+            errors.UserBlacklisted
         )
         if isinstance(error, ignored):
             return
