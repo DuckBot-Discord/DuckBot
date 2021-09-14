@@ -212,13 +212,3 @@ class DuckBot(commands.Bot):
                                                f"\n For a list of commands do`{prefix[0]}help` 💞")
 
         await self.process_commands(message)
-
-    def blacklist(self, ctx: commands.Context):
-        if ctx.author.id in self.owner_ids:
-            return True
-        try:
-            return self.blacklist[ctx.author.id] is False
-        except KeyError:
-            return True
-
-    super().add_check(blacklist)

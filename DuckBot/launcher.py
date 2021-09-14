@@ -4,6 +4,7 @@ import os
 # Async stuff seperate
 import asyncpg
 import asyncpraw
+from discord.ext import commands
 from dotenv import load_dotenv
 
 # Local imports always at bottom
@@ -38,4 +39,15 @@ if __name__ == '__main__':
                                   username=os.getenv('ASYNC_PRAW_UN'),
                                   password=os.getenv('ASYNC_PRAW_PA'))
     bot.db = bot.loop.run_until_complete(create_db_pool())
+
+    def blacklist(ctx: commands.Context):
+        if ctx.author.id in bot.owner_ids:
+            return True
+        try:
+            return bot.blacklist[ctx.author.id] is False
+        except KeyError:
+            return True
+
+    bot.add_check(blacklist)
+
     bot.run(TOKEN, reconnect=True)
