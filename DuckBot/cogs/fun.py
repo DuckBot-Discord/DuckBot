@@ -55,8 +55,10 @@ class Fun(commands.Cog, name='Fun'):
                 post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
             embed = discord.Embed(color=discord.Color.random(),
-                                  description=f"🌐 [Original reddit post](https://reddit.com{post.permalink}) | "
-                                              f"<:upvote:274492025678856192> {post.score} "
+                                  description=f"🌐 [Post](https://reddit.com{post.permalink}) | "
+                                              f"<:upvote:274492025678856192> {post.score} | "
+                                              f"from [r/{post.subreddit.name}]"
+                                              f"(https://reddit.com/r/{post.subreddit.name})"
                                               f"({post.upvote_ratio * 100}%)")
             embed.title = post.title if title is True else None
             embed.set_image(url=post.url)
@@ -139,15 +141,16 @@ class Fun(commands.Cog, name='Fun'):
                          icon_url='https://inspirobot.me/website/images/inspirobot-dark-green.png')
         return await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=['pp', 'eggplant', 'cucumber'])
     async def banana(self, ctx: commands.Context, member: discord.Member = None) -> discord.Message:
         """
         Measures your banana 😏
         """
         member = member or ctx.author
+        scheme = random.choice([("🍆", 0x744EAA), ("🥒", 0x74AE53), ("🍌", 0xFFCD71)])
         size = random.uniform(8, 25)
-        embed = discord.Embed(colour=0xFFCD71)
-        embed.description = f"8{'=' * int(round(size, 0))}D\n\n**{member.name}**'s 🍌 is {round(size, 1)} cm"
+        embed = discord.Embed(colour=scheme[1])
+        embed.description = f"8{'=' * int(round(size, 0))}D\n\n**{member.name}**'s {scheme[0]} is {round(size, 1)} cm"
         embed.set_author(icon_url=member.display_avatar.url, name=member)
         return await ctx.send(embed=embed)
 
