@@ -511,6 +511,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
+        print("Event triggered")
         if channel.category.id in self.research_channels:
             delete_from = self.bot.get_channel(804035776722894890)
             msg_id = await self.bot.db.execute('SELECT message_id FROM voice_channels WHERE '
@@ -520,3 +521,5 @@ class Management(commands.Cog, name='Bot Management'):
                 await message.delete()
             except (discord.Forbidden, discord.HTTPException):
                 pass
+            print(message)
+            print(msg_id)
