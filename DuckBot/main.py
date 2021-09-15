@@ -2,7 +2,10 @@ import datetime
 import logging
 import os
 import traceback
-from typing import Final, List, Optional
+from typing import (
+    List,
+    Optional
+)
 
 import aiohttp
 import discord
@@ -88,6 +91,10 @@ class CustomContext(commands.Context):
 
         reference = reference or self.message.reference or self.message
 
+        if embed_text is True and not embed:
+            embed = discord.Embed(description=content)
+            content = None
+
         if embed and footer is True:
             if not embed.footer:
                 embed.set_footer(text=f"Requested by {self.author}",
@@ -96,12 +103,13 @@ class CustomContext(commands.Context):
 
         if embed:
             embed.color = embed.color if embed.color != discord.Color.default() \
-            else self.me.color if self.me.color != discord.Color.default() else discord.Color.blurple()
+                else self.me.color if self.me.color != discord.Color.default() else discord.Color.blurple()
 
         try:
             return await super().send(content=content, embed=embed, reference=reference, **kwargs)
         except discord.HTTPException:
             return await super().send(content=content, embed=embed, reference=None, **kwargs)
+
 
 class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)
@@ -115,7 +123,8 @@ class DuckBot(commands.Bot):
             command_prefix=self.get_pre,
             case_insensitive=True,
             activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'),
-            enable_debug_events=True
+            enable_debug_events=True,
+            strip_after_prefix=True
         )
 
         self.owner_id = 349373972103561218
