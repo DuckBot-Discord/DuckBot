@@ -192,8 +192,8 @@ class Moderation(commands.Cog):
     async def wait_for_bot_ready(self):
         await self.bot.wait_until_ready()
 
-    @commands.group(invoke_without_command=True, aliases=['prefix'])
-    async def prefixes(self, ctx: commands.Context) -> discord.Message:
+    @commands.group(invoke_without_command=True, aliases=['prefixes'])
+    async def prefix(self, ctx: commands.Context) -> discord.Message:
         """ Lists all the bots prefixes. """
         prefixes = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
         embed = discord.Embed(title="Here are my prefixes:",
@@ -207,7 +207,7 @@ class Moderation(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    @prefixes.command(name="add")
+    @prefix.command(name="add")
     async def prefixes_add(self, ctx: commands.Context,
                            new: str) -> discord.Message:
         """Adds a prefix to the bots prefixes.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
@@ -234,7 +234,7 @@ class Moderation(commands.Cog):
             return await ctx.send(f"That is already one of my prefixes!")
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    @prefixes.command(name="remove", aliases=['delete'])
+    @prefix.command(name="remove", aliases=['delete'])
     async def prefixes_remove(self, ctx: commands.Context,
                               prefix: str) -> discord.Message:
         """Removes a prefix from the bots prefixes.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
@@ -255,7 +255,7 @@ class Moderation(commands.Cog):
             return await ctx.send(f"That is not one of my prefixes!")
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    @prefixes.command(name="clear", aliases=['delall'])
+    @prefix.command(name="clear", aliases=['delall'])
     async def prefixes_clear(self, ctx):
         """ Clears the bots prefixes, resetting it to default. """
         await self.bot.db.execute(
