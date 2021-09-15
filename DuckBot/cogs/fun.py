@@ -57,8 +57,7 @@ class Fun(commands.Cog, name='Fun'):
             embed = discord.Embed(color=discord.Color.random(),
                                   description=f"🌐 [Post](https://reddit.com{post.permalink}) | "
                                               f"<:upvote:274492025678856192> {post.score} | "
-                                              f"from [r/{post.subreddit.name}]"
-                                              f"(https://reddit.com/r/{post.subreddit.name})"
+                                              f"from [r/{subreddit}](https://reddit.com/r/{subreddit})"
                                               f"({post.upvote_ratio * 100}%)")
             embed.title = post.title if title is True else None
             embed.set_image(url=post.url)
