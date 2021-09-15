@@ -199,9 +199,11 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="Here are my prefixes:",
                               description=ctx.me.mention + '\n' + '\n'.join(prefixes),
                               color=ctx.me.color)
-        embed.add_field(name="Available prefix commands:", value=f"`{ctx.clean_prefix}{ctx.command} add`"
-                                                                 f"\n`{ctx.clean_prefix}{ctx.command} remove`"
-                                                                 f"`\n{ctx.clean_prefix}{ctx.command} clear`")
+        embed.add_field(name="Available prefix commands:", value=f"```fix"
+                                                                 f"\n{ctx.clean_prefix}{ctx.command} add"
+                                                                 f"\n{ctx.clean_prefix}{ctx.command} remove"
+                                                                 f"\n{ctx.clean_prefix}{ctx.command} clear"
+                                                                 f"\n```")
         return await ctx.send(embed=embed)
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
