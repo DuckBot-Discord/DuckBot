@@ -195,16 +195,19 @@ class DuckBot(commands.Bot):
             values = await self.db.fetch("SELECT guild_id, prefix FROM prefixes")
 
             for value in values:
-                self.prefixes[value['guild_id']] = ((value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
+                if value['prefix']:
+                    self.prefixes[value['guild_id']] = ((value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
             for guild in self.guilds:
-                try:
-                    self.prefixes[guild.id]
-                except KeyError:
-                    self.prefixes[guild.id] = self.PRE
+                if not guild.unavailable:
+                    try:
+                        self.prefixes[guild.id]
+                    except KeyError:
+                        self.prefixes[guild.id] = self.PRE
 
             values = await self.db.fetch("SELECT user_id, is_blacklisted FROM blacklist")
             for value in values:
                 self.blacklist[value['user_id']] = (value['is_blacklisted'] or False)
+            print(self.prefixes)
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):
