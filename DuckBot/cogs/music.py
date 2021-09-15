@@ -800,7 +800,7 @@ class Music(commands.Cog):
         embed = discord.Embed(color = (color(ctx)),description = "The playback was stopped.")
         return await ctx.send(embed=embed)
 
-    @commands.command(name="clear")
+    @commands.command(name="clear_queue")
     async def clear_command(self,ctx: commands.Context):
         """Removes all tracks from the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
@@ -940,7 +940,7 @@ class Music(commands.Cog):
         embed = discord.Embed(colour = (color(ctx)),description = f'The volume was set to **{player.volume}%**')
         return await ctx.send(embed=embed)
 
-    @commands.command(name="remove")
+    @commands.command(name="clean_queue")
     async def remove_range_command(self,ctx: commands.Context,start: int,*,end: int= None):
         """Removes all the tracks from the specified start through the specified end (if the end is not specified it will remove only one track)"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)

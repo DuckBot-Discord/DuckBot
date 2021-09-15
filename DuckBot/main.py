@@ -89,7 +89,7 @@ class CustomContext(commands.Context):
                    reply: bool = True, footer: bool = True,
                    reference: typing.Union[discord.Message, discord.MessageReference] = None, **kwargs):
 
-        reference = reference or self.message.reference or self.message
+        reference = (reference or self.message.reference or self.message) if reply is True else reference
 
         if embed and footer is True:
             if not embed.footer:

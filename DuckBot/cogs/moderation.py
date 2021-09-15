@@ -355,7 +355,7 @@ class Moderation(commands.Cog):
                               f"\nnickname: **`{old}`** -> **`{new}`**",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.group(name="clean", aliases=['purge', 'delete'])
+    @commands.group(name="clean", aliases=['purge', 'delete', 'remove', 'clear'])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int] = 100):
@@ -1091,6 +1091,7 @@ class Moderation(commands.Cog):
     # Temp-mute
 
     @commands.command()
+    @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def tempmute(self, ctx, member: discord.Member, *, duration: helpers.ShortTime):
         """
