@@ -355,7 +355,7 @@ class Moderation(commands.Cog):
                               f"\nnickname: **`{old}`** -> **`{new}`**",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.group(aliases=['purge', 'delete'])
+    @commands.group(name="clean", aliases=['purge', 'delete'])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     async def remove(self, ctx, search: typing.Optional[int] = 100):
@@ -1259,4 +1259,3 @@ class Moderation(commands.Cog):
         await channel.send(f"Thread archived by **{ctx.author}**"
                            f"\n{f'**With reason:** {reason}' if reason else ''}")
         await channel.edit(archived=True)
-

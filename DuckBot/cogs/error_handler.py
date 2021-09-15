@@ -28,7 +28,9 @@ class Handler(commands.Cog, name='Handler'):
 
         ignored = (
             commands.CommandNotFound,
+            music_cog.NoPlayer,
             music_cog.FullVoiceChannel,
+            music_cog.NotAuthorized,
             music_cog.IncorrectChannelError,
             music_cog.AlreadyConnectedToChannel,
             music_cog.NoVoiceChannel,
@@ -37,10 +39,16 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.PlayerIsAlreadyPaused,
             music_cog.PlayerIsNotPaused,
             music_cog.NoMoreTracks,
-            music_cog.InvalidRepeatMode,
             music_cog.InvalidTimeString,
             music_cog.NoPerms,
             music_cog.NoConnection,
+            music_cog.AfkChannel,
+            music_cog.SkipInLoopMode,
+            music_cog.InvalidTrack,
+            music_cog.InvalidPosition,
+            music_cog.InvalidVolume,
+            music_cog.OutOfTrack,
+            music_cog.NegativeSeek,
             errors.UserBlacklisted
         )
         if isinstance(error, ignored):
