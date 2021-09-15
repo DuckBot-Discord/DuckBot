@@ -514,8 +514,8 @@ class Management(commands.Cog, name='Bot Management'):
         print("Event triggered")
         if channel.category.id in self.research_channels:
             delete_from = self.bot.get_channel(804035776722894890)
-            msg_id = await self.bot.db.execute('SELECT message_id FROM voice_channels WHERE '
-                                               'channel_id = $1', channel.id)
+            msg_id = await self.bot.db.fetchval('SELECT message_id FROM voice_channels WHERE '
+                                                'channel_id = $1', channel.id)
             message = delete_from.get_partial_message(msg_id)
             try:
                 await message.delete()
