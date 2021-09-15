@@ -55,9 +55,9 @@ class Fun(commands.Cog, name='Fun'):
                 post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
             embed = discord.Embed(color=discord.Color.random(),
-                                  description=f"🌐 [Post](https://reddit.com{post.permalink}) | "
-                                              f"<:upvote:274492025678856192> {post.score} ({post.upvote_ratio * 100}%)"
-                                              f"| from [r/{subreddit}](https://reddit.com/r/{subreddit})")
+                                  description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
+                                              f"<:upvote:274492025678856192> {post.score} ({post.upvote_ratio * 100}%) "
+                                              f"• from [r/{subreddit}](https://reddit.com/r/{subreddit})")
             embed.title = post.title if title is True else None
             embed.set_image(url=post.url)
             return embed
@@ -201,7 +201,7 @@ class Fun(commands.Cog, name='Fun'):
                               allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['cf', 'flip', 'coin'])
-    async def coinFlip(self, ctx: commands.Context) -> discord.Message:
+    async def coinflip(self, ctx: commands.Context) -> discord.Message:
         """ Flips a VirtualCoin™ """
         return await ctx.send(random.choice([
             '<:heads:883577184499953734> Heads!',
