@@ -47,7 +47,8 @@ class Management(commands.Cog, name='Bot Management'):
     """
 
     def __init__(self, bot):
-        self.bot = bot
+        self.research_channels = (881215900315951184, 881246869873917962, 881246946776449045, 881247025688084521)
+        self.bot: commands.Bot = bot
         self._last_result = None
 
     # Git but to the correct directory
@@ -498,3 +499,24 @@ class Management(commands.Cog, name='Bot Management'):
         except KeyError:
             status = False
         return await ctx.send(f"**{user}** {'is' if status is True else 'is not'} blacklisted")
+
+    @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
+        if channel.category.id in self.research_channels:
+            send_to = self.bot.get_channel(804035776722894890)
+            invite = await channel.create_invite(max_age=3600 * 24)
+            message = await send_to.send(invite.url)
+            await self.bot.db.execute('INSERT INTO voice_channels(channel_id, message_id) '
+                                      'VALUES ($1, $2)', channel.id, message.id)
+
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
+        if channel.category.id in self.research_channels:
+            delete_from = self.bot.get_channel(804035776722894890)
+            msg_id = await self.bot.db.execute('SELECT message_id FROM voice_channels WHERE '
+                                               'channel_id = $1', channel.id)
+            message = delete_from.get_partial_message(msg_id)
+            try:
+                await message.delete()
+            except (discord.Forbidden, discord.HTTPException):
+                pass
