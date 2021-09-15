@@ -199,6 +199,9 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="Here are my prefixes:",
                               description=ctx.me.mention + '\n' + '\n'.join(prefixes),
                               color=ctx.me.color)
+        embed.add_field(name="Available prefix commands:", value=f"`{ctx.clean_prefix}{ctx.command} add`"
+                                                                 f"\n`{ctx.clean_prefix}{ctx.command} remove`"
+                                                                 f"`\n{ctx.clean_prefix}{ctx.command} clear`")
         return await ctx.send(embed=embed)
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
@@ -813,6 +816,59 @@ class Moderation(commands.Cog):
                               f"\nReason: {only_reason}",
                               allowed_mentions=discord.AllowedMentions().none())
 
+    # Indefinitely mute member
+
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def hardmute(self, ctx: commands.Context, member: discord.Member, reason: str = None) -> discord.Message:
+        """
+        Mutes a member indefinitely, and removes all their roles.
+        """
+        only_reason = reason
+        reason = reason or "No reason given"
+        reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
+        if not can_execute_action(ctx, ctx.author, member):
+            return await ctx.send("You're not high enough in role hierarchy to mute that member.")
+
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not mute_role:
+            raise errors.MuteRoleNotFound
+
+        role = ctx.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            raise errors.MuteRoleNotFound
+
+        if role > ctx.me.top_role:
+            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+
+        roles = [r for r in member.roles if r < ctx.me.top_role and not any([r.is_bot_managed(),
+                                                                             r.is_default(),
+                                                                             r.is_integration(),
+                                                                             r.is_premium_subscriber()])]
+
+        try:
+            await member.remove_roles(*roles)
+            await member.add_roles(role, reason=reason)
+        except discord.Forbidden:
+            return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
+
+        await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
+                                  ctx.guild.id, member.id)
+
+        # in a command that adds new task in db
+        if self.temporary_mutes.is_running():
+            self.temporary_mutes.restart()
+        else:
+            self.temporary_mutes.start()
+
+        if not only_reason:
+            return await ctx.send(f"**{ctx.author}** muted **{member}**",
+                                  allowed_mentions=discord.AllowedMentions().none())
+        return await ctx.send(f"**{ctx.author}** muted **{member}**"
+                              f"\nReason: {only_reason}",
+                              allowed_mentions=discord.AllowedMentions().none())
+
     # Get mute role
 
     @commands.command()
@@ -1173,7 +1229,7 @@ class Moderation(commands.Cog):
         """
 
         role = role if role and (role < ctx.me.top_role or ctx.author == ctx.guild.owner) \
-                        and role < ctx.author.top_role else ctx.guild.default_role
+                       and role < ctx.author.top_role else ctx.guild.default_role
 
         channel = channel if channel and channel.permissions_for(ctx.author).manage_roles and channel.permissions_for(
             ctx.me).manage_roles else ctx.channel
@@ -1191,7 +1247,8 @@ class Moderation(commands.Cog):
 
         await channel.set_permissions(role, overwrite=perms,
                                       reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
-        await ctx.send(f"Locked down **{channel.name}** for **{role.name}**", allowed_mentions=discord.AllowedMentions().none())
+        await ctx.send(f"Locked down **{channel.name}** for **{role.name}**",
+                       allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['unlockdown', 'uld'])
     @commands.has_permissions(manage_roles=True)
@@ -1216,7 +1273,8 @@ class Moderation(commands.Cog):
         await channel.set_permissions(role, overwrite=perms,
                                       reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
 
-        await ctx.send(f"Unlocked **{channel.name}** for **{role.name}**", allowed_mentions=discord.AllowedMentions().none())
+        await ctx.send(f"Unlocked **{channel.name}** for **{role.name}**",
+                       allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(usage="[channel] <duration|reset>")
     @commands.has_permissions(manage_channels=True)
