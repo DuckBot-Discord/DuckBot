@@ -1,0 +1,17 @@
+{
+    "user_id": 788278464474120202,
+    "nodes": [
+        {
+            "host": "lava.link",
+            "port": 80,
+            "password": "anything as a password",
+            "name": "Node 2",
+            "region": "Germany"
+        }],
+    "ignored_commands": [
+        "queue",
+        "nodes",
+        "current",
+        "change_node"
+    ]
+}
