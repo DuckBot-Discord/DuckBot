@@ -949,7 +949,8 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="loop", aliases=['repeat'])
-    async def loop_command(self, ctx: commands.Context, mode=typing.Optional[typing.Literal['queue', 'track', 'off']]):
+    async def loop_command(self, ctx: commands.Context,
+                           mode=typing.Optional[typing.Literal[('queue', 'track', 'off')]]):
         """Starts/Stops looping your currently playing track"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.is_connected:
