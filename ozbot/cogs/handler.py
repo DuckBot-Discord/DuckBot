@@ -43,9 +43,8 @@ class handler(commands.Cog):
             music_cog.InvalidPosition,
             music_cog.InvalidVolume,
             music_cog.OutOfTrack,
-            music_cog.NegativeSeek,
-            errors.UserBlacklisted
-        )
+            music_cog.NegativeSeek
+)
         if isinstance(error, ignored):
             return
         if isinstance(error, ignored):
