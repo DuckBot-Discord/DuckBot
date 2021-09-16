@@ -957,12 +957,13 @@ class Music(commands.Cog):
         if not self.is_privileged(ctx):
             raise NotAuthorized
         # ACTUAL PART
+        mode = mode.lower() if mode else None
         if mode in ('off', 'track', 'queue'):
             modes = {"off": 0,
                      "track": 1,
                      "queue": 2
                      }
-            player.set_loop(modes[mode])
+            player.set_loop(modes[mode.lower()])
             return await ctx.send(f"Loop mode set to **{mode}**")
 
         embed = discord.Embed(color=(color(ctx)), description=f"Choose loop mode\
