@@ -5,8 +5,6 @@ import  discord, asyncio
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
-from cogs import music as music_cog
-
 class handler(commands.Cog):
     """🆘 Handle them errors 👀"""
     def __init__(self, bot):
@@ -23,29 +21,7 @@ class handler(commands.Cog):
         error = getattr(error, "original", error)
         ignored = (
             commands.CommandNotFound,
-            music_cog.NoPlayer,
-            music_cog.FullVoiceChannel,
-            music_cog.NotAuthorized,
-            music_cog.IncorrectChannelError,
-            music_cog.AlreadyConnectedToChannel,
-            music_cog.NoVoiceChannel,
-            music_cog.QueueIsEmpty,
-            music_cog.NoCurrentTrack,
-            music_cog.PlayerIsAlreadyPaused,
-            music_cog.PlayerIsNotPaused,
-            music_cog.NoMoreTracks,
-            music_cog.InvalidTimeString,
-            music_cog.NoPerms,
-            music_cog.NoConnection,
-            music_cog.AfkChannel,
-            music_cog.SkipInLoopMode,
-            music_cog.InvalidTrack,
-            music_cog.InvalidPosition,
-            music_cog.InvalidVolume,
-            music_cog.OutOfTrack,
-            music_cog.NegativeSeek,
-            errors.UserBlacklisted
-        )
+)
         if isinstance(error, ignored):
             return
         if isinstance(error, ignored):
