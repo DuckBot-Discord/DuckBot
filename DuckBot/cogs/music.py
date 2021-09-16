@@ -287,7 +287,7 @@ class LoopMenu(discord.ui.Select):
 
 class LoopMenuView(discord.ui.View):
     def __init__(self, bot, ctx):
-        super().__init__(timeout=1.0)
+        super().__init__(timeout=30.0)
         self.ctx = ctx
         self.add_item(LoopMenu(bot, ctx))
 
