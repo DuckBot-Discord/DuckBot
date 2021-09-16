@@ -237,6 +237,13 @@ class PlayMenuView(discord.ui.View):
             self.stop()
             return True
 
+    async def on_timeout(self):
+        for item in self.children:
+            if isinstance(item, discord.ui.Select):
+                item.placeholder = "Command disabled due to timeout."
+            item.disabled = True
+        await self.message.edit(view=self)
+
 
 class LoopMenu(discord.ui.Select):
     def __init__(self, bot, ctx):
@@ -278,10 +285,9 @@ class LoopMenu(discord.ui.Select):
         if self.values[0] == 'Cancel':
             await interaction.message.delete()
 
-
 class LoopMenuView(discord.ui.View):
     def __init__(self, bot, ctx):
-        super().__init__(timeout=30.0)
+        super().__init__(timeout=1.0)
         self.ctx = ctx
         self.add_item(LoopMenu(bot, ctx))
 
@@ -291,6 +297,13 @@ class LoopMenuView(discord.ui.View):
         else:
             self.stop()
             return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            if isinstance(item, discord.ui.Select):
+                item.placeholder = "Timed out! Please try again."
+            item.disabled = True
+        await self.message.edit(view=self)
 
 
 class CustomPlayer(lavalink.BasePlayer):
@@ -823,7 +836,8 @@ class Music(commands.Cog):
                 integer += 1
                 info.append(f"`{integer}\U0000fe0f\U000020e3` [{track['info']['title']}]({track['info']['uri']})")
             embed.description = '\n'.join(x for x in info)
-            await ctx.send(embed=embed, view=PlayMenuView(tracks, self.bot, ctx))
+            view = PlayMenuView(tracks, self.bot, ctx)
+            view.message = await ctx.send(embed=embed, view=view)
 
         if results['loadType'] == 'NO_MATCHES':
             embedVar = discord.Embed(colour=0xe74c3c,
@@ -971,7 +985,8 @@ class Music(commands.Cog):
             \n**:repeat: Queue** - Starts looping your current queue.\
             \n **:arrow_right: Off** - Stops looping.\
             \n**{cancel_emote} Cancel** - Cancels the action.")
-        await ctx.send(embed=embed, view=LoopMenuView(self.bot, ctx))
+        view = LoopMenuView(self.bot, ctx)
+        view.message = await ctx.send(embed=embed, view=view)
 
     @commands.command(name="queue", aliases=['q', 'que', 'list', 'upcoming'])
     async def queue_command(self, ctx: commands.Context):
