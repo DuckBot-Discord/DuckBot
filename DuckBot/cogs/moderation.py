@@ -117,7 +117,7 @@ class Moderation(commands.Cog):
         await ctx.message.delete(delay=5)
 
     @staticmethod
-    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None):
+    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None, bulk: bool = None):
         if limit > 2000:
             return await ctx.send(f'Too many messages to search given ({limit}/2000)')
 
@@ -131,7 +131,7 @@ class Moderation(commands.Cog):
                 after = discord.Object(id=after)
 
             try:
-                deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
+                deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate, bulk=bulk)
             except discord.Forbidden:
                 return await ctx.send('I do not have permissions to delete messages.')
             except discord.HTTPException as e:
@@ -611,32 +611,16 @@ class Moderation(commands.Cog):
                 await ctx.send("I need the `manage_messages` permission to perform a search greater than 25")
                 return
 
-        async with ctx.typing():
-            if ctx.channel.permissions_for(ctx.me).manage_messages:
-                prefix = tuple(await self.bot.get_pre(self.bot, ctx.message))
+        if ctx.channel.permissions_for(ctx.me).manage_messages:
+            prefix = tuple(await self.bot.get_pre(self.bot, ctx.message))
 
-                def check(msg):
-                    return msg.author == ctx.me or msg.content.startswith(prefix)
+            def check(msg):
+                return msg.author == ctx.me or msg.content.startswith(prefix)
+        else:
+            def check(msg):
+                return msg.author == ctx.me
 
-                deleted = await ctx.channel.purge(limit=amount, check=check, before=ctx.message.created_at)
-            else:
-                def check(msg):
-                    return msg.author == ctx.me
-
-                deleted = await ctx.channel.purge(limit=amount, check=check, bulk=False, before=ctx.message.created_at)
-            spammers = Counter(m.author.display_name for m in deleted)
-            deleted = len(deleted)
-            messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
-            if deleted:
-                messages.append('')
-                spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
-                messages.extend(f'**{name}**: {count}' for name, count in spammers)
-
-            to_send = '\n'.join(messages)
-            if len(to_send) > 2000:
-                await ctx.send(f'Successfully removed {deleted} messages.', delete_after=10, reply=False)
-            else:
-                await ctx.send(to_send, delete_after=10, reply=False)
+        await self.do_removal(predicate=check, bulk=False)
 
     # ------------------------------------------------------------------------------#
     # --------------------------------- UNBAN --------------------------------------#
