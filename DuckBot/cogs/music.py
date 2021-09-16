@@ -963,7 +963,7 @@ class Music(commands.Cog):
                      "queue": 2
                      }
             player.set_loop(modes[mode])
-            return await ctx.send(f"Loop mode set to **mode**")
+            return await ctx.send(f"Loop mode set to **{mode}**")
 
         embed = discord.Embed(color=(color(ctx)), description=f"Choose loop mode\
             \n**:repeat_one: Track** - Starts looping your currently playing track.\
