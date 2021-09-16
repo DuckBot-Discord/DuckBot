@@ -613,14 +613,17 @@ class Moderation(commands.Cog):
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
             prefix = tuple(await self.bot.get_pre(self.bot, ctx.message))
+            bulk = True
 
             def check(msg):
                 return msg.author == ctx.me or msg.content.startswith(prefix)
         else:
+            bulk = False
+
             def check(msg):
                 return msg.author == ctx.me
 
-        await self.do_removal(predicate=check, bulk=False)
+        await self.do_removal(ctx, before=check, bulk=bulk)
 
     # ------------------------------------------------------------------------------#
     # --------------------------------- UNBAN --------------------------------------#
