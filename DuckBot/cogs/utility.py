@@ -100,7 +100,7 @@ class Utility(commands.Cog):
             raise commands.MissingRequiredArgument(
                 Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY))
         elif ctx.message.reference:
-            message_or_reply = ctx.message.reference.resolved
+            message_or_reply = ctx.message.reference.resolved.content
         return await channel.send(message_or_reply[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False,
                                                                                                      roles=False,
                                                                                                      users=True))
