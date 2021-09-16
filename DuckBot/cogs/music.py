@@ -226,7 +226,7 @@ class PlayMenu(discord.ui.Select):
 
 class PlayMenuView(discord.ui.View):
     def __init__(self, options, bot, ctx):
-        super().__init__(timeout=180.0)
+        super().__init__(timeout=60.0)
         self.ctx = ctx
         self.add_item(PlayMenu(options, bot, ctx))
 
