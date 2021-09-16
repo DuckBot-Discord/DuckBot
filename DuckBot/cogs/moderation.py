@@ -623,7 +623,7 @@ class Moderation(commands.Cog):
             def check(msg):
                 return msg.author == ctx.me
 
-        await self.do_removal(ctx, before=check, bulk=bulk)
+        await self.do_removal(ctx, predicate=check, bulk=bulk, limit=amount)
 
     # ------------------------------------------------------------------------------#
     # --------------------------------- UNBAN --------------------------------------#
