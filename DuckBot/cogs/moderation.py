@@ -1178,8 +1178,7 @@ class Moderation(commands.Cog):
 
     # Add dj role
 
-    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    @commands.has_permissions(manage_roles=True)
+    @commands.check_any(commands.has_permissions(manage_roles=True), commands.is_owner())
     @commands.group()
     async def dj(self, ctx: commands.Context, new_role: discord.Role = None):
         """
