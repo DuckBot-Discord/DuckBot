@@ -590,6 +590,6 @@ DuckBot's top role position
 
     @commands.command(hidden=True)
     async def oz_ad(self, ctx):
-        embed=discord.Embed(title="This is a literal AD.",
-                            description="This is an ad for a minecraft server, press the button for more info.")
-        await ctx.send(embed=embed, delete_after=30, view=OzAd())
+        embed = discord.Embed(title="Here's a cool minecraft server!",
+                              description="Press the button for more info.")
+        await ctx.send(embed=embed, delete_after=30, view=OzAd(), footer=False)
