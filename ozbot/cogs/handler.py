@@ -1,9 +1,11 @@
 import io
-import traceback
 import logging
-import  discord, asyncio
+import traceback
+
+import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
+
 
 class handler(commands.Cog):
     """🆘 Handle them errors 👀"""
@@ -21,7 +23,7 @@ class handler(commands.Cog):
         error = getattr(error, "original", error)
         ignored = (
             commands.CommandNotFound,
-)
+        )
         if isinstance(error, ignored):
             return
         if isinstance(error, ignored):
