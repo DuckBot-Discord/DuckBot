@@ -109,8 +109,7 @@ class OzAd(discord.ui.View):
     @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji="<:minecraft:799344306166956052>",
                        custom_id='OzSmpAd')
     async def advertisement(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = discord.Embed(title="Hey! Thanks for being interested in OZ SMP",
-                              description="We’re not in Kansas anymore Toto. 🧙"
+        embed = discord.Embed(description="We’re not in Kansas anymore Toto. 🧙"
                                           "\n"
                                           "\n**Welcome to OZ SMP, your home away from home.** "
                                           "\nWe all know there's no place like home. "
@@ -131,6 +130,8 @@ class OzAd(discord.ui.View):
                               color=discord.Colour.blurple())
         embed.set_image(url="https://media.discordapp.net/attachments/861134063489777664/888558076804857876/"
                             "PicsArt_09-03-03.png?width=806&height=676")
+        embed.set_author(name="Hey! Thanks for being interested in OZ SMP",
+                         icon_url="https://i.imgur.com/CC9AWcz.png")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
