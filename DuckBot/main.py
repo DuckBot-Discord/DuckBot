@@ -98,9 +98,10 @@ class CustomContext(commands.Context):
                 embed.timestamp = discord.utils.utcnow()
 
         if embed:
-            embed.color = embed.color if embed.color not in (discord.Color.default(), discord.Embed.Empty, None) \
-                else self.me.color if self.me.color not in (discord.Color.default(), discord.Embed.Empty, None) else \
-                discord.Color.blurple()
+            embed.color = embed.color if embed.color not in (discord.Color.default(), discord.Embed.Empty, None)\
+                else self.me.color if self.me.color not in (discord.Color.default(), discord.Embed.Empty, None)\
+                else self.author.color if self.author.color not in (discord.Color.default(), discord.Embed.Empty, None)\
+                else discord.Color.blurple()
 
         try:
             return await super().send(content=content, embed=embed, reference=reference, **kwargs)
