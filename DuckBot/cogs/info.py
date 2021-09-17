@@ -123,10 +123,10 @@ class OzAd(discord.ui.View):
                                           "\nCome join us, and remember- There's no place like home."
                                           "\n"
                                           "\n**Here's our [discord server](https://discord.gg/z5tuvXGFqX)**"
-                                          "\n**Server IP:** `OZ.apexmc.co`"
                                           "\n**Take a peek at our [interactive web map](http://oz_smp.apexmc.co:7380)**"
+                                          "\n**Server IP:** `OZ.apexmc.co`"
                                           "\n"
-                                          "\n_Note: You need to join the discord for whitelisting. "
+                                          "\n> _Note: You need to join the discord for whitelisting. "
                                           "Whitelisting is automatic, just read and agree to the rules._ 💞",
                               color=discord.Colour.blurple())
         embed.set_image(url="https://media.discordapp.net/attachments/861134063489777664/888558076804857876/"
