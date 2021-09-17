@@ -2,14 +2,10 @@ import logging
 import os
 
 # Async stuff seperate
-import asyncpg
-import asyncpraw
-from discord.ext import commands
 from dotenv import load_dotenv
 
 # Local imports always at bottom
 from main import DuckBot
-import errors
 
 os.environ['JISHAKU_HIDE'] = 'True'
 

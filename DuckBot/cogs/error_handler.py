@@ -1,12 +1,12 @@
 import io
-import logging
 import traceback
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
-import errors
-from cogs import music as music_cog
+from DuckBot.main import DuckBot
+from DuckBot import errors
+from DuckBot.cogs import music as music_cog
 
 
 def setup(bot):
@@ -19,7 +19,7 @@ class Handler(commands.Cog, name='Handler'):
     """
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: DuckBot = bot
         self.error_channel = 880181130408636456
 
     @commands.Cog.listener('on_command_error')

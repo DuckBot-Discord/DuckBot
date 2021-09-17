@@ -1,7 +1,6 @@
-import discord
-import random
-
 from discord.ext import commands
+
+from DuckBot.main import DuckBot
 
 
 def setup(bot):
@@ -15,4 +14,4 @@ class Test(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: DuckBot = bot

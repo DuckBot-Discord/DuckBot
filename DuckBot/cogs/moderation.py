@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import datetime
 import time
-from main import DuckBot
 import discord
 import re
 import shlex
@@ -11,9 +10,10 @@ from collections import Counter
 
 from discord.ext import commands, tasks, menus
 
-from helpers import time_inputs as helpers
+from DuckBot import errors
+from DuckBot.main import DuckBot
+from DuckBot.helpers import time_inputs as helpers
 
-import errors
 
 
 def setup(bot):

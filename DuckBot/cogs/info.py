@@ -9,6 +9,8 @@ import re
 import time
 from discord.ext import commands, menus
 
+from DuckBot.main import DuckBot
+
 
 def setup(bot):
     bot.add_cog(About(bot))
@@ -102,6 +104,37 @@ class InvMe(discord.ui.View):
                                             "788278464474120202&permissions=8&scope=bot%20applications.commands"))
 
 
+class OzAd(discord.ui.View):
+    super().__init__(timeout=None)
+
+    @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji="<:minecraft:799344306166956052>",
+                       custom_id='OzSmpAd')
+    async def advertisement(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = discord.Embed(title="Hey! Thanks for being interested in OZ SMP",
+                              description="We’re not in Kansas anymore Toto. :WumpusWizard:"
+                                          "\n"
+                                          "\nWelcome to OZ SMP, your home away from home. We all know there's no place "
+                                          "like home. Inspired by The Wizard of OZ we are a small tight knit community "
+                                          "from across the world with 20 active players "
+                                          "and we’re looking for more to join us!"
+                                          "\n"
+                                          "\nWe’re a 1.17.1 JAVA server complete with MCMMO, TPA, "
+                                          "nether highway, /sethome and more!"
+                                          "\n"
+                                          "\nCome join us, and remember- There's no place like home."
+                                          "\n"
+                                          "\nOZ SMP discord: https://discord.gg/z5tuvXGFqX"
+                                          "\nServer IP: `OZ.apexmc.co`"
+                                          "\nTake a peek at our map: http://oz_smp.apexmc.co:7380/"
+                                          "\n"
+                                          "\n_Note: You need to join the discord for whitelisting. "
+                                          "Whitelisting is automatic, just read and agree to the rules._ 💞",
+                              color=discord.Colour.blurple())
+        embed.set_image(url="https://media.discordapp.net/attachments/861134063489777664/888558076804857876/"
+                            "PicsArt_09-03-03.png?width=806&height=676")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
 class InvSrc(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -166,8 +199,8 @@ class HelpMenu(DuckPaginator):
 
 
 class GroupHelpPageSource(menus.ListPageSource):
-    def __init__(self, group, commands, *, prefix):
-        super().__init__(entries=commands, per_page=6)
+    def __init__(self, group, cog_commands, *, prefix):
+        super().__init__(entries=cog_commands, per_page=6)
         self.group = group
         self.prefix = prefix
         if isinstance(group, discord.ext.commands.Group):
@@ -177,10 +210,10 @@ class GroupHelpPageSource(menus.ListPageSource):
             self.title = f'{self.group.qualified_name} Commands'
             self.description = self.group.description
 
-    async def format_page(self, menu, commands):
+    async def format_page(self, menu, cog_commands):
         embed = discord.Embed(title=self.title, description=self.description, colour=discord.Colour.blurple())
 
-        for command in commands:
+        for command in cog_commands:
             signature = f'{command.qualified_name} {command.signature}'
             if command.help:
                 command_help = command.help.replace("%PRE%", self.prefix)
@@ -231,10 +264,10 @@ class MyHelp(commands.HelpCommand):
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
 
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
-        for cog, commands in mapping.items():
+        for cog, cog_commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
-            filtered = await self.filter_commands(commands, sort=True)
+            filtered = await self.filter_commands(cog_commands, sort=True)
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
                 val = "`, `".join(command_signatures)
@@ -307,7 +340,7 @@ class About(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: DuckBot = bot
         help_command = MyHelp()
         help_command.cog = self
         bot.help_command = help_command
@@ -317,6 +350,7 @@ class About(commands.Cog):
     async def register_views(self):
         if not self.bot.persistent_views_added:
             self.bot.add_view(InvSrc())
+            self.bot.add_view(OzAd())
             self.bot.persistent_views_added = True
 
     def get_bot_uptime(self):
@@ -365,11 +399,16 @@ class About(commands.Cog):
         await asyncio.sleep(0.7)
 
         await message.edit(content=re.sub('\n *', '\n',
-                                          f"\n<:open_site:854786097363812352> **| `Websocket ═╣ {round(latency_ms, 3)}ms{' ' * (9 - len(str(round(latency_ms, 3))))}`** "
-                                          f"\n<a:typing:597589448607399949> **| `Typing ════╣ {round(typing_ms, 3)}ms{' ' * (9 - len(str(round(typing_ms, 3))))}`**"
-                                          f"\n:speech_balloon: **| `Message ═══╣ {round(message_ms, 3)}ms{' ' * (9 - len(str(round(message_ms, 3))))}`**"
-                                          f"\n<:psql:871758815345901619> **| `Database ══╣ {round(postgres_ms, 3)}ms{' ' * (9 - len(str(round(postgres_ms, 3))))}`**"
-                                          f"\n:infinity: **| `Average ═══╣ {round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
+                                          f"\n<:open_site:854786097363812352> **| `Websocket ═╣ "
+                                          f"{round(latency_ms, 3)}ms{' ' * (9 - len(str(round(latency_ms, 3))))}`** "
+                                          f"\n<a:typing:597589448607399949> **| `Typing ════╣ "
+                                          f"{round(typing_ms, 3)}ms{' ' * (9 - len(str(round(typing_ms, 3))))}`**"
+                                          f"\n:speech_balloon: **| `Message ═══╣ "
+                                          f"{round(message_ms, 3)}ms{' ' * (9 - len(str(round(message_ms, 3))))}`**"
+                                          f"\n<:psql:871758815345901619> **| `Database ══╣ "
+                                          f"{round(postgres_ms, 3)}ms{' ' * (9 - len(str(round(postgres_ms, 3))))}`**"
+                                          f"\n:infinity: **| `Average ═══╣ "
+                                          f"{round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
 
     @commands.command(help="Shows info about the bot", aliases=['info'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -414,7 +453,8 @@ class About(commands.Cog):
         embed.add_field(name='Bot servers',
                         value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(avg) / len(avg), 2)}%")
         embed.add_field(name='Command info:',
-                        value=f"**Last reboot:**\n{self.get_bot_uptime()}\n**Last command reload:**\n{self.get_bot_last_rall()}")
+                        value=f"**Last reboot:**\n{self.get_bot_uptime()}"
+                              f"\n**Last command reload:**\n{self.get_bot_last_rall()}")
 
         version = pkg_resources.get_distribution('discord.py').version
         embed.set_footer(text=f'Made with discord.py v{version} 💖', icon_url='http://i.imgur.com/5BFecvA.png')
@@ -545,3 +585,9 @@ DuckBot's top role position
                               f"\n> **📜 New! Would you rather command!**"
                               f"\ndo `{ctx.clean_prefix}wyr` or `{ctx.clean_prefix}would_you_rather` ⚖")
         await ctx.send(embed=embed)
+
+    @commands.command(hidden=True)
+    async def oz_ad(self, ctx):
+        embed=discord.Embed(title="This is a literal AD.",
+                            description="This is an ad for a minecraft server, press the button for more info.")
+        await ctx.send(embed=embed, delete_after=30, view=OzAd())

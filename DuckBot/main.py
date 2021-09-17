@@ -143,8 +143,8 @@ class DuckBot(commands.Bot):
             raise errors.UserBlacklisted
 
     def __init__(self) -> None:
-        intents = discord.Intents.default()
-        intents.members = True
+        intents = discord.Intents(members=True,
+                                  **{k: v for k, v in dict(discord.Intents.default()).items() if k != 'members'})
 
         super().__init__(
             intents=intents,
@@ -155,7 +155,7 @@ class DuckBot(commands.Bot):
             strip_after_prefix=True
         )
 
-        self.db = self.loop.run_until_complete(create_db_pool())
+        self.db: asyncpg.Pool = self.loop.run_until_complete(create_db_pool())
 
         self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
                                        client_secret=os.getenv('ASYNC_PRAW_CS'),

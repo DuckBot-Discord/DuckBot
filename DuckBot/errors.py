@@ -21,6 +21,7 @@ class WaitForCancelled(commands.CheckFailure):
 class MuteRoleNotFound(commands.CheckFailure):
     pass
 
+
 class UserBlacklisted(commands.CheckFailure):
     pass
     

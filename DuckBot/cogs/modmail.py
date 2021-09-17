@@ -3,6 +3,8 @@ from discord.errors import HTTPException
 from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 
+from DuckBot.main import DuckBot
+
 
 def setup(bot):
     bot.add_cog(Events(bot))
@@ -26,7 +28,7 @@ class Events(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: DuckBot = bot
 
     @commands.Cog.listener('on_message')
     async def on_mail(self, message):
