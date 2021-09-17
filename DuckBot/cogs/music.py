@@ -1023,6 +1023,7 @@ class Music(commands.Cog):
                         inline=True)
         embed.add_field(name='Requested By:', value=f'{player.current.requester.mention}', inline=True)
         await ctx.send(embed=embed)
+        print(player.current.extra)
 
     @commands.command(name="restart")
     async def restart_command(self, ctx: commands.Context):
