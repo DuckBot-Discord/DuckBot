@@ -17,8 +17,6 @@ from lavalink.events import (NodeChangedEvent, PlayerUpdateEvent,
                              QueueEndEvent, TrackEndEvent, TrackExceptionEvent,
                              TrackStartEvent, TrackStuckEvent)
 
-from DuckBot.main import DuckBot
-
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 cancel_emote = "❌"
 
@@ -618,7 +616,7 @@ class Music(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: DuckBot = bot
+        self.bot: commands.Bot = bot
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(config['user_id'], CustomPlayer)
             for node in config['nodes']:

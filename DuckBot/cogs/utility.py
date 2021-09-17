@@ -8,10 +8,8 @@ from inspect import Parameter
 from typing import Optional
 from discord.ext import commands, menus
 
-from DuckBot import errors
-from DuckBot.helpers import helper
-
-from DuckBot.main import DuckBot
+import errors
+from helpers import helper
 
 
 def setup(bot):
@@ -31,7 +29,7 @@ class Utility(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: DuckBot = bot
+        self.bot: commands.Bot = bot
 
     @commands.command(name='charinfo')
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)

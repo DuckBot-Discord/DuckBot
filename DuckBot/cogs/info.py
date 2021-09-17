@@ -9,8 +9,6 @@ import re
 import time
 from discord.ext import commands, menus
 
-from DuckBot.main import DuckBot
-
 
 def setup(bot):
     bot.add_cog(About(bot))
@@ -340,7 +338,7 @@ class About(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: DuckBot = bot
+        self.bot: commands.Bot = bot
         help_command = MyHelp()
         help_command.cog = self
         bot.help_command = help_command

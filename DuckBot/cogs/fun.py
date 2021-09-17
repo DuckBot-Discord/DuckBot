@@ -1,12 +1,10 @@
 import asyncio
 import random
 
-import aiowiki as aiowiki
+import aiowiki
 import discord
 import typing
 from discord.ext import commands
-
-from DuckBot.main import DuckBot
 
 _8ball_good = ['It is certain',
                'It is decidedly so',
@@ -46,7 +44,7 @@ class Fun(commands.Cog, name='Fun'):
     __slots__ = ('bot',)
 
     def __init__(self, bot):
-        self.bot: DuckBot = bot
+        self.bot: commands.Bot = bot
 
     async def reddit(self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE') -> discord.Embed:
 

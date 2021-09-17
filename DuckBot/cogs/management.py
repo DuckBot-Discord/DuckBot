@@ -6,7 +6,6 @@ import os
 import textwrap
 import traceback
 import typing
-from DuckBot.main import DuckBot
 
 import discord
 from discord.ext import commands
@@ -49,7 +48,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     def __init__(self, bot):
         self.research_channels = (881215900315951184, 881246869873917962, 881246946776449045, 881247025688084521)
-        self.bot: DuckBot = bot
+        self.bot: commands.Bot = bot
         self._last_result = None
 
     # Git but to the correct directory

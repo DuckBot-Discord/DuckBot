@@ -10,10 +10,8 @@ from collections import Counter
 
 from discord.ext import commands, tasks, menus
 
-from DuckBot import errors
-from DuckBot.main import DuckBot
-from DuckBot.helpers import time_inputs as helpers
-
+import errors
+from helpers import time_inputs as helpers
 
 
 def setup(bot):
@@ -78,7 +76,7 @@ class Moderation(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: DuckBot = bot
+        self.bot: commands.Bot = bot
         self.temporary_mutes.start()
 
     async def cog_check(self, ctx):

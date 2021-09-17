@@ -1,8 +1,5 @@
 from discord.ext import commands
 
-from DuckBot.main import DuckBot
-
-
 def setup(bot):
     bot.add_cog(Test(bot))
 
@@ -14,4 +11,4 @@ class Test(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: DuckBot = bot
+        self.bot: commands.Bot = bot
