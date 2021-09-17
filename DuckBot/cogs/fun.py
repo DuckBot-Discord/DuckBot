@@ -108,7 +108,8 @@ class Fun(commands.Cog, name='Fun'):
 
             res = await r.json()
 
-        embed = discord.Embed(title='Here is a duck!', color=random.randint(0, 0xFFFFFF))
+        embed = discord.Embed(title='Here is a duck!',
+                              color=random.randint(0, 0xFFFFFF))
         embed.set_image(url=res["url"])
         embed.set_footer(text='by random-d.uk', icon_url='https://avatars2.githubusercontent.com/u/38426912')
         return await ctx.send(embed=embed)
@@ -133,7 +134,8 @@ class Fun(commands.Cog, name='Fun'):
 
             res = await r.text()
 
-        embed = discord.Embed(title='An inspirational image...', color=random.randint(0, 0xFFFFFF))
+        embed = discord.Embed(title='An inspirational image...',
+                              color=random.randint(0, 0xFFFFFF))
         embed.set_image(url=res)
         embed.set_footer(text='by inspirobot.me',
                          icon_url='https://inspirobot.me/website/images/inspirobot-dark-green.png')

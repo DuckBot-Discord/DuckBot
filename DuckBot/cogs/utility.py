@@ -135,7 +135,7 @@ class Utility(commands.Cog):
         """
         member = member or ctx.author
 
-        embed = discord.Embed(color=(member.color if member.color != discord.Colour.default() else ctx.me.color))
+        embed = discord.Embed(color=(member.color if member.color != discord.Colour.default() else discord.Embed.Empty))
         embed.set_author(name=member, icon_url=member.display_avatar.url)
         embed.set_thumbnail(url=member.display_avatar.url)
 
@@ -246,8 +246,7 @@ class Utility(commands.Cog):
         if roles != "":
             roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
         # EMBED
-        embed = discord.Embed(color=ctx.me.color,
-                              description=f"{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}")
+        embed = discord.Embed(description=f"{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}")
         embed.set_author(name=user, icon_url=user.display_avatar.url)
         embed.set_thumbnail(url=user.display_avatar.url)
         await ctx.send(embed=embed)
@@ -268,7 +267,7 @@ class Utility(commands.Cog):
             elif perm[1] is False:
                 denied.append(ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
 
-        embed = discord.Embed(color=ctx.me.color)
+        embed = discord.Embed()
         embed.set_author(icon_url=target.display_avatar.url, name=target)
         embed.set_footer(icon_url=target.display_avatar.url, text=f"{target.name}'s guild permissions")
         if allowed:
@@ -327,8 +326,7 @@ class Utility(commands.Cog):
             if feature in features:
                 enabled_features.append(f'{ctx.tick(True)} {label}')
 
-        embed = discord.Embed(color=discord.Colour.blurple(),
-                              title=guild.name)
+        embed = discord.Embed(title=guild.name)
 
         embed.add_field(name="<:rich_presence:658538493521166336> Features:",
                         value='\n'.join(enabled_features), inline=True)
@@ -388,8 +386,7 @@ class Utility(commands.Cog):
         Displays a user's avatar. If not specified, shows your own.
         """
         user: discord.Member = user or ctx.author
-        embed = discord.Embed(color=discord.Colour.blurple(),
-                              title=user, url=user.display_avatar.url)
+        embed = discord.Embed(title=user, url=user.display_avatar.url)
         embed.set_image(url=user.display_avatar.url)
         await ctx.send(embed=embed, footer=False)
 
@@ -412,7 +409,7 @@ class Utility(commands.Cog):
                 emoticon = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
             else:
                 emoticon = f"*`<`*`:{emoji.name}:{emoji.id}>`"
-            embed = discord.Embed(description=f"{emoticon}", color=ctx.me.color)
+            embed = discord.Embed(description=f"{emoticon}")
             embed.set_image(url=emoji.url)
             await ctx.send(embed=embed)
 
@@ -429,8 +426,7 @@ class Utility(commands.Cog):
         """
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
-        embed = discord.Embed(color=ctx.me.color,
-                              description=f"**Restricted access of {server_emoji} to:**"
+        embed = discord.Embed(description=f"**Restricted access of {server_emoji} to:**"
                                           f"\n{', '.join([r.mention for r in roles])}"
                                           f"\nTo unlock the emoji do `{ctx.clean_prefix} emoji unlock {server_emoji}`"
                                           f"_Note that to do this you will need one of the roles the emoji has been "
@@ -450,8 +446,7 @@ class Utility(commands.Cog):
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
         await server_emoji.edit(roles=[])
-        embed = discord.Embed(color=ctx.me.color,
-                              title="Successfully unlocked emoji!",
+        embed = discord.Embed(title="Successfully unlocked emoji!",
                               description=f"**Allowed {server_emoji} to @everyone**")
         return await ctx.send(embed=embed)
 
@@ -539,7 +534,7 @@ class Utility(commands.Cog):
         """
         argument = username
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
-            embed = discord.Embed(color=ctx.me.color)
+            embed = discord.Embed()
             if cs.status == 204:
                 embed.add_field(name='⚠ ERROR ⚠', value=f"`{argument}` is not a minecraft username!")
 
@@ -570,6 +565,5 @@ class Utility(commands.Cog):
         all_commands = list(divide_chunks(shown_commands, 3))
         all_commands = '\n'.join([''.join([f"{x}{' ' * (ml - len(x))}" for x in c]).strip() for c in all_commands])
 
-        return await ctx.send(embed=discord.Embed(color=ctx.me.color,
-                                                  title=f"Here are ALL my commands ({len(shown_commands)})",
+        return await ctx.send(embed=discord.Embed(title=f"Here are ALL my commands ({len(shown_commands)})",
                                                   description=f"```fix\n{all_commands}\n```"))
