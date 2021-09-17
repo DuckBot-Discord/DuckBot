@@ -124,7 +124,7 @@ class OzAd(discord.ui.View):
                                           "\n**Here's our [discord server](https://discord.gg/z5tuvXGFqX "
                                           "\"https://discord.gg/z5tuvXGFqX\")**"
                                           "\n**Take a peek at our [interactive web map](http://oz_smp.apexmc.co:7380"
-                                          "\"http://oz_smp.apexmc.co:7380\")**"
+                                          " \"http://oz_smp.apexmc.co:7380\")**"
                                           "\n**Server IP:** `OZ.apexmc.co`"
                                           "\n"
                                           "\n> _Note: You need to join the discord for whitelisting. "
