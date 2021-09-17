@@ -118,7 +118,7 @@ class Moderation(commands.Cog):
         await ctx.message.delete(delay=5)
 
     @staticmethod
-    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None, bulk: bool = None):
+    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None, bulk: bool = True):
         if limit > 2000:
             return await ctx.send(f'Too many messages to search given ({limit}/2000)')
 
