@@ -1180,7 +1180,7 @@ class Moderation(commands.Cog):
 
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.has_permissions(manage_roles=True)
-    @commands.command()
+    @commands.group()
     async def dj(self, ctx: commands.Context, new_role: discord.Role = None):
         """
         Manages the current DJ role. If no role is specified, shows the current DJ role.
