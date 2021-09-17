@@ -774,14 +774,15 @@ class Music(commands.Cog):
                 embed.add_field(name='Requested by:', value=event.track.requester.mention, inline=True)
                 await channel.send(embed=embed)
 
-    def is_privileged(self, ctx: commands.Context):
+    async def is_privileged(self, ctx: commands.Context):
         """Check whether the user is an Admin or DJ or alone in a VC."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        role_id = (await self.bot.db.fetchval('SELECT dj_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)) or 1
         if player.dj == ctx.author.id:
             return True
         elif ctx.author.guild_permissions.manage_messages:
             return True
-        elif discord.utils.get(ctx.author.roles, name="DJ"):
+        elif ctx.author._roles.has(role_id) or role_id == 0:
             return True
         elif ctx.author.id in ctx.bot.owner_ids:
             return True
@@ -860,7 +861,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         # ACTUAL PART
         embed = discord.Embed(colour=(color(ctx)), description='The player was disconnected.')
@@ -876,7 +877,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if player.paused:
             raise PlayerIsAlreadyPaused
@@ -892,7 +893,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if not player.paused:
             raise PlayerIsNotPaused()
@@ -908,7 +909,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if player.loop == 2:
             player.set_loop(0)
@@ -925,7 +926,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if not player.length > 0:
             raise QueueIsEmpty
@@ -942,7 +943,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if player.length == 0:
             raise NoMoreTracks
@@ -959,7 +960,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         # ACTUAL PART
         await player.shuffle()
@@ -972,7 +973,7 @@ class Music(commands.Cog):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         # ACTUAL PART
         mode = mode.lower() if mode else None
@@ -1035,7 +1036,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if not player.current:
             raise NoCurrentTrack
@@ -1051,7 +1052,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         time_stamp = ''
         try:
@@ -1087,7 +1088,7 @@ class Music(commands.Cog):
         if volume is None:
             embed = discord.Embed(colour=(color(ctx)), description=f'Current volume: **{player.volume}%**')
             return await ctx.send(embed=embed)
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if not 0 < volume < 101:
             raise InvalidVolume
@@ -1103,7 +1104,7 @@ class Music(commands.Cog):
         # CHECKING
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if player.length == 0:
             raise QueueIsEmpty
@@ -1128,7 +1129,7 @@ class Music(commands.Cog):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.is_connected:
             raise NoVoiceChannel
-        if not self.is_privileged(ctx):
+        if not await self.is_privileged(ctx):
             raise NotAuthorized
         if player.length == 0:
             raise QueueIsEmpty

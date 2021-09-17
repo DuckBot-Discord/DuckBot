@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import datetime
 import time
+from inspect import Parameter
 
 import discord
 import re
@@ -1307,3 +1308,70 @@ class Moderation(commands.Cog):
         await channel.send(f"Thread archived by **{ctx.author}**"
                            f"\n{f'**With reason:** {reason}' if reason else ''}")
         await channel.edit(archived=True)
+
+    # Add dj role
+
+    @commands.group(invoke_without_command=True)
+    @commands.has_permissions(manage_roles=True)
+    async def dj(self, ctx: commands.Context, new_role: discord.Role = None):
+        """
+        Manages the current DJ role. If no role is specified, shows the current DJ role.
+        """
+        if ctx.invoked_subcommand is None:
+            if new_role:
+                await self.bot.db.execute(
+                    "INSERT INTO prefixes(guild_id, dj_id) VALUES ($1, $2) "
+                    "ON CONFLICT (guild_id) DO UPDATE SET dj_id = $2",
+                    ctx.guild.id, new_role.id)
+
+                return await ctx.send(f"Updated the dj role to {new_role.mention}!",
+                                      allowed_mentions=discord.AllowedMentions().none())
+
+            dj_role = await self.bot.db.fetchval('SELECT dj_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+
+            if not dj_role:
+                return await ctx.send("This server doesn't have a DJ role!"
+                                      "\nDo `help dj` for more commends")
+
+            role = ctx.guild.get_role(int(dj_role))
+            if not isinstance(role, discord.Role):
+                return await ctx.send("This server doesn't have a DJ role!"
+                                      "\nDo `help dj` for more commends")
+
+            return await ctx.send(f"This server's DJ role is {role.mention}"
+                                  "\nDo `help dj` for more commends",
+                                  allowed_mentions=discord.AllowedMentions().none())
+
+    # Remove dj role
+
+    @commands.has_permissions(manage_roles=True)
+    @dj.command(name="clear", aliases=["unset", "remove"])
+    async def dj_remove(self, ctx: commands.Context):
+        """
+        Unsets the DJ role for the server.
+        """
+        await self.bot.db.execute(
+            "INSERT INTO prefixes(guild_id, dj_id) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET dj_id = $2",
+            ctx.guild.id, None)
+
+        return await ctx.send(f"Removed this server's DJ role!",
+                              allowed_mentions=discord.AllowedMentions().none())
+
+    # Disable DJ role requirement
+
+    @commands.has_permissions(manage_messages=True)
+    @dj.command(name='all', aliases=['disable'])
+    async def dj_all(self, ctx: commands.Context):
+        """
+        Makes everyone able to control the player
+        """
+
+        await self.bot.db.execute(
+            "INSERT INTO prefixes(guild_id, dj_id) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET dj_id = $2",
+            ctx.guild.id, 0)
+
+        return await ctx.send(f"Everyone is the dj now! 💃"
+                              "\nDo `help dj` for more commends",
+                              allowed_mentions=discord.AllowedMentions().none())
