@@ -758,7 +758,7 @@ class Music(commands.Cog):
     async def is_privileged(self, ctx: commands.Context):
         """Check whether the user is an Admin or DJ or alone in a VC."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
-        role = await self.bot.db.fetchval("SELECT dj_id FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+        role = (await self.bot.db.fetchval("SELECT dj_id FROM prefixes WHERE guild_id = $1", ctx.guild.id)) or 1
         if any([player.dj == ctx.author.id, ctx.author.guild_permissions.manage_messages,
                 ctx.author._roles.has(role), role == 1234, ctx.author.id in self.bot.owner_ids]):
             return True
