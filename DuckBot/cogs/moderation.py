@@ -49,18 +49,6 @@ def safe_reason_append(base, to_append):
     return appended
 
 
-class BanEmbed(menus.ListPageSource):
-    def __init__(self, data, per_page=15):
-        super().__init__(data, per_page=per_page)
-
-    @staticmethod
-    async def format_page(entries, *args, **kwargs):
-        embed = discord.Embed(title=f"Server bans ({len(entries)})",
-                              description="\n".join(entries))
-        embed.set_footer(text=f"To unban do db.unban [entry]\nMore user info do db.baninfo [entry]")
-        return embed
-
-
 class Confirm(menus.Menu):
     def __init__(self, msg):
         super().__init__(timeout=30.0, delete_message_after=True)
@@ -634,126 +622,9 @@ class Moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def unban(self, ctx, entry: int):
-        number = entry
-        if number <= 0:
-            embed = discord.Embed(color=0xFF0000,
-                                  description=f"__number__ must be greater than 1"
-                                              f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
-                                              f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
-            await ctx.send(embed=embed)
-            return
-
-        number = number - 1
-
-        bans = await ctx.guild.bans()
-
-        if not bans:
-            await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
-            return
-
-        try:
-            ban_entry = bans[number]
-        except IndexError:
-            embed = discord.Embed(color=0xFF0000,
-                                  description=f"That member was not found. "
-                                              f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
-                                              f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
-            await ctx.send(embed=embed)
-            return
-
-        await ctx.guild.unban(ban_entry.user)
-        await ctx.send(f'unbanned **{ban_entry.user}**')
-
-    # ------------------------------------------------------------------------------#
-    # -------------------------------- BAN LIST ------------------------------------#
-    # ------------------------------------------------------------------------------#
-
-    @commands.command(help="Gets the current guild's list of bans")
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
-    @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def bans(self, ctx: commands.Context) -> discord.Message:
-        bans = await ctx.guild.bans()
-        if not bans:
-            return await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
-        desc = []
-        number = 1
-        for ban_entry in bans:
-            desc.append(f"**{number}) {ban_entry.user}**")
-            number = number + 1
-        pages = menus.MenuPages(source=BanEmbed(desc), clear_reactions_after=True)
-        await pages.start(ctx)
-
-    # ------------------------------------------------------------------------------#
-    # -------------------------------- BAN INFO ------------------------------------#
-    # ------------------------------------------------------------------------------#
-
-    @commands.command(help="brings info about a ban # run without arguments to get a list of entries", usage="[entry]")
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
-    @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def baninfo(self, ctx, number: typing.Optional[int]):
-        """
-        Information about a ban from the list of bans.
-        For the list of bans do %PRE%bans
-        """
-        if not ctx.channel.permissions_for(ctx.me).ban_members:
-            await ctx.send("i'm missing the ban_members permission :pensive:")
-            return
-
-        if not number:
-            bans = await ctx.guild.bans()
-
-            if not bans:
-                await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
-                return
-
-            desc = []
-            number = 1
-            for ban_entry in bans:
-                desc.append(f"**{number}) {ban_entry.user}**")
-                number = number + 1
-            pages = menus.MenuPages(source=BanEmbed(desc), clear_reactions_after=True)
-            await pages.start(ctx)
-            return
-
-        if number <= 0:
-            embed = discord.Embed(
-                color=0xFF0000,
-                description=f"__number__ must be greater than 1"
-                            f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
-                            f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
-            await ctx.send(embed=embed)
-            return
-
-        number = number - 1
-
-        bans = await ctx.guild.bans()
-
-        if not bans:
-            await ctx.send(embed=discord.Embed(title="There are no banned users in this server"))
-            return
-        try:
-            ban_entry = bans[number]
-        except IndexError:
-            embed = discord.Embed(color=0xFF0000,
-                                  description=f"That member was not found. "
-                                              f"\nsyntax: `{ctx.prefix}{ctx.command} {ctx.command.usage}`"
-                                              f"\n To get the number use the `{ctx.prefix}{ctx.command}` command")
-            await ctx.send(embed=embed)
-            return
-
-        date = ban_entry.user.created_at
-        embed = discord.Embed(color=ctx.me.color,
-                              description=f"""```yaml
-       user: {ban_entry.user}
-    user id: {ban_entry.user.id}
-     reason: {ban_entry.reason}
- created at: {date.strftime("%b %-d %Y at %-H:%M")} UTC
-```""")
-        embed.set_author(name=ban_entry.user, icon_url=ban_entry.user.display_avatar.url)
-        await ctx.send(embed=embed)
+    async def unban(self, ctx: commands.Context, user: discord.User):
+        await ctx.guild.unban(user)
+        return await ctx.send(f"Unbanned **{user}**")
 
     # --------------------------------------------------------------------------------#
     # -------------------------------- MUTE STUFF ------------------------------------#
