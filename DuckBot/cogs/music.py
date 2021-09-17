@@ -1187,7 +1187,7 @@ class Music(commands.Cog):
 
         elif isinstance(track, int):
             try:
-                x = queue[track]
+                x = queue[track-1]
                 queue.insert(position - 1, queue.pop(queue.index(x)))
                 embed = discord.Embed(color=(color(ctx)),
                                       description=f'Successfully moved **[{x["title"]}]({x["uri"]})** to position `{position}`')
