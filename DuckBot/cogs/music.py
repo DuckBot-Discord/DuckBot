@@ -599,7 +599,7 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         if not hasattr(bot, 'lavalink'):
-            bot.lavalink = lavalink.Client(bot.user_id, CustomPlayer)
+            bot.lavalink = lavalink.Client(config['user_id'], CustomPlayer)
             for node in config['nodes']:
                 bot.lavalink.add_node(**node)
             bot.add_listener(bot.lavalink.voice_update_handler, 'on_socket_custom_receive')
