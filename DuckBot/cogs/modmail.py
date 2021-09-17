@@ -8,7 +8,7 @@ def setup(bot):
     bot.add_cog(Events(bot))
 
 
-async def get_webhook(channel):
+async def get_webhook(channel) -> discord.Webhook:
     webhook_list = await channel.webhooks()
     if webhook_list:
         for hook in webhook_list:
@@ -106,4 +106,4 @@ class Events(commands.Cog):
                             value=str(before))
             embed.add_field(name="After:",
                             value=str(after))
-            await wh.send(embed=embed)
+            await wh.send(embed=embed, avatar_url=after.display_avatar.url)

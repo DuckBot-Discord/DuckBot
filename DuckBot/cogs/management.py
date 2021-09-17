@@ -269,7 +269,7 @@ class Management(commands.Cog, name='Bot Management'):
             if filename.endswith(".py"):
                 cogs_list = f"{cogs_list} \n🔃 {filename[:-3]}"
 
-        embed = discord.Embed(color=ctx.me.color, description=cogs_list)
+        embed = discord.Embed(description=cogs_list)
         message = await ctx.send(embed=embed, footer=False)
 
         for filename in os.listdir("./cogs"):

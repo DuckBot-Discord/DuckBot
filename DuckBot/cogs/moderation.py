@@ -100,7 +100,7 @@ class Moderation(commands.Cog):
 
     @staticmethod
     async def error_message(ctx, message):
-        embed = discord.Embed(color=ctx.me.color)
+        embed = discord.Embed()
         embed.set_author(name=message, icon_url='https://i.imgur.com/OAmzSGF.png')
         await ctx.send(embed=embed, delete_after=5)
         await ctx.message.delete(delay=5)
@@ -186,8 +186,7 @@ class Moderation(commands.Cog):
         """ Lists all the bots prefixes. """
         prefixes = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
         embed = discord.Embed(title="Here are my prefixes:",
-                              description=ctx.me.mention + '\n' + '\n'.join(prefixes),
-                              color=ctx.me.color)
+                              description=ctx.me.mention + '\n' + '\n'.join(prefixes))
         embed.add_field(name="Available prefix commands:", value=f"```fix"
                                                                  f"\n{ctx.clean_prefix}{ctx.command} add"
                                                                  f"\n{ctx.clean_prefix}{ctx.command} remove"
@@ -280,8 +279,7 @@ class Moderation(commands.Cog):
                 action_reason = ''
 
             embed = discord.Embed(
-                description=f"{ctx.author.mention} kicked **{member}**({member.mention}){action_reason}",
-                color=ctx.me.color)
+                description=f"{ctx.author.mention} kicked **{member}**({member.mention}){action_reason}")
             embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
             await ctx.send(embed=embed)
 
@@ -322,8 +320,7 @@ class Moderation(commands.Cog):
         else:
             action_reason = ''
 
-        embed = discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){action_reason}",
-                              color=ctx.me.color)
+        embed = discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){action_reason}")
         embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
         await ctx.send(embed=embed)
 

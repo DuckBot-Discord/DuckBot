@@ -211,7 +211,7 @@ class MyHelp(commands.HelpCommand):
 
     # !help
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(color=discord.Colour.blurple())
+        embed = discord.Embed()
         embed.description = (
             "```diff"
             f"\n+ {self.context.clean_prefix}help [command] - get information on a command"
@@ -259,8 +259,7 @@ class MyHelp(commands.HelpCommand):
         else:
             command_help = 'No help given...'
         if alias:
-            embed = discord.Embed(color=discord.Colour.blurple(),
-                                  title=f"information about: {self.context.clean_prefix}{command}",
+            embed = discord.Embed(title=f"information about: {self.context.clean_prefix}{command}",
                                   description=f"""
 ```yaml
       usage: {self.get_minimal_command_signature(command)}
@@ -268,8 +267,8 @@ class MyHelp(commands.HelpCommand):
 description: {command_help}
 ```""")
         else:
-            embed = discord.Embed(color=discord.Colour.blurple(),
-                                  title=f"information about {self.context.clean_prefix}{command}", description=f"""```yaml
+            embed = discord.Embed(title=f"information about {self.context.clean_prefix}{command}",
+                                  description=f"""```yaml
       usage: {self.get_minimal_command_signature(command)}
 description: {command_help}
 ```""")
@@ -299,7 +298,7 @@ description: {command_help}
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
-            await ctx.send(embed=discord.Embed(color=discord.Colour.blurple(), description=str(error.original)))
+            await ctx.send(embed=discord.Embed(description=str(error.original)))
 
 
 class About(commands.Cog):
@@ -329,8 +328,8 @@ class About(commands.Cog):
     @commands.command(help="Sends a link to invite the bot to your server")
     async def invite(self, ctx):
         await ctx.send(
-            embed=discord.Embed(description=f"[**<:invite:860644752281436171> invite me**]({self.bot.invite_url})",
-                                color=ctx.me.color), view=InvMe())
+            embed=discord.Embed(description=f"[**<:invite:860644752281436171> invite me**]({self.bot.invite_url})"),
+            view=InvMe())
 
     @commands.command(help="Checks the bot's ping to Discord")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -377,8 +376,7 @@ class About(commands.Cog):
     async def about(self, ctx):
         """Tells you information about the bot itself."""
         information = await self.bot.application_info()
-        embed = discord.Embed(color=discord.Colour.blurple(),
-                              description=f"<:github:744345792172654643> [source]({self.bot.repo}) | "
+        embed = discord.Embed(description=f"<:github:744345792172654643> [source]({self.bot.repo}) | "
                                           f"<:invite:860644752281436171> [invite me]({self.bot.invite_url}) | "
                                           f"<:topgg:870133913102721045> [top.gg]({self.bot.vote_top_gg}) | "
                                           f"<:botsgg:870134146972938310> [bots.gg]({self.bot.vote_bots_gg})"
@@ -433,7 +431,7 @@ class About(commands.Cog):
         source_url = 'https://github.com/LeoCx1000/discord-bots'
         branch = 'master/DuckBot'
         if command is None:
-            embed = discord.Embed(color=ctx.me.color, description=f"**[Here's my source code]({source_url})**")
+            embed = discord.Embed(description=f"**[Here's my source code]({source_url})**")
             return await ctx.send(embed=embed)
 
         if command == 'help':
@@ -443,7 +441,7 @@ class About(commands.Cog):
         else:
             obj = self.bot.get_command(command.replace('.', ' '))
             if obj is None:
-                embed = discord.Embed(color=ctx.me.color, description=f"**[Here's my source code]({source_url})**",
+                embed = discord.Embed(description=f"**[Here's my source code]({source_url})**",
                                       title="command not found")
                 return await ctx.send(embed=embed)
 

@@ -639,7 +639,8 @@ class Music(commands.Cog):
             await ctx.send(error.original)
 
         if isinstance(error, NoPlayer):
-            return await ctx.send(embed=discord.Embed(description=f'There isn\'t an active player in your server.'))
+            return await ctx.send(embed=discord.Embed(description=f'There isn\'t an active player in your server.',
+                                                      color=0xD7332A))
 
         if isinstance(error, IncorrectChannelError):
             player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
