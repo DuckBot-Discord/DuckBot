@@ -103,7 +103,8 @@ class InvMe(discord.ui.View):
 
 
 class OzAd(discord.ui.View):
-    super().__init__(timeout=None)
+    def __init__(self):
+        super().__init__(timeout=None)
 
     @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji="<:minecraft:799344306166956052>",
                        custom_id='OzSmpAd')
