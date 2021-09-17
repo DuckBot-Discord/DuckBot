@@ -6,6 +6,9 @@ from typing import (
     List,
     Optional
 )
+from dotenv import load_dotenv
+import asyncpg
+import asyncpraw
 
 import aiohttp
 import discord
@@ -17,11 +20,13 @@ from discord.ext.commands.errors import (
     ExtensionNotFound,
     NoEntryPointError
 )
+import errors
 
 initial_extensions = (
     'jishaku',
 )
 
+load_dotenv()
 
 class CustomContext(commands.Context):
 
@@ -112,6 +117,30 @@ class CustomContext(commands.Context):
 class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)
 
+    def blacklist(self, ctx: commands.Context):
+        try:
+            is_blacklisted = self.blacklist[ctx.author.id]
+        except KeyError:
+            is_blacklisted = False
+        if ctx.author.id == self.owner_id:
+            is_blacklisted = False
+
+        if is_blacklisted is False:
+            return True
+        else:
+            raise errors.UserBlacklisted
+
+    async def create_db_pool(self) -> asyncpg.Pool:
+        credentials = {
+            "user": f"{os.getenv('PSQL_USER')}",
+            "password": f"{os.getenv('PSQL_PASSWORD')}",
+            "database": f"{os.getenv('PSQL_DB')}",
+            "host": f"{os.getenv('PSQL_HOST')}"
+        }
+
+        return await asyncpg.create_pool( **credentials)
+
+
     def __init__(self) -> None:
         intents = discord.Intents.default()
         intents.members = True
@@ -124,6 +153,16 @@ class DuckBot(commands.Bot):
             enable_debug_events=True,
             strip_after_prefix=True
         )
+
+        self.db = self.loop.run_until_complete(self.create_db_pool())
+
+        self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
+                                       client_secret=os.getenv('ASYNC_PRAW_CS'),
+                                       user_agent=os.getenv('ASYNC_PRAW_UA'),
+                                       username=os.getenv('ASYNC_PRAW_UN'),
+                                       password=os.getenv('ASYNC_PRAW_PA'))
+
+        self.add_check(self.blacklist)
 
         self.owner_id = 349373972103561218
 
