@@ -1185,9 +1185,9 @@ class Music(commands.Cog):
                                               description=f'Successfully moved **[{x["title"]}]({x["uri"]})** to position `{position}`')
                         return await ctx.send(embed=embed)
 
-        if isinstance(track, int):
+        elif isinstance(track, int):
             try:
-                x = queue[position]
+                x = queue[track]
                 queue.insert(position - 1, queue.pop(queue.index(x)))
                 embed = discord.Embed(color=(color(ctx)),
                                       description=f'Successfully moved **[{x["title"]}]({x["uri"]})** to position `{position}`')
