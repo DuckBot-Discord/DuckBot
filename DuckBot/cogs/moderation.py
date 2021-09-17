@@ -54,7 +54,7 @@ class BanEmbed(menus.ListPageSource):
         super().__init__(data, per_page=per_page)
 
     @staticmethod
-    async def format_page(entries, **kwargs):
+    async def format_page(entries, *args, **kwargs):
         embed = discord.Embed(title=f"Server bans ({len(entries)})",
                               description="\n".join(entries))
         embed.set_footer(text=f"To unban do db.unban [entry]\nMore user info do db.baninfo [entry]")
