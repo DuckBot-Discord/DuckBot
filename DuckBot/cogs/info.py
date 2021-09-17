@@ -118,7 +118,7 @@ class OzAd(discord.ui.View):
                                           "from across the world with 20 active players and we’re "
                                           "looking for more to join us!"
                                           "\n"
-                                          "\n**We’re a 1.17.1 JAVA server complete with **McMMO**, **TPA**, "
+                                          "\n**We’re a 1.17.1 JAVA server complete with McMMO, TPA, "
                                           "nether highways, `/sethome` and more!**"
                                           "\n"
                                           "\nCome join us, and remember- There's no place like home."
