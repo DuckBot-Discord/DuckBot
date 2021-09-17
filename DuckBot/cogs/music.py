@@ -782,7 +782,7 @@ class Music(commands.Cog):
             return True
         elif ctx.author.guild_permissions.manage_messages:
             return True
-        elif ctx.author._roles.has(role_id) or role_id == 0:
+        elif ctx.author._roles.has(role_id) or role_id == 1234:
             return True
         elif ctx.author.id in ctx.bot.owner_ids:
             return True
