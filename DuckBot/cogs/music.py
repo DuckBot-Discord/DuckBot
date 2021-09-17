@@ -9,6 +9,7 @@ import time as t
 import typing
 import zlib
 from time import time
+from difflib import get_close_matches
 
 from discord.ext import commands, menus
 from discord.ext.menus.views import ViewMenuPages
@@ -1048,7 +1049,6 @@ class Music(commands.Cog):
         embed = discord.Embed(title=f'Current Track', color=color(ctx), description=info)
         embed.set_thumbnail(url=thumnail)
         await ctx.send(embed=embed)
-        print(player.current.extra)
 
     @commands.command(name="restart")
     async def restart_command(self, ctx: commands.Context):
@@ -1156,7 +1156,7 @@ class Music(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name="move")
-    async def move_command(self, ctx: commands.Context, position: int, *, track: str):
+    async def move_command(self, ctx: commands.Context, position: int, *, track: typing.Union[int, str]):
         """Moves the specified song to the specified position"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player:
@@ -1171,12 +1171,30 @@ class Music(commands.Cog):
             raise InvalidPosition
         # ACTUAL PART
         queue = player.queue
-        for x in queue:
-            if x['title'].upper() == track.upper():
+
+        if isinstance(track, str):
+            tracks = [str(x['title']) for x in queue]
+            matches = get_close_matches(track, tracks)
+            if matches:
+                track = matches[0]
+
+                for x in queue:
+                    if x['title'].upper() == track.upper():
+                        queue.insert(position - 1, queue.pop(queue.index(x)))
+                        embed = discord.Embed(color=(color(ctx)),
+                                              description=f'Successfully moved **[{x["title"]}]({x["uri"]})** to position `{position}`')
+                        return await ctx.send(embed=embed)
+
+        if isinstance(track, int):
+            try:
+                x = queue[position]
                 queue.insert(position - 1, queue.pop(queue.index(x)))
                 embed = discord.Embed(color=(color(ctx)),
                                       description=f'Successfully moved **[{x["title"]}]({x["uri"]})** to position `{position}`')
                 return await ctx.send(embed=embed)
+            except KeyError:
+                pass
+
         embed = discord.Embed(color=0xD7332A, description='Track not found.')
         return await ctx.send(embed=embed)
 

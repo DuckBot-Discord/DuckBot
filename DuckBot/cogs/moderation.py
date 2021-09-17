@@ -2,8 +2,7 @@ import argparse
 import asyncio
 import datetime
 import time
-from inspect import Parameter
-
+import DuckBot
 import discord
 import re
 import shlex
@@ -79,7 +78,7 @@ class Moderation(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
         self.temporary_mutes.start()
 
     async def cog_check(self, ctx):
