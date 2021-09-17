@@ -28,6 +28,7 @@ initial_extensions = (
 
 load_dotenv()
 
+
 class CustomContext(commands.Context):
 
     @staticmethod
@@ -103,7 +104,7 @@ class CustomContext(commands.Context):
                 embed.timestamp = discord.utils.utcnow()
 
         if embed:
-            embed.color = embed.color if embed.color not in (discord.Color.default(), discord.Embed.Empty, None)\
+            embed.colour = embed.colour if embed.colour not in (discord.Color.default(), discord.Embed.Empty, None)\
                 else self.me.color if self.me.color not in (discord.Color.default(), discord.Embed.Empty, None)\
                 else self.author.color if self.author.color not in (discord.Color.default(), discord.Embed.Empty, None)\
                 else discord.Color.blurple()
@@ -112,6 +113,17 @@ class CustomContext(commands.Context):
             return await super().send(content=content, embed=embed, reference=reference, **kwargs)
         except discord.HTTPException:
             return await super().send(content=content, embed=embed, reference=None, **kwargs)
+
+
+async def create_db_pool() -> asyncpg.Pool:
+    credentials = {
+        "user": f"{os.getenv('PSQL_USER')}",
+        "password": f"{os.getenv('PSQL_PASSWORD')}",
+        "database": f"{os.getenv('PSQL_DB')}",
+        "host": f"{os.getenv('PSQL_HOST')}"
+    }
+
+    return await asyncpg.create_pool(**credentials)
 
 
 class DuckBot(commands.Bot):
@@ -130,17 +142,6 @@ class DuckBot(commands.Bot):
         else:
             raise errors.UserBlacklisted
 
-    async def create_db_pool(self) -> asyncpg.Pool:
-        credentials = {
-            "user": f"{os.getenv('PSQL_USER')}",
-            "password": f"{os.getenv('PSQL_PASSWORD')}",
-            "database": f"{os.getenv('PSQL_DB')}",
-            "host": f"{os.getenv('PSQL_HOST')}"
-        }
-
-        return await asyncpg.create_pool( **credentials)
-
-
     def __init__(self) -> None:
         intents = discord.Intents.default()
         intents.members = True
@@ -154,7 +155,7 @@ class DuckBot(commands.Bot):
             strip_after_prefix=True
         )
 
-        self.db = self.loop.run_until_complete(self.create_db_pool())
+        self.db = self.loop.run_until_complete(create_db_pool())
 
         self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
                                        client_secret=os.getenv('ASYNC_PRAW_CS'),
@@ -237,7 +238,8 @@ class DuckBot(commands.Bot):
 
             for value in values:
                 if value['prefix']:
-                    self.prefixes[value['guild_id']] = ((value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
+                    self.prefixes[value['guild_id']] = (
+                                (value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
             for guild in self.guilds:
                 if not guild.unavailable:
                     try:
