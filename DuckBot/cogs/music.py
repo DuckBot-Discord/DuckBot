@@ -667,7 +667,7 @@ class Music(commands.Cog):
                 embed=discord.Embed(color=0xe74c3c, description="I can't play music in the afk channel."))
 
         if isinstance(error, NotAuthorized):
-            return await ctx.send(embed=discord.Embed(colour=0xe74c3c, description="You cannot perform this action."))
+            return await ctx.send(embed=discord.Embed(colour=0xe74c3c, description="You need to be the DJ, have Manage Messages permission, or have a role named \"DJ\" to perform this action!"))
 
         if isinstance(error, InvalidTrack):
             return await ctx.send(embed=discord.Embed(colour=0xe74c3c,
@@ -780,6 +780,10 @@ class Music(commands.Cog):
         if player.dj == ctx.author.id:
             return True
         elif ctx.author.guild_permissions.manage_messages:
+            return True
+        elif discord.utils.get(ctx.author.roles, name="DJ"):
+            return True
+        elif ctx.author.id in ctx.bot.owner_ids:
             return True
         else:
             return False
