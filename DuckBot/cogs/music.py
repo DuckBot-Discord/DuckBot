@@ -650,7 +650,7 @@ class Music(commands.Cog):
         if isinstance(error, IncorrectTextChannelError):
             player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
             channel = self.bot.get_channel(int(player.text_channel))
-            return await ctx.send(embed=discord.Embed(title='Error occured', color=0xe74c3c,
+            return await ctx.send(embed=discord.Embed(title='Error occured', color=0xD7332A,
                                                       description=f'{ctx.author.mention}, you can only use commands in '
                                                                   f'{channel.mention} for this session.'))
 
@@ -675,7 +675,7 @@ class Music(commands.Cog):
         }
 
         if isinstance(error, tuple(errors.keys())):
-            return await ctx.send(embed=discord.Embed(color=0xe74c3c, description=errors[type(error)]))
+            return await ctx.send(embed=discord.Embed(color=0xD7332A, description=errors[type(error)]))
 
     async def ensure_voice(self, ctx):
         """ This check ensures that the bot and command author are in the same voicechannel. """
@@ -757,7 +757,7 @@ class Music(commands.Cog):
             guild = self.bot.get_guild(int(event.player.guild_id))
             await guild.change_voice_state(channel=None)
             channel = self.bot.get_channel(int(event.player.text_channel))
-            embed = discord.Embed(title=f'Inactive player', color=0xe74c3c,
+            embed = discord.Embed(title=f'Inactive player', color=0xD7332A,
                                   description='There were no tracks played in the past 3 minutes.')
             await channel.send(embed=embed)
         if isinstance(event, TrackStartEvent):
@@ -796,7 +796,7 @@ class Music(commands.Cog):
         # Results could be None if Lavalink returns an invalid response (non-JSON/non-200 (OK)).
         # ALternatively, resullts['tracks'] could be an empty array if the query yielded no tracks.
         if not results or not results['tracks']:
-            embed_var = discord.Embed(colour=0xe74c3c)
+            embed_var = discord.Embed(colour=0xD7332A)
             embed_var.description = 'No songs were found with that query. Please try again.'
             return await ctx.send(embed=embed_var)
         # Valid loadTypes are:
@@ -839,12 +839,12 @@ class Music(commands.Cog):
             view.message = await ctx.send(embed=embed, view=view)
 
         if results['loadType'] == 'NO_MATCHES':
-            embed_var = discord.Embed(colour=0xe74c3c,
+            embed_var = discord.Embed(colour=0xD7332A,
                                       description='No songs were found with that query. Please try again.')
             await ctx.send(embed=embed_var)
 
         if results['loadType'] == 'LOAD_FAILED':
-            embed_var = discord.Embed(colour=0xe74c3c, description='Failed loading your query.')
+            embed_var = discord.Embed(colour=0xD7332A, description='Failed loading your query.')
             await ctx.send(embed=embed_var)
 
     @commands.command(name="disconnect", aliases=['dc'])
@@ -1175,7 +1175,7 @@ class Music(commands.Cog):
                 embed = discord.Embed(color=(color(ctx)),
                                       description=f'Successfully moved **[{x["title"]}]({x["uri"]})** to position `{position}`')
                 return await ctx.send(embed=embed)
-        embed = discord.Embed(color=0xe74c3c, description='Track not found.')
+        embed = discord.Embed(color=0xD7332A, description='Track not found.')
         return await ctx.send(embed=embed)
 
     @commands.command(name='nodes')
@@ -1221,11 +1221,11 @@ class Music(commands.Cog):
                                                 color=(color(ctx))))
                     else:
                         return await ctx.send(
-                            embed=discord.Embed(title=f'{node} is currently unavailable', color=0xe74c3c))
+                            embed=discord.Embed(title=f'{node} is currently unavailable', color=0xD7332A))
         else:
             return await ctx.send(
-                embed=discord.Embed(title=f'There are no nodes connected with this server', color=0xe74c3c))
-        return await ctx.send(embed=discord.Embed(title=f'Unknown node', color=0xe74c3c))
+                embed=discord.Embed(title=f'There are no nodes connected with this server', color=0xD7332A))
+        return await ctx.send(embed=discord.Embed(title=f'Unknown node', color=0xD7332A))
 
 
 class SocketFix(commands.Cog):
