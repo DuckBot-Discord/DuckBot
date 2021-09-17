@@ -970,7 +970,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="loop", aliases=['repeat'])
-    async def loop_command(self, ctx: commands.Context):
+    async def loop_command(self, ctx: commands.Context, mode: str = None):
         """Starts/Stops looping your currently playing track"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player:
@@ -980,6 +980,27 @@ class Music(commands.Cog):
         if not await self.is_privileged(ctx):
             raise NotAuthorized
         # ACTUAL PART
+        mode = mode.lower() if mode else None
+        modes = {"off": 0,
+                 "0": 0,
+                 "o": 0,
+                 "track": 1,
+                 "1": 1,
+                 "t": 1,
+                 "queue": 2,
+                 "2": 2,
+                 "q": 2
+                 }
+        if mode.lower() in tuple(modes.keys()):
+            mode = modes[mode.lower()]
+            messages = {
+                0: "No longer looping.",
+                1: "Now looping the **current track**",
+                2: "Now looping the **queue**"
+            }
+            player.set_loop(mode)
+            return await ctx.send(messages[mode])
+
         embed = discord.Embed(color=(color(ctx)), description=f"Choose loop mode\
             \n**:repeat_one: Track** - Starts looping your currently playing track.\
             \n**:repeat: Queue** - Starts looping your current queue.\
