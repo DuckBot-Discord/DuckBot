@@ -624,14 +624,12 @@ class Music(commands.Cog):
             await ctx.send(error.original)
 
         if isinstance(error, NoPlayer):
-            return await ctx.send(embed=discord.Embed(title='Error occured', color=0xe74c3c,
-                                                      description=f'There isn\'t an active player in your server.'))
+            return await ctx.send(embed=discord.Embed(description=f'There isn\'t an active player in your server.'))
 
         if isinstance(error, IncorrectChannelError):
             player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
             channel = self.bot.get_channel(int(player.channel_id))
-            return await ctx.send(embed=discord.Embed(title='Error occured', color=0xe74c3c,
-                                                      description=f'{ctx.author.mention}, you must be in '
+            return await ctx.send(embed=discord.Embed(description=f'{ctx.author.mention}, you must be in '
                                                                   f'{channel.mention} for this session.'))
 
         if isinstance(error, IncorrectTextChannelError):
@@ -673,6 +671,8 @@ class Music(commands.Cog):
         if not ignored:
             if not ctx.author.voice or not ctx.author.voice.channel:
                 raise NoConnection
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             if not should_connect:
                 raise NoVoiceChannel
@@ -832,6 +832,8 @@ class Music(commands.Cog):
         """Disconnects the bot from your voice channel and clears the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -845,6 +847,8 @@ class Music(commands.Cog):
         """Pauses playback"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -861,6 +865,8 @@ class Music(commands.Cog):
         """Resumes playback"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -877,6 +883,8 @@ class Music(commands.Cog):
         """Stops the currently playing track and removes all tracks from the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -893,6 +901,8 @@ class Music(commands.Cog):
         """Removes all tracks from the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -910,6 +920,8 @@ class Music(commands.Cog):
         """Skips to the next song"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -926,6 +938,8 @@ class Music(commands.Cog):
         """Randomizes the current order of tracks in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -939,6 +953,8 @@ class Music(commands.Cog):
     async def loop_command(self, ctx: commands.Context):
         """Starts/Stops looping your currently playing track"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -972,6 +988,8 @@ class Music(commands.Cog):
         """Displays info about the current track in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKINFG
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not player.is_playing:
@@ -993,6 +1011,8 @@ class Music(commands.Cog):
         """Restarts the current track in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -1009,6 +1029,8 @@ class Music(commands.Cog):
         """Skips to the specified timestamp in the currently playing track (input: H:M:S)"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -1042,6 +1064,8 @@ class Music(commands.Cog):
         """Sets the player's volume; If there is not input, it will return the current value"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if volume is None:
@@ -1064,6 +1088,8 @@ class Music(commands.Cog):
         """
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
@@ -1089,6 +1115,8 @@ class Music(commands.Cog):
     async def move_command(self, ctx: commands.Context, position: int, *, track: str):
         """Moves the specified song to the specified position"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        if not player:
+            raise NoPlayer
         if not player.is_connected:
             raise NoVoiceChannel
         if not await self.is_privileged(ctx):
