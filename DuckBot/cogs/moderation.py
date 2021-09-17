@@ -804,7 +804,8 @@ class Moderation(commands.Cog):
 
     # Remove mute role
 
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     @muterole.command(name="remove", aliases=["unset"])
     async def muterole_remove(self, ctx: commands.Context):
         """
@@ -820,7 +821,8 @@ class Moderation(commands.Cog):
         return await ctx.send(f"Removed this server's mute role!",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     @muterole.command(name="create")
     async def muterole_create(self, ctx: commands.Context):
         starting_time = time.monotonic()
@@ -869,7 +871,8 @@ class Moderation(commands.Cog):
                            f"\nSet permissions for {modified} channel{'' if modified == 1 else 's'}!")
 
     @muterole.command(name="delete")
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     async def muterole_delete(self, ctx: commands.Context):
         """
         Deletes the server's mute role if it exists.
@@ -908,7 +911,8 @@ class Moderation(commands.Cog):
         await ctx.send("🚮")
 
     @muterole.command(name="fix")
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     async def muterole_fix(self, ctx: commands.Context):
         async with ctx.typing():
             starting_time = time.monotonic()
@@ -1174,7 +1178,7 @@ class Moderation(commands.Cog):
 
     # Add dj role
 
-    @commands.group(invoke_without_command=True)
+    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.has_permissions(manage_roles=True)
     async def dj(self, ctx: commands.Context, new_role: discord.Role = None):
         """
@@ -1207,7 +1211,7 @@ class Moderation(commands.Cog):
 
     # Remove dj role
 
-    @commands.has_permissions(manage_roles=True)
+    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @dj.command(name="clear", aliases=["unset", "remove"])
     async def dj_remove(self, ctx: commands.Context):
         """
@@ -1223,7 +1227,7 @@ class Moderation(commands.Cog):
 
     # Disable DJ role requirement
 
-    @commands.has_permissions(manage_messages=True)
+    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @dj.command(name='all', aliases=['disable'])
     async def dj_all(self, ctx: commands.Context):
         """
