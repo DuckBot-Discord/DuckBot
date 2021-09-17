@@ -764,7 +764,11 @@ class Music(commands.Cog):
             if event.player.loop != 1:
                 channel = self.bot.get_channel(int(event.player.text_channel))
                 thumnail = f"https://img.youtube.com/vi/{event.track.identifier}/maxresdefault.jpg"
-                info = f'**Title**: **[{event.track.title}]({event.track.uri})**\n\n**Artist**: {event.track.author}\n\n**Duration**: {str(dt.timedelta(milliseconds=int(event.track.duration)))}\n\n**Requested By**: {event.track.requester.mention}\n\n'
+                info = f'**Title**: **[{event.track.title}]({event.track.uri})**' \
+                       f'\n**Artist**: {event.track.author}' \
+                       f'\n**Duration**: ' \
+                       f'{str(dt.timedelta(milliseconds=int(event.track.duration)))}\n' \
+                       f'**Requested By**: {event.track.requester.mention}'
                 embed = discord.Embed(title='Now playing', color=color(self.bot.get_guild(int(event.player.guild_id))),
                                       description=info)
                 embed.set_thumbnail(url=thumnail)
@@ -829,14 +833,14 @@ class Music(commands.Cog):
             info = []
             for track in tracks:
                 integer += 1
-                info.append(f"`{integer}` **[{track['info']['title']}]({track['info']['uri']})**\n")
+                info.append(f"`{integer}\U0000fe0f\U000020e3` [{track['info']['title']}]({track['info']['uri']})")
             embed.description = '\n'.join(x for x in info)
             view = PlayMenuView(tracks, self.bot, ctx)
             view.message = await ctx.send(embed=embed, view=view)
 
         if results['loadType'] == 'NO_MATCHES':
             embed_var = discord.Embed(colour=0xe74c3c,
-                                     description='No songs were found with that query. Please try again.')
+                                      description='No songs were found with that query. Please try again.')
             await ctx.send(embed=embed_var)
 
         if results['loadType'] == 'LOAD_FAILED':
