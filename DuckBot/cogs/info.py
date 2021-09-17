@@ -113,11 +113,12 @@ class OzAd(discord.ui.View):
                                           "\n"
                                           "\n**Welcome to OZ SMP, your home away from home.** "
                                           "\nWe all know there's no place like home. "
-                                          "Inspired by The Wizard of OZ we are a small tight knit community from across"
-                                          " the world with 20 active players and we’re looking for more to join us!"
+                                          "Inspired by The Wizard of OZ, we are a small tight knit community "
+                                          "from across the world with 20 active players and we’re "
+                                          "looking for more to join us!"
                                           "\n"
-                                          "\n**We’re a 1.17.1 JAVA server complete with McMMO, TPA, "
-                                          "nether highways, /sethome and more!**"
+                                          "\n**We’re a 1.17.1 JAVA server complete with **McMMO**, **TPA**, "
+                                          "nether highways, `/sethome` and more!**"
                                           "\n"
                                           "\nCome join us, and remember- There's no place like home."
                                           "\n"
@@ -592,4 +593,4 @@ DuckBot's top role position
     async def oz_ad(self, ctx):
         embed = discord.Embed(title="Here's a cool minecraft server!",
                               description="Press the button for more info.")
-        await ctx.send(embed=embed, delete_after=30, view=OzAd(), footer=False)
+        await ctx.send(embed=embed, view=OzAd(), footer=False)
