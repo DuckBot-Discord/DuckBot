@@ -1370,7 +1370,7 @@ class Moderation(commands.Cog):
         await self.bot.db.execute(
             "INSERT INTO prefixes(guild_id, dj_id) VALUES ($1, $2) "
             "ON CONFLICT (guild_id) DO UPDATE SET dj_id = $2",
-            ctx.guild.id, 0)
+            ctx.guild.id, 1234)
 
         return await ctx.send(f"Everyone is the dj now! 💃"
                               "\nDo `help dj` for more commends",
