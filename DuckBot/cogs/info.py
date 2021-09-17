@@ -109,7 +109,8 @@ class OzAd(discord.ui.View):
     @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji="<:minecraft:799344306166956052>",
                        custom_id='OzSmpAd')
     async def advertisement(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = discord.Embed(description="We’re not in Kansas anymore Toto. 🧙"
+        embed = discord.Embed(description="\u200b"
+                                          "\nWe’re not in Kansas anymore Toto. 🧙"
                                           "\n"
                                           "\n**Welcome to OZ SMP, your home away from home.** "
                                           "\nWe all know there's no place like home. "
