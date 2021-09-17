@@ -657,9 +657,9 @@ class Music(commands.Cog):
 
         }
 
-        if isinstance(error, errors.keys()):
+        if isinstance(error, tuple(errors.keys())):
             return await ctx.send(embed=discord.Embed(title='Error occured', color=0xe74c3c,
-                                                      description=errors[error]))
+                                                      description=errors[type(error)]))
 
 
     async def ensure_voice(self, ctx):
@@ -1009,7 +1009,7 @@ class Music(commands.Cog):
         embed = discord.Embed(colour=(color(ctx)), description=f'The volume was set to **{player.volume}%**')
         return await ctx.send(embed=embed)
 
-    @commands.command(name="remove")
+    @commands.command(name="remove_song")
     async def remove_range_command(self, ctx: commands.Context, start: int, *, end: int = None):
         """Removes all the tracks from the specified start through the specified end (if the end is not specified it will remove only one track)"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
