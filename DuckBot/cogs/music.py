@@ -612,7 +612,7 @@ class CustomPlayer(lavalink.BasePlayer):
 
 class Music(commands.Cog):
     """
-    🎵 Commands related to playing music through the bot in a voice channel (made by DaPandaOfficial🐼#5684).
+    🎵 Commands to play music in a voice channel [Hover for credits](https://tiny.one/music-cog \"Music cog made by DaPandaOfficial🐼#5684 at tiny.one/music-cog. Click me to open the website!\")
     """
 
     def __init__(self, bot):
