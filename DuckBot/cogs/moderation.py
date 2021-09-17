@@ -329,6 +329,14 @@ class Moderation(commands.Cog):
 
         await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason or ''}")
 
+    @commands.command(help="unbans a member # run without arguments to get a list of entries")
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
+    @commands.cooldown(1, 3.0, commands.BucketType.user)
+    async def unban(self, ctx: commands.Context, user: discord.User):
+        await ctx.guild.unban(user)
+        return await ctx.send(f"Unbanned **{user}**")
+
     @commands.command(aliases=['sn', 'nick'])
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
@@ -613,18 +621,6 @@ class Moderation(commands.Cog):
                 return msg.author == ctx.me
 
         await self.do_removal(ctx, predicate=check, bulk=bulk, limit=amount)
-
-    # ------------------------------------------------------------------------------#
-    # --------------------------------- UNBAN --------------------------------------#
-    # ------------------------------------------------------------------------------#
-
-    @commands.command(help="unbans a member # run without arguments to get a list of entries")
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
-    @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def unban(self, ctx: commands.Context, user: discord.User):
-        await ctx.guild.unban(user)
-        return await ctx.send(f"Unbanned **{user}**")
 
     # --------------------------------------------------------------------------------#
     # -------------------------------- MUTE STUFF ------------------------------------#
