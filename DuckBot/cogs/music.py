@@ -778,7 +778,6 @@ class Music(commands.Cog):
         """Check whether the user is an Admin or DJ or alone in a VC."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         role_id = (await self.bot.db.fetchval('SELECT dj_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)) or 1
-        return print(role_id)
         if player.dj == ctx.author.id:
             return True
         elif ctx.author.guild_permissions.manage_messages:
