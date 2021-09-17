@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import datetime
 import time
-import DuckBot
+from main import DuckBot
 import discord
 import re
 import shlex
