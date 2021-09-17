@@ -158,7 +158,8 @@ class QueueMenu(menus.ListPageSource):
     async def format_page(self, menu, entries):
         offset = menu.current_page * self.per_page
         text = '1 song in the queue'
-        if len(self.data) > 1:  text = f'{len(self.data)} songs in the queue'
+        if len(self.data) > 1:
+            text = f'{len(self.data)} songs in the queue'
         embed = discord.Embed(title=text, colour=color(self.ctx))
         for i, v in enumerate(entries, start=offset):
             embed.add_field(name='\u200b', value=f'`{i + 1}.` {v}', inline=False)
@@ -205,13 +206,14 @@ class PlayMenu(discord.ui.Select):
         self.info = data
         for track in self.info:
             integer += 1
-            title = track['info']['title'].upper()
+            title = track['info']['title']
             author = track['info']['author']
             id = track['info']['identifier']
             values.append(
                 discord.SelectOption(label=title, value=id, description=author, emoji=f'{integer}\U0000fe0f\U000020e3'))
         values.append(discord.SelectOption(label='Cancel',
-                                           description='Cancels the action and disconnects the player, if the queue remains empty.',
+                                           description='Cancels the action and disconnects the player, '
+                                                       ' the queue remains empty.',
                                            emoji=cancel_emote))
         super().__init__(placeholder='Select a track', min_values=1, max_values=1, options=values)
 
@@ -229,7 +231,7 @@ class PlayMenu(discord.ui.Select):
                 self.player.add(requester=interaction.user, track=track)
                 await interaction.message.edit(view=None)
                 await hook.edit(embed=discord.Embed(color=color(self.ctx), title="Added a track to the queue",
-                                                    description=f"**[{track.title.upper()}]({track.uri})**"))
+                                                    description=f"**[{track.title}]({track.uri})**"))
                 if not self.player.is_playing:
                     await self.player.play()
 
@@ -442,13 +444,14 @@ class CustomPlayer(lavalink.BasePlayer):
         if start_time is not None:
             if not isinstance(start_time, int) or not 0 <= start_time <= track.duration:
                 raise ValueError(
-                    'start_time must be an int with a value equal to, or greater than 0, and less than the track duration')
+                    'start_time must be an int with a value equal to, '
+                    'or greater than 0, and less than the track duration')
             options['startTime'] = start_time
 
         if end_time is not None:
             if not isinstance(end_time, int) or not 0 <= end_time <= track.duration:
                 raise ValueError(
-                    'end_time must be an int with a value equal to, or greater than 0, and less than the track duration')
+                    'end_time must be a number greater than 0 and lower than the current song\'s duration')
             options['endTime'] = end_time
 
         if no_replace is None:
@@ -628,13 +631,15 @@ class Music(commands.Cog):
             player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
             channel = self.bot.get_channel(int(player.channel_id))
             return await ctx.send(embed=discord.Embed(title='Error occured', color=0xe74c3c,
-                                                      description=f'{ctx.author.mention}, you must be in {channel.mention} for this session.'))
+                                                      description=f'{ctx.author.mention}, you must be in '
+                                                                  f'{channel.mention} for this session.'))
 
         if isinstance(error, IncorrectTextChannelError):
             player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
             channel = self.bot.get_channel(int(player.text_channel))
             return await ctx.send(embed=discord.Embed(title='Error occured', color=0xe74c3c,
-                                                      description=f'{ctx.author.mention}, you can only use commands in {channel.mention} for this session.'))
+                                                      description=f'{ctx.author.mention}, you can only use commands in '
+                                                                  f'{channel.mention} for this session.'))
 
         errors = {
             NoVoiceChannel: "I'm not connected to any voice channels.",
@@ -716,7 +721,8 @@ class Music(commands.Cog):
                     player.dj = random.choice(members)
                     new_dj = member.guild.get_member(player.dj)
                     embed = discord.Embed(title=f'New DJ', color=(
-                        member.guild.me.color if member.guild.me.color != discord.Color.default() else discord.Color.random()),
+                        member.guild.me.color if member.guild.me.color != discord.Color.default()
+                        else discord.Color.random()),
                                           description=f'Now {new_dj.mention} is in charge!')
                     await text_channel.send(embed=embed)
         else:
@@ -731,7 +737,8 @@ class Music(commands.Cog):
                 else:
                     await asyncio.sleep(5)
                     time += 5
-            if not event.player.is_connected: return
+            if not event.player.is_connected:
+                return
             guild = self.bot.get_guild(int(event.player.guild_id))
             await guild.change_voice_state(channel=None)
             channel = self.bot.get_channel(int(event.player.text_channel))
@@ -742,7 +749,7 @@ class Music(commands.Cog):
             if event.player.loop != 1:
                 channel = self.bot.get_channel(int(event.player.text_channel))
                 thumnail = f"https://img.youtube.com/vi/{event.track.identifier}/maxresdefault.jpg"
-                info = f'**Title**: **[{event.track.title.upper()}]({event.track.uri})**\n\n**Artist**: {event.track.author}\n\n**Duration**: {str(dt.timedelta(milliseconds=int(event.track.duration)))}\n\n**Requested By**: {event.track.requester.mention}\n\n'
+                info = f'**Title**: **[{event.track.title}]({event.track.uri})**\n\n**Artist**: {event.track.author}\n\n**Duration**: {str(dt.timedelta(milliseconds=int(event.track.duration)))}\n\n**Requested By**: {event.track.requester.mention}\n\n'
                 embed = discord.Embed(title='Now playing', color=color(self.bot.get_guild(int(event.player.guild_id))),
                                       description=info)
                 embed.set_thumbnail(url=thumnail)
@@ -770,9 +777,9 @@ class Music(commands.Cog):
         # Results could be None if Lavalink returns an invalid response (non-JSON/non-200 (OK)).
         # ALternatively, resullts['tracks'] could be an empty array if the query yielded no tracks.
         if not results or not results['tracks']:
-            embedVar = discord.Embed(colour=0xe74c3c)
-            embedVar.description = 'No songs were found with that query. Please try again.'
-            return await ctx.send(embed=embedVar)
+            embed_var = discord.Embed(colour=0xe74c3c)
+            embed_var.description = 'No songs were found with that query. Please try again.'
+            return await ctx.send(embed=embed_var)
         # Valid loadTypes are:
         #   TRACK_LOADED    - single video/direct URL)
         #   PLAYLIST_LOADED - direct URL to playlist)
@@ -783,7 +790,7 @@ class Music(commands.Cog):
             track = lavalink.models.AudioTrack(results['tracks'][0], ctx.author, recommended=True)
             player.add(requester=ctx.author, track=track)
             embed = discord.Embed(color=(color(ctx)), title="Added a track to the queue",
-                                  description=f"**[{track.title.upper()}]({track.uri})**")
+                                  description=f"**[{track.title}]({track.uri})**")
             await ctx.send(embed=embed)
             if not player.is_playing:
                 await player.play()
@@ -794,7 +801,8 @@ class Music(commands.Cog):
                 player.add(requester=ctx.author, track=track)
 
             embed = discord.Embed(color=(color(ctx)), title="Added a playlist to the queue",
-                                  description=f'**[{results["playlistInfo"]["name"]}]({query})** with {len(tracks)} songs.')
+                                  description=
+                                  f'**[{results["playlistInfo"]["name"]}]({query})** with {len(tracks)} songs.')
             await ctx.send(embed=embed)
             if not player.is_playing:
                 await player.play()
@@ -806,26 +814,28 @@ class Music(commands.Cog):
             info = []
             for track in tracks:
                 integer += 1
-                info.append(f"`{integer}` **[{track['info']['title'].upper()}]({track['info']['uri']})**\n")
+                info.append(f"`{integer}` **[{track['info']['title']}]({track['info']['uri']})**\n")
             embed.description = '\n'.join(x for x in info)
             await ctx.send(embed=embed, view=PlayMenuView(tracks, self.bot, ctx))
 
         if results['loadType'] == 'NO_MATCHES':
-            embedVar = discord.Embed(colour=0xe74c3c,
+            embed_var = discord.Embed(colour=0xe74c3c,
                                      description='No songs were found with that query. Please try again.')
-            await ctx.send(embed=embedVar)
+            await ctx.send(embed=embed_var)
 
         if results['loadType'] == 'LOAD_FAILED':
-            embedVar = discord.Embed(colour=0xe74c3c, description='Failed loading your query.')
-            await ctx.send(embed=embedVar)
+            embed_var = discord.Embed(colour=0xe74c3c, description='Failed loading your query.')
+            await ctx.send(embed=embed_var)
 
     @commands.command(name="disconnect", aliases=['dc'])
     async def disconnect_command(self, ctx: commands.Context):
         """Disconnects the bot from your voice channel and clears the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
         # ACTUAL PART
         await player.destroy(ctx.guild)
         return await ctx.send(embed=discord.Embed(colour=(color(ctx)), description='The player was disconnected.'))
@@ -835,9 +845,12 @@ class Music(commands.Cog):
         """Pauses playback"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if player.paused: raise PlayerIsAlreadyPaused
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if player.paused:
+            raise PlayerIsAlreadyPaused
         # ACTUAL PART
         await player.set_pause(True)
         embed = discord.Embed(color=(color(ctx)), description="The playback was paused.")
@@ -848,9 +861,12 @@ class Music(commands.Cog):
         """Resumes playback"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if not player.paused: raise PlayerIsNotPaused()
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if not player.paused:
+            raise PlayerIsNotPaused()
         # ACTUAL PART
         await player.set_pause(False)
         embed = discord.Embed(color=(color(ctx)), description="The playback was resumed.")
@@ -861,8 +877,10 @@ class Music(commands.Cog):
         """Stops the currently playing track and removes all tracks from the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
         if player.loop == 2: player.set_loop(0)
         # ACTUAL PART
         player.queue.clear()
@@ -870,14 +888,17 @@ class Music(commands.Cog):
         embed = discord.Embed(color=(color(ctx)), description="The playback was stopped.")
         return await ctx.send(embed=embed)
 
-    @commands.command(name="clear")
+    @commands.command(name="clear_queue", aliases=['clear-queue', 'cq'])
     async def clear_command(self, ctx: commands.Context):
         """Removes all tracks from the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if not player.length > 0: raise QueueIsEmpty
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if not player.length > 0:
+            raise QueueIsEmpty
         if player.loop == 2: player.set_loop(0)
         # ACTUAL PART
         player.queue.clear()
@@ -889,9 +910,12 @@ class Music(commands.Cog):
         """Skips to the next song"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if player.length == 0: raise NoMoreTracks
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if player.length == 0:
+            raise NoMoreTracks
         # ACTUAL PART
         if player.loop == 1: player.set_loop(0)
         await player.stop()
@@ -902,8 +926,10 @@ class Music(commands.Cog):
         """Randomizes the current order of tracks in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
         # ACTUAL PART
         await player.shuffle()
         embed = discord.Embed(color=(color(ctx)), description="The current queue was shuffled.")
@@ -913,8 +939,10 @@ class Music(commands.Cog):
     async def loop_command(self, ctx: commands.Context):
         """Starts/Stops looping your currently playing track"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
         # ACTUAL PART
         embed = discord.Embed(color=(color(ctx)), description=f"Choose loop mode\
             \n**:repeat_one: Track** - Starts looping your currently playing track.\
@@ -928,12 +956,14 @@ class Music(commands.Cog):
         """Displays the current song queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player or not player.is_connected: raise NoVoiceChannel
-        if player.length == 0: raise QueueIsEmpty
+        if not player or not player.is_connected:
+            raise NoVoiceChannel
+        if player.length == 0:
+            raise QueueIsEmpty
         # ACTUAL PART
         info = []
         for x in player.queue:
-            info.append(f'**[{x.title.upper()}]({x.uri})** ({str(dt.timedelta(milliseconds=int(x.duration)))})\n')
+            info.append(f'**[{x.title}]({x.uri})** ({str(dt.timedelta(milliseconds=int(x.duration)))})\n')
         paginator = ViewMenuPages(source=QueueMenu(info, ctx), clear_reactions_after=True)
         await paginator.start(ctx)
 
@@ -942,13 +972,17 @@ class Music(commands.Cog):
         """Displays info about the current track in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKINFG
-        if not player.is_connected: raise NoVoiceChannel
-        if not player.is_playing: raise NoCurrentTrack
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not player.is_playing:
+            raise NoCurrentTrack
         # ACTUAL PART
         position = str(dt.timedelta(milliseconds=player.position))
         position = position.split('.')
         thumnail = f"https://img.youtube.com/vi/{player.current.identifier}/maxresdefault.jpg"
-        info = f'**Title**: **[{player.current.title.upper()}]({player.current.uri})**\n\n**Artist**: {player.current.author}\n\n**Position**: {position[0]} / {str(dt.timedelta(milliseconds=int(player.current.duration)))}\n\n**Requested By**: {player.current.requester.mention}\n\n'
+        info = f'**Title**: **[{player.current.title}]({player.current.uri})**\n\n**Artist**: {player.current.author}' \
+               f'\n**Position**: {position[0]} / {str(dt.timedelta(milliseconds=int(player.current.duration)))}' \
+               f'\n**Requested By**: {player.current.requester.mention}'
         embed = discord.Embed(title=f'Current Track', color=color(ctx), description=info)
         embed.set_thumbnail(url=thumnail)
         await ctx.send(embed=embed)
@@ -959,9 +993,12 @@ class Music(commands.Cog):
         """Restarts the current track in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if not player.current: raise NoCurrentTrack
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if not player.current:
+            raise NoCurrentTrack
         # ACTUAL PART
         await player.seek(0)
         embed = discord.Embed(color=(color(ctx)), description=f"The current track was restarted.")
@@ -972,8 +1009,10 @@ class Music(commands.Cog):
         """Skips to the specified timestamp in the currently playing track (input: H:M:S)"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
         time_stamp = ''
         try:
             position = position.split(':')
@@ -985,8 +1024,10 @@ class Music(commands.Cog):
                 time_stamp = f"{position[0]}h:{position[1]}m:{position[2]}s"
         except:
             pass
-        if not player.current: raise NoCurrentTrack()
-        if not (secs := seconds(time_stamp)): raise InvalidTimeString()
+        if not player.current:
+            raise NoCurrentTrack()
+        if not (secs := seconds(time_stamp)):
+            raise InvalidTimeString()
         if (secs * 1000) > player.current.duration - 5:
             raise OutOfTrack
         if secs < 0:
@@ -1001,31 +1042,42 @@ class Music(commands.Cog):
         """Sets the player's volume; If there is not input, it will return the current value"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
+        if not player.is_connected:
+            raise NoVoiceChannel
         if volume is None:
             embed = discord.Embed(colour=(color(ctx)), description=f'Current volume: **{player.volume}%**')
             return await ctx.send(embed=embed)
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if not 0 < volume < 101: raise InvalidVolume
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if not 0 < volume < 101:
+            raise InvalidVolume
         # ACTUAL PART
         await player.set_volume(volume)
         embed = discord.Embed(colour=(color(ctx)), description=f'The volume was set to **{player.volume}%**')
         return await ctx.send(embed=embed)
 
-    @commands.command(name="remove_song")
+    @commands.command(name="remove_song", aliases=['remove-song', 'rs'])
     async def remove_range_command(self, ctx: commands.Context, start: int, *, end: int = None):
-        """Removes all the tracks from the specified start through the specified end (if the end is not specified it will remove only one track)"""
+        """
+        Removes all the tracks from the specified start through the specified end
+        (if the end is not specified it will remove only one track)
+        """
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if player.length == 0: raise QueueIsEmpty
-        if start < 0: raise InvalidPosition
-        if end and end > player.length: raise InvalidTrack
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if player.length == 0:
+            raise QueueIsEmpty
+        if start < 0:
+            raise InvalidPosition
+        if end and end > player.length:
+            raise InvalidTrack
         # ACTUAL PART
-        if end == None or start == end:
+        if end is None or start == end:
             embed = discord.Embed(color=(color(ctx)),
-                                  description=f'Successfully removed **[{player.queue[start - 1].title.upper()}]({player.queue[start - 1].uri})** from the queue')
+                                  description=f'Successfully removed **[{player.queue[start - 1].title}]({player.queue[start - 1].uri})** from the queue')
             del player.queue[start - 1]
         else:
             embed = discord.Embed(color=(color(ctx)),
@@ -1037,10 +1089,14 @@ class Music(commands.Cog):
     async def move_command(self, ctx: commands.Context, position: int, *, track: str):
         """Moves the specified song to the specified position"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
-        if not player.is_connected: raise NoVoiceChannel
-        if not await self.is_privileged(ctx): raise NotAuthorized
-        if player.length == 0: raise QueueIsEmpty
-        if position < 0 or position > player.length: raise InvalidPosition
+        if not player.is_connected:
+            raise NoVoiceChannel
+        if not await self.is_privileged(ctx):
+            raise NotAuthorized
+        if player.length == 0:
+            raise QueueIsEmpty
+        if position < 0 or position > player.length:
+            raise InvalidPosition
         # ACTUAL PART
         queue = player.queue
         for x in queue:
@@ -1069,10 +1125,14 @@ class Music(commands.Cog):
                 uptime = str(dt.timedelta(milliseconds=node.stats.uptime))
                 uptime = uptime.split('.')
                 info.append(
-                    f"**{node.name} - Status: ✅\nPlayers: `{len(node.players)}` | Region: `{node.region}` | Ping: `{ms}ms`\nNode RAM: `{convert_bytes(node.stats.memory_used)} / {convert_bytes(node.stats.memory_allocated)} ({convert_bytes(node.stats.memory_free)} free)`\nNode CPU Cores: `{node.stats.cpu_cores}` | Node Uptime: `{uptime[0]}`**")
+                    f"**{node.name} - Status: ✅\nPlayers: `{len(node.players)}` | Region: `{node.region}` | Ping: "
+                    f"`{ms}ms`\nNode RAM: `{convert_bytes(node.stats.memory_used)} / "
+                    f"{convert_bytes(node.stats.memory_allocated)} ({convert_bytes(node.stats.memory_free)} "
+                    f"free)`\nNode CPU Cores: `{node.stats.cpu_cores}` | Node Uptime: `{uptime[0]}`**")
             else:
                 info.append(
-                    f"**{node.name} - Status: ❌\nPlayers: `N/A` |Region: `N/A` | Ping: `N/A`\nNode RAM: `N/A`\nNode CPU Cores: `N/A` | Node Uptime: `N/A`**")
+                    f"**{node.name} - Status: ❌\nPlayers: `N/A` |Region: `N/A` | Ping: `N/A`\nNode RAM: "
+                    f"`N/A`\nNode CPU Cores: `N/A` | Node Uptime: `N/A`**")
         paginator = ViewMenuPages(source=NodesMenu(currentNode, info, ctx), timeout=30.0, clear_reactions_after=True)
         await paginator.start(ctx)
 
