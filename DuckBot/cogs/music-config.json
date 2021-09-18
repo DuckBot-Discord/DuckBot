@@ -4,10 +4,18 @@
         {
             "host": "lava.link",
             "port": 80,
+            "password": "G/D5n+:E9eqk`PE",
+            "name": "main node",
+            "region": "us_central"
+        },
+        {
+            "host": "104.243.44.44",
+            "port": 3490,
             "password": "anything as a password",
-            "name": "Node 2",
+            "name": "free node",
             "region": "Germany"
-        }],
+        }
+      ],
     "ignored_commands": [
         "queue",
         "nodes",

@@ -10,6 +10,7 @@ import typing
 import zlib
 from time import time
 from difflib import get_close_matches
+import tekore as tk
 
 from discord.ext import commands, menus
 from discord.ext.menus.views import ViewMenuPages
@@ -791,8 +792,25 @@ class Music(commands.Cog):
         """Loads your input and adds it to the queue; If there is no playing track, then it will start playing"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         query = query.strip('<>')
+
+        try:
+            spotify_results = tk.from_url(query)
+            if spotify_results[0] != 'track':
+                embed_var = discord.Embed(colour=0xD7332A)
+                embed_var.description = f'**Spotify {spotify_results[0]}** is not supported! Only single songs.'
+                return await ctx.send(embed=embed_var)
+
+            track: tk.model.FullTrack = await self.bot.spotify.track(spotify_results[1])
+            if not track:
+                return await ctx.send('I couldn\'t find the song associated with that URL, sorry.')
+            query = f"{track.name} - {' - '.join(artist.name for artist in track.artists)}"
+
+        except tk.ConversionError:
+            pass
+
         if not url_rx.match(query):
             query = f'ytsearch:{query}'
+
         results = await player.node.get_tracks(query)
 
         # Results could be None if Lavalink returns an invalid response (non-JSON/non-200 (OK)).
