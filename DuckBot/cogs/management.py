@@ -395,10 +395,6 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.is_owner()
     async def _eval(self, ctx, *, body: str):
         """Evaluates a code"""
-        try:
-            await ctx.message.add_reaction('▶')
-        except (discord.Forbidden, discord.HTTPException):
-            pass
         env = {
             'bot': self.bot,
             'ctx': ctx,

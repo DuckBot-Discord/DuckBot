@@ -664,7 +664,7 @@ class Music(commands.Cog):
             PlayerIsAlreadyPaused: "The current track is already paused.",
             NoMoreTracks: "There are no more tracks in the queue.",
             NoCurrentTrack: "There is no track currently playing.",
-            FullVoiceChannel: f'I can\'t join {ctx.author.voice.channel.mention}, because it\'s full.',
+            FullVoiceChannel: f'I can\'t join {ctx.author.voice.channel.mention if ctx.author.voice else "thta channel"}, because it\'s full.',
             NoPerms: "I don't have permissions to `CONNECT` or `SPEAK`.",
             NoConnection: "You must be connected to a voice channel to use voice commands.",
             PlayerIsNotPaused: "The current track is not paused.",
@@ -689,8 +689,6 @@ class Music(commands.Cog):
         if not ignored:
             if not ctx.author.voice or not ctx.author.voice.channel:
                 raise NoConnection
-        if not player:
-            raise NoPlayer
         if not player.is_connected:
             if not should_connect:
                 raise NoVoiceChannel
