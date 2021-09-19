@@ -14,15 +14,15 @@ def setup(bot):
     bot.add_cog(About(bot))
 
 
-class DuckPaginator(menus.MenuPages):
+class DuckPaginator(menus.views.ViewMenuPages):
     def __init__(self, source):
-        super().__init__(source=source, check_embeds=True)
+        super().__init__(source=source, check_embeds=True, delete_message_after=True)
         self.input_lock = asyncio.Lock()
 
     async def finalize(self, timed_out):
         try:
             if timed_out:
-                await self.message.clear_reactions()
+                await self.message.edit(view=None)
             else:
                 await self.message.delete()
         except discord.HTTPException:
@@ -257,7 +257,7 @@ class MyHelp(commands.HelpCommand):
             f"\n- Usage: <required argument> [optional argument]"
             f"\n- [optional that accepts a list of arguments]..."
             f"\n``````fix"
-            f"\nLatest commands: \"meme\", \"remove threads\"```"
+            f"\nLatest commands: \"remove threads\", \"wyr\"```"
             f"\n> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** "
             f"{len(await self.filter_commands(list(self.context.bot.commands), sort=True))} 🔄"
             f"\n> 📰 **Do `{self.context.clean_prefix}news` to see the latest "

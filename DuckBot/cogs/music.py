@@ -1219,28 +1219,32 @@ class Music(commands.Cog):
     @commands.command(name='nodes')
     async def nodes_command(self, ctx: commands.Context):
         """Gives full information about the nodes"""
-        info = []
-        if self.bot.lavalink.player_manager.get(ctx.guild.id):
-            currentNode = f'**Current Node:** {self.bot.lavalink.player_manager.get(ctx.guild.id).node.name}\n'
-        else:
-            currentNode = f'**Current Node:** N/A\n'
-        for node in self.bot.lavalink.node_manager.nodes:
-            if node.available:
-                before = t.monotonic()
-                async with self.bot.session.get(f'http://{node.host}'):
-                    now = t.monotonic()
-                    ms = round((now - before) * 1000)
-                uptime = str(dt.timedelta(milliseconds=node.stats.uptime))
-                uptime = uptime.split('.')
-                info.append(
-                    f"**{node.name} - Status: ✅\nPlayers: `{len(node.players)}` | Region: `{node.region}` | Ping: "
-                    f"`{ms}ms`\nNode RAM: `{convert_bytes(node.stats.memory_used)} / "
-                    f"{convert_bytes(node.stats.memory_allocated)} ({convert_bytes(node.stats.memory_free)} "
-                    f"free)`\nNode CPU Cores: `{node.stats.cpu_cores}` | Node Uptime: `{uptime[0]}`**")
+        async with ctx.typing():
+            info = []
+            if self.bot.lavalink.player_manager.get(ctx.guild.id):
+                currentNode = f'**Current Node:** {self.bot.lavalink.player_manager.get(ctx.guild.id).node.name}\n'
             else:
-                info.append(
-                    f"**{node.name} - Status: ❌\nPlayers: `N/A` |Region: `N/A` | Ping: `N/A`\nNode RAM: "
-                    f"`N/A`\nNode CPU Cores: `N/A` | Node Uptime: `N/A`**")
+                currentNode = f'**Current Node:** N/A\n'
+            for node in self.bot.lavalink.node_manager.nodes:
+                if node.available:
+                    try:
+                        before = t.monotonic()
+                        async with self.bot.session.get(f'http://{node.host}', timeout=1):
+                            now = t.monotonic()
+                            ms = round((now - before) * 1000)
+                    except asyncio.TimeoutError:
+                        ms = 'N/A '
+                    uptime = str(dt.timedelta(milliseconds=node.stats.uptime))
+                    uptime = uptime.split('.')
+                    info.append(
+                        f"**{node.name} - Status: ✅\nPlayers: `{len(node.players)}` | Region: `{node.region}` | Ping: "
+                        f"`{ms}ms`\nNode RAM: `{convert_bytes(node.stats.memory_used)} / "
+                        f"{convert_bytes(node.stats.memory_allocated)} ({convert_bytes(node.stats.memory_free)} "
+                        f"free)`\nNode CPU Cores: `{node.stats.cpu_cores}` | Node Uptime: `{uptime[0]}`**")
+                else:
+                    info.append(
+                        f"**{node.name} - Status: ❌\nPlayers: `N/A` |Region: `N/A` | Ping: `N/A`\nNode RAM: "
+                        f"`N/A`\nNode CPU Cores: `N/A` | Node Uptime: `N/A`**")
         paginator = ViewMenuPages(source=NodesMenu(currentNode, info, ctx), timeout=30.0, clear_reactions_after=True)
         await paginator.start(ctx)
 

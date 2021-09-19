@@ -278,7 +278,7 @@ class UrbanPageSource(menus.ListPageSource):
     async def format_page(self, menu, entry):
         maximum = self.get_max_pages()
         title = f'{entry["word"]}: {menu.current_page + 1} out of {maximum}' if maximum else entry['word']
-        embed = discord.Embed(title=title, colour=0xE86222, url=entry['permalink'])
+        embed = discord.Embed(title=title, colour=discord.Colour.blurple(), url=entry['permalink'])
         embed.set_footer(text=f'by {entry["author"]}')
         embed.description = self.cleanup_definition(entry['definition'])
 

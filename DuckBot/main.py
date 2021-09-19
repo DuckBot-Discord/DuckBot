@@ -143,8 +143,9 @@ class DuckBot(commands.Bot):
             raise errors.UserBlacklisted
 
     def __init__(self) -> None:
-        intents = discord.Intents(members=True,
-                                  **{k: v for k, v in dict(discord.Intents.default()).items() if k != 'members'})
+        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
+                                  **{k: v for k, v in dict(discord.Intents.default()).items() \
+                                  if k not in ('members', 'guild_typing', 'dm_typing')})
 
         super().__init__(
             intents=intents,

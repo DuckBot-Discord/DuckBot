@@ -2,15 +2,15 @@
     "user_id": 788278464474120202,
     "nodes": [
         {
-            "host": "lava.link",
-            "port": 80,
-            "password": "G/D5n+:E9eqk`PE",
+            "host": "104.243.44.44",
+            "port": 3490,
+            "password": "T5Ap6bVzUuzFHCnVjmp5MtfxJyNBqTJsrbyVD7GkHqzTV2X9bfW9CJv7w3MQhahWtyJ99Aayv6DRfcjK4G5khsHX8dKykkpVkpeWJHVUkJCARyJNbJ5TzPkzhxw4xupF",
             "name": "main node",
             "region": "us_central"
         },
         {
-            "host": "104.243.44.44",
-            "port": 3490,
+            "host": "lava.link",
+            "port": 80,
             "password": "anything as a password",
             "name": "free node",
             "region": "Germany"
