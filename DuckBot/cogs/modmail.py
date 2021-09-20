@@ -37,7 +37,10 @@ class Events(commands.Cog):
 
         ctx = await self.bot.get_context(message)
 
-        self.bot.blacklist(ctx)
+        try:
+            self.bot.blacklist(ctx)
+        except errors.UserBlacklisted:
+            return await ctx.send("Sorry but that message wasn't delivered! You are blacklisted.")
 
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
         channel = discord.utils.get(category.channels, topic=str(message.author.id))

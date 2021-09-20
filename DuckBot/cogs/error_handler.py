@@ -63,6 +63,8 @@ class Handler(commands.Cog, name='Handler'):
             if ctx.author.id not in warned:
                 warned.append(ctx.author.id)
                 return await ctx.send("You can't do that! You're blacklisted.")
+            else:
+                return
 
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
