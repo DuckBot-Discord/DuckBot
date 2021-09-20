@@ -8,6 +8,9 @@ import errors
 from cogs import music as music_cog
 
 
+warned = []
+
+
 def setup(bot):
     bot.add_cog(Handler(bot))
 
@@ -47,11 +50,20 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.InvalidPosition,
             music_cog.InvalidVolume,
             music_cog.OutOfTrack,
-            music_cog.NegativeSeek,
-            errors.UserBlacklisted
+            music_cog.NegativeSeek
         )
+
+        embed = discord.Embed(color=0xD7342A)
+        embed.set_author(name='Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
+
         if isinstance(error, ignored):
             return
+
+        if isinstance(error, errors.UserBlacklisted):
+            if ctx.author.id not in warned:
+                warned.append(ctx.author.id)
+                return await ctx.send("You can't do that! You're blacklisted.")
+
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
@@ -62,9 +74,6 @@ class Handler(commands.Cog, name='Handler'):
         if isinstance(error, discord.ext.commands.BadUnionArgument):
             if error.errors:
                 error = error.errors[0]
-
-        embed = discord.Embed(color=0xD7342A)
-        embed.set_author(name='Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
 
         if isinstance(error, commands.NotOwner):
             return await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
@@ -95,17 +104,17 @@ class Handler(commands.Cog, name='Handler'):
             finally:
                 return
 
-        elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        if isinstance(error, discord.ext.commands.MissingRequiredArgument):
             missing = f"{str(error.param).split(':')[0]}"
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
             separator = (' ' * (len(command.split(missing)[0]) - 1))
             indicator = ('^' * (len(missing) + 2))
             return await ctx.send(f"```\n{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
 
-        elif isinstance(error, commands.errors.PartialEmojiConversionFailure):
+        if isinstance(error, commands.errors.PartialEmojiConversionFailure):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
 
-        elif isinstance(error, commands.errors.CommandOnCooldown):
+        if isinstance(error, commands.errors.CommandOnCooldown):
             embed = discord.Embed(color=0xD7342A,
                                   description=f'Please try again in {round(error.retry_after, 2)} seconds')
             embed.set_author(name='Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
@@ -130,7 +139,7 @@ class Handler(commands.Cog, name='Handler'):
             embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
 
-        elif isinstance(error, discord.ext.commands.errors.MaxConcurrencyReached):
+        if isinstance(error, discord.ext.commands.errors.MaxConcurrencyReached):
             embed = discord.Embed(color=0xD7342A, description=f"Please try again once you are done running the command")
             embed.set_author(name='Command is alrady running!', icon_url='https://i.imgur.com/izRBtg9.png')
 
@@ -154,41 +163,41 @@ class Handler(commands.Cog, name='Handler'):
             embed.set_footer(text=f"limit is {error.number} command(s) running {per}")
             return await ctx.send(embed=embed)
 
-        elif isinstance(error, errors.NoQuotedMessage):
+        if isinstance(error, errors.NoQuotedMessage):
             return await ctx.send("<:reply:824240882488180747> Missing reply!")
 
-        elif isinstance(error, errors.MuteRoleNotFound):
+        if isinstance(error, errors.MuteRoleNotFound):
             return await ctx.send("This server doesn't have a mute role, or it was deleted!"
                                   "\nAssign it with `muterole [new_role]` command, "
                                   "or can create it with the `muterole create` command")
 
-        elif isinstance(error, errors.NoEmojisFound):
+        if isinstance(error, errors.NoEmojisFound):
             return await ctx.send("I couldn't find any emojis there.")
 
-        elif isinstance(error, commands.errors.MemberNotFound):
+        if isinstance(error, commands.errors.MemberNotFound):
             return await ctx.send(f"I couldn't find `{error.argument}` in this server")
 
-        elif isinstance(error, commands.errors.UserNotFound):
+        if isinstance(error, commands.errors.UserNotFound):
             return await ctx.send(
                 f"I've searched far and wide, but `{error.argument}` doesn't seem to be a member discord user...")
 
-        elif isinstance(error, commands.BadArgument):
+        if isinstance(error, commands.BadArgument):
             return await ctx.send(error or "Bad argument given!")
 
-        elif isinstance(error, discord.HTTPException):
+        if isinstance(error, discord.HTTPException):
             await ctx.send("Oh no! An unexpected HTTP error occurred while handling this command! 😔"
                            "\nI've notified the developers about it. in the meantime, maybe try again?")
 
-        elif isinstance(error, discord.Forbidden):
+        if isinstance(error, discord.Forbidden):
             await ctx.send("Oh no! It seems like I don't have permissions to perform that action!"
                            "\nThis may be due to me missing permissions in a specific channel, server"
                            "permissions, or an issue with role hierarchy. Try adjusting my permissions"
                            "for this server. \n(Note that I can't edit the server owner)")
 
-        elif isinstance(error, commands.NoPrivateMessage):
+        if isinstance(error, commands.NoPrivateMessage):
             return await ctx.send("This command does not work inside DMs")
 
-        elif isinstance(error, commands.PrivateMessageOnly):
+        if isinstance(error, commands.PrivateMessageOnly):
             return await ctx.send("This command only works inside DMs")
 
         error_channel = self.bot.get_channel(self.error_channel)
