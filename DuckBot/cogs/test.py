@@ -1,8 +1,11 @@
+import discord
+import typing
+import emoji
 from discord.ext import commands
+
 
 def setup(bot):
     bot.add_cog(Test(bot))
-
 
 class Test(commands.Cog):
     """

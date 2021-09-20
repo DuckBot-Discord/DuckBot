@@ -143,8 +143,9 @@ class DuckBot(commands.Bot):
             raise errors.UserBlacklisted
 
     def __init__(self) -> None:
-        intents = discord.Intents(members=True,
-                                  **{k: v for k, v in dict(discord.Intents.default()).items() if k != 'members'})
+        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
+                                  **{k: v for k, v in dict(discord.Intents.default()).items() \
+                                  if k not in ('members', 'guild_typing', 'dm_typing')})
 
         super().__init__(
             intents=intents,
@@ -250,7 +251,6 @@ class DuckBot(commands.Bot):
             values = await self.db.fetch("SELECT user_id, is_blacklisted FROM blacklist")
             for value in values:
                 self.blacklist[value['user_id']] = (value['is_blacklisted'] or False)
-            print(self.prefixes)
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):
@@ -264,5 +264,9 @@ class DuckBot(commands.Bot):
                 elif isinstance(prefix, (tuple, list)):
                     return await message.reply(f"My prefixes here are `{'`, `'.join(prefix)}`"
                                                f"\n For a list of commands do`{prefix[0]}help` 💞")
-
         await self.process_commands(message)
+
+    def get_mapping(self):
+        mapping = {cog: cog.get_commands() for cog in self.cogs.values()}
+        mapping[None] = [c for c in self.commands if c.cog is None]
+        return mapping

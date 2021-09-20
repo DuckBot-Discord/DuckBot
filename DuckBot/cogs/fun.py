@@ -5,6 +5,7 @@ import aiowiki
 import discord
 import typing
 from discord.ext import commands
+from helpers.paginator import ViewPaginator, UrbanPageSource
 
 _8ball_good = ['It is certain',
                'It is decidedly so',
@@ -246,3 +247,20 @@ class Fun(commands.Cog, name='Fun'):
                              name="Here are the top 10 Wikipedia results:",
                              url="https://en.wikipedia.org/")
             return await ctx.send(embed=embed)
+
+    @commands.command(name='urban', aliases=['ud'])
+    async def _urban(self, ctx, *, word):
+        """Searches urban dictionary."""
+
+        url = 'http://api.urbandictionary.com/v0/define'
+        async with self.bot.session.get(url, params={'term': word}) as resp:
+            if resp.status != 200:
+                return await ctx.send(f'An error occurred: {resp.status} {resp.reason}')
+
+            js = await resp.json()
+            data = js.get('list', [])
+            if not data:
+                return await ctx.send('No results found, sorry.')
+
+        pages = ViewPaginator(UrbanPageSource(data), ctx=ctx)
+        await pages.start()

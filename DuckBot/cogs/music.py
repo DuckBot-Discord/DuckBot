@@ -10,6 +10,7 @@ import typing
 import zlib
 from time import time
 from difflib import get_close_matches
+import tekore as tk
 
 from discord.ext import commands, menus
 from discord.ext.menus.views import ViewMenuPages
@@ -663,7 +664,7 @@ class Music(commands.Cog):
             PlayerIsAlreadyPaused: "The current track is already paused.",
             NoMoreTracks: "There are no more tracks in the queue.",
             NoCurrentTrack: "There is no track currently playing.",
-            FullVoiceChannel: f'I can\'t join {ctx.author.voice.channel.mention}, because it\'s full.',
+            FullVoiceChannel: f'I can\'t join {ctx.author.voice.channel.mention if ctx.author.voice else "thta channel"}, because it\'s full.',
             NoPerms: "I don't have permissions to `CONNECT` or `SPEAK`.",
             NoConnection: "You must be connected to a voice channel to use voice commands.",
             PlayerIsNotPaused: "The current track is not paused.",
@@ -688,8 +689,6 @@ class Music(commands.Cog):
         if not ignored:
             if not ctx.author.voice or not ctx.author.voice.channel:
                 raise NoConnection
-        if not player:
-            raise NoPlayer
         if not player.is_connected:
             if not should_connect:
                 raise NoVoiceChannel
@@ -791,8 +790,25 @@ class Music(commands.Cog):
         """Loads your input and adds it to the queue; If there is no playing track, then it will start playing"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         query = query.strip('<>')
+
+        try:
+            spotify_results = tk.from_url(query)
+            if spotify_results[0] != 'track':
+                embed_var = discord.Embed(colour=0xD7332A)
+                embed_var.description = f'**Spotify {spotify_results[0]}** is not supported! Only single songs.'
+                return await ctx.send(embed=embed_var)
+
+            track: tk.model.FullTrack = await self.bot.spotify.track(spotify_results[1])
+            if not track:
+                return await ctx.send('I couldn\'t find the song associated with that URL, sorry.')
+            query = f"{track.name} - {' - '.join(artist.name for artist in track.artists)}"
+
+        except tk.ConversionError:
+            pass
+
         if not url_rx.match(query):
             query = f'ytsearch:{query}'
+
         results = await player.node.get_tracks(query)
 
         # Results could be None if Lavalink returns an invalid response (non-JSON/non-200 (OK)).
@@ -1201,28 +1217,32 @@ class Music(commands.Cog):
     @commands.command(name='nodes')
     async def nodes_command(self, ctx: commands.Context):
         """Gives full information about the nodes"""
-        info = []
-        if self.bot.lavalink.player_manager.get(ctx.guild.id):
-            currentNode = f'**Current Node:** {self.bot.lavalink.player_manager.get(ctx.guild.id).node.name}\n'
-        else:
-            currentNode = f'**Current Node:** N/A\n'
-        for node in self.bot.lavalink.node_manager.nodes:
-            if node.available:
-                before = t.monotonic()
-                async with self.bot.session.get(f'http://{node.host}'):
-                    now = t.monotonic()
-                    ms = round((now - before) * 1000)
-                uptime = str(dt.timedelta(milliseconds=node.stats.uptime))
-                uptime = uptime.split('.')
-                info.append(
-                    f"**{node.name} - Status: ✅\nPlayers: `{len(node.players)}` | Region: `{node.region}` | Ping: "
-                    f"`{ms}ms`\nNode RAM: `{convert_bytes(node.stats.memory_used)} / "
-                    f"{convert_bytes(node.stats.memory_allocated)} ({convert_bytes(node.stats.memory_free)} "
-                    f"free)`\nNode CPU Cores: `{node.stats.cpu_cores}` | Node Uptime: `{uptime[0]}`**")
+        async with ctx.typing():
+            info = []
+            if self.bot.lavalink.player_manager.get(ctx.guild.id):
+                currentNode = f'**Current Node:** {self.bot.lavalink.player_manager.get(ctx.guild.id).node.name}\n'
             else:
-                info.append(
-                    f"**{node.name} - Status: ❌\nPlayers: `N/A` |Region: `N/A` | Ping: `N/A`\nNode RAM: "
-                    f"`N/A`\nNode CPU Cores: `N/A` | Node Uptime: `N/A`**")
+                currentNode = f'**Current Node:** N/A\n'
+            for node in self.bot.lavalink.node_manager.nodes:
+                if node.available:
+                    try:
+                        before = t.monotonic()
+                        async with self.bot.session.get(f'http://{node.host}', timeout=1):
+                            now = t.monotonic()
+                            ms = round((now - before) * 1000)
+                    except asyncio.TimeoutError:
+                        ms = 'N/A '
+                    uptime = str(dt.timedelta(milliseconds=node.stats.uptime))
+                    uptime = uptime.split('.')
+                    info.append(
+                        f"**{node.name} - Status: ✅\nPlayers: `{len(node.players)}` | Region: `{node.region}` | Ping: "
+                        f"`{ms}ms`\nNode RAM: `{convert_bytes(node.stats.memory_used)} / "
+                        f"{convert_bytes(node.stats.memory_allocated)} ({convert_bytes(node.stats.memory_free)} "
+                        f"free)`\nNode CPU Cores: `{node.stats.cpu_cores}` | Node Uptime: `{uptime[0]}`**")
+                else:
+                    info.append(
+                        f"**{node.name} - Status: ❌\nPlayers: `N/A` |Region: `N/A` | Ping: `N/A`\nNode RAM: "
+                        f"`N/A`\nNode CPU Cores: `N/A` | Node Uptime: `N/A`**")
         paginator = ViewMenuPages(source=NodesMenu(currentNode, info, ctx), timeout=30.0, clear_reactions_after=True)
         await paginator.start(ctx)
 
