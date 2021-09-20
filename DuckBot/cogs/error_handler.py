@@ -12,6 +12,9 @@ def setup(bot):
     bot.add_cog(Handler(bot))
 
 
+warned = []
+
+
 class Handler(commands.Cog, name='Handler'):
     """
     🆘 Handle them errors 👀 How did you manage to get a look at this category????
@@ -44,14 +47,18 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.AfkChannel,
             music_cog.SkipInLoopMode,
             music_cog.InvalidTrack,
+            music_cog.InvalidTrack,
             music_cog.InvalidPosition,
             music_cog.InvalidVolume,
             music_cog.OutOfTrack,
-            music_cog.NegativeSeek,
-            errors.UserBlacklisted
+            music_cog.NegativeSeek
         )
+
         if isinstance(error, ignored):
             return
+
+        embed = discord.Embed(color=0xD7342A)
+        embed.set_author(name='Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
@@ -59,20 +66,22 @@ class Handler(commands.Cog, name='Handler'):
                     error = e
                     break
 
-        if isinstance(error, discord.ext.commands.BadUnionArgument):
+        elif isinstance(error, errors.UserBlacklisted):
+            if ctx.author.id not in warned:
+                warned.append(ctx.author.id)
+                return await ctx.send("Sorry but you can't do that! You are blacklisted.")
+
+        elif isinstance(error, discord.ext.commands.BadUnionArgument):
             if error.errors:
                 error = error.errors[0]
 
-        embed = discord.Embed(color=0xD7342A)
-        embed.set_author(name='Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
-
-        if isinstance(error, commands.NotOwner):
+        elif isinstance(error, commands.NotOwner):
             return await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
 
-        if isinstance(error, commands.TooManyArguments):
+        elif isinstance(error, commands.TooManyArguments):
             return await ctx.send(f"Too many arguments passed to the command!")
 
-        if isinstance(error, discord.ext.commands.MissingPermissions):
+        elif isinstance(error, discord.ext.commands.MissingPermissions):
             text = f"You're missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
             embed.description = text
             try:
@@ -85,7 +94,7 @@ class Handler(commands.Cog, name='Handler'):
                 finally:
                     return
 
-        if isinstance(error, discord.ext.commands.BotMissingPermissions):
+        elif isinstance(error, discord.ext.commands.BotMissingPermissions):
             text = f"I'm missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
             try:
                 embed.description = text

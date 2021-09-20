@@ -3,6 +3,8 @@ from discord.errors import HTTPException
 from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 
+import errors
+
 
 def setup(bot):
     bot.add_cog(Events(bot))
@@ -29,9 +31,13 @@ class Events(commands.Cog):
         self.bot: commands.Bot = bot
 
     @commands.Cog.listener('on_message')
-    async def on_mail(self, message):
+    async def on_mail(self, message: discord.Message):
         if message.guild or message.author == self.bot.user:
             return
+
+        ctx = await self.bot.get_context(message)
+
+        self.bot.blacklist(ctx)
 
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
         channel = discord.utils.get(category.channels, topic=str(message.author.id))
