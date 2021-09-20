@@ -50,6 +50,7 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.NegativeSeek,
             errors.UserBlacklisted
         )
+        print(type(error))
         if isinstance(error, ignored):
             return
 

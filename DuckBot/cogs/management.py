@@ -6,6 +6,7 @@ import os
 import textwrap
 import traceback
 import typing
+import emoji as unicode_emoji
 
 import discord
 from discord.ext import commands
@@ -39,6 +40,25 @@ def cleanup_code(content):
 
     # remove `foo`
     return content.strip('` \n')
+
+
+def is_reply():
+    def predicate(ctx):
+        if not ctx.message.reference:
+            raise commands.BadArgument('You must reply to a message!')
+        return True
+    return commands.check(predicate)
+
+
+class UnicodeEmoji:
+    def __init__(self, emoji):
+        self.emoji = emoji
+
+    @classmethod
+    async def convert(cls, ctx, argument):
+        if argument not in list(unicode_emoji.EMOJI_UNICODE_ENGLISH.values()):
+            raise commands.BadArgument('That is not an emoji I can use!')
+        return argument
 
 
 class Management(commands.Cog, name='Bot Management'):
@@ -516,3 +536,9 @@ class Management(commands.Cog, name='Bot Management'):
                 await message.delete()
             except (discord.Forbidden, discord.HTTPException):
                 pass
+
+    @is_reply()
+    @commands.is_owner()
+    @commands.command()
+    async def react(self, ctx, emoji: typing.Union[UnicodeEmoji, discord.Emoji]):
+        await ctx.message.reference.resolved.add_reaction(emoji)

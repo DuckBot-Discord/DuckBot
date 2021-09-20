@@ -264,5 +264,9 @@ class DuckBot(commands.Bot):
                 elif isinstance(prefix, (tuple, list)):
                     return await message.reply(f"My prefixes here are `{'`, `'.join(prefix)}`"
                                                f"\n For a list of commands do`{prefix[0]}help` 💞")
-
         await self.process_commands(message)
+
+    def get_mapping(self):
+        mapping = {cog: cog.get_commands() for cog in self.cogs.values()}
+        mapping[None] = [c for c in self.commands if c.cog is None]
+        return mapping
