@@ -10,3 +10,6 @@ ozbot/files/*
 .env
 copy-paste/*
 gafapasta/files/*
+DuckBot/cogs/music-config.json
+*.json
+.json

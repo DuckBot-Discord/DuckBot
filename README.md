@@ -22,7 +22,7 @@ db.emoji lock <server_emoji> <roles>...
 - for example: db.emoji lock :DuckBotBan: @admin @moderator @helper
 ```
 
-## 🎶 Music
+## Music
 - play \<query>
 - disconnect
 - pause
@@ -42,7 +42,83 @@ db.emoji lock <server_emoji> <roles>...
 - nodes
 - change_node \<node>
 
-## 🤪 Fun
+## Logging
+- invitestats
+- welcome
+- - channel \[new_channel]
+- - message \<message>
+
+## About
+- invite
+- ping
+- about
+- source \[command|command.subcommand]
+- privacy
+- suggest \<suggestion>
+- news
+- oz_ad
+- help \[command]
+
+## Moderation
+- prefix
+- - remove \<prefix>
+- - clear
+- - add \<new>
+- kick \<member> \[reason]
+- ban \<user> \[reason]
+- unban \<user>
+- setnick \<member> \[new]
+- clean \[search=100]
+- - threads \[search=100]
+- - all \[search=100]
+- - bot \[prefix] \[search=100]
+- - files \[search=100]
+- - user \<member> \[search=100]
+- - help
+- - emoji \[search=100]
+- - embeds \[search=100]
+- - images \[search=100]
+- - contains \<text>
+- - reactions \[search=100]
+- - custom \<args>
+- cleanup \[amount=25]
+- mute \<member> \[reason]
+- hardmute \<member> \[reason]
+- unmute \<member> \[reason]
+- muterole \[new_role]
+- - create
+- - delete
+- - fix
+- - remove
+- selfmute \<duration>
+- tempmute \<member> \<duration>
+- lockdown \[channel] \[role]
+- unlock \[channel] \[role]
+- slowmode \[channel] \<duration|reset>
+- archive \[channel] \[reason]
+- dj \[new_role]
+- - clear
+- - all
+
+## Utility
+- charinfo \<characters>
+- say \<msg>
+- echo \<channel> \<message_or_reply>
+- edit_message \[new message] \[--d|--s]
+- userinfo \[member]
+- old_userinfo \[user]
+- permissions \[target]
+- serverinfo \[guild_id]
+- avatar \[user]
+- emoji \[custom_emojis]...
+- - unlock \<server_emoji>
+- - lock \<server_emoji> \[roles]...
+- - steal \[index=1]
+- - clone \[server_emoji] \[index=1]
+- minecraft_uuid \<username>
+- commands
+
+## Fun
 - cat
 - dog
 - duck
@@ -58,75 +134,6 @@ db.emoji lock <server_emoji> <roles>...
 - roll \[number]
 - wikipedia \<search>
 - urban \<word>
-
-## 💬 Utility
-- charinfo \<characters>
-- say \<msg>
-- echo \<channel> \<message_or_reply>
-- edit_message \[new message] \[--d|--s]
-- userinfo \[member]
-- old_userinfo \[user]
-- permissions \[target]
-- serverinfo \[guild_id]
-- avatar \[user]
-- emoji \[custom_emojis]...
-- - unlock \<server_emoji>
-- - steal \[index=1]
-- - lock \<server_emoji> \[roles]...
-- - clone \[server_emoji] \[index=1]
-- minecraft_uuid \<username>
-- commands
-
-## 🔨 Moderation
-- prefix
-- - remove \<prefix>
-- - clear
-- - add \<new>
-- kick \<member> \[reason]
-- ban \<user> \[reason]
-- unban \<user>
-- setnick \<member> \[new]
-- clean \[search=100]
-- - help
-- - bot \[prefix] \[search=100]
-- - user \<member> \[search=100]
-- - embeds \[search=100]
-- - images \[search=100]
-- - emoji \[search=100]
-- - files \[search=100]
-- - contains \<text>
-- - reactions \[search=100]
-- - custom \<args>
-- - threads \[search=100]
-- - all \[search=100]
-- cleanup \[amount=25]
-- mute \<member> \[reason]
-- hardmute \<member> \[reason]
-- unmute \<member> \[reason]
-- muterole \[new_role]
-- - create
-- - fix
-- - delete
-- - remove
-- selfmute \<duration>
-- tempmute \<member> \<duration>
-- lockdown \[channel] \[role]
-- unlock \[channel] \[role]
-- slowmode \[channel] \<duration|reset>
-- archive \[channel] \[reason]
-- dj \[new_role]
-- - clear
-- - all
-
-## 😮 About
-- invite
-- ping
-- about
-- source \[command|command.subcommand]
-- privacy
-- suggest \<suggestion>
-- news
-- help \[command]
 
 
 # Created by `LeoCx1000#9999`

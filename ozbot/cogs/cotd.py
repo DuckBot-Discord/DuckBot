@@ -1,11 +1,29 @@
 import typing, discord, asyncio, random, datetime
 from discord.ext import commands, tasks
 
+async def do_cotd(ctx: commands.Context, color: discord.Color = None, manual: bool = False):
+    color = color or discord.Color.random()
+    guild = ctx.bot.get_guild(706624339595886683)
+    await guild.get_role(800407956323434556).edit(colour=color)
+    await guild.get_role(800295689585819659).edit(colour=color)
+    log_channel = guild.get_channel(869282490160926790)
+    embed = discord.Embed(color=color)
+    embed.set_author(icon_url=f"https://singlecolorimage.com/get/{str(color)[1:]}/64x64",
+                    name=f"Color of the day{' manually ' if manual is True else ' '}changed to {color}")
+
+    if manual is True:
+        embed.set_footer(text=f"Requested by {ctx.author}",
+                         icon_url=ctx.author.display_avatar.url)
+
+        embed.timestamp = discord.utils.utcnow()
+        await ctx.send(embed=embed, delete_after = 1)
+    await log_channel.send(embed=embed)
+    return color
+
 class daily_color(commands.Cog):
     """🎨 A role that changes color every day."""
     def __init__(self, bot):
         self.bot = bot
-        self.var = 0
 
         self.remrole.start()
         self.daily_task.start()
@@ -16,54 +34,26 @@ class daily_color(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_task(self):
-        if self.var == 0:
-            self.var == 1
-            color = random.randint(0, 0xFFFFFF)
-            await self.bot.get_guild(706624339595886683).get_role(800407956323434556).edit(colour=color)
-            await self.bot.get_guild(706624339595886683).get_role(800295689585819659).edit(colour=color)
-            channel = self.bot.get_channel(869282490160926790)
-            embcol = color
-            color = f'{hex(color)}'.replace('0x', '').upper()
-            embed = discord.Embed(description=f"Color of the day changed to {color}", color=embcol)
-            embed.set_thumbnail(url=f"https://singlecolorimage.com/get/{color}/16x16")
-            await channel.send(embed=embed)
-            print(self.daily_task.current_loop)
+        await do_cotd(ctx)
 
     @daily_task.before_loop
-    async def wait_until_7am(self):
+    async def wait_until_midnight(self):
         await self.bot.wait_until_ready()
         now = datetime.datetime.now().astimezone()
-        next_run = now.replace(hour=5, minute=0, second=0)
+        next_run = now.replace(hour=5, minute=0, second=2)
 
         if next_run < now:
             next_run += datetime.timedelta(days=1)
 
         await discord.utils.sleep_until(next_run)
 
-
-
-
-
-    @commands.command(aliases=["color", "setcolor"], help="Changes the Color of the Day. use \"-r\" to randomize it", usage="<#HEX | -r>")
+    @commands.command(aliases=["color", "setcolor"])
     @commands.has_permissions(manage_nicknames=True)
-    async def cotd(self, ctx, color: typing.Optional[discord.Colour], tag: typing.Optional[str]):
-        if color == None and tag == None: return await ctx.send("`!cotd <#HEX | -r>` Missing hex code. `-r` to randomize", delete_after=5)
-        if tag == "-r": color = random.randint(0, 0xFFFFFF)
-        await self.bot.get_guild(706624339595886683).get_role(800407956323434556).edit(colour=color)
-        await self.bot.get_guild(706624339595886683).get_role(800295689585819659).edit(colour=color)
-        await ctx.message.delete()
-        embcol = color
-        embed = discord.Embed(description=":sparkles:", color=embcol)
-        await ctx.send(embed=embed, delete_after=3)
-        channel = self.bot.get_channel(869282490160926790)
-        if tag == "-r": color = f'{hex(color)}'.replace('0x', '').upper()
-        embed = discord.Embed(description=f"Daily color manually changed to {color}", color=embcol)
-        imcolor = f"{color}"
-        imcolor = imcolor.replace("#", "")
-        embed.set_thumbnail(url=f" https://singlecolorimage.com/get/{imcolor}/16x16")
-        await channel.send(embed=embed)
-
-
+    async def cotd(self, ctx, color: typing.Optional[discord.Colour] = None):
+        """
+        Changes the Color of the day, run the command withour a colour to randomize it.
+        """
+        await do_cotd(ctx, color, manual=True)
 
     @tasks.loop(minutes=15)
     async def remrole(self):

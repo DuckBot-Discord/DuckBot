@@ -234,6 +234,8 @@ class text(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot: return
+        if not message.guild: return
+        if message.guild.id != 706624339595886683: return
         banned_words = self.words['pogwords']
         if any(ele in message.content.lower() for ele in banned_words):
             await message.add_reaction('<:nopog:848312880516562945>')
