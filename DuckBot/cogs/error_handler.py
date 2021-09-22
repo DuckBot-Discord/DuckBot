@@ -53,9 +53,6 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.NegativeSeek
         )
 
-        embed = discord.Embed(color=0xD7342A)
-        embed.set_author(name='Missing permissions!', icon_url='https://i.imgur.com/OAmzSGF.png')
-
         if isinstance(error, ignored):
             return
 
@@ -65,7 +62,6 @@ class Handler(commands.Cog, name='Handler'):
                 return await ctx.send("You can't do that! You're blacklisted.")
             else:
                 return
-
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
@@ -84,32 +80,19 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(f"Too many arguments passed to the command!")
 
         if isinstance(error, discord.ext.commands.MissingPermissions):
-            text = f"You're missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
-            embed.description = text
-            try:
-                return await ctx.send(embed=embed)
-            except discord.Forbidden:
-                try:
-                    return await ctx.send(text)
-                except discord.Forbidden:
-                    pass
-                finally:
-                    return
+            missing = [(e.replace('_', ' ').replace('guild', 'server')).title() for e in error.missing_permissions]
+            perms_formatted = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
+            text = f"You're missing \n**{perms_formatted}** permissions!"
 
         if isinstance(error, discord.ext.commands.BotMissingPermissions):
-            text = f"I'm missing the following permissions: \n**{', '.join(error.missing_permissions)}**"
-            try:
-                embed.description = text
-                await ctx.send(embed=embed)
-            except discord.Forbidden:
-                await ctx.send(text)
-            finally:
-                return
+            missing = [(e.replace('_', ' ').replace('guild', 'server')).title() for e in error.missing_permissions]
+            perms_formatted = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
+            text = f"I'm missing missing \n**{perms_formatted}** permissions!"
 
         if isinstance(error, discord.ext.commands.MissingRequiredArgument):
-            missing = f"{str(error.param).split(':')[0]}"
+            missing = f"{str(error.param).split(':')[:-1][0]}"
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
-            separator = (' ' * (len(command.split(missing)[0]) - 1))
+            separator = (' ' * (len(command.split(missing)[:-1][0]) - 1))
             indicator = ('^' * (len(missing) + 2))
             return await ctx.send(f"```\n{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
 
