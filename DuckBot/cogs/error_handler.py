@@ -82,12 +82,12 @@ class Handler(commands.Cog, name='Handler'):
         if isinstance(error, discord.ext.commands.MissingPermissions):
             missing = [(e.replace('_', ' ').replace('guild', 'server')).title() for e in error.missing_permissions]
             perms_formatted = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
-            text = f"You're missing \n**{perms_formatted}** permissions!"
+            return await ctx.send(f"You're missing \n**{perms_formatted}** permissions!")
 
         if isinstance(error, discord.ext.commands.BotMissingPermissions):
             missing = [(e.replace('_', ' ').replace('guild', 'server')).title() for e in error.missing_permissions]
             perms_formatted = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
-            text = f"I'm missing missing \n**{perms_formatted}** permissions!"
+            return await ctx.send(f"I'm missing \n**{perms_formatted}** permissions!")
 
         if isinstance(error, discord.ext.commands.MissingRequiredArgument):
             missing = f"{str(error.param).split(':')[:-1][0]}"
