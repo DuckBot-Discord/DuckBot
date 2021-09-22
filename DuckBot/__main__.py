@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import traceback
+import tekore as tk
 from typing import (
     List,
     Optional
@@ -28,6 +29,14 @@ initial_extensions = (
 
 load_dotenv()
 
+token_spotify = tk.request_client_token(
+    client_id=os.getenv('SPOTIFY_CLIENT_ID'),
+    client_secret=os.getenv('SPOTIFY_CLIENT_SECRET'))
+
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
+
+os.environ['JISHAKU_HIDE'] = 'True'
 
 class CustomContext(commands.Context):
 
@@ -155,6 +164,8 @@ class DuckBot(commands.Bot):
             enable_debug_events=True,
             strip_after_prefix=True
         )
+
+        self.spotify = tk.Spotify(token_spotify, asynchronous=True)
 
         self.db: asyncpg.Pool = self.loop.run_until_complete(create_db_pool())
 
@@ -294,3 +305,9 @@ class DuckBot(commands.Bot):
             self.welcome_channels[member.guild.id] = None
             raise errors.NoWelcomeChannel
         return welcome_channel
+
+
+if __name__ == '__main__':
+    TOKEN = os.getenv('DISCORD_TOKEN')
+    bot = DuckBot()
+    bot.run(TOKEN, reconnect=True)
