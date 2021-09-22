@@ -184,9 +184,10 @@ class DuckBot(commands.Bot):
         self.last_rall = datetime.datetime.utcnow()
         self.prefixes = {}
         self.blacklist = {}
+        self.welcome_channels = {}
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.first_help_sent = False
+
 
         for ext in initial_extensions:
             self._load_extension(ext)
@@ -252,6 +253,11 @@ class DuckBot(commands.Bot):
             for value in values:
                 self.blacklist[value['user_id']] = (value['is_blacklisted'] or False)
 
+            values = await self.db.fetch("SELECT guild_id, welcome_channel FROM prefixes")
+            for value in values:
+                self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
+
+
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):
             return
@@ -270,3 +276,21 @@ class DuckBot(commands.Bot):
         mapping = {cog: cog.get_commands() for cog in self.cogs.values()}
         mapping[None] = [c for c in self.commands if c.cog is None]
         return mapping
+
+
+    async def get_welcome_channel(self, member: discord.Member):
+        if not isinstance(member, discord.Member):
+            raise errors.NoWelcomeChannel
+        try:
+            channel = self.welcome_channels[member.guild.id]
+        except KeyError:
+            raise errors.NoWelcomeChannel
+
+        if not channel:
+            raise errors.NoWelcomeChannel
+
+        welcome_channel = member.guild.get_channel(channel) or (await member.guild.fetch_channel(channel))
+        if not welcome_channel:
+            self.welcome_channels[member.guild.id] = None
+            raise errors.NoWelcomeChannel
+        return welcome_channel

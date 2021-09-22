@@ -24,4 +24,7 @@ class MuteRoleNotFound(commands.CheckFailure):
 
 class UserBlacklisted(commands.CheckFailure):
     pass
-    
+
+
+class NoWelcomeChannel(commands.CheckFailure):
+    pass

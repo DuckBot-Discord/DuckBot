@@ -257,7 +257,7 @@ class MyHelp(commands.HelpCommand):
             f"\n- Usage: <required argument> [optional argument]"
             f"\n- [optional that accepts a list of arguments]..."
             f"\n``````fix"
-            f"\nLatest commands: \"remove threads\", \"wyr\"```"
+            f"\nLatest commands: \"wyr\", \"invitestats\" \"welcome\"```"
             f"\n> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** "
             f"{len(await self.filter_commands(list(self.context.bot.commands), sort=True))} 🔄"
             f"\n> 📰 **Do `{self.context.clean_prefix}news` to see the latest "
@@ -565,7 +565,7 @@ DuckBot's top role position
         Shows the latest changes of the bot.
         """
         embed = discord.Embed(color=ctx.me.color)
-        embed.add_field(name="📰 Latest News - <t:1631593960:d> (<t:1631593960:R>)",
+        embed.add_field(name="📰 Latest News - <t:1632334420:d> (<t:1632334420:R>)",
                         value=f"\u200b"
                               f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
                               f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
@@ -586,8 +586,11 @@ DuckBot's top role position
                               f"\n> **🗑 New! `remove threads` command!**"
                               f"\n> Deletes all messages with threads, and their associated threads."
                               f"\n"
-                              f"\n> **📜 New! Would you rather command!**"
-                              f"\ndo `{ctx.clean_prefix}wyr` or `{ctx.clean_prefix}would_you_rather` ⚖")
+                              f"\n> **📜 <t:1631593960:R>: New would you rather command!**"
+                              f"\ndo `{ctx.clean_prefix}wyr` or `{ctx.clean_prefix}would_you_rather` ⚖"
+                              f"\n"
+                              f"\n> **👋 <t:1632334420:R>: New welcome messages!**"
+                              f"\n> _use the `{ctx.clean_prefix}welcome` command to configure it!_")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
