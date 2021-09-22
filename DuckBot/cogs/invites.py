@@ -315,7 +315,7 @@ class Logging(commands.Cog):
             await ctx.send("Done! cleared the welcome channel.")
 
     @welcome.command(name="message")
-    async def welcome_message(self, ctx: commands.Context, *, new_message: commands.clean_content):
+    async def welcome_message(self, ctx: commands.Context, *, message: commands.clean_content):
         """
         Sets the welcome message for this server.
         ``````fix
