@@ -7,6 +7,7 @@ from discord.ext import commands
 def setup(bot):
     bot.add_cog(Test(bot))
 
+
 class Test(commands.Cog):
     """
     🧪 Test commands. 💀 These may not work, or not be what you think they will.

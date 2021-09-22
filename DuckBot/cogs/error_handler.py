@@ -4,8 +4,8 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
-import errors
-from cogs import music as music_cog
+import DuckBot.errors as errors
+from DuckBot.cogs import music as music_cog
 
 
 warned = []

@@ -45,6 +45,7 @@ class Logging(commands.Cog):
     """
     👋 Commands and stuff about logging, welcome channels, ect.
     """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._invites_ready = asyncio.Event()
@@ -271,7 +272,8 @@ class Logging(commands.Cog):
         amount = 10 if len(invites) >= 10 else len(invites)
         # list comp on the sorted invites and then
         # join it into one string with str.join
-        description = '\n'.join([f'{i + 1}. {invites[i].inviter.mention} {invites[i].code} - {invites[i].uses}' for i in range(amount)])
+        description = '\n'.join(
+            [f'{i + 1}. {invites[i].inviter.mention} {invites[i].code} - {invites[i].uses}' for i in range(amount)])
         embed.description = description
         # if there are more than 10 invites
         # add a footer saying how many more
@@ -306,7 +308,8 @@ class Logging(commands.Cog):
                 raise commands.BadArgument("You can't send messages in that channel!")
             await self.bot.db.execute(query, ctx.guild.id, channel.id)
             self.bot.welcome_channels[ctx.guild.id] = channel.id
-            message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+            message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
+                                                 ctx.guild.id)
             await ctx.send(f"Done! Welcome channel updated to {channel.mention} \n"
                            f"{'also, you can customize the welcome message with the `welcome message` command.' if not message else ''}")
         else:
@@ -355,7 +358,8 @@ class Logging(commands.Cog):
             channel = await self.bot.get_welcome_channel(member)
         except:
             return
-        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", member.guild.id)
+        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
+                                             member.guild.id)
         message = message or "**%INVITER%** just added **%USER%** to **%SERVER%** (They're the **%COUNT%** to join)"
 
         l = {'%SERVER%': str(member.guild),
@@ -366,7 +370,8 @@ class Logging(commands.Cog):
              '%CODE%': str(invite.code),
              '%FULL-CODE%': f"discord.gg/{invite.code}",
              '%FULL-URL%': str(invite),
-             '%INVITER%': str(((member.guild.get_member(invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
+             '%INVITER%': str(((member.guild.get_member(
+                 invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
              '%FULL-INVITER%': str(invite.inviter if invite.inviter else 'N/A'),
              '%INVITER-MENTION%': str(invite.inviter.mention if invite.inviter else 'N/A')}
 

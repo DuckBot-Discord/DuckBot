@@ -10,8 +10,8 @@ from collections import Counter
 
 from discord.ext import commands, tasks, menus
 
-import errors
-from helpers import time_inputs as helpers
+from DuckBot import errors
+from DuckBot.helpers import time_inputs as helpers
 
 
 def setup(bot):

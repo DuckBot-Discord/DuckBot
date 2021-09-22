@@ -8,8 +8,8 @@ from inspect import Parameter
 from typing import Optional
 from discord.ext import commands, menus
 
-import errors
-from helpers import helper
+from DuckBot import errors
+from DuckBot.helpers import helper
 
 
 def setup(bot):

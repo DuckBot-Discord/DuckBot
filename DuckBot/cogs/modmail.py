@@ -3,7 +3,7 @@ from discord.errors import HTTPException
 from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 
-import errors
+from DuckBot import errors
 
 
 def setup(bot):
