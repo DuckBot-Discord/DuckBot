@@ -546,7 +546,7 @@ class Management(commands.Cog, name='Bot Management'):
     async def react(self, ctx, emoji: typing.Union[UnicodeEmoji, discord.Emoji]):
         await ctx.message.reference.resolved.add_reaction(emoji)
 
-    @commands.command(aliases=["si"])
+    @commands.command()
     @commands.is_owner()
     async def servers(self, ctx: CustomContext):
         """
