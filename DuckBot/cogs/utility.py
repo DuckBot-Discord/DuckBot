@@ -9,7 +9,7 @@ from typing import Optional
 from discord.ext import commands, menus
 
 from DuckBot import errors
-from DuckBot.helpers import paginator
+from DuckBot.helpers import paginator, time_inputs
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import helper
 
@@ -480,3 +480,14 @@ class Utility(commands.Cog):
 
         return await ctx.send(embed=discord.Embed(title=f"Here are ALL my commands ({len(shown_commands)})",
                                                   description=f"```fix\n{all_commands}\n```"))
+
+    @commands.command(name="in")
+    async def _in_command(self, ctx, *, relative_time: time_inputs.ShortTime):
+        """
+        Shows a time in everyone's time-zone
+          note that: `relative_time` must be a short time!
+        for example: 1d, 5h, 3m or 25s, or a combination of those, like 3h5m25s (without spaces between these times)
+        """
+
+        await ctx.send(f"{discord.utils.format_dt(relative_time.dt, style='F')} "
+                       f"({discord.utils.format_dt(relative_time.dt, style='R')})")
