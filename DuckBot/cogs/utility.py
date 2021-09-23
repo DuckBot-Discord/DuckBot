@@ -400,7 +400,7 @@ class Utility(commands.Cog):
         if not custom_emojis:
             raise commands.MissingRequiredArgument(
                 Parameter(name='custom_emojis', kind=Parameter.POSITIONAL_ONLY))
-
+        embeds = []
         for emoji in custom_emojis:
             if emoji.animated:
                 emoticon = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
