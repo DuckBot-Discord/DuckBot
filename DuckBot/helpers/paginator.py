@@ -10,12 +10,12 @@ from discord.ext import menus
 
 class ViewPaginator(discord.ui.View):
     def __init__(
-        self,
-        source: menus.PageSource,
-        *,
-        ctx: commands.Context,
-        check_embeds: bool = True,
-        compact: bool = False,
+            self,
+            source: menus.PageSource,
+            *,
+            ctx: commands.Context,
+            check_embeds: bool = True,
+            compact: bool = False,
     ):
         super().__init__()
         self.source: menus.PageSource = source
@@ -112,7 +112,8 @@ class ViewPaginator(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user and interaction.user.id in (self.ctx.bot.owner_id, self.ctx.author.id):
             return True
-        await interaction.response.send_message(f'This menu belongs to **{self.ctx.author}**, sorry! 💖', ephemeral=True)
+        await interaction.response.send_message(f'This menu belongs to **{self.ctx.author}**, sorry! 💖',
+                                                ephemeral=True)
         return False
 
     async def on_timeout(self) -> None:
@@ -160,7 +161,6 @@ class ViewPaginator(discord.ui.View):
         """go to the last page"""
         # The call here is safe because it's guarded by skip_if
         await self.show_page(interaction, self.source.get_max_pages() - 1)
-
 
     @discord.ui.button(label='Skip to page...', style=discord.ButtonStyle.grey)
     async def numbered_page(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -260,8 +260,10 @@ class SimplePages(ViewPaginator):
         super().__init__(SimplePageSource(entries, per_page=per_page), ctx=ctx)
         self.embed = discord.Embed(colour=discord.Colour.blurple())
 
+
 class UrbanPageSource(menus.ListPageSource):
     BRACKETED = re.compile(r'(\[(.+?)\])')
+
     def __init__(self, data):
         super().__init__(entries=data, per_page=1)
 
@@ -297,6 +299,7 @@ class UrbanPageSource(menus.ListPageSource):
             embed.timestamp = date
 
         return embed
+
 
 class ServerEmotesEmbedPage(menus.ListPageSource):
     def __init__(self, data: list, guild: discord.Guild) -> discord.Embed:

@@ -25,6 +25,16 @@ class EmbedPageSource(menus.ListPageSource):
         return embed
 
 
+class EmojiListPageSource(menus.ListPageSource):
+    def __init__(self, data: list, guild: discord.Guild) -> discord.Embed:
+        self.data = data
+        self.guild = guild
+        super().__init__(data, per_page=1)
+
+    async def format_page(self, menu, entries):
+        return entries[menus.current_page]
+
+
 class Utility(commands.Cog):
     """
     💬 Text and utility commands, mostly to display information about a server.
@@ -409,8 +419,9 @@ class Utility(commands.Cog):
             embed = discord.Embed(description=f"{emoticon}")
             embed.set_image(url=emoji.url)
             embeds.append(embed)
-        source = menus.ListPageSource(entries=embeds, per_page=1)
-        menu = paginator.ViewPaginator(source=source, ctx=ctx, check_embeds=True)
+        source = EmojiListPageSource(data=embeds)
+        menu = paginator.ViewPaginator(source=source, ctx=ctx,
+                                       check_embeds=True)
         await menu.start()
 
     @emoji.command(name="lock")
