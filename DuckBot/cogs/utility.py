@@ -397,7 +397,7 @@ class Utility(commands.Cog):
         """
         guilds = [guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild]
 
-        source = ServerInfoPageSource(guilds=guilds)
+        source = ServerInfoPageSource(guilds=guilds, ctx=ctx)
         menu = paginator.ViewPaginator(source=source, ctx=ctx)
         await menu.start()
 
