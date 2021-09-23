@@ -4,7 +4,7 @@ import emoji
 from DuckBot.helpers import paginator
 from discord.ext import commands
 
-from DuckBot.__main__ import DuckBot
+from DuckBot.__main__ import DuckBot, CustomContext
 
 
 def setup(bot):
@@ -19,3 +19,7 @@ class Test(commands.Cog):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
+
+    @commands.command()
+    async def test(self, ctx: CustomContext):
+        await ctx.send(ctx.tick(await self.bot.is_owner(ctx.guild.owner), text="Is bot owner"))
