@@ -4,7 +4,7 @@ import emoji
 from DuckBot.helpers import paginator
 from DuckBot.helpers.time_inputs import ShortTime
 from discord.ext import commands
-
+from DuckBot.__main__ import DuckBot, CustomContext
 def setup(bot):
     bot.add_cog(Test(bot))
 
