@@ -5,7 +5,7 @@ import unicodedata
 import discord
 
 from inspect import Parameter
-from typing import Optional, List
+from typing import Optional
 from discord.ext import commands, menus
 
 from DuckBot import errors
@@ -18,6 +18,7 @@ def setup(bot):
     bot.add_cog(Utility(bot))
 
 
+<<<<<<< HEAD
 class EmbedPageSource(menus.ListPageSource):
 
     async def format_page(self, menu, item):
@@ -136,6 +137,8 @@ class EmojiListPageSource(menus.ListPageSource):
         return embed
 
 
+=======
+>>>>>>> cdc4d64379fe2b3f45e550e5c351cd7920c37f26
 class Utility(commands.Cog):
     """
     💬 Text and utility commands, mostly to display information about a server.
@@ -157,7 +160,8 @@ class Utility(commands.Cog):
 
         msg = '\n'.join(map(to_string, characters))
 
-        menu = menus.MenuPages(EmbedPageSource(msg.split("\n"), per_page=20), delete_message_after=True)
+        menu = menus.MenuPages(paginator.CharacterInformationPageSource(msg.split("\n"), per_page=20),
+                               delete_message_after=True)
         await menu.start(ctx)
 
     # .s <text>
@@ -396,8 +400,7 @@ class Utility(commands.Cog):
         Shows the current server's information.
         """
         guilds = [guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild]
-
-        source = ServerInfoPageSource(guilds=guilds, ctx=ctx)
+        source = paginator.ServerInfoPageSource(guilds=guilds, ctx=ctx)
         menu = paginator.ViewPaginator(source=source, ctx=ctx)
         await menu.start()
 
@@ -430,7 +433,7 @@ class Utility(commands.Cog):
             embed = discord.Embed(description=f"{emoticon}")
             embed.set_image(url=emoji.url)
             embeds.append(embed)
-        source = EmojiListPageSource(data=embeds)
+        source = paginator.EmojiListPageSource(data=embeds)
         menu = paginator.ViewPaginator(source=source, ctx=ctx,
                                        check_embeds=True)
         await menu.start()
