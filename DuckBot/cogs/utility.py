@@ -103,9 +103,8 @@ class Utility(commands.Cog):
                 Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY))
         elif ctx.message.reference:
             message_or_reply = ctx.message.reference.resolved.content
-        return await channel.send(message_or_reply[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False,
-                                                                                                     roles=False,
-                                                                                                     users=True))
+        return await channel.send(message_or_reply[0:2000], allowed_mentions=discord.AllowedMentions(
+            everyone=False, roles=False, users=True))
 
     @commands.command(
         aliases=['e', 'edit'],
@@ -248,7 +247,8 @@ class Utility(commands.Cog):
         if roles != "":
             roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
         # EMBED
-        embed = discord.Embed(description=f"{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}")
+        embed = discord.Embed(
+            description=f"{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}")
         embed.set_author(name=user, icon_url=user.display_avatar.url)
         embed.set_thumbnail(url=user.display_avatar.url)
         await ctx.send(embed=embed)
@@ -409,7 +409,9 @@ class Utility(commands.Cog):
             embed = discord.Embed(description=f"{emoticon}")
             embed.set_image(url=emoji.url)
             embeds.append(embed)
-        await ctx.send(embeds=embeds)
+        source = menus.ListPageSource(entries=embeds, per_page=1)
+        menu = paginator.ViewPaginator(source=source, ctx=ctx, check_embeds=True)
+        await menu.start()
 
     @emoji.command(name="lock")
     @commands.guild_only()
@@ -489,7 +491,7 @@ class Utility(commands.Cog):
         except discord.NotFound:
             pass
 
-    @emoji.command(name="clone", usage = "<server_emoji>")
+    @emoji.command(name="clone", usage="<server_emoji>")
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_clone(self, ctx: CustomContext,
@@ -531,7 +533,6 @@ class Utility(commands.Cog):
         emotes = [f"{str(e)} **|** {e.name} **|** [`{str(e)}`]({e.url})" for e in guild.emojis]
         menu = paginator.ViewPaginator(paginator.ServerEmotesEmbedPage(data=emotes, guild=guild), ctx=ctx)
         await menu.start()
-
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
