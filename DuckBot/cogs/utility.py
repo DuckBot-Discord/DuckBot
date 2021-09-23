@@ -279,17 +279,11 @@ class Utility(commands.Cog):
 
     @commands.command(aliases=["si"])
     @commands.guild_only()
-    async def serverinfo(self, ctx: CustomContext, guild_id: int = None):
+    async def serverinfo(self, ctx: CustomContext, guild: typing.Optional[discord.Guild]):
         """
         Shows the current server's information.
         """
-        if guild_id and await self.bot.is_owner(ctx.author):
-            guild = self.bot.get_guild(guild_id)
-            if not guild:
-                return await ctx.send(f'Invalid Guild ID given.')
-        else:
-            guild = ctx.guild
-
+        guild = guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild
         enabled_features = []
         features = set(guild.features)
         all_features = {

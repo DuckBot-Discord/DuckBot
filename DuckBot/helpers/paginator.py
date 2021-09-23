@@ -297,3 +297,15 @@ class UrbanPageSource(menus.ListPageSource):
             embed.timestamp = date
 
         return embed
+
+class ServerEmotesEmbedPage(menus.ListPageSource):
+    def __init__(self, data: list, guild: discord.Guild) -> discord.Embed:
+        self.data = data
+        self.guild = guild
+        super().__init__(data, per_page=15)
+
+    async def format_page(self, menu, entries):
+        offset = menu.current_page * self.per_page
+        embed = discord.Embed(title=f"{self.guild}'s emotes ({len(self.guild.emojis)})",
+                              description="\n".join(f'{i}. {v}' for i, v in enumerate(entries, start=offset)))
+        return embed
