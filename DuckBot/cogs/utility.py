@@ -26,13 +26,12 @@ class EmbedPageSource(menus.ListPageSource):
 
 
 class EmojiListPageSource(menus.ListPageSource):
-    def __init__(self, data: list, guild: discord.Guild) -> discord.Embed:
+    def __init__(self, data: list) -> discord.Embed:
         self.data = data
-        self.guild = guild
         super().__init__(data, per_page=1)
 
-    async def format_page(self, menu, entries):
-        return entries[menus.current_page]
+    async def format_page(self, menu, embed):
+        return embed
 
 
 class Utility(commands.Cog):
