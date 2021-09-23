@@ -16,6 +16,7 @@ from jishaku.features.baseclass import Feature
 from jishaku.models import copy_context_with
 
 from DuckBot.__main__ import DuckBot, CustomContext
+from DuckBot.helpers import paginator
 
 
 def setup(bot):
@@ -544,3 +545,13 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.command()
     async def react(self, ctx, emoji: typing.Union[UnicodeEmoji, discord.Emoji]):
         await ctx.message.reference.resolved.add_reaction(emoji)
+
+    @commands.command(aliases=["si"])
+    @commands.is_owner()
+    async def servers(self, ctx: CustomContext):
+        """
+        Shows the bots servers info.
+        """
+        source = paginator.ServerInfoPageSource(guilds=self.bot.guilds, ctx=ctx)
+        menu = paginator.ViewPaginator(source=source, ctx=ctx)
+        await menu.start()
