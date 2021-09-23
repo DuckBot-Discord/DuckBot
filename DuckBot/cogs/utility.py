@@ -5,7 +5,7 @@ import unicodedata
 import discord
 
 from inspect import Parameter
-from typing import Optional
+from typing import Optional, List
 from discord.ext import commands, menus
 
 from DuckBot import errors
@@ -22,6 +22,108 @@ class EmbedPageSource(menus.ListPageSource):
 
     async def format_page(self, menu, item):
         embed = discord.Embed(description="\n".join(item), title="ℹ Character information")
+        return embed
+
+
+class ServerInfoPageSource(menus.ListPageSource):
+    def __init__(self, guilds: List[discord.Guild], ctx: CustomContext):
+        self.guilds = guilds
+        self.context = ctx
+        super().__init__(guilds, per_page=1)
+
+    async def format_page(self, menu, guild: discord.Guild) -> discord.Embed:
+        enabled_features = []
+        features = set(guild.features)
+        all_features = {
+            'COMMUNITY': 'Community Server',
+            'VERIFIED': 'Verified',
+            'DISCOVERABLE': 'Discoverable',
+            'PARTNERED': 'Partnered',
+            'FEATURABLE': 'Featured',
+            'COMMERCE': 'Commerce',
+            'MONETIZATION_ENABLED': 'Monetization',
+            'NEWS': 'News Channels',
+            'PREVIEW_ENABLED': 'Preview Enabled',
+            'INVITE_SPLASH': 'Invite Splash',
+            'VANITY_URL': 'Vanity Invite URL',
+            'ANIMATED_ICON': 'Animated Server Icon',
+            'BANNER': 'Server Banner',
+            'MORE_EMOJI': 'More Emoji',
+            'MORE_STICKERS': 'More Stickers',
+            'WELCOME_SCREEN_ENABLED': 'Welcome Screen',
+            'MEMBER_VERIFICATION_GATE_ENABLED': 'Membership Screening',
+            'TICKETED_EVENTS_ENABLED': 'Ticketed Events',
+            'VIP_REGIONS': 'VIP Voice Regions',
+            'PRIVATE_THREADS': 'Private Threads',
+            'THREE_DAY_THREAD_ARCHIVE': '3 Day Thread Archive',
+            'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
+        }
+        boosting_level_emojis = {
+            '0': '<:Level0_guild:883081706918252604>',
+            '1': '<:Level1_guild:883072977430794240>',
+            '2': '<:Level2_guild:883073003984916491>',
+            '3': '<:Level3_guild:883073034817245234>'
+        }
+
+        for feature, label in all_features.items():
+            if feature in features:
+                enabled_features.append(f'{self.context.tick(True)} {label}')
+
+        embed = discord.Embed(title=guild.name)
+
+        embed.add_field(name="<:rich_presence:658538493521166336> Features:",
+                        value='\n'.join(enabled_features), inline=True)
+
+        embed.add_field(name="<:info:860295406349058068> General Info:",
+                        value=f"🆔 {guild.id}"
+                              f"\n<:owner_crown:845946530452209734> {guild.owner}"
+                              f"\n👤 {len([m for m in guild.members if not m.bot])} "
+                              f"(🤖 {len([m for m in guild.members if m.bot])})"
+                              f"\n╰ ➕ {guild.member_count}/{guild.max_members}"
+                              f"\n🌐 Server Region: {helper.get_server_region(guild)}"
+                              f"\n<:role:860644904048132137> Roles: {len(guild.roles)}")
+
+        if guild.description:
+            desc = guild.description
+        else:
+            desc = "<:toggle_off:857842924544065536> Feature toggled off." \
+                   "\nEnable it in `community -> overview` in server settings!"
+
+        embed.add_field(name="<:info:860295406349058068> Server description:",
+                        value=desc, inline=False)
+
+        embed.add_field(name="<:rich_presence:658538493521166336> Channels:",
+                        value=f"<:voice:860330111377866774> "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
+                              f"\n<:view_channel:854786097023549491> Channels: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
+                              f"\n<:category:882685952999428107> Categories: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
+                              f"\n<:stagechannel:824240882793447444> Stages: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
+                              f"\n<:threadnew:833432474347372564> Threads: {len(guild.threads)}"
+                              f"\n╰ (visible by me)",
+                        inline=True)
+
+        embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
+                        value=f"Static: {len([e for e in guild.emojis if not e.animated])}/{guild.emoji_limit} "
+                              f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} ",
+                        inline=True)
+
+        last_boost = max(guild.members, key=lambda m: m.premium_since or guild.created_at)
+        if last_boost.premium_since is not None:
+            boost = f"\n{last_boost}" \
+                    f"\n╰ {discord.utils.format_dt(last_boost.premium_since, style='R')}"
+        else:
+            boost = "\n╰ No active boosters"
+
+        embed.add_field(name="<:booster4:860644548887969832> Boosts:",
+                        value=f"{boosting_level_emojis[str(guild.premium_tier)]} Level: {guild.premium_tier}"
+                              f"\n╰ Amount: {guild.premium_subscription_count}"
+                              f"\n**<:booster4:860644548887969832> Last booster:**{boost}")
+
+        if guild.icon:
+            embed.set_thumbnail(url=guild.icon.url)
         return embed
 
 
@@ -294,101 +396,11 @@ class Utility(commands.Cog):
         """
         Shows the current server's information.
         """
-        guild = guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild
-        enabled_features = []
-        features = set(guild.features)
-        all_features = {
-            'COMMUNITY': 'Community Server',
-            'VERIFIED': 'Verified',
-            'DISCOVERABLE': 'Discoverable',
-            'PARTNERED': 'Partnered',
-            'FEATURABLE': 'Featured',
-            'COMMERCE': 'Commerce',
-            'MONETIZATION_ENABLED': 'Monetization',
-            'NEWS': 'News Channels',
-            'PREVIEW_ENABLED': 'Preview Enabled',
-            'INVITE_SPLASH': 'Invite Splash',
-            'VANITY_URL': 'Vanity Invite URL',
-            'ANIMATED_ICON': 'Animated Server Icon',
-            'BANNER': 'Server Banner',
-            'MORE_EMOJI': 'More Emoji',
-            'MORE_STICKERS': 'More Stickers',
-            'WELCOME_SCREEN_ENABLED': 'Welcome Screen',
-            'MEMBER_VERIFICATION_GATE_ENABLED': 'Membership Screening',
-            'TICKETED_EVENTS_ENABLED': 'Ticketed Events',
-            'VIP_REGIONS': 'VIP Voice Regions',
-            'PRIVATE_THREADS': 'Private Threads',
-            'THREE_DAY_THREAD_ARCHIVE': '3 Day Thread Archive',
-            'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
-        }
-        boosting_level_emojis = {
-            '0': '<:Level0_guild:883081706918252604>',
-            '1': '<:Level1_guild:883072977430794240>',
-            '2': '<:Level2_guild:883073003984916491>',
-            '3': '<:Level3_guild:883073034817245234>'
-        }
+        guilds = [guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild]
 
-        for feature, label in all_features.items():
-            if feature in features:
-                enabled_features.append(f'{ctx.tick(True)} {label}')
-
-        embed = discord.Embed(title=guild.name)
-
-        embed.add_field(name="<:rich_presence:658538493521166336> Features:",
-                        value='\n'.join(enabled_features), inline=True)
-
-        embed.add_field(name="<:info:860295406349058068> General Info:",
-                        value=f"🆔 {guild.id}"
-                              f"\n<:owner_crown:845946530452209734> {guild.owner}"
-                              f"\n👤 {len([m for m in guild.members if not m.bot])} "
-                              f"(🤖 {len([m for m in guild.members if m.bot])})"
-                              f"\n╰ ➕ {guild.member_count}/{guild.max_members}"
-                              f"\n🌐 Server Region: {helper.get_server_region(guild)}"
-                              f"\n<:role:860644904048132137> Roles: {len(guild.roles)}")
-
-        if guild.description:
-            desc = guild.description
-        else:
-            desc = "<:toggle_off:857842924544065536> Feature toggled off." \
-                   "\nEnable it in `community -> overview` in server settings!"
-
-        embed.add_field(name="<:info:860295406349058068> Server description:",
-                        value=desc, inline=False)
-
-        embed.add_field(name="<:rich_presence:658538493521166336> Channels:",
-                        value=f"<:voice:860330111377866774> "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
-                              f"\n<:view_channel:854786097023549491> Channels: "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
-                              f"\n<:category:882685952999428107> Categories: "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
-                              f"\n<:stagechannel:824240882793447444> Stages: "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
-                              f"\n<:threadnew:833432474347372564> Threads: {len(guild.threads)}"
-                              f"\n╰ (visible by me)",
-                        inline=True)
-
-        embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
-                        value=f"Static: {len([e for e in guild.emojis if not e.animated])}/{guild.emoji_limit} "
-                              f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} ",
-                        inline=True)
-
-        last_boost = max(guild.members, key=lambda m: m.premium_since or guild.created_at)
-        if last_boost.premium_since is not None:
-            boost = f"\n{last_boost}" \
-                    f"\n╰ {discord.utils.format_dt(last_boost.premium_since, style='R')}"
-        else:
-            boost = "\n╰ No active boosters"
-
-        embed.add_field(name="<:booster4:860644548887969832> Boosts:",
-                        value=f"{boosting_level_emojis[str(guild.premium_tier)]} Level: {guild.premium_tier}"
-                              f"\n╰ Amount: {guild.premium_subscription_count}"
-                              f"\n**<:booster4:860644548887969832> Last booster:**{boost}")
-
-        if guild.icon:
-            embed.set_thumbnail(url=guild.icon.url)
-
-        await ctx.send(embed=embed)
+        source = ServerInfoPageSource(guilds=guilds)
+        menu = paginator.ViewPaginator(source=source, ctx=ctx)
+        await menu.start()
 
     @commands.command()
     async def avatar(self, ctx: CustomContext, user: discord.User = None):
