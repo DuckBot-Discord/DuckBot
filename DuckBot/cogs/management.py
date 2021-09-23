@@ -15,6 +15,8 @@ from jishaku.codeblocks import Codeblock, codeblock_converter
 from jishaku.features.baseclass import Feature
 from jishaku.models import copy_context_with
 
+from DuckBot.__main__ import DuckBot, CustomContext
+
 
 def setup(bot):
     bot.add_cog(Management(bot))
@@ -68,12 +70,12 @@ class Management(commands.Cog, name='Bot Management'):
 
     def __init__(self, bot):
         self.research_channels = (881215900315951184, 881246869873917962, 881246946776449045, 881247025688084521)
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
         self._last_result = None
 
     # Git but to the correct directory
     @Feature.Command(parent="jsk", name="git")
-    async def jsk_git(self, ctx: commands.Context, *, argument: codeblock_converter):
+    async def jsk_git(self, ctx: CustomContext, *, argument: codeblock_converter):
         """
         Shortcut for 'jsk sh git'. Invokes the system shell.
         """
@@ -82,32 +84,32 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.group(aliases=['setstatus', 'ss', 'activity'], invoke_without_subcommand=True)
     @commands.is_owner()
-    async def status(self, ctx: commands.Context):
+    async def status(self, ctx: CustomContext):
         if not ctx.invoked_subcommand:
             await ctx.send_help(ctx.command)
 
     @status.command(name='playing')
-    async def status_playing(self, ctx: commands.Context, text):
+    async def status_playing(self, ctx: CustomContext, text):
         await self.bot.change_presence(activity=discord.Game(name=f'{text}'))
         await ctx.message.add_reaction('✅')
         await ctx.send(f"Activity changed to `Playing {text}` ")
 
     @status.command(name='listening')
-    async def status_listening(self, ctx: commands.Context, text):
+    async def status_listening(self, ctx: CustomContext, text):
         await self.bot.change_presence(
             activity=discord.Activity(type=discord.ActivityType.listening, name=f'{text}'))
         await ctx.message.add_reaction('✅')
         await ctx.send(f"Activity changed to `Listening to {text}` ")
 
     @status.command(name='watching')
-    async def status_watching(self, ctx: commands.Context, text):
+    async def status_watching(self, ctx: CustomContext, text):
         await self.bot.change_presence(
             activity=discord.Activity(type=discord.ActivityType.watching, name=f'{text}'))
         await ctx.message.add_reaction('✅')
         await ctx.send(f"Activity changed to `Watching {text}` ")
 
     @status.command(name='competing')
-    async def status_competing(self, ctx: commands.Context, text):
+    async def status_competing(self, ctx: CustomContext, text):
         await self.bot.change_presence(
             activity=discord.Activity(type=discord.ActivityType.competing, name=f'{text}'))
         await ctx.message.add_reaction('✅')
@@ -346,7 +348,7 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.command(aliases=['pm', 'message', 'direct'])
     @commands.is_owner()
     @commands.guild_only()
-    async def dm(self, ctx: commands.Context, member: discord.User, *, message=None):
+    async def dm(self, ctx: CustomContext, member: discord.User, *, message=None):
         if ctx.channel.category_id == 878123261525901342:
             return
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
@@ -384,7 +386,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.command()
     @commands.is_owner()
-    async def sudo(self, ctx: commands.Context, target: discord.User, *, command_string: str):
+    async def sudo(self, ctx: CustomContext, target: discord.User, *, command_string: str):
         """
         Run a command as someone else.
 
@@ -468,14 +470,14 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.group(invoke_without_command=True, aliases=['bl'])
     @commands.is_owner()
-    async def blacklist(self, ctx: commands.Context) -> discord.Message:
+    async def blacklist(self, ctx: CustomContext) -> discord.Message:
         """ Blacklist management commands """
         if ctx.invoked_subcommand is None:
             return
 
     @blacklist.command(name="add", aliases=['a'])
     @commands.is_owner()
-    async def blacklist_add(self, ctx: commands.Context,
+    async def blacklist_add(self, ctx: CustomContext,
                             user: discord.User) -> discord.Message:
         """ adds a user to the bot blacklist """
 
@@ -490,7 +492,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @blacklist.command(name="remove", aliases=['r', 'rm'])
     @commands.is_owner()
-    async def blacklist_remove(self, ctx: commands.Context,
+    async def blacklist_remove(self, ctx: CustomContext,
                                user: discord.User) -> discord.Message:
         """
         removes a user from the bot blacklist
@@ -506,7 +508,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @blacklist.command(name='check', aliases=['c'])
     @commands.is_owner()
-    async def blacklist_check(self, ctx: commands.Context, user: discord.User):
+    async def blacklist_check(self, ctx: CustomContext, user: discord.User):
         """
         Checks a user's blacklist status
         """

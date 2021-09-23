@@ -9,6 +9,8 @@ import re
 import time
 from discord.ext import commands, menus
 
+from DuckBot.__main__ import DuckBot, CustomContext
+
 
 def setup(bot):
     bot.add_cog(About(bot))
@@ -344,7 +346,7 @@ class About(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
         help_command = MyHelp()
         help_command.cog = self
         bot.help_command = help_command
@@ -530,7 +532,7 @@ DuckBot's top role position
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def suggest(self, ctx: commands.Context, *, suggestion):
+    async def suggest(self, ctx: CustomContext, *, suggestion):
         channel = self.bot.get_channel(882634213516521473)
         embed = discord.Embed(colour=ctx.me.color,
                               title="Suggestion successful!")
@@ -560,7 +562,7 @@ DuckBot's top role position
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def news(self, ctx: commands.Context):
+    async def news(self, ctx: CustomContext):
         """
         Shows the latest changes of the bot.
         """

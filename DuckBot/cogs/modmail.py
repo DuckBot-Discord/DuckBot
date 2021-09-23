@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 
 from DuckBot import errors
+from DuckBot.__main__ import DuckBot
 
 
 def setup(bot):
@@ -28,7 +29,7 @@ class Events(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
 
     @commands.Cog.listener('on_message')
     async def on_mail(self, message: discord.Message):

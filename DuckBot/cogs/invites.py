@@ -17,6 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from DuckBot.__main__ import DuckBot, CustomContext
 
 """
 https://github.com/cyrus01337/invites/
@@ -47,7 +48,7 @@ class Logging(commands.Cog):
     """
 
     def __init__(self, bot: commands.Bot):
-        self.bot = bot
+        self.bot: DuckBot = bot
         self._invites_ready = asyncio.Event()
         self._dict_filled = asyncio.Event()
 
@@ -285,7 +286,7 @@ class Logging(commands.Cog):
     @commands.group()
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
-    async def welcome(self, ctx: commands.Context):
+    async def welcome(self, ctx: CustomContext):
         """
         Commands to manage the welcome message for this server.
         """
@@ -293,7 +294,7 @@ class Logging(commands.Cog):
             await ctx.send_help(ctx.command)
 
     @welcome.command(name='channel')
-    async def welcome_channel(self, ctx: commands.Context, *, new_channel: discord.TextChannel = None):
+    async def welcome_channel(self, ctx: CustomContext, *, new_channel: discord.TextChannel = None):
         """
         Sets the channel where the welcome messages should be delivered to.
         Send it without the channel
@@ -318,7 +319,7 @@ class Logging(commands.Cog):
             await ctx.send("Done! cleared the welcome channel.")
 
     @welcome.command(name="message")
-    async def welcome_message(self, ctx: commands.Context, *, message: commands.clean_content):
+    async def welcome_message(self, ctx: CustomContext, *, message: commands.clean_content):
         """
         Sets the welcome message for this server.
         ``````fix

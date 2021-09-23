@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 import DuckBot.errors as errors
+from DuckBot.__main__ import DuckBot
 from DuckBot.cogs import music as music_cog
 
 
@@ -21,7 +22,7 @@ class Handler(commands.Cog, name='Handler'):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
         self.error_channel = 880181130408636456
 
     @commands.Cog.listener('on_command_error')
@@ -94,7 +95,8 @@ class Handler(commands.Cog, name='Handler'):
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
             separator = (' ' * (len([item[::-1] for item in command[::-1].split(missing[::-1], 1)][::-1][0]) - 1))
             indicator = ('^' * (len(missing) + 2))
-            return await ctx.send(f"```\n{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
+            return await ctx.send(f"```\n{command}\n{separator}{indicator}\n{missing} "
+                                  f"is a required argument that is missing.\n```")
 
         if isinstance(error, commands.errors.PartialEmojiConversionFailure):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")

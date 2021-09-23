@@ -9,6 +9,7 @@ from typing import Optional
 from discord.ext import commands, menus
 
 from DuckBot import errors
+from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import helper
 
 
@@ -29,11 +30,11 @@ class Utility(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
 
     @commands.command(name='charinfo')
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def character_info(self, ctx: commands.Context, *, characters: str):
+    async def character_info(self, ctx: CustomContext, *, characters: str):
         """Shows you information about a number of characters."""
 
         def to_string(c):
@@ -53,7 +54,7 @@ class Utility(commands.Cog):
     @commands.command(aliases=['s', 'send'],
                       help="Speak as if you were me. # URLs/Invites not allowed!")
     @commands.check_any(commands.bot_has_permissions(send_messages=True), commands.is_owner())
-    async def say(self, ctx: commands.context, *, msg: str) -> Optional[discord.Message]:
+    async def say(self, ctx: CustomContext, *, msg: str) -> Optional[discord.Message]:
 
         results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+",
                              msg)  # HTTP/HTTPS URL regex
@@ -85,7 +86,7 @@ class Utility(commands.Cog):
         usage="<channel> <message_or_reply>")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def echo(self, ctx: commands.Context, channel: typing.Union[discord.TextChannel, int], *,
+    async def echo(self, ctx: CustomContext, channel: typing.Union[discord.TextChannel, int], *,
                    message_or_reply: str = None) \
             -> discord.Message:
         """"
@@ -129,7 +130,7 @@ class Utility(commands.Cog):
     @commands.command(aliases=['uinfo', 'ui', 'whois', 'whoami'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
-    async def userinfo(self, ctx: commands.Context, *, member: typing.Optional[discord.Member]):
+    async def userinfo(self, ctx: CustomContext, *, member: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
@@ -158,7 +159,7 @@ class Utility(commands.Cog):
                         value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
                                f"\n\u200b \u200b \u200b \u200b ╰ <:moved:848312880666640394> **Join Position:** "
-                               f"{sorted(ctx.guild.members, key=lambda member: member.joined_at).index(member) + 1}")
+                               f"{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}")
                         if member else "Could not get data",
                         inline=False)
 
@@ -230,7 +231,7 @@ class Utility(commands.Cog):
             bot = ""
         # Join Order
         order = f"\n<:moved:848312880666640394>**Join position:** " \
-                f"`{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
+                f"`{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(user) + 1}`"
 
         if user.premium_since:
             date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
@@ -253,7 +254,7 @@ class Utility(commands.Cog):
 
     @commands.command(aliases=['perms'])
     @commands.guild_only()
-    async def permissions(self, ctx: commands.Context, target: discord.Member = None) -> discord.Message:
+    async def permissions(self, ctx: CustomContext, target: discord.Member = None) -> discord.Message:
         """
         Shows a user's guild permissions.
         Note: This does not take into account channel overwrites.
@@ -278,7 +279,7 @@ class Utility(commands.Cog):
 
     @commands.command(aliases=["si"])
     @commands.guild_only()
-    async def serverinfo(self, ctx: commands.Context, guild_id: int = None):
+    async def serverinfo(self, ctx: CustomContext, guild_id: int = None):
         """
         Shows the current server's information.
         """
@@ -350,10 +351,14 @@ class Utility(commands.Cog):
                         value=desc, inline=False)
 
         embed.add_field(name="<:rich_presence:658538493521166336> Channels:",
-                        value=f"<:voice:860330111377866774> {len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
-                              f"\n<:view_channel:854786097023549491> Channels: {len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
-                              f"\n<:category:882685952999428107> Categories: {len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
-                              f"\n<:stagechannel:824240882793447444> Stages: {len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
+                        value=f"<:voice:860330111377866774> "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
+                              f"\n<:view_channel:854786097023549491> Channels: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
+                              f"\n<:category:882685952999428107> Categories: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
+                              f"\n<:stagechannel:824240882793447444> Stages: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
                               f"\n<:threadnew:833432474347372564> Threads: {len(guild.threads)}"
                               f"\n╰ (visible by me)",
                         inline=True)
@@ -381,7 +386,7 @@ class Utility(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def avatar(self, ctx: commands.Context, user: discord.User = None):
+    async def avatar(self, ctx: CustomContext, user: discord.User = None):
         """
         Displays a user's avatar. If not specified, shows your own.
         """
@@ -417,7 +422,7 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_lock(self, ctx: commands.Context, server_emoji: discord.Emoji,
+    async def emoji_lock(self, ctx: CustomContext, server_emoji: discord.Emoji,
                          roles: commands.Greedy[discord.Role]) -> discord.Message:
         """
         Locks an emoji to one or multiple roles. Input as many roles as you want in the "[roles]..." parameter.
@@ -439,7 +444,7 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_unlock(self, ctx: commands.Context, server_emoji: discord.Emoji) -> discord.Message:
+    async def emoji_unlock(self, ctx: CustomContext, server_emoji: discord.Emoji) -> discord.Message:
         """
         Unlocks a locked emoji.
         """
@@ -453,7 +458,7 @@ class Utility(commands.Cog):
     @emoji_unlock.command(name="all")
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_unlock_all(self, ctx: commands.Context):
+    async def emoji_unlock_all(self, ctx: CustomContext):
         """
         Unlocks all locked emojis in the current server.
         """
@@ -494,7 +499,7 @@ class Utility(commands.Cog):
     @emoji.command(name="clone")
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_clone(self, ctx: commands.Context,
+    async def emoji_clone(self, ctx: CustomContext,
                           server_emoji: typing.Optional[typing.Union[discord.Embed,
                                                                      discord.PartialEmoji]],
                           index: int = 1):
@@ -527,7 +532,7 @@ class Utility(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def minecraft_uuid(self, ctx: commands.Context, *, username: str) \
+    async def minecraft_uuid(self, ctx: CustomContext, *, username: str) \
             -> typing.Optional[discord.Message]:
         """
         Fetches the UUID of a minecraft user from the mojang API
@@ -548,7 +553,7 @@ class Utility(commands.Cog):
             return await ctx.send(embed=embed)
 
     @commands.command(name="commands")
-    async def _commands(self, ctx: commands.Context) -> discord.Message:
+    async def _commands(self, ctx: CustomContext) -> discord.Message:
         """
         Shows all the bot commands, even the ones you can't run.
         """

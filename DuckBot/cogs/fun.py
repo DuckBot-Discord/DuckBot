@@ -5,6 +5,8 @@ import aiowiki
 import discord
 import typing
 from discord.ext import commands
+
+from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
 
 _8ball_good = ['It is certain',
@@ -45,7 +47,7 @@ class Fun(commands.Cog, name='Fun'):
     __slots__ = ('bot',)
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
 
     async def reddit(self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE') -> discord.Embed:
 
@@ -85,21 +87,21 @@ class Fun(commands.Cog, name='Fun'):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def cat(self, ctx: commands.Context) -> discord.Message:
+    async def cat(self, ctx: CustomContext) -> discord.Message:
         """ Sends a random cat image from r/cats """
         async with ctx.typing():
             await ctx.send(embed=await self.reddit('cats'))
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def dog(self, ctx: commands.Context) -> discord.Message:
+    async def dog(self, ctx: CustomContext) -> discord.Message:
         """ Sends a random dog image from r/dog """
         async with ctx.typing():
             await ctx.send(embed=await self.reddit('dog'))
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def duck(self, ctx: commands.Context) -> discord.Message:
+    async def duck(self, ctx: CustomContext) -> discord.Message:
         """
         Sends a random duck image
         """
@@ -117,7 +119,7 @@ class Fun(commands.Cog, name='Fun'):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
-    async def tias(self, ctx: commands.Context) -> discord.Message:
+    async def tias(self, ctx: CustomContext) -> discord.Message:
         """
         Try it and see...
         """
@@ -125,7 +127,7 @@ class Fun(commands.Cog, name='Fun'):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def inspireme(self, ctx: commands.Context) -> discord.Message:
+    async def inspireme(self, ctx: CustomContext) -> discord.Message:
         """
         shows a funny "inspirational" image from inspirobot.me
         """
@@ -143,7 +145,7 @@ class Fun(commands.Cog, name='Fun'):
         return await ctx.send(embed=embed)
 
     @commands.command(aliases=['pp', 'eggplant', 'cucumber'])
-    async def banana(self, ctx: commands.Context, member: discord.Member = None) -> discord.Message:
+    async def banana(self, ctx: CustomContext, member: discord.Member = None) -> discord.Message:
         """
         Measures your banana 😏
         """
@@ -156,7 +158,7 @@ class Fun(commands.Cog, name='Fun'):
         return await ctx.send(embed=embed)
 
     @commands.command()
-    async def meme(self, ctx: commands.Context) -> discord.Message:
+    async def meme(self, ctx: CustomContext) -> discord.Message:
         """
         Sends a random meme from reddit.com/r/memes.
         """
@@ -164,7 +166,7 @@ class Fun(commands.Cog, name='Fun'):
             return await ctx.send(embed=await self.reddit(random.choice(['memes', 'dankmemes'])))
 
     @commands.command(aliases=['wyr'])
-    async def would_you_rather(self, ctx: commands.Context) -> discord.Message:
+    async def would_you_rather(self, ctx: CustomContext) -> discord.Message:
         """
         Sends a random meme from reddit.com/r/WouldYouRather.
         """
@@ -175,7 +177,7 @@ class Fun(commands.Cog, name='Fun'):
                 await message.add_reaction(reaction)
 
     @commands.command()
-    async def aww(self, ctx: commands.Context) -> discord.Message:
+    async def aww(self, ctx: CustomContext) -> discord.Message:
         """
         Sends cute pic from r/aww
         """
@@ -183,7 +185,7 @@ class Fun(commands.Cog, name='Fun'):
             return await ctx.send(embed=await self.reddit('aww'))
 
     @commands.command(name="8ball")
-    async def _8ball(self, ctx: commands.Context, *, question: str) -> discord.Message:
+    async def _8ball(self, ctx: CustomContext, *, question: str) -> discord.Message:
         """
         Vaguely answers your question.
         """
@@ -193,7 +195,7 @@ class Fun(commands.Cog, name='Fun'):
                                   f"\nA: {random.choice(_8ball_answers)}")
 
     @commands.command()
-    async def choose(self, ctx: commands.Context, *choices: str) -> discord.Message:
+    async def choose(self, ctx: CustomContext, *choices: str) -> discord.Message:
         """
         Chooses one random word from the list of choices you input.
         If you want multi-word choices, use "Quotes for it" "Like so"
@@ -204,7 +206,7 @@ class Fun(commands.Cog, name='Fun'):
                               allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['cf', 'flip', 'coin'])
-    async def coinflip(self, ctx: commands.Context) -> discord.Message:
+    async def coinflip(self, ctx: CustomContext) -> discord.Message:
         """ Flips a VirtualCoin™ """
         return await ctx.send(random.choice([
             '<:heads:883577184499953734> Heads!',
@@ -212,7 +214,7 @@ class Fun(commands.Cog, name='Fun'):
         ]))
 
     @commands.command(aliases=['RandomNumber', 'dice'])
-    async def roll(self, ctx: commands.Context, number: typing.Optional[int]) -> discord.Message:
+    async def roll(self, ctx: CustomContext, number: typing.Optional[int]) -> discord.Message:
         """
         Rolls a VirtualDice™ or, if specified, sends a random number
         """

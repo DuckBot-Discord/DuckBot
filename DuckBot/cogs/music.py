@@ -18,6 +18,8 @@ from lavalink.events import (NodeChangedEvent, PlayerUpdateEvent,
                              QueueEndEvent, TrackEndEvent, TrackExceptionEvent,
                              TrackStartEvent, TrackStuckEvent)
 
+from DuckBot.__main__ import DuckBot, CustomContext
+
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 cancel_emote = "❌"
 
@@ -617,7 +619,7 @@ class Music(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(config['user_id'], CustomPlayer)
             for node in config['nodes']:
@@ -775,7 +777,7 @@ class Music(commands.Cog):
                 embed.set_thumbnail(url=thumnail)
                 await channel.send(embed=embed)
 
-    async def is_privileged(self, ctx: commands.Context):
+    async def is_privileged(self, ctx: CustomContext):
         """Check whether the user is an Admin or DJ or alone in a VC."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         role = (await self.bot.db.fetchval("SELECT dj_id FROM prefixes WHERE guild_id = $1", ctx.guild.id)) or 1
@@ -786,7 +788,7 @@ class Music(commands.Cog):
             return False
 
     @commands.command(name="play", aliases=['p'])
-    async def play_command(self, ctx: commands.Context, *, query: str):
+    async def play_command(self, ctx: CustomContext, *, query: str):
         """Loads your input and adds it to the queue; If there is no playing track, then it will start playing"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         query = query.strip('<>')
@@ -866,7 +868,7 @@ class Music(commands.Cog):
             await ctx.send(embed=embed_var)
 
     @commands.command(name="disconnect", aliases=['dc'])
-    async def disconnect_command(self, ctx: commands.Context):
+    async def disconnect_command(self, ctx: CustomContext):
         """Disconnects the bot from your voice channel and clears the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -881,7 +883,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=discord.Embed(colour=(color(ctx)), description='The player was disconnected.'))
 
     @commands.command(name="pause")
-    async def pause_command(self, ctx: commands.Context):
+    async def pause_command(self, ctx: CustomContext):
         """Pauses playback"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -899,7 +901,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="resume", aliases=['unpause'])
-    async def resume_command(self, ctx: commands.Context):
+    async def resume_command(self, ctx: CustomContext):
         """Resumes playback"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -917,7 +919,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="stop")
-    async def stop_command(self, ctx: commands.Context):
+    async def stop_command(self, ctx: CustomContext):
         """Stops the currently playing track and removes all tracks from the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -935,7 +937,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="clear_queue", aliases=['clear-queue', 'cq'])
-    async def clear_command(self, ctx: commands.Context):
+    async def clear_command(self, ctx: CustomContext):
         """Removes all tracks from the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -954,7 +956,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="skip", aliases=["next"])
-    async def skip_command(self, ctx: commands.Context):
+    async def skip_command(self, ctx: CustomContext):
         """Skips to the next song"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -972,7 +974,7 @@ class Music(commands.Cog):
         await player.skip()
 
     @commands.command(name="shuffle")
-    async def shuffle_command(self, ctx: commands.Context):
+    async def shuffle_command(self, ctx: CustomContext):
         """Randomizes the current order of tracks in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -988,7 +990,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="loop", aliases=['repeat'])
-    async def loop_command(self, ctx: commands.Context, mode: str = None):
+    async def loop_command(self, ctx: CustomContext, mode: str = None):
         """Starts/Stops looping your currently playing track"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player:
@@ -1028,7 +1030,7 @@ class Music(commands.Cog):
         view.message = await ctx.send(embed=embed, view=view)
 
     @commands.command(name="queue", aliases=['q', 'que', 'list', 'upcoming'])
-    async def queue_command(self, ctx: commands.Context):
+    async def queue_command(self, ctx: CustomContext):
         """Displays the current song queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -1044,7 +1046,7 @@ class Music(commands.Cog):
         await paginator.start(ctx)
 
     @commands.command(name="current", aliases=["np", "playing", "track"])
-    async def playing_command(self, ctx: commands.Context):
+    async def playing_command(self, ctx: CustomContext):
         """Displays info about the current track in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKINFG
@@ -1067,7 +1069,7 @@ class Music(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name="restart")
-    async def restart_command(self, ctx: commands.Context):
+    async def restart_command(self, ctx: CustomContext):
         """Restarts the current track in the queue"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -1085,7 +1087,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="seek")
-    async def seek_command(self, ctx: commands.Context, position: str):
+    async def seek_command(self, ctx: CustomContext, position: str):
         """Skips to the specified timestamp in the currently playing track (input: H:M:S)"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -1120,7 +1122,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="volume", aliases=['vol'])
-    async def volume_command(self, ctx: commands.Context, volume: int = None):
+    async def volume_command(self, ctx: CustomContext, volume: int = None):
         """Sets the player's volume; If there is not input, it will return the current value"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         # CHECKING
@@ -1141,7 +1143,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="remove_song", aliases=['remove-song', 'rs'])
-    async def remove_range_command(self, ctx: commands.Context, start: int, *, end: int = None):
+    async def remove_range_command(self, ctx: CustomContext, start: int, *, end: int = None):
         """
         Removes all the tracks from the specified start through the specified end
         (if the end is not specified it will remove only one track)
@@ -1172,7 +1174,7 @@ class Music(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name="move")
-    async def move_command(self, ctx: commands.Context, position: int, *, track: typing.Union[int, str]):
+    async def move_command(self, ctx: CustomContext, position: int, *, track: typing.Union[int, str]):
         """Moves the specified song to the specified position"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player:
@@ -1215,7 +1217,7 @@ class Music(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='nodes')
-    async def nodes_command(self, ctx: commands.Context):
+    async def nodes_command(self, ctx: CustomContext):
         """Gives full information about the nodes"""
         async with ctx.typing():
             info = []
@@ -1248,7 +1250,7 @@ class Music(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="change_node", aliases=['new_node'])
-    async def set_node_command(self, ctx: commands.Context, *, node: str):
+    async def set_node_command(self, ctx: CustomContext, *, node: str):
         """Chanes the current node to the specified one"""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if self.bot.lavalink.player_manager.get(ctx.guild.id):

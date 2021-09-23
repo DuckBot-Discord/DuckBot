@@ -3,6 +3,8 @@ import typing
 import emoji
 from discord.ext import commands
 
+from DuckBot.__main__ import DuckBot
+
 
 def setup(bot):
     bot.add_cog(Test(bot))
@@ -15,4 +17,4 @@ class Test(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot

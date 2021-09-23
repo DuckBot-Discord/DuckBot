@@ -21,6 +21,7 @@ from discord.ext.commands.errors import (
     ExtensionNotFound,
     NoEntryPointError
 )
+
 from DuckBot import errors
 
 initial_extensions = (
@@ -37,6 +38,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
 
 os.environ['JISHAKU_HIDE'] = 'True'
+
 
 class CustomContext(commands.Context):
 
@@ -138,7 +140,7 @@ async def create_db_pool() -> asyncpg.Pool:
 class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)
 
-    def blacklist(self, ctx: commands.Context):
+    def blacklist(self, ctx: CustomContext):
         try:
             is_blacklisted = self.blacklist[ctx.author.id]
         except KeyError:
@@ -152,9 +154,10 @@ class DuckBot(commands.Bot):
             raise errors.UserBlacklisted
 
     def __init__(self) -> None:
+        self.invites = None
         intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
-                                  **{k: v for k, v in dict(discord.Intents.default()).items() \
-                                  if k not in ('members', 'guild_typing', 'dm_typing')})
+                                  **{k: v for k, v in dict(discord.Intents.default()).items()
+                                     if k not in ('members', 'guild_typing', 'dm_typing')})
 
         super().__init__(
             intents=intents,
@@ -198,7 +201,6 @@ class DuckBot(commands.Bot):
         self.welcome_channels = {}
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
-
 
         for ext in initial_extensions:
             self._load_extension(ext)
@@ -252,7 +254,7 @@ class DuckBot(commands.Bot):
             for value in values:
                 if value['prefix']:
                     self.prefixes[value['guild_id']] = (
-                                (value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
+                            (value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
             for guild in self.guilds:
                 if not guild.unavailable:
                     try:
@@ -267,7 +269,6 @@ class DuckBot(commands.Bot):
             values = await self.db.fetch("SELECT guild_id, welcome_channel FROM prefixes")
             for value in values:
                 self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
-
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):
@@ -287,7 +288,6 @@ class DuckBot(commands.Bot):
         mapping = {cog: cog.get_commands() for cog in self.cogs.values()}
         mapping[None] = [c for c in self.commands if c.cog is None]
         return mapping
-
 
     async def get_welcome_channel(self, member: discord.Member):
         if not isinstance(member, discord.Member):

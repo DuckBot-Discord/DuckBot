@@ -11,6 +11,7 @@ from collections import Counter
 from discord.ext import commands, tasks, menus
 
 from DuckBot import errors
+from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import time_inputs as helpers
 
 
@@ -76,7 +77,7 @@ class Moderation(commands.Cog):
     """
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: DuckBot = bot
         self.temporary_mutes.start()
 
     async def cog_check(self, ctx):
@@ -103,7 +104,7 @@ class Moderation(commands.Cog):
         await ctx.message.delete(delay=5)
 
     @staticmethod
-    async def do_removal(ctx: commands.Context, limit: int, predicate, *, before=None, after=None, bulk: bool = True):
+    async def do_removal(ctx: CustomContext, limit: int, predicate, *, before=None, after=None, bulk: bool = True):
         if limit > 2000:
             return await ctx.send(f'Too many messages to search given ({limit}/2000)')
 
@@ -179,7 +180,7 @@ class Moderation(commands.Cog):
         await self.bot.wait_until_ready()
 
     @commands.group(invoke_without_command=True, aliases=['prefixes'])
-    async def prefix(self, ctx: commands.Context) -> discord.Message:
+    async def prefix(self, ctx: CustomContext) -> discord.Message:
         """ Lists all the bots prefixes. """
         prefixes = await self.bot.get_pre(self.bot, ctx.message, raw_prefix=True)
         embed = discord.Embed(title="Here are my prefixes:",
@@ -193,7 +194,7 @@ class Moderation(commands.Cog):
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     @prefix.command(name="add")
-    async def prefixes_add(self, ctx: commands.Context,
+    async def prefixes_add(self, ctx: CustomContext,
                            new: str) -> discord.Message:
         """Adds a prefix to the bots prefixes.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
 
@@ -220,7 +221,7 @@ class Moderation(commands.Cog):
 
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     @prefix.command(name="remove", aliases=['delete'])
-    async def prefixes_remove(self, ctx: commands.Context,
+    async def prefixes_remove(self, ctx: CustomContext,
                               prefix: str) -> discord.Message:
         """Removes a prefix from the bots prefixes.\nuse quotes to add spaces: %PRE%prefix \"duck \" """
 
@@ -327,14 +328,14 @@ class Moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def unban(self, ctx: commands.Context, user: discord.User):
+    async def unban(self, ctx: CustomContext, user: discord.User):
         await ctx.guild.unban(user)
         return await ctx.send(f"Unbanned **{user}**")
 
     @commands.command(aliases=['sn', 'nick'])
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_nicknames=True)
-    async def setnick(self, ctx: commands.Context, member: discord.Member, *, new: str = None) -> \
+    async def setnick(self, ctx: CustomContext, member: discord.Member, *, new: str = None) -> \
             typing.Optional[discord.Message]:
         """
         Removes someone's nickname. Don't send a new nickname to remove it.
@@ -590,7 +591,7 @@ class Moderation(commands.Cog):
         await ctx.send_help(ctx.command)
 
     @commands.command()
-    async def cleanup(self, ctx: commands.Context, amount: int = 25):
+    async def cleanup(self, ctx: CustomContext, amount: int = 25):
         """
         Cleans up the bots messages. it defaults to 25 messages. if you or the bot don't have manage_messages permission, the search will be limited to 25 messages.
         """
@@ -625,7 +626,7 @@ class Moderation(commands.Cog):
     @commands.command(aliases=['stfu', 'shut', 'silence'])
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def mute(self, ctx: commands.Context, member: discord.Member, reason: str = None) -> discord.Message:
+    async def mute(self, ctx: CustomContext, member: discord.Member, reason: str = None) -> discord.Message:
         """
         Mutes a member indefinitely.
         """
@@ -672,7 +673,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def hardmute(self, ctx: commands.Context, member: discord.Member, reason: str = None) -> discord.Message:
+    async def hardmute(self, ctx: CustomContext, member: discord.Member, reason: str = None) -> discord.Message:
         """
         Mutes a member indefinitely, and removes all their roles.
         """
@@ -725,7 +726,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+    async def unmute(self, ctx: CustomContext, member: discord.Member, reason: str = None):
         """
         Unmutes a member
         """
@@ -773,7 +774,7 @@ class Moderation(commands.Cog):
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def muterole(self, ctx: commands.Context, new_role: discord.Role = None):
+    async def muterole(self, ctx: CustomContext, new_role: discord.Role = None):
         """
         Manages the current mute role. If no role is specified, shows the current mute role.
         """
@@ -805,7 +806,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @muterole.command(name="remove", aliases=["unset"])
-    async def muterole_remove(self, ctx: commands.Context):
+    async def muterole_remove(self, ctx: CustomContext):
         """
         Unsets the mute role for the server,
         note that this will NOT delete the role, but only remove it from the bot's database!
@@ -822,7 +823,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @muterole.command(name="create")
-    async def muterole_create(self, ctx: commands.Context):
+    async def muterole_create(self, ctx: CustomContext):
         starting_time = time.monotonic()
 
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
@@ -871,7 +872,7 @@ class Moderation(commands.Cog):
     @muterole.command(name="delete")
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def muterole_delete(self, ctx: commands.Context):
+    async def muterole_delete(self, ctx: CustomContext):
         """
         Deletes the server's mute role if it exists.
         # If you want to keep the role but not
@@ -911,7 +912,7 @@ class Moderation(commands.Cog):
     @muterole.command(name="fix")
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def muterole_fix(self, ctx: commands.Context):
+    async def muterole_fix(self, ctx: CustomContext):
         async with ctx.typing():
             starting_time = time.monotonic()
             mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
@@ -1134,7 +1135,7 @@ class Moderation(commands.Cog):
     @commands.command(usage="[channel] <duration|reset>")
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
-    async def slowmode(self, ctx: commands.Context, channel: typing.Optional[discord.TextChannel], *,
+    async def slowmode(self, ctx: CustomContext, channel: typing.Optional[discord.TextChannel], *,
                        duration: helpers.ShortTime = None) -> discord.Message:
         """
         Sets the current slow mode to a delay between 1s and 6h. If specified, sets it for another channel.
@@ -1178,7 +1179,7 @@ class Moderation(commands.Cog):
 
     @commands.check_any(commands.has_permissions(manage_roles=True), commands.is_owner())
     @commands.group(invoke_without_command=True)
-    async def dj(self, ctx: commands.Context, new_role: discord.Role = None):
+    async def dj(self, ctx: CustomContext, new_role: discord.Role = None):
         """
         Manages the current DJ role. If no role is specified, shows the current DJ role.
         """
@@ -1211,7 +1212,7 @@ class Moderation(commands.Cog):
 
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @dj.command(name="clear", aliases=["unset", "remove"])
-    async def dj_remove(self, ctx: commands.Context):
+    async def dj_remove(self, ctx: CustomContext):
         """
         Unsets the DJ role for the server.
         """
@@ -1227,7 +1228,7 @@ class Moderation(commands.Cog):
 
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @dj.command(name='all', aliases=['disable'])
-    async def dj_all(self, ctx: commands.Context):
+    async def dj_all(self, ctx: CustomContext):
         """
         Makes everyone able to control the player
         """
