@@ -5,7 +5,7 @@ import aiowiki
 import discord
 import typing
 from discord.ext import commands
-from helpers.paginator import ViewPaginator, UrbanPageSource
+from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
 
 _8ball_good = ['It is certain',
                'It is decidedly so',

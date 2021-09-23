@@ -174,7 +174,7 @@ class Management(commands.Cog, name='Bot Management'):
         embed = discord.Embed(color=ctx.me.color, description=f"⬆ {extension}")
         message = await ctx.send(embed=embed, footer=False)
         try:
-            self.bot.load_extension("cogs.{}".format(extension))
+            self.bot.load_extension("DuckBot.cogs.{}".format(extension))
             await asyncio.sleep(0.5)
             embed = discord.Embed(color=ctx.me.color, description=f"✅ {extension}")
             await message.edit(embed=embed)
@@ -214,7 +214,7 @@ class Management(commands.Cog, name='Bot Management'):
         embed = discord.Embed(color=ctx.me.color, description=f"⬇ {extension}")
         message = await ctx.send(embed=embed, footer=False)
         try:
-            self.bot.unload_extension("cogs.{}".format(extension))
+            self.bot.unload_extension("DuckBot.cogs.{}".format(extension))
             await asyncio.sleep(0.5)
             embed = discord.Embed(color=ctx.me.color, description=f"✅ {extension}")
             await message.edit(embed=embed)
@@ -236,7 +236,7 @@ class Management(commands.Cog, name='Bot Management'):
         embed = discord.Embed(color=ctx.me.color, description=f"🔃 {extension}")
         message = await ctx.send(embed=embed, footer=False)
         try:
-            self.bot.reload_extension("cogs.{}".format(extension))
+            self.bot.reload_extension("DuckBot.cogs.{}".format(extension))
             await asyncio.sleep(0.5)
             embed = discord.Embed(color=ctx.me.color, description=f"✅ {extension}")
             await message.edit(embed=embed)
@@ -285,24 +285,24 @@ class Management(commands.Cog, name='Bot Management'):
         else:
             channel = False
 
-        for filename in os.listdir("./cogs"):
+        for filename in os.listdir("DuckBot/cogs"):
             if filename.endswith(".py"):
                 cogs_list = f"{cogs_list} \n🔃 {filename[:-3]}"
 
         embed = discord.Embed(description=cogs_list)
         message = await ctx.send(embed=embed, footer=False)
 
-        for filename in os.listdir("./cogs"):
+        for filename in os.listdir("DuckBot/cogs"):
             if filename.endswith(".py"):
                 try:
-                    self.bot.reload_extension("cogs.{}".format(filename[:-3]))
+                    self.bot.reload_extension("DuckBot.cogs.{}".format(filename[:-3]))
                     to_send = f"{to_send} \n✅ {filename[:-3]}"
                 except Exception:
                     first_reload_failed_extensions.append(filename)
 
         for filename in first_reload_failed_extensions:
             try:
-                self.bot.reload_extension("cogs.{}".format(filename[:-3]))
+                self.bot.reload_extension("DuckBot.cogs.{}".format(filename[:-3]))
                 to_send = f"{to_send} \n✅ {filename[:-3]}"
 
             except discord.ext.commands.ExtensionNotLoaded:

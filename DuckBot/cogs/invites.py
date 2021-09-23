@@ -340,7 +340,6 @@ class Logging(commands.Cog):
         ``````yaml
         NOTE: these placeholders are case insensitive.
         """
-        message = new_message
         query = """
                 INSERT INTO prefixes(guild_id, welcome_message) VALUES ($1, $2)
                 ON CONFLICT (guild_id) DO UPDATE SET welcome_message = $2

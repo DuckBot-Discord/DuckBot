@@ -21,7 +21,7 @@ from discord.ext.commands.errors import (
     ExtensionNotFound,
     NoEntryPointError
 )
-import errors
+from DuckBot import errors
 
 initial_extensions = (
     'jishaku',
@@ -212,11 +212,11 @@ class DuckBot(commands.Bot):
             print()  # Empty line
 
     def _dynamic_cogs(self) -> None:
-        for filename in os.listdir("./cogs"):
+        for filename in os.listdir("DuckBot/cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
                 logging.info(f"Trying to load cog: {cog}")
-                self._load_extension(f'cogs.{cog}')
+                self._load_extension(f'DuckBot.cogs.{cog}')
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:

@@ -21,7 +21,7 @@ from lavalink.events import (NodeChangedEvent, PlayerUpdateEvent,
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 cancel_emote = "❌"
 
-with open('cogs/music-config.json', "r+") as file:
+with open('DuckBot/cogs/music-config.json', "r+") as file:
     config = json.load(file)
 
 
