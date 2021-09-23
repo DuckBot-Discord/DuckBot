@@ -952,9 +952,10 @@ class Moderation(commands.Cog):
     async def selfmute(self, ctx, *, duration: helpers.ShortTime):
         """
         Temporarily mutes yourself for the specified duration.
-        Duration must be a short time, for example: 1s, 5m, 3h, or a combination of those, like 3h5m25s
+          note that: `relative_time` must be a short time!
+        for example: 1d, 5h, 3m or 25s, or a combination of those, like 3h5m25s (without spaces between these times)
         You can only mute yourself for a maximum of 24 hours and a minimum of 5 minutes.
-        note: # Do not ask a moderator to unmute you.
+        # ❓❔ Do not ask a moderator to unmute you! ❓❔
         """
         reason = "self mute"
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
