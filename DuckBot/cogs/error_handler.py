@@ -197,7 +197,7 @@ class Handler(commands.Cog, name='Handler'):
         if ctx.guild:
             command_data = f"by: {ctx.author.name} ({ctx.author.id})" \
                            f"\ncommand: {ctx.message.content[0:1700]}" \
-                           f"\nguild_id: {ctx.guild.id}" \
+                           f"\nguild_id: {ctx.guild.id} - channel_id: {ctx.channel.id}" \
                            f"\nowner: {ctx.guild.owner.name} ({ctx.guild.owner.id})" \
                            f"\nbot admin: {ctx.default_tick(ctx.me.guild_permissions.administrator)} " \
                            f"- role pos: {ctx.me.top_role.position}"

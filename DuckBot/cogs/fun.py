@@ -66,7 +66,7 @@ class Fun(commands.Cog, name='Fun'):
             return embed
 
         if embed_type == 'POLL':
-            while not post.poll_data or post.over_18:
+            while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18:
                 post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
             iterations: int = 1
