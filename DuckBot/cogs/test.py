@@ -17,15 +17,5 @@ class Test(commands.Cog):
     Remember that these commands are all a work in progress, and they may or may not ever be released
     """
 
-    @commands.command(usage="")
-    @commands.guild_only()
-    async def emojilist(self, ctx, guild: typing.Optional[discord.Guild]):
-        """ Lists this server's emoji """
-        guild = guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild
-        emotes = [f"{str(e)} **|** {e.name} **|** [`{str(e)}`]({e.url})" for e in guild.emojis]
-        menu = paginator.ViewPaginator(paginator.ServerEmotesEmbedPage(data=emotes, guild=guild), ctx=ctx)
-        await menu.start()
-
-
     def __init__(self, bot):
         self.bot: DuckBot = bot

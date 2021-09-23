@@ -259,7 +259,7 @@ class MyHelp(commands.HelpCommand):
             f"\n- Usage: <required argument> [optional argument]"
             f"\n- [optional that accepts a list of arguments]..."
             f"\n``````fix"
-            f"\nLatest commands:\"invitestats\", \"welcome\", \"emojilist\"```"
+            f"\nLatest commands:\"invitestats\", \"welcome\", \"emoji list\"```"
             f"\n> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** "
             f"{len(await self.filter_commands(list(self.context.bot.commands), sort=True))} 🔄"
             f"\n> 📰 **Do `{self.context.clean_prefix}news` to see the latest "
@@ -595,7 +595,7 @@ DuckBot's top role position
                                           f"\n> _use the `{ctx.clean_prefix}welcome` command to configure it!_"
                                           f"\n"
                                           f"\n> **☺ <t:1632409234:R> New emoji list comand!**"
-                                          f"\n> Do `{ctx.clean_prefix}emojilist` for a list of this server's emoji!")
+                                          f"\n> Do `{ctx.clean_prefix}emoji list` for a list of this server's emoji!")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)

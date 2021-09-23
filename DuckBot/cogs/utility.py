@@ -9,6 +9,7 @@ from typing import Optional
 from discord.ext import commands, menus
 
 from DuckBot import errors
+from DuckBot.helpers import paginator
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import helper
 
@@ -400,9 +401,6 @@ class Utility(commands.Cog):
             raise commands.MissingRequiredArgument(
                 Parameter(name='custom_emojis', kind=Parameter.POSITIONAL_ONLY))
 
-        if len(custom_emojis) > 5:
-            raise commands.TooManyArguments()
-
         for emoji in custom_emojis:
             if emoji.animated:
                 emoticon = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
@@ -410,7 +408,8 @@ class Utility(commands.Cog):
                 emoticon = f"*`<`*`:{emoji.name}:{emoji.id}>`"
             embed = discord.Embed(description=f"{emoticon}")
             embed.set_image(url=emoji.url)
-            await ctx.send(embed=embed)
+            embeds.append(embed)
+        await ctx.send(embeds=embeds)
 
     @emoji.command(name="lock")
     @commands.guild_only()
@@ -490,7 +489,7 @@ class Utility(commands.Cog):
         except discord.NotFound:
             pass
 
-    @emoji.command(name="clone")
+    @emoji.command(name="clone", usage = "<server_emoji>")
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_clone(self, ctx: CustomContext,
@@ -523,6 +522,16 @@ class Utility(commands.Cog):
         server_emoji = await guild.create_custom_emoji(name=server_emoji.name, image=file,
                                                        reason=f"Cloned emoji, requested by {ctx.author}")
         await ctx.send(f"Done! cloned {server_emoji}")
+
+    @emoji.command(usage="", name='list')
+    @commands.guild_only()
+    async def emoji_list(self, ctx, guild: typing.Optional[discord.Guild]):
+        """ Lists this server's emoji """
+        guild = guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild
+        emotes = [f"{str(e)} **|** {e.name} **|** [`{str(e)}`]({e.url})" for e in guild.emojis]
+        menu = paginator.ViewPaginator(paginator.ServerEmotesEmbedPage(data=emotes, guild=guild), ctx=ctx)
+        await menu.start()
+
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
