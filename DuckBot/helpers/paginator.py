@@ -352,7 +352,7 @@ class ServerInfoPageSource(menus.ListPageSource):
         embed = discord.Embed(title=guild.name)
 
         embed.add_field(name="<:rich_presence:658538493521166336> Features:",
-                        value='\n'.join(enabled_features), inline=True)
+                        value=('\n'.join(enabled_features) if enabled_features else 'No features...'), inline=True)
 
         embed.add_field(name="<:info:860295406349058068> General Info:",
                         value=f"🆔 {guild.id}"
