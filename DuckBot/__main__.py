@@ -84,7 +84,7 @@ class DuckBot(commands.Bot):
         )
 
         # Bot based stuff
-        self.context = commands.Context
+        self.context: commands.Context = None
         self.invites = None
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()
         self.invite_url = "https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope" \
@@ -148,8 +148,8 @@ class DuckBot(commands.Bot):
             return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
         return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
 
-    async def get_context(self, message, *, cls=None):
-        return await super().get_context(message, cls=cls or self.context)  # use the context we defined in the extensinon
+    async def get_context(self, message, *, cls=CustomContext):
+        return await super().get_context(message, cls=self.context or cls)
 
     # Event based
     async def on_ready(self) -> None:
