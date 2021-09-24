@@ -123,8 +123,9 @@ class CustomContext(commands.Context):
     async def confirm(self, message: str = 'Do you want to confirm?',
                       buttons: typing.Tuple[typing.Union[discord.PartialEmoji, str],
                                             str, discord.ButtonStyle] = None, timeout: int = 30,
-                      delete_after_confirm: bool = False, delete_after_timeout: bool = False):
-
+                      delete_after_confirm: bool = False, delete_after_timeout: bool = False,
+                      delete_after_cancel: bool = None):
+        delete_after_cancel = delete_after_cancel or delete_after_confirm
         view = Confirm(buttons=buttons or (
             (None, 'Confirm', discord.ButtonStyle.green),
             (None, 'Cancel', discord.ButtonStyle.red)
@@ -150,7 +151,7 @@ class CustomContext(commands.Context):
         else:
             try:
                 (await message.edit(view=None)) if \
-                    delete_after_confirm is False else (await message.delete())
+                    delete_after_cancel is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False
