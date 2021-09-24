@@ -109,28 +109,28 @@ class CustomContext(commands.Context):
         except discord.HTTPException:
             return await super().send(content=content, embed=embed, reference=None, **kwargs)
 
-    async def confirm(self, message: str = 'Do you want to confirm?', delete_after_confirm: int = False):
+    async def confirm(self, message: str = 'Do you want to confirm?', delete_message_after: int = False):
         view = Confirm()
         message = await self.send(message, view=view)
         await view.wait()
         if view.value is None:
             try:
                 (await message.edit(view=None)) if \
-                    delete_after_confirm is False else (await message.delete())
+                    delete_message_after is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False
         elif view.value:
             try:
                 (await message.edit(view=None)) if \
-                    delete_after_confirm is False else (await message.delete())
+                    delete_message_after is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return True
         else:
             try:
                 (await message.edit(view=None)) if \
-                    delete_after_confirm is False else (await message.delete())
+                    delete_message_after is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False

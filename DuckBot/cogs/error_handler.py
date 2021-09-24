@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import io
 import re
@@ -68,16 +69,17 @@ class Handler(commands.Cog, name='Handler'):
 
         if isinstance(error, commands.CommandNotFound):
             ignored_cogs = ('Bot Management', 'jishaku')
-            all_commands = list(itertools.chain.from_iterable(
-                [[c.name] + c.aliases for c in self.bot.commands if
-                 c.cog_name not in ignored_cogs and (await c.can_run(ctx))]))
+            async with contextlib.suppress(commands.CommandInvokeError, commands.MissingPermissions):
+                all_commands = list(itertools.chain.from_iterable(
+                    [[c.name] + c.aliases for c in self.bot.commands if
+                     c.cog_name not in ignored_cogs and (await c.can_run(ctx))]))
 
             matches = difflib.get_close_matches(ctx.invoked_with, all_commands)
 
             if matches:
                 confirm = await ctx.confirm(message=f"Sorry, but the command {ctx.invoked_with} was not found."
                                                     f"{f'did you mean `{matches[0]}`?' if matches else ''}",
-                                            delete_after_confirm=True, )
+                                            delete_message_after=True, )
                 if confirm is True:
                     message = copy.copy(ctx.message)
                     message._edited_timestamp = discord.utils.utcnow()
