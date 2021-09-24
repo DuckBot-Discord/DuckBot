@@ -296,18 +296,15 @@ class Management(commands.Cog, name='Bot Management'):
         """
         pages = WrappedPaginator(prefix='', suffix='')
 
-        # 'jsk reload' on its own just reloads jishaku
-        if ctx.invoked_with == 'reload' and not extensions:
-            extensions = [['jishaku']]
-
         for extension in itertools.chain(*extensions):
             method, icon = (
-                (importlib.import_module, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
+                (None, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
             )
 
             try:
-                module = method(extension)
+                module = importlib.import_module(extension)
                 importlib.reload(module)
+
             except Exception as exc:  # pylint: disable=broad-except
                 traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 1))
 
@@ -318,6 +315,8 @@ class Management(commands.Cog, name='Bot Management'):
             else:
                 pages.add_line(f"{icon} `{extension}`")
 
+        for page in pages.pages:
+            await ctx.send(page)
 
     ###############################################################################
     ###############################################################################
