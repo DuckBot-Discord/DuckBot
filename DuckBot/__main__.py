@@ -84,7 +84,7 @@ class DuckBot(commands.Bot):
         )
 
         # Bot based stuff
-        self.context = None
+        self.context = commands.Context
         self.invites = None
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()
         self.invite_url = "https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope" \

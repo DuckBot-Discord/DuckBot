@@ -158,8 +158,8 @@ class CustomContext(commands.Context):
 
 
 def setup(bot):
-    bot.context = CustomContext  # store it as a bot var
+    bot.context = CustomContext
 
 
 def teardown(bot):
-    bot.context = commands.Context  # revert it back to original when removed
+    bot.context = commands.Context
