@@ -26,10 +26,6 @@ from discord.ext.commands.errors import (
 
 from DuckBot import errors
 
-initial_extensions = (
-    'jishaku',
-)
-
 load_dotenv()
 
 token_spotify = tk.request_client_token(
@@ -204,8 +200,6 @@ class DuckBot(commands.Bot):
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
 
-        for ext in initial_extensions:
-            self._load_extension(ext)
         self._dynamic_cogs()
 
     def _load_extension(self, name: str) -> None:
