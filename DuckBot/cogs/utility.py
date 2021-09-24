@@ -295,7 +295,7 @@ class Utility(commands.Cog):
 
     @commands.group(invoke_without_command=True, aliases=['em'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def emoji(self, ctx, custom_emojis: commands.Greedy[discord.PartialEmoji]):
+    async def emoji(self, ctx: CustomContext, custom_emojis: commands.Greedy[discord.PartialEmoji]):
         """
         Makes an emoji bigger and shows it's formatting
         """
@@ -309,7 +309,8 @@ class Utility(commands.Cog):
                 emoticon = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
             else:
                 emoticon = f"*`<`*`:{emoji.name}:{emoji.id}>`"
-            embed = discord.Embed(description=f"{emoticon}")
+            embed = discord.Embed(description=f"{emoticon}", color=0xF4D58C, timestamp=ctx.message.created_at)
+            embed.set_footer(text=f'Requested by {ctx.author}', icon_url=ctx.author.display_avatar.url)
             embed.set_image(url=emoji.url)
             embeds.append(embed)
         source = paginator.EmojiListPageSource(data=embeds)
