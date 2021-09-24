@@ -210,7 +210,7 @@ class DuckBot(commands.Bot):
             print()  # Empty line
 
     def _dynamic_cogs(self) -> None:
-        for cog in jishaku.modules.resolve_extensions(self, 'DuckBot.cogs.*'):
+        for cog in jishaku.modules.resolve_extensions(self, 'DuckBot.cogs.*') + 'jishaku':
             logging.info(f"Trying to load cog: {cog}")
             self._load_extension(cog)
 
