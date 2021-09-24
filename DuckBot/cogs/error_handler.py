@@ -1,4 +1,5 @@
 import io
+import re
 import traceback
 import discord
 from discord.ext import commands
@@ -240,9 +241,21 @@ class Handler(commands.Cog, name='Handler'):
             if not message.author.bot or not message.embeds:
                 return
             embed = message.embeds[0]
-            scheme = {'🔼': (0x6aed64, f'Approved {embed.title.replace("Suggestion", "suggestion")}'),
-                      '🔽': (0xf25050, f'Denied {embed.title.replace("Suggestion", "suggestion")}')
-                      }[str(payload.emoji)]
+
+            sub = {
+                'Suggestion': 'suggestion',
+                'Denied suggestion': 'suggestion',
+                'Approved suggestion': 'suggestion'
+            }
+
+            pattern = '|'.join(sorted(re.escape(k) for k in sub))
+            title = re.sub(pattern, lambda m: sub.get(m.group(0).upper()), embed.title, flags=re.IGNORECASE)
+
+            scheme = {
+                '🔼': (0x6aed64, f'Approved {title}'),
+                '🔽': (0xf25050, f'Denied {title}')
+            }[str(payload.emoji)]
+
             embed.title = scheme[1]
             embed.colour = scheme[0]
             await message.edit(embed=embed)
