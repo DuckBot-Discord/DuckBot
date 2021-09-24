@@ -4,7 +4,6 @@ import datetime
 import importlib
 import io
 import itertools
-import os
 import textwrap
 import traceback
 import typing
@@ -17,7 +16,6 @@ from discord.ext import commands
 from jishaku.codeblocks import Codeblock, codeblock_converter
 from jishaku.features.baseclass import Feature
 from jishaku.models import copy_context_with
-from jishaku.modules import ExtensionConverter
 from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext

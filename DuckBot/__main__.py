@@ -2,6 +2,8 @@ import datetime
 import logging
 import os
 import traceback
+
+import jishaku.modules
 import tekore as tk
 from typing import (
     List,
@@ -214,11 +216,9 @@ class DuckBot(commands.Bot):
             print()  # Empty line
 
     def _dynamic_cogs(self) -> None:
-        for filename in os.listdir("DuckBot/cogs"):
-            if filename.endswith(".py"):
-                cog = filename[:-3]
-                logging.info(f"Trying to load cog: {cog}")
-                self._load_extension(f'DuckBot.cogs.{cog}')
+        for cog in jishaku.modules.resolve_extensions(self, '~'):
+            logging.info(f"Trying to load cog: {cog}")
+            self._load_extension(cog)
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
