@@ -27,6 +27,7 @@ from DuckBot.helpers.context import CustomContext
 
 initial_extensions = (
     'jishaku',
+    'DuckBot.helpers.context'
 )
 
 load_dotenv()
@@ -69,37 +70,10 @@ class DuckBot(commands.Bot):
             raise errors.UserBlacklisted
 
     def __init__(self) -> None:
-        self.invites = None
-        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
-                                  **{k: v for k, v in dict(discord.Intents.default()).items()
-                                     if k not in ('members', 'guild_typing', 'dm_typing')})
-
-        super().__init__(
-            intents=intents,
-            command_prefix=self.get_pre,
-            case_insensitive=True,
-            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'),
-            enable_debug_events=True,
-            strip_after_prefix=True
-        )
-
-        self.spotify = tk.Spotify(token_spotify, asynchronous=True)
-
-        self.db: asyncpg.Pool = self.loop.run_until_complete(create_db_pool())
-
-        self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
-                                       client_secret=os.getenv('ASYNC_PRAW_CS'),
-                                       user_agent=os.getenv('ASYNC_PRAW_UA'),
-                                       username=os.getenv('ASYNC_PRAW_UN'),
-                                       password=os.getenv('ASYNC_PRAW_PA'))
-
-        self.add_check(self.blacklist)
-
-        self.owner_id = 349373972103561218
-
-        self._BotBase__cogs = commands.core._CaseInsensitiveDict()
-
         # Bot based stuff
+        self.context = None
+        self.invites = None
+        self._BotBase__cogs = commands.core._CaseInsensitiveDict()
         self.invite_url = "https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope" \
                           "=bot%20applications.commands "
         self.vote_top_gg = "https://top.gg/bot/788278464474120202#/"
@@ -114,8 +88,32 @@ class DuckBot(commands.Bot):
         self.prefixes = {}
         self.blacklist = {}
         self.welcome_channels = {}
-        self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
+        self.spotify = tk.Spotify(token_spotify, asynchronous=True)
+        self.db: asyncpg.Pool = self.loop.run_until_complete(create_db_pool())
+        self.owner_id = 349373972103561218
+        self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
+                                       client_secret=os.getenv('ASYNC_PRAW_CS'),
+                                       user_agent=os.getenv('ASYNC_PRAW_UA'),
+                                       username=os.getenv('ASYNC_PRAW_UN'),
+                                       password=os.getenv('ASYNC_PRAW_PA'))
+        self.add_check(self.blacklist)
+
+        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
+                                  **{k: v for k, v in dict(discord.Intents.default()).items()
+                                     if k not in ('members', 'guild_typing', 'dm_typing')})
+
+        super().__init__(
+            intents=intents,
+            command_prefix=self.get_pre,
+            case_insensitive=True,
+            enable_debug_events=True,
+            strip_after_prefix=True,
+            allowed_mentions=discord.AllowedMentions(replied_user=False),
+            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help')
+        )
+
+        # Bot based stuff
 
         for ext in initial_extensions:
             self._load_extension(ext)
@@ -153,8 +151,8 @@ class DuckBot(commands.Bot):
             return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
         return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
 
-    async def get_context(self, message, *, cls=CustomContext):
-        return await super().get_context(message, cls=cls)
+    async def get_context(self, message, *, cls=None):
+        return await super().get_context(message, cls=cls or self.context)  # use the context we defined in the extensinon
 
     # Event based
     async def on_ready(self) -> None:

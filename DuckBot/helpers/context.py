@@ -155,3 +155,11 @@ class CustomContext(commands.Context):
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False
+
+
+def setup(bot):
+    bot.context = CustomContext  # store it as a bot var
+
+
+def teardown(bot):
+    bot.context = commands.Context  # revert it back to original when removed

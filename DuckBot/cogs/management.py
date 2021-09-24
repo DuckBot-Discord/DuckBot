@@ -192,17 +192,17 @@ class Management(commands.Cog, name='Bot Management'):
             embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension not loaded")
             await message.edit(embed=embed)
 
-    @commands.command(aliases=['load'])
+    @commands.command(help="Reloads all extensions", aliases=['relall', 'rall', 'reloadall'])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reload(self, ctx, *extensions: jishaku.modules.ExtensionConverter):
-        """
-        Reloads one or multiple extensions
-        """
+        self.bot.last_rall = datetime.datetime.utcnow()
         pages = WrappedPaginator(prefix='', suffix='')
+        to_send = []
+        err = False
+        first_reload_failed_extensions = []
 
-        if ctx.invoked_with == 'rall' and not extensions:
-            extensions = [await jishaku.modules.ExtensionConverter.convert(self, ctx, '~')]
+        extensions = extensions or [await jishaku.modules.ExtensionConverter.convert(self, ctx, '~')]
 
         for extension in itertools.chain(*extensions):
             method, icon = (
@@ -210,43 +210,11 @@ class Management(commands.Cog, name='Bot Management'):
                 if extension in self.bot.extensions else
                 (self.bot.load_extension, "\N{INBOX TRAY}")
             )
-
+            # noinspection PyBroadException
             try:
                 method(extension)
-            except Exception as exc:  # pylint: disable=broad-except
-                traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 1))
-
-                pages.add_line(
-                    f"{icon}\N{WARNING SIGN} `{extension}`\n```py\n{traceback_data}\n```",
-                    empty=True
-                )
-            else:
                 pages.add_line(f"{icon} `{extension}`")
-
-        for page in pages.pages:
-            await ctx.send(page)
-
-    @commands.command(help="Reloads all extensions", aliases=['relall', 'rall'], usage="[silent|channel]")
-    @commands.is_owner()
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def reloadall(self, ctx, send_in_channel: typing.Optional[bool] = False):
-        self.bot.last_rall = datetime.datetime.utcnow()
-        to_send = []
-        err = False
-        first_reload_failed_extensions = []
-
-        extensions = await jishaku.modules.ExtensionConverter.convert(self, ctx, '~')
-
-        for extension in extensions:
-            method, icon = (
-                (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
-                if extension in self.bot.extensions else
-                (self.bot.load_extension, "\N{INBOX TRAY}")
-            )
-            try:
-                method(extension)
-                to_send.append(f"{icon} `{extension}`")
-            except Exception:  # pylint: disable=broad-except
+            except Exception:
                 first_reload_failed_extensions.append(extension)
 
         error_keys = {
@@ -264,25 +232,25 @@ class Management(commands.Cog, name='Bot Management'):
             )
             try:
                 method(extension)
-                to_send.append(f"{icon} `{extension}`")
+                pages.add_line(f"{icon} `{extension}`")
 
             except tuple(error_keys.keys()) as exc:
-                to_send.append(f"{icon}❌ `{extension}` - {error_keys[type(exc)]}")
+                pages.add_line(f"{icon}❌ `{extension}` - {error_keys[type(exc)]}")
 
             except discord.ext.commands.ExtensionFailed as e:
                 traceback_string = f"```py" \
                                    f"\n{''.join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))}" \
                                    f"\n```"
-                to_send.append(f"{icon}❌ `{extension}` - Execution error")
+                pages.add_line(f"{icon}❌ `{extension}` - Execution error")
                 to_dm = f"❌ {extension} - Execution error - Traceback:"
 
-                target = ctx.author if send_in_channel is False else ctx
                 if (len(to_dm) + len(traceback_string) + 5) > 2000:
-                    await target.send(file=io.StringIO(traceback_string))
+                    await ctx.author.send(file=io.StringIO(traceback_string))
                 else:
-                    await target.send(f"{to_dm}\n{traceback_string}")
+                    await ctx.author.send(f"{to_dm}\n{traceback_string}")
 
-        await ctx.send('\n'.join(to_send))
+        for page in pages.pages:
+            await ctx.send(page)
 
     @commands.command(name="mreload", aliases=['mload', 'mrl'])
     @commands.is_owner()
