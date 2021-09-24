@@ -162,11 +162,11 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send("I couldn't find any emojis there.")
 
         if isinstance(error, commands.errors.MemberNotFound):
-            return await ctx.send(f"I couldn't find `{error.argument}` in this server")
+            return await ctx.send(f"I've searched far and wide, but I couldn't find `{error.argument}` in this server...")
 
         if isinstance(error, commands.errors.UserNotFound):
             return await ctx.send(
-                f"I've searched far and wide, but `{error.argument}` doesn't seem to be a member discord user...")
+                f"I've searched far and wide, but `{error.argument}` doesn't seem to be a discord user...")
 
         if isinstance(error, commands.BadArgument):
             return await ctx.send(error or "Bad argument given!")
@@ -182,7 +182,10 @@ class Handler(commands.Cog, name='Handler'):
 
         error_channel = self.bot.get_channel(self.error_channel)
 
-        await ctx.send("An unexpected error ocurred... For more info, join my support server", view = ServerInvite())
+        nl = '\n'
+        await ctx.send(f"**An unexpected error ocurred... For more info, join my support server**"
+                       f"\n> ```py\n> {f'{nl}> '.join(str(error).split(nl))}\n> ```",
+                       view = ServerInvite())
 
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))
