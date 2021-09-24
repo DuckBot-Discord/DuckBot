@@ -1,3 +1,4 @@
+import copy
 import io
 import re
 import traceback
@@ -67,13 +68,25 @@ class Handler(commands.Cog, name='Handler'):
 
         if isinstance(error, commands.CommandNotFound):
             ignored_cogs = ('Bot Management', 'jishaku')
-            all_commands = list(itertools.chain.from_iterable([[c.name] + c.aliases for c in self.bot.commands
-                                                               if c.cog_name not in ignored_cogs]))
+            all_commands = list(itertools.chain.from_iterable(
+                [[c.name] + c.aliases for c in self.bot.commands if
+                 c.cog_name not in ignored_cogs and (await c.can_run(ctx))]))
+
             matches = difflib.get_close_matches(ctx.invoked_with, all_commands)
-            nl = '\n'
-            sep = '```py\n'
-            return await ctx.send(f"Sorry, but the command {ctx.invoked_with} was not found."
-                                  f"{f'did you mean... {nl+sep+nl.join(matches)}```' if matches else ''}")
+
+            if matches:
+                confirm = await ctx.confirm(message=f"Sorry, but the command {ctx.invoked_with} was not found."
+                                                    f"{f'did you mean `{matches[0]}`?' if matches else ''}",
+                                            delete_after_confirm=True, )
+                if confirm is True:
+                    message = copy.copy(ctx.message)
+                    message._edited_timestamp = discord.utils.utcnow()
+                    message.content = message.content.replace(ctx.invoked_with, matches[0])
+                    return await self.bot.process_commands(message)
+                else:
+                    return
+            else:
+                return await ctx.send(f"Sorry, but the command {ctx.invoked_with} was not found.")
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
