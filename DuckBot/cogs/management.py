@@ -269,7 +269,7 @@ class Management(commands.Cog, name='Bot Management'):
                 to_send.append(f"{icon} `{extension}`")
 
             except tuple(error_keys.values()) as exc:
-                to_send.append(f"❌ {extension} - {error_keys[type(exc)]}")
+                to_send.append(f"{icon}❌ `{extension}` - {error_keys[type(exc)]}")
 
             except discord.ext.commands.ExtensionFailed as e:
                 traceback_string = f"```py" \
