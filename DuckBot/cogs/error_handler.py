@@ -5,9 +5,9 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 import DuckBot.errors as errors
-from DuckBot.__main__ import DuckBot
+from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.cogs import music as music_cog
-
+from DuckBot.cogs.info import suggestions_channel
 
 warned = []
 
@@ -26,7 +26,7 @@ class Handler(commands.Cog, name='Handler'):
         self.error_channel = 880181130408636456
 
     @commands.Cog.listener('on_command_error')
-    async def error_handler(self, ctx: commands.Context, error):
+    async def error_handler(self, ctx: CustomContext, error):
         error = getattr(error, "original", error)
 
         ignored = (
@@ -128,7 +128,7 @@ class Handler(commands.Cog, name='Handler'):
 
         if isinstance(error, discord.ext.commands.errors.MaxConcurrencyReached):
             embed = discord.Embed(color=0xD7342A, description=f"Please try again once you are done running the command")
-            embed.set_author(name='Command is alrady running!', icon_url='https://i.imgur.com/izRBtg9.png')
+            embed.set_author(name='Command is already running!', icon_url='https://i.imgur.com/izRBtg9.png')
 
             if error.per == BucketType.default:
                 per = ""
@@ -229,6 +229,20 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def wastebasket(self, payload: discord.RawReactionActionEvent):
-        if payload.channel_id != self.error_channel or payload.member.bot:
-            return
-        await self.bot.get_channel(payload.channel_id).get_partial_message(payload.message_id).delete()
+        if payload.channel_id == self.error_channel and await \
+                self.bot.is_owner(payload.member) and str(payload.emoji == '🗑'):
+            return await self.bot.get_channel(payload.channel_id).get_partial_message(payload.message_id).delete()
+
+        if payload.channel_id == suggestions_channel and await \
+                self.bot.is_owner(payload.member) and str(payload.emoji) in ('🔼', '🔽'):
+
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+            if not message.author.bot or not message.embeds:
+                return
+            embed = message.embeds[0]
+            scheme = {'🔼': (0x6aed64, f'Approved {embed.title.replace("Suggestion", "suggestion")}'),
+                      '🔽': (0xf25050, f'Denied {embed.title.replace("Suggestion", "suggestion")}')
+                      }[str(payload.emoji)]
+            embed.title = scheme[1]
+            embed.colour = scheme[0]
+            await message.edit(embed=embed)

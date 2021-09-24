@@ -11,6 +11,8 @@ from discord.ext import commands, menus
 
 from DuckBot.__main__ import DuckBot, CustomContext
 
+suggestions_channel = 882634213516521473
+
 
 def setup(bot):
     bot.add_cog(About(bot))
@@ -533,7 +535,7 @@ DuckBot's top role position
 
     @commands.command()
     async def suggest(self, ctx: CustomContext, *, suggestion):
-        channel = self.bot.get_channel(882634213516521473)
+        channel = self.bot.get_channel(suggestions_channel)
         embed = discord.Embed(colour=ctx.me.color,
                               title="Suggestion successful!")
         embed.add_field(name="Thank you!", value="Your suggestion has been sent to the moderators of duckbot! "
@@ -558,8 +560,10 @@ DuckBot's top role position
                 embed.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
                 embed2.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
 
-        await channel.send(embed=embed2)
+        message = await channel.send(embed=embed2)
         await ctx.send(embed=embed)
+        await message.add_reaction('🔼')
+        await message.add_reaction('🔽')
 
     @commands.command()
     async def news(self, ctx: CustomContext):
