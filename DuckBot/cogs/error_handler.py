@@ -67,7 +67,9 @@ class Handler(commands.Cog, name='Handler'):
                 return
 
         if isinstance(error, commands.CommandNotFound):
-            all_commands = list(itertools.chain.from_iterable([[c.name] + c.aliases for c in self.bot.commands]))
+            ignored_cogs = ('Bot Management', 'jishaku')
+            all_commands = list(itertools.chain.from_iterable([[c.name] + c.aliases for c in self.bot.commands
+                                                               if c.cog_name not in ignored_cogs]))
             matches = difflib.get_close_matches(ctx.invoked_with, all_commands)
             nl = '\n'
             return await ctx.send(f"Sorry, but the command {ctx.invoked_with} was not found."
