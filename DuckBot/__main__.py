@@ -2,8 +2,6 @@ import datetime
 import logging
 import os
 import traceback
-
-import jishaku.modules
 import tekore as tk
 from typing import (
     List,
@@ -25,6 +23,10 @@ from discord.ext.commands.errors import (
 )
 
 from DuckBot import errors
+
+initial_extensions = (
+    'jishaku',
+)
 
 load_dotenv()
 
@@ -200,6 +202,8 @@ class DuckBot(commands.Bot):
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
 
+        for ext in initial_extensions:
+            self._load_extension(ext)
         self._dynamic_cogs()
 
     def _load_extension(self, name: str) -> None:
@@ -210,10 +214,11 @@ class DuckBot(commands.Bot):
             print()  # Empty line
 
     def _dynamic_cogs(self) -> None:
-        self._load_extension('jishaku')
-        for cog in jishaku.modules.resolve_extensions(self, 'DuckBot.cogs.*'):
-            logging.info(f"Trying to load cog: {cog}")
-            self._load_extension(cog)
+        for filename in os.listdir("DuckBot/cogs"):
+            if filename.endswith(".py"):
+                cog = filename[:-3]
+                logging.info(f"Trying to load cog: {cog}")
+                self._load_extension(f'DuckBot.cogs.{cog}')
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
