@@ -240,22 +240,33 @@ class Management(commands.Cog, name='Bot Management'):
         extensions = await jishaku.modules.ExtensionConverter.convert(self, ctx, '~')
 
         for extension in extensions:
+            method, icon = (
+                (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
+                if extension in self.bot.extensions else
+                (self.bot.load_extension, "\N{INBOX TRAY}")
+            )
             try:
-                self.bot.reload_extension(extension)
-                to_send.append(extension)
+                method(extension)
+                to_send.append(f"`{icon} {extension}`")
             except Exception:  # pylint: disable=broad-except
                 first_reload_failed_extensions.append(extension)
 
         error_keys = {
             discord.ext.commands.ExtensionNotFound: 'Not found',
             discord.ext.commands.NoEntryPointError: 'No setup function',
-            discord.ext.commands.ExtensionNotLoaded: 'Not loaded'
+            discord.ext.commands.ExtensionNotLoaded: 'Not loaded',
+            discord.ext.commands.ExtensionAlreadyLoaded: 'Already loaded'
         }
 
         for extension in first_reload_failed_extensions:
+            method, icon = (
+                (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
+                if extension in self.bot.extensions else
+                (self.bot.load_extension, "\N{INBOX TRAY}")
+            )
             try:
-                self.bot.reload_extension(extension)
-                to_send.append(extension)
+                method(extension)
+                to_send.append(f"`{icon} {extension}`")
 
             except tuple(error_keys.values()) as exc:
                 to_send.append(f"❌ {extension} - {error_keys[type(exc)]}")
