@@ -23,9 +23,10 @@ https://github.com/cyrus01337/invites/
 import asyncio
 import contextlib
 import datetime
+import random
 import time
 from typing import Dict, Optional
-import re
+import unittest
 
 import discord
 from discord.ext import commands, tasks
@@ -351,6 +352,32 @@ class Logging(commands.Cog):
         await self.bot.db.execute(query, ctx.guild.id, message)
 
         return await ctx.send(f"**Welcome message updated to:**\n{message}")
+
+    @welcome.command(name='fake', aliases=['test', 'try'])
+    async def welcome_message_test(self, ctx: CustomContext):
+        """ Sends a fake welcome message """
+        invite = unittest.TestCase(methodName='discord.gg/discord-api')
+        invite.inviter = random.choice(ctx.guild.members)
+        invite.code = 'discord-api'
+        member = random.choice(ctx.guild.members)
+        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
+                                             member.guild.id)
+        message = message or "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
+
+        l = {'server': str(member.guild),
+             'user': str(member.display_name),
+             'full-user': str(member),
+             'user-mention': str(member.mention),
+             'count': str(member.guild.member_count),
+             'code': str(invite.code),
+             'full-code': f"discord.gg/{invite.code}",
+             'full-url': str(invite),
+             'inviter': str(((member.guild.get_member(
+                 invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
+             'full-inviter': str(invite.inviter if invite.inviter else 'N/A'),
+             'inviter-mention': str(invite.inviter.mention if invite.inviter else 'N/A')}
+
+        await ctx.send(message.format(**l))
 
     @commands.Cog.listener()
     async def on_invite_update(self, member, invite):
