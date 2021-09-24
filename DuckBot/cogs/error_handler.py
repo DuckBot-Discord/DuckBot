@@ -72,8 +72,9 @@ class Handler(commands.Cog, name='Handler'):
                                                                if c.cog_name not in ignored_cogs]))
             matches = difflib.get_close_matches(ctx.invoked_with, all_commands)
             nl = '\n'
+            sep = '```py\n'
             return await ctx.send(f"Sorry, but the command {ctx.invoked_with} was not found."
-                                  f"{f'{nl}did you mean: {nl+nl.join(matches)}' if matches else ''}")
+                                  f"{f'did you mean... {nl+sep+nl.join(matches)}```' if matches else ''}")
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
