@@ -238,7 +238,8 @@ class Management(commands.Cog, name='Bot Management'):
         first_reload_failed_extensions = []
 
         extensions = jishaku.modules.ExtensionConverter.convert(self, ctx, '~')
-        for extension in extensions:
+
+        for extension in itertools.chain(extensions):
             try:
                 self.bot.reload_extension(extension)
                 to_send.append(extension)
