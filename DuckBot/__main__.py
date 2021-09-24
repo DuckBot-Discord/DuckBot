@@ -70,6 +70,19 @@ class DuckBot(commands.Bot):
             raise errors.UserBlacklisted
 
     def __init__(self) -> None:
+        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
+                                  **{k: v for k, v in dict(discord.Intents.default()).items()
+                                     if k not in ('members', 'guild_typing', 'dm_typing')})
+        super().__init__(
+            intents=intents,
+            command_prefix=self.get_pre,
+            case_insensitive=True,
+            enable_debug_events=True,
+            strip_after_prefix=True,
+            allowed_mentions=discord.AllowedMentions(replied_user=False),
+            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help')
+        )
+
         # Bot based stuff
         self.context = None
         self.invites = None
@@ -98,22 +111,6 @@ class DuckBot(commands.Bot):
                                        username=os.getenv('ASYNC_PRAW_UN'),
                                        password=os.getenv('ASYNC_PRAW_PA'))
         self.add_check(self.blacklist)
-
-        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
-                                  **{k: v for k, v in dict(discord.Intents.default()).items()
-                                     if k not in ('members', 'guild_typing', 'dm_typing')})
-
-        super().__init__(
-            intents=intents,
-            command_prefix=self.get_pre,
-            case_insensitive=True,
-            enable_debug_events=True,
-            strip_after_prefix=True,
-            allowed_mentions=discord.AllowedMentions(replied_user=False),
-            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help')
-        )
-
-        # Bot based stuff
 
         for ext in initial_extensions:
             self._load_extension(ext)
