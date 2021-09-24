@@ -477,7 +477,7 @@ class About(commands.Cog):
         Links to the bot's code, or a specific command's
         """
         source_url = 'https://github.com/LeoCx1000/discord-bots'
-        branch = 'master/DuckBot'
+        branch = 'master'
         if command is None:
             embed = discord.Embed(description=f"**[Here's my source code]({source_url})**")
             return await ctx.send(embed=embed)

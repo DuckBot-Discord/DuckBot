@@ -8,7 +8,7 @@ from discord.ext.commands import BucketType
 import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.cogs import music as music_cog
-from DuckBot.cogs.info import suggestions_channel
+from DuckBot.cogs.info import suggestions_channel, ServerInvite
 
 warned = []
 
@@ -171,26 +171,18 @@ class Handler(commands.Cog, name='Handler'):
         if isinstance(error, commands.BadArgument):
             return await ctx.send(error or "Bad argument given!")
 
-        if isinstance(error, discord.HTTPException):
-            await ctx.send("Oh no! An unexpected HTTP error occurred while handling this command! 😔"
-                           "\nI've notified the developers about it. in the meantime, maybe try again?")
-
-        if isinstance(error, discord.Forbidden):
-            await ctx.send("Oh no! It seems like I don't have permissions to perform that action!"
-                           "\nThis may be due to me missing permissions in a specific channel, server"
-                           "permissions, or an issue with role hierarchy. Try adjusting my permissions"
-                           "for this server. \n(Note that I can't edit the server owner)")
-
         if isinstance(error, commands.NoPrivateMessage):
             return await ctx.send("This command does not work inside DMs")
 
         if isinstance(error, commands.PrivateMessageOnly):
             return await ctx.send("This command only works inside DMs")
 
+        if isinstance(error, commands.NSFWChannelRequired):
+            return await ctx.send('This commands only works in NSFW channels')
+
         error_channel = self.bot.get_channel(self.error_channel)
 
-        if not isinstance(error, (discord.Forbidden, discord.HTTPException)):
-            await ctx.send("Uh oh! An unexpected error has ocurred. I've notified the developers about it")
+        await ctx.send("An unexpected error ocurred... For more info, join my support server", view = ServerInvite())
 
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))
@@ -235,8 +227,8 @@ class Handler(commands.Cog, name='Handler'):
             message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
             if not message.author == self.bot.user:
                 return
-            error = '> ```py\n> '+'\n> '.join(message.content.split('\n')[7:])
-            await message.edit(f"{error}\n```fix\n✅ Marked as fixed by the developers.```")
+            error = '```py\n'+'\n'.join(message.content.split('\n')[7:])
+            await message.edit(f"{error}```fix\n✅ Marked as fixed by the developers.```")
             await message.clear_reactions()
 
         if payload.channel_id == suggestions_channel and await \

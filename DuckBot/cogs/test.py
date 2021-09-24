@@ -17,5 +17,6 @@ class Test(commands.Cog):
         self.bot: DuckBot = bot
 
     @commands.command()
+    @commands.is_nsfw()
     async def test(self, ctx: CustomContext):
-        await ctx.send()
+        await ctx.send("😏")
