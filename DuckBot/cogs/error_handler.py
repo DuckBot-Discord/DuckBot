@@ -67,7 +67,7 @@ class Handler(commands.Cog, name='Handler'):
                 return
 
         if isinstance(error, commands.CommandNotFound):
-            ignored_cogs = ('Bot Management', 'jishaku')
+            ignored_cogs = ('Bot Management', 'jishaku') if ctx.author.id != self.bot.owner_id else ()
             command_names = []
             for command in [c for c in self.bot.commands if c.cog_name not in ignored_cogs]:
                 # noinspection PyBroadException
@@ -82,10 +82,10 @@ class Handler(commands.Cog, name='Handler'):
             matches = difflib.get_close_matches(ctx.invoked_with, command_names)
 
             if matches:
-                confirm = await ctx.confirm(message=f"Sorry, but the command {ctx.invoked_with} was not found."
-                                                    f"\n{f'did you mean... `{matches[0]}`?' if matches else ''}",
-                                            delete_after_confirm=True, delete_after_timeout=False,
-                                            buttons=(('✅', 'run command'), ('❌', 'cancel')))
+                confirm = await ctx.confirm(message=f"Sorry, but the command **{ctx.invoked_with}** was not found."
+                                                    f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
+                                            delete_after_confirm=True, delete_after_timeout=False)
+
                 if confirm is True:
                     message = copy.copy(ctx.message)
                     message._edited_timestamp = discord.utils.utcnow()
@@ -93,6 +93,7 @@ class Handler(commands.Cog, name='Handler'):
                     return await self.bot.process_commands(message)
                 else:
                     return
+
             else:
                 return await ctx.send(f"Sorry, but the command {ctx.invoked_with} was not found.")
 

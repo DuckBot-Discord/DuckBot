@@ -120,10 +120,18 @@ class CustomContext(commands.Context):
         except discord.HTTPException:
             return await super().send(content=content, embed=embed, reference=None, **kwargs)
 
-    async def confirm(self, message: str = 'Do you want to confirm?', buttons: typing.Tuple[typing.Tuple[str]] = None,
-                      timeout: int = 30, delete_after_confirm: bool = False, delete_after_timeout: bool = False):
-        view = Confirm(buttons=buttons or ((None, 'Confirm'), (None, 'Cancel')), timeout=timeout)
+    async def confirm(self, message: str = 'Do you want to confirm?',
+                      buttons: typing.Tuple[typing.Union[discord.PartialEmoji, str],
+                                            str, discord.ButtonStyle] = None, timeout: int = 30,
+                      delete_after_confirm: bool = False, delete_after_timeout: bool = False):
+
+        view = Confirm(buttons=buttons or (
+            (None, 'Confirm', discord.ButtonStyle.green),
+            (None, 'Cancel', discord.ButtonStyle.red)
+        ), timeout=timeout)
+
         message = await self.send(message, view=view)
+
         await view.wait()
         if view.value is None:
             try:
