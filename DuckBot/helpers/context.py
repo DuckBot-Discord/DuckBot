@@ -125,7 +125,7 @@ class CustomContext(commands.Context):
                                             str, discord.ButtonStyle] = None, timeout: int = 30,
                       delete_after_confirm: bool = False, delete_after_timeout: bool = False,
                       delete_after_cancel: bool = None):
-        delete_after_cancel = delete_after_cancel if delete_after_timeout is None else delete_after_confirm
+        delete_after_cancel = delete_after_cancel if delete_after_cancel is None else delete_after_confirm
         view = Confirm(buttons=buttons or (
             (None, 'Confirm', discord.ButtonStyle.green),
             (None, 'Cancel', discord.ButtonStyle.red)
