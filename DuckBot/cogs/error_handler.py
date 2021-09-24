@@ -69,7 +69,7 @@ class Handler(commands.Cog, name='Handler'):
 
         if isinstance(error, commands.CommandNotFound):
             ignored_cogs = ('Bot Management', 'jishaku')
-            async with contextlib.suppress(commands.CommandInvokeError, commands.MissingPermissions):
+            with contextlib.suppress(commands.MissingPermissions, commands.NotOwner):
                 all_commands = list(itertools.chain.from_iterable(
                     [[c.name] + c.aliases for c in self.bot.commands if
                      c.cog_name not in ignored_cogs and (await c.can_run(ctx))]))
