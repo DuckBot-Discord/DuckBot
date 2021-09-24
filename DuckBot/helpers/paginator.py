@@ -432,5 +432,5 @@ class EmojiListPageSource(menus.ListPageSource):
         self.data = data
         super().__init__(data, per_page=1)
 
-    async def format_page(self, menu, entries):
-        return entries[menus.current_page]
+    async def format_page(self, menu, entry):
+        return entry
