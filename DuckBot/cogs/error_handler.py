@@ -31,7 +31,6 @@ class Handler(commands.Cog, name='Handler'):
     @commands.Cog.listener('on_command_error')
     async def error_handler(self, ctx: CustomContext, error):
         error = getattr(error, "original", error)
-        await self.bot.wait_until_ready()
         ignored = (
             music_cog.NoPlayer,
             music_cog.FullVoiceChannel,
