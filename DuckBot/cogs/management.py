@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import datetime
+import importlib
 import io
 import itertools
 import os
@@ -285,6 +286,37 @@ class Management(commands.Cog, name='Bot Management'):
                     await target.send(f"{to_dm}\n{traceback_string}")
 
         await ctx.send('\n'.join(to_send))
+
+    @commands.command(name="mreload", aliases=['mload', 'mrl'])
+    @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def reload_module(self, ctx, *extensions: jishaku.modules.ExtensionConverter):
+        """
+        Reloads one or multiple extensions
+        """
+        pages = WrappedPaginator(prefix='', suffix='')
+
+        # 'jsk reload' on its own just reloads jishaku
+        if ctx.invoked_with == 'reload' and not extensions:
+            extensions = [['jishaku']]
+
+        for extension in itertools.chain(*extensions):
+            method, icon = (
+                (importlib.import_module, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
+            )
+
+            try:
+                module = method(extension)
+                importlib.reload(module)
+            except Exception as exc:  # pylint: disable=broad-except
+                traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 1))
+
+                pages.add_line(
+                    f"{icon}\N{WARNING SIGN} `{extension}`\n```py\n{traceback_data}\n```",
+                    empty=True
+                )
+            else:
+                pages.add_line(f"{icon} `{extension}`")
 
 
     ###############################################################################
