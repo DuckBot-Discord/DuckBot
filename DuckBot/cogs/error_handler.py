@@ -1,13 +1,12 @@
-import contextlib
 import copy
 import io
+import itertools
 import re
 import traceback
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
 import difflib
-import itertools
 
 import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
@@ -69,12 +68,18 @@ class Handler(commands.Cog, name='Handler'):
 
         if isinstance(error, commands.CommandNotFound):
             ignored_cogs = ('Bot Management', 'jishaku')
-            with contextlib.suppress(commands.MissingPermissions, commands.NotOwner):
-                all_commands = list(itertools.chain.from_iterable(
-                    [[c.name] + c.aliases for c in self.bot.commands if
-                     c.cog_name not in ignored_cogs and (await c.can_run(ctx))]))
+            command_names = []
+            for command in [c for c in self.bot.commands if c.cog_name not in ignored_cogs]:
+                # noinspection PyBroadException
+                try:
+                    if await command.can_run(ctx):
+                        command_names.append([command.name] + command.aliases)
+                except:
+                    continue
 
-            matches = difflib.get_close_matches(ctx.invoked_with, all_commands)
+            command_names = list(itertools.chain.from_iterable(command_names))
+
+            matches = difflib.get_close_matches(ctx.invoked_with, command_names)
 
             if matches:
                 confirm = await ctx.confirm(message=f"Sorry, but the command {ctx.invoked_with} was not found."
