@@ -4,6 +4,8 @@ import traceback
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
+import difflib
+import itertools
 
 import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
@@ -11,6 +13,7 @@ from DuckBot.cogs import music as music_cog
 from DuckBot.cogs.info import suggestions_channel, ServerInvite
 
 warned = []
+
 
 def setup(bot):
     bot.add_cog(Handler(bot))
@@ -30,7 +33,6 @@ class Handler(commands.Cog, name='Handler'):
         error = getattr(error, "original", error)
         await self.bot.wait_until_ready()
         ignored = (
-            commands.CommandNotFound,
             music_cog.NoPlayer,
             music_cog.FullVoiceChannel,
             music_cog.NotAuthorized,
@@ -63,6 +65,13 @@ class Handler(commands.Cog, name='Handler'):
                 return await ctx.send("You can't do that! You're blacklisted.")
             else:
                 return
+
+        if isinstance(error, commands.CommandNotFound):
+            all_commands = list(itertools.chain.from_iterable([[c.name] + c.aliases for c in self.bot.commands]))
+            matches = difflib.get_close_matches(ctx.invoked_with, all_commands)
+            nl = '\n'
+            return await ctx.send(f"Sorry, but the command {ctx.invoked_with} was not found."
+                                  f"{f'{nl}did you mean: {nl+nl.join(matches)}' if matches else ''}")
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
@@ -162,7 +171,8 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send("I couldn't find any emojis there.")
 
         if isinstance(error, commands.errors.MemberNotFound):
-            return await ctx.send(f"I've searched far and wide, but I couldn't find `{error.argument}` in this server...")
+            return await ctx.send(f"I've searched far and wide, "
+                                  f"but I couldn't find `{error.argument}` in this server...")
 
         if isinstance(error, commands.errors.UserNotFound):
             return await ctx.send(
@@ -184,8 +194,7 @@ class Handler(commands.Cog, name='Handler'):
 
         nl = '\n'
         await ctx.send(f"**An unexpected error ocurred... For more info, join my support server**"
-                       f"\n> ```py\n> {f'{nl}> '.join(str(error).split(nl))}\n> ```",
-                       view = ServerInvite())
+                       f"\n> ```py\n> {f'{nl}> '.join(str(error).split(nl))}\n> ```", view=ServerInvite())
 
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))
@@ -230,8 +239,8 @@ class Handler(commands.Cog, name='Handler'):
             message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
             if not message.author == self.bot.user:
                 return
-            error = '```py\n'+'\n'.join(message.content.split('\n')[7:])
-            await message.edit(f"{error}```fix\n✅ Marked as fixed by the developers.```")
+            error = '```py\n' + '\n'.join(message.content.split('\n')[7:])
+            await message.edit(content=f"{error}```fix\n✅ Marked as fixed by the developers.```")
             await message.clear_reactions()
 
         if payload.channel_id == suggestions_channel and await \
@@ -259,19 +268,27 @@ class Handler(commands.Cog, name='Handler'):
 
             embed.title = scheme[1]
             embed.colour = scheme[0]
-            user_id = int(embed.footer.text.replace("Sender ID: ", ""))
+            # noinspection PyBroadException
+            try:
+                user_id = int(embed.footer.text.replace("Sender ID: ", ""))
+            except:
+                user_id = None
             suggestion = embed.description
 
-            try:
-                user = (self.bot.get_user(user_id) or (await self.bot.fetch_user(user_id)))
-                embed = discord.Embed(title="🎉 Suggestion approved! 🎉",
-                                      description=f"**Your suggestion has been approved! "
-                                                  f"You suggested:**\n{suggestion}")
-                embed.set_footer(text='Reply to this DM if you want to stay in contact with us while we work on your suggestion!')
-                await user.send()
-                embed.set_footer(text = f"DM sent - ✅ - {user_id}")
-            except (discord.Forbidden, discord.HTTPException):
-                embed.set_footer(text = f"DM sent - ❌ - {user_id}")
+            if str(payload.emoji) == '🔽' and user_id:
+                try:
+                    user = (self.bot.get_user(user_id) or (await self.bot.fetch_user(user_id)))
+                    user_embed = discord.Embed(title="🎉 Suggestion approved! 🎉",
+                                               description=f"**Your suggestion has been approved! "
+                                                           f"You suggested:**\n{suggestion}")
+                    user_embed.set_footer(text='Reply to this DM if you want to stay in contact '
+                                               'with us while we work on your suggestion!')
+                    await user.send(embed=user_embed)
+                    embed.set_footer(text=f"DM sent - ✅ - {user_id}")
+                except (discord.Forbidden, discord.HTTPException):
+                    embed.set_footer(text=f"DM sent - ❌ - {user_id}")
+            else:
+                embed.set_footer(text='Suggestion denied. No DM sent.')
 
             await message.edit(embed=embed)
             await message.clear_reactions()
