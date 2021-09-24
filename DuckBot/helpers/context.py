@@ -11,7 +11,6 @@ class ConfirmButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         assert self.view is not None
         view: Confirm = self.view
-        await interaction.edit_original_message(view=None)
         view.value = True
         view.stop()
 
@@ -23,7 +22,6 @@ class CancelButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         assert self.view is not None
         view: Confirm = self.view
-        await interaction.edit_original_message(view=None)
         view.value = False
         view.stop()
 
@@ -35,9 +33,6 @@ class Confirm(discord.ui.View):
         self.value = None
         self.add_item(ConfirmButton(emoji=buttons[0][0], label=buttons[0][1]))
         self.add_item(CancelButton(emoji=buttons[1][0], label=buttons[1][1]))
-
-    async def on_timeout(self):
-        await self.message.edit(view=None)
 
 
 class CustomContext(commands.Context):
