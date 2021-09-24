@@ -30,6 +30,7 @@ import re
 import discord
 from discord.ext import commands, tasks
 
+from DuckBot import errors
 from DuckBot.__main__ import DuckBot, CustomContext
 
 # poll period in minutes for the
@@ -323,8 +324,8 @@ class Logging(commands.Cog):
         Sets the welcome message for this server.
         ``````fix
         Here are some placeholders you can use in the message.
-        To use them, just surround them in % symbols, like so:
-        = %server%, %full-name% or %code%
+        To use them, just surround them in {} symbols, like so:
+        = {server}, {full-name} or %code%
         ``````yaml
         server : returns the server's name (Server Name)
         user : returns the user's name (Name)
@@ -338,7 +339,7 @@ class Logging(commands.Cog):
         full-inviter : returns the inviter's full name (Name#1234)
         inviter-mention : returns the inviter's mention (@Name)
         ``````yaml
-        NOTE: these placeholders are case insensitive.
+        NOTE: these placeholders are CASE SENSITIVE.
         """
         query = """
                 INSERT INTO prefixes(guild_id, welcome_message) VALUES ($1, $2)
@@ -355,28 +356,26 @@ class Logging(commands.Cog):
     async def on_invite_update(self, member, invite):
         try:
             channel = await self.bot.get_welcome_channel(member)
-        except:
+        except errors.NoWelcomeChannel:
             return
         message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
                                              member.guild.id)
-        message = message or "**%INVITER%** just added **%USER%** to **%SERVER%** (They're the **%COUNT%** to join)"
+        message = message or "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
 
-        l = {'%SERVER%': str(member.guild),
-             '%USER%': str(member.display_name),
-             '%FULL-USER%': str(member),
-             '%USER-MENTION%': str(member.mention),
-             '%COUNT%': str(member.guild.member_count),
-             '%CODE%': str(invite.code),
-             '%FULL-CODE%': f"discord.gg/{invite.code}",
-             '%FULL-URL%': str(invite),
-             '%INVITER%': str(((member.guild.get_member(
+        l = {'server': str(member.guild),
+             'user': str(member.display_name),
+             'full-user': str(member),
+             'user-mention': str(member.mention),
+             'count': str(member.guild.member_count),
+             'code': str(invite.code),
+             'full-code': f"discord.gg/{invite.code}",
+             'full-url': str(invite),
+             'inviter': str(((member.guild.get_member(
                  invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
-             '%FULL-INVITER%': str(invite.inviter if invite.inviter else 'N/A'),
-             '%INVITER-MENTION%': str(invite.inviter.mention if invite.inviter else 'N/A')}
+             'full-inviter': str(invite.inviter if invite.inviter else 'N/A'),
+             'inviter-mention': str(invite.inviter.mention if invite.inviter else 'N/A')}
 
-        pattern = '|'.join(sorted(re.escape(k) for k in l))
-        message = re.sub(pattern, lambda m: l.get(m.group(0).upper()), message, flags=re.IGNORECASE)
-        await channel.send(message)
+        await channel.send(message.format(**l))
 
 
 def setup(bot: commands.Bot):
