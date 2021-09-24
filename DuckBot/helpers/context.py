@@ -4,24 +4,40 @@ import typing
 from discord.ext import commands
 
 
+class ConfirmButton(discord.ui.Button):
+    def __init__(self, label: str, emoji: str):
+        super().__init__(style=discord.ButtonStyle.green, label=label, emoji=emoji)
+
+    async def callback(self, interaction: discord.Interaction):
+        assert self.view is not None
+        view: Confirm = self.view
+        await interaction.edit_original_message(view=None)
+        view.value = True
+        view.stop()
+
+
+class CancelButton(discord.ui.Button):
+    def __init__(self, label: str, emoji: str):
+        super().__init__(style=discord.ButtonStyle.red, label=label, emoji=emoji)
+
+    async def callback(self, interaction: discord.Interaction):
+        assert self.view is not None
+        view: Confirm = self.view
+        await interaction.edit_original_message(view=None)
+        view.value = False
+        view.stop()
+
+
 class Confirm(discord.ui.View):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, buttons: typing.Tuple[typing.Tuple[str]]):
+        super().__init__(timeout=5)
+        self.message = None
         self.value = None
+        self.add_item(ConfirmButton(emoji=buttons[0][0], label=buttons[0][1]))
+        self.add_item(CancelButton(emoji=buttons[1][0], label=buttons[1][1]))
 
-    # When the confirm button is pressed, set the inner value to `True` and
-    # stop the View from listening to more input.
-    # We also send the user an ephemeral message that we're confirming their choice.
-    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.green)
-    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.value = True
-        self.stop()
-
-    # This one is similar to the confirmation button except sets the inner value to `False`
-    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.red)
-    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.value = False
-        self.stop()
+    async def on_timeout(self):
+        await self.message.edit(view=None)
 
 
 class CustomContext(commands.Context):
@@ -109,8 +125,8 @@ class CustomContext(commands.Context):
         except discord.HTTPException:
             return await super().send(content=content, embed=embed, reference=None, **kwargs)
 
-    async def confirm(self, message: str = 'Do you want to confirm?', delete_message_after: int = False):
-        view = Confirm()
+    async def confirm(self, message: str = 'Do you want to confirm?', delete_message_after: int = False, buttons: typing.Tuple[typing.Tuple[str]] = None):
+        view = Confirm(buttons=buttons or ((None, 'Confirm'), (None, 'Cancel')))
         message = await self.send(message, view=view)
         await view.wait()
         if view.value is None:
