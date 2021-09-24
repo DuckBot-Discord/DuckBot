@@ -247,7 +247,7 @@ class Management(commands.Cog, name='Bot Management'):
             )
             try:
                 method(extension)
-                to_send.append(f"`{icon} {extension}`")
+                to_send.append(f"{icon} `{extension}`")
             except Exception:  # pylint: disable=broad-except
                 first_reload_failed_extensions.append(extension)
 
@@ -266,7 +266,7 @@ class Management(commands.Cog, name='Bot Management'):
             )
             try:
                 method(extension)
-                to_send.append(f"`{icon} {extension}`")
+                to_send.append(f"{icon} `{extension}`")
 
             except tuple(error_keys.values()) as exc:
                 to_send.append(f"❌ {extension} - {error_keys[type(exc)]}")
