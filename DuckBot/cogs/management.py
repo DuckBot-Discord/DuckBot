@@ -194,7 +194,7 @@ class Management(commands.Cog, name='Bot Management'):
             embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension not loaded")
             await message.edit(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=['load'])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reload(self, ctx, *extensions: jishaku.modules.ExtensionConverter):
@@ -203,9 +203,8 @@ class Management(commands.Cog, name='Bot Management'):
         """
         pages = WrappedPaginator(prefix='', suffix='')
 
-        # 'jsk reload' on its own just reloads jishaku
-        if ctx.invoked_with == 'reload' and not extensions:
-            extensions = [['jishaku']]
+        if ctx.invoked_with == 'rall' and not extensions:
+            extensions = [await jishaku.modules.ExtensionConverter.convert(self, ctx, '~')]
 
         for extension in itertools.chain(*extensions):
             method, icon = (
@@ -295,6 +294,9 @@ class Management(commands.Cog, name='Bot Management'):
         Reloads one or multiple extensions
         """
         pages = WrappedPaginator(prefix='', suffix='')
+
+        if not extensions:
+            extensions = [await jishaku.modules.ExtensionConverter.convert(self, ctx, 'DuckBot.helpers.*')]
 
         for extension in itertools.chain(*extensions):
             method, icon = (
