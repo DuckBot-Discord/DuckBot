@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import datetime
 import io
+import itertools
 import os
 import textwrap
 import traceback
@@ -9,11 +10,14 @@ import typing
 import emoji as unicode_emoji
 
 import discord
+import jishaku.modules
 from discord.ext import commands
 
 from jishaku.codeblocks import Codeblock, codeblock_converter
 from jishaku.features.baseclass import Feature
 from jishaku.models import copy_context_with
+from jishaku.modules import ExtensionConverter
+from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator
@@ -50,6 +54,7 @@ def is_reply():
         if not ctx.message.reference:
             raise commands.BadArgument('You must reply to a message!')
         return True
+
     return commands.check(predicate)
 
 
@@ -166,50 +171,6 @@ class Management(commands.Cog, name='Bot Management'):
                 await ctx.message.add_reaction(ctx.toggle(False))
                 self.bot.noprefix = False
 
-    # ----------------------------------------------------------------------------#
-    # ------------------------ EXTENSION MANAGEMENT ------------------------------#
-    # ----------------------------------------------------------------------------#
-
-    @commands.command(help="Loads an extension", aliases=['le', 'lc', 'loadcog'])
-    @commands.is_owner()
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def load(self, ctx, extension):
-        embed = discord.Embed(color=ctx.me.color, description=f"⬆ {extension}")
-        message = await ctx.send(embed=embed, footer=False)
-        try:
-            self.bot.load_extension("DuckBot.cogs.{}".format(extension))
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"✅ {extension}")
-            await message.edit(embed=embed)
-
-        except discord.ext.commands.ExtensionNotFound:
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension not found")
-            await message.edit(embed=embed)
-
-        except discord.ext.commands.ExtensionAlreadyLoaded:
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension already loaded")
-            await message.edit(embed=embed)
-
-        except discord.ext.commands.NoEntryPointError:
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ No setup function")
-            await message.edit(embed=embed)
-
-        except discord.ext.commands.ExtensionFailed as e:
-            traceback_string = "".join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ Execution error\n```{traceback_string}```")
-            try:
-                await message.edit(embed=embed)
-            except (discord.HTTPException, discord.Forbidden):
-                embed = discord.Embed(color=ctx.me.color,
-                                      description=f"❌ Execution error ```\n error too long\n```")
-                await message.edit(embed=embed,
-                                   file=io.StringIO(traceback_string))
-            raise e
-
     @commands.command(help="Unloads an extension", aliases=['unl', 'ue', 'uc'])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -232,116 +193,87 @@ class Management(commands.Cog, name='Bot Management'):
             embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension not loaded")
             await message.edit(embed=embed)
 
-    @commands.command(help="Reloads an extension", aliases=['rel', 're', 'rc'])
+    @commands.command()
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def reload(self, ctx, extension=""):
-        embed = discord.Embed(color=ctx.me.color, description=f"🔃 {extension}")
-        message = await ctx.send(embed=embed, footer=False)
-        try:
-            self.bot.reload_extension("DuckBot.cogs.{}".format(extension))
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"✅ {extension}")
-            await message.edit(embed=embed)
-        except discord.ext.commands.ExtensionNotLoaded:
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension not loaded")
-            await message.edit(embed=embed)
+    async def reload(self, ctx, *extensions: jishaku.modules.ExtensionConverter):
+        """
+        Reloads one or multiple extensions
+        """
+        pages = WrappedPaginator(prefix='', suffix='')
 
-        except discord.ext.commands.ExtensionNotFound:
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension not found")
-            await message.edit(embed=embed)
+        # 'jsk reload' on its own just reloads jishaku
+        if ctx.invoked_with == 'reload' and not extensions:
+            extensions = [['jishaku']]
 
-        except discord.ext.commands.NoEntryPointError:
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ No setup function")
-            await message.edit(embed=embed)
+        for extension in itertools.chain(*extensions):
+            method, icon = (
+                (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
+                if extension in self.bot.extensions else
+                (self.bot.load_extension, "\N{INBOX TRAY}")
+            )
 
-        except discord.ext.commands.ExtensionFailed as e:
-            traceback_string = "".join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))
-            await asyncio.sleep(0.5)
-            embed = discord.Embed(color=ctx.me.color, description=f"❌ Execution error\n```{traceback_string}```")
             try:
-                await message.edit(embed=embed)
-            except (discord.Forbidden, discord.HTTPException):
-                embed = discord.Embed(color=ctx.me.color,
-                                      description=f"❌ Execution error ```\n error too long, check the console\n```")
-                await message.edit(embed=embed)
-            raise e
+                method(extension)
+            except Exception as exc:  # pylint: disable=broad-except
+                traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 1))
+
+                pages.add_line(
+                    f"{icon}\N{WARNING SIGN} `{extension}`\n```py\n{traceback_data}\n```",
+                    empty=True
+                )
+            else:
+                pages.add_line(f"{icon} `{extension}`")
+
+        for page in pages.pages:
+            await ctx.send(page)
 
     @commands.command(help="Reloads all extensions", aliases=['relall', 'rall'], usage="[silent|channel]")
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def reloadall(self, ctx, argument: typing.Optional[str]):
+    async def reloadall(self, ctx, send_in_channel: typing.Optional[bool] = False):
         self.bot.last_rall = datetime.datetime.utcnow()
-        cogs_list = ""
-        to_send = ""
+        to_send = []
         err = False
         first_reload_failed_extensions = []
-        if argument == 'silent' or argument == 's':
-            silent = True
-        else:
-            silent = False
-        if argument == 'channel' or argument == 'c':
-            channel = True
-        else:
-            channel = False
 
-        for filename in os.listdir("DuckBot/cogs"):
-            if filename.endswith(".py"):
-                cogs_list = f"{cogs_list} \n🔃 {filename[:-3]}"
-
-        embed = discord.Embed(description=cogs_list)
-        message = await ctx.send(embed=embed, footer=False)
-
-        for filename in os.listdir("DuckBot/cogs"):
-            if filename.endswith(".py"):
-                try:
-                    self.bot.reload_extension("DuckBot.cogs.{}".format(filename[:-3]))
-                    to_send = f"{to_send} \n✅ {filename[:-3]}"
-                except Exception:
-                    first_reload_failed_extensions.append(filename)
-
-        for filename in first_reload_failed_extensions:
+        extensions = jishaku.modules.ExtensionConverter.convert(self, ctx, '~')
+        for extension in extensions:
             try:
-                self.bot.reload_extension("DuckBot.cogs.{}".format(filename[:-3]))
-                to_send = f"{to_send} \n✅ {filename[:-3]}"
+                self.bot.reload_extension(extension)
+                to_send.append(extension)
+            except Exception:  # pylint: disable=broad-except
+                first_reload_failed_extensions.append(extension)
 
-            except discord.ext.commands.ExtensionNotLoaded:
-                to_send = f"{to_send} \n❌ {filename[:-3]} - Not loaded"
-            except discord.ext.commands.ExtensionNotFound:
-                to_send = f"{to_send} \n❌ {filename[:-3]} - Not found"
-            except discord.ext.commands.NoEntryPointError:
-                to_send = f"{to_send} \n❌ {filename[:-3]} - No setup func"
+        error_keys = {
+            discord.ext.commands.ExtensionNotFound: 'Not found',
+            discord.ext.commands.NoEntryPointError: 'No setup function',
+            discord.ext.commands.ExtensionNotLoaded: 'Not loaded'
+        }
+
+        for extension in first_reload_failed_extensions:
+            try:
+                self.bot.reload_extension(extension)
+                to_send.append(extension)
+
+            except tuple(error_keys.values()) as exc:
+                to_send.append(f"❌ {extension} - {error_keys[type(exc)]}")
+
             except discord.ext.commands.ExtensionFailed as e:
-                traceback_string = "".join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))
-                to_send = f"{to_send} \n❌ {filename[:-3]} - Execution error"
-                embed_error = f"\n❌ {filename[:-3]} Execution error - Traceback" \
-                              f"\n```py\n{traceback_string}\n```"
-                if not silent:
-                    target = ctx if channel else ctx.author
-                    if len(embed_error) > 2000:
-                        await target.send(file=io.StringIO(embed_error))
-                    else:
-                        await target.send(embed_error)
+                traceback_string = f"```py" \
+                                   f"\n{''.join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))}" \
+                                   f"\n```"
+                to_send = to_send.append(f"❌ {extension} - Execution error!")
+                to_dm = f"❌ {extension} - Execution error - Traceback:"
 
-                err = True
-
-        await asyncio.sleep(0.4)
-        if err:
-            if not silent:
-                if not channel:
-                    to_send = f"{to_send} \n\n📬 {ctx.author.mention}, I sent you all the tracebacks."
+                target = ctx.author if send_in_channel is False else ctx
+                if (len(to_dm) + len(traceback_string) + 5) > 2000:
+                    await target.send(file=io.StringIO(traceback_string))
                 else:
-                    to_send = f"{to_send} \n\n📬 Sent all tracebacks here."
-            if silent:
-                to_send = f"{to_send} \n\n📭 silent, no tracebacks sent."
-            embed = discord.Embed(color=ctx.me.color, description=to_send, title='Reloaded some extensions')
-            await message.edit(embed=embed)
-        else:
-            embed = discord.Embed(title='Reloaded all extensions', color=ctx.me.color, description=to_send)
-            await message.edit(embed=embed)
+                    await target.send(f"{to_dm}\n{traceback_string}")
+
+        await ctx.send('\n'.join(to_send))
+
 
     ###############################################################################
     ###############################################################################
