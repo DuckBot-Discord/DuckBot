@@ -27,8 +27,8 @@ class CancelButton(discord.ui.Button):
 
 
 class Confirm(discord.ui.View):
-    def __init__(self, buttons: typing.Tuple[typing.Tuple[str]]):
-        super().__init__(timeout=5)
+    def __init__(self, buttons: typing.Tuple[typing.Tuple[str]], timeout: int = 30):
+        super().__init__(timeout=timeout)
         self.message = None
         self.value = None
         self.add_item(ConfirmButton(emoji=buttons[0][0], label=buttons[0][1]))
@@ -120,28 +120,29 @@ class CustomContext(commands.Context):
         except discord.HTTPException:
             return await super().send(content=content, embed=embed, reference=None, **kwargs)
 
-    async def confirm(self, message: str = 'Do you want to confirm?', delete_message_after: int = False, buttons: typing.Tuple[typing.Tuple[str]] = None):
-        view = Confirm(buttons=buttons or ((None, 'Confirm'), (None, 'Cancel')))
+    async def confirm(self, message: str = 'Do you want to confirm?', buttons: typing.Tuple[typing.Tuple[str]] = None,
+                      timeout: int = 30, delete_after_confirm: bool = False, delete_after_timeout: bool = False):
+        view = Confirm(buttons=buttons or ((None, 'Confirm'), (None, 'Cancel')), timeout=timeout)
         message = await self.send(message, view=view)
         await view.wait()
         if view.value is None:
             try:
                 (await message.edit(view=None)) if \
-                    delete_message_after is False else (await message.delete())
+                    delete_after_timeout is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False
         elif view.value:
             try:
                 (await message.edit(view=None)) if \
-                    delete_message_after is False else (await message.delete())
+                    delete_after_confirm is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return True
         else:
             try:
                 (await message.edit(view=None)) if \
-                    delete_message_after is False else (await message.delete())
+                    delete_after_confirm is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False
