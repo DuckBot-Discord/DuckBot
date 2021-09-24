@@ -18,4 +18,4 @@ class Test(commands.Cog):
 
     @commands.command()
     async def test(self, ctx: CustomContext):
-        await ctx.send(ctx.tick(await self.bot.is_owner(ctx.guild.owner), text="Is bot owner"))
+        await ctx.send()

@@ -268,14 +268,14 @@ class Management(commands.Cog, name='Bot Management'):
                 method(extension)
                 to_send.append(f"{icon} `{extension}`")
 
-            except tuple(error_keys.values()) as exc:
+            except tuple(error_keys.keys()) as exc:
                 to_send.append(f"{icon}❌ `{extension}` - {error_keys[type(exc)]}")
 
             except discord.ext.commands.ExtensionFailed as e:
                 traceback_string = f"```py" \
                                    f"\n{''.join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))}" \
                                    f"\n```"
-                to_send = to_send.append(f"❌ {extension} - Execution error!")
+                to_send.append(f"{icon}❌ `{extension}` - Execution error")
                 to_dm = f"❌ {extension} - Execution error - Traceback:"
 
                 target = ctx.author if send_in_channel is False else ctx

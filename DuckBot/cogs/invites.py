@@ -326,7 +326,7 @@ class Logging(commands.Cog):
         ``````fix
         Here are some placeholders you can use in the message.
         To use them, just surround them in {} symbols, like so:
-        = {server}, {full-name} or %code%
+        = {server}, {full-name} or {code}
         ``````yaml
         server : returns the server's name (Server Name)
         user : returns the user's name (Name)
@@ -356,10 +356,8 @@ class Logging(commands.Cog):
     @welcome.command(name='fake', aliases=['test', 'try'])
     async def welcome_message_test(self, ctx: CustomContext):
         """ Sends a fake welcome message """
-        invite = unittest.TestCase(methodName='discord.gg/discord-api')
-        invite.inviter = random.choice(ctx.guild.members)
-        invite.code = 'discord-api'
         member = random.choice(ctx.guild.members)
+        inviter = random.choice(ctx.guild.members)
         message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
                                              member.guild.id)
         message = message or "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
@@ -369,13 +367,12 @@ class Logging(commands.Cog):
              'full-user': str(member),
              'user-mention': str(member.mention),
              'count': str(member.guild.member_count),
-             'code': str(invite.code),
-             'full-code': f"discord.gg/{invite.code}",
-             'full-url': str(invite),
-             'inviter': str(((member.guild.get_member(
-                 invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
-             'full-inviter': str(invite.inviter if invite.inviter else 'N/A'),
-             'inviter-mention': str(invite.inviter.mention if invite.inviter else 'N/A')}
+             'code': "discord-api",
+             'full-code': "discord.gg/discord-api",
+             'full-url': "https://discord.gg/discord-api",
+             'inviter': str(inviter),
+             'full-inviter': str(inviter if inviter else 'N/A'),
+             'inviter-mention': str(inviter.mention if inviter else 'N/A')}
 
         await ctx.send(message.format(**l))
 

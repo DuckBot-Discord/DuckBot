@@ -46,11 +46,12 @@ class Events(commands.Cog):
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
         channel = discord.utils.get(category.channels, topic=str(message.author.id))
         if not channel:
-            await message.author.send(
-                "**Warning! This is DuckBot's ModMail thread.** \nThis conversation will be sent to the bot "
-                "developers. \n_They will reply to you as soon as possible! 💞_\n\n**<:nickname:850914031953903626> "
-                "Message edits are not saved! <:nickname:850914031953903626>**\nIf the message receives a ⚠ reaction, "
-                "there was an issue delivering the message.")
+            if not message.reference:
+                await message.author.send(
+                    "**Warning! This is DuckBot's ModMail thread.** \nThis conversation will be sent to the bot "
+                    "developers. \n_They will reply to you as soon as possible! 💞_\n\n**<:nickname:850914031953903626> "
+                    "Message edits are not saved! <:nickname:850914031953903626>**\nIf the message receives a ⚠ reaction, "
+                    "there was an issue delivering the message.")
             channel = await category.create_text_channel(
                 name=f"{message.author}",
                 topic=str(message.author.id),
@@ -62,8 +63,8 @@ class Events(commands.Cog):
         files = [await attachment.to_file(spoiler=attachment.is_spoiler()) for attachment in message.attachments if
                  attachment.size < 8388600]
         if not files and message.attachments:
-            await message.author.send("Some files couldn't be sent because they were over 8mb")
-
+            await message.author.send(embed = discord.Embed(description="Some files couldn't be sent because they were over 8mb",
+            color = discord.Colour.red()))
         try:
             await wh.send(content=message.content,
                           username=message.author.name,

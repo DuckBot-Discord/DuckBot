@@ -12,7 +12,6 @@ from DuckBot.cogs.info import suggestions_channel
 
 warned = []
 
-
 def setup(bot):
     bot.add_cog(Handler(bot))
 
@@ -29,7 +28,7 @@ class Handler(commands.Cog, name='Handler'):
     @commands.Cog.listener('on_command_error')
     async def error_handler(self, ctx: CustomContext, error):
         error = getattr(error, "original", error)
-
+        await self.bot.wait_until_ready()
         ignored = (
             commands.CommandNotFound,
             music_cog.NoPlayer,
@@ -190,10 +189,11 @@ class Handler(commands.Cog, name='Handler'):
 
         error_channel = self.bot.get_channel(self.error_channel)
 
+        if not isinstance(error, (discord.Forbidden, discord.HTTPException)):
+            await ctx.send("Uh oh! An unexpected error has ocurred. I've notified the developers about it")
+
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))
-
-        await self.bot.wait_until_ready()
 
         if ctx.guild:
             command_data = f"by: {ctx.author.name} ({ctx.author.id})" \
@@ -232,7 +232,12 @@ class Handler(commands.Cog, name='Handler'):
     async def wastebasket(self, payload: discord.RawReactionActionEvent):
         if payload.channel_id == self.error_channel and await \
                 self.bot.is_owner(payload.member) and str(payload.emoji == '🗑'):
-            return await self.bot.get_channel(payload.channel_id).get_partial_message(payload.message_id).delete()
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+            if not message.author == self.bot.user:
+                return
+            error = '> ```py\n> '+'\n> '.join(message.content.split('\n')[7:])
+            await message.edit(f"{error}\n```fix\n✅ Marked as fixed by the developers.```")
+            await message.clear_reactions()
 
         if payload.channel_id == suggestions_channel and await \
                 self.bot.is_owner(payload.member) and str(payload.emoji) in ('🔼', '🔽'):
@@ -243,19 +248,35 @@ class Handler(commands.Cog, name='Handler'):
             embed = message.embeds[0]
 
             sub = {
-                'Suggestion': 'suggestion',
-                'Denied suggestion': 'suggestion',
-                'Approved suggestion': 'suggestion'
+                'Suggestion ': 'suggestion',
+                'suggestion ': 'suggestion',
+                'Denied ': '',
+                'Approved ': ''
             }
 
             pattern = '|'.join(sorted(re.escape(k) for k in sub))
             title = re.sub(pattern, lambda m: sub.get(m.group(0).upper()), embed.title, flags=re.IGNORECASE)
 
             scheme = {
-                '🔼': (0x6aed64, f'Approved {title}'),
-                '🔽': (0xf25050, f'Denied {title}')
+                '🔼': (0x6aed64, f'Approved suggestion {title}'),
+                '🔽': (0xf25050, f'Denied suggestion {title}')
             }[str(payload.emoji)]
 
             embed.title = scheme[1]
             embed.colour = scheme[0]
+            user_id = int(embed.footer.text.replace("Sender ID: ", ""))
+            suggestion = embed.description
+
+            try:
+                user = (self.bot.get_user(user_id) or (await self.bot.fetch_user(user_id)))
+                embed = discord.Embed(title="🎉 Suggestion approved! 🎉",
+                                      description=f"**Your suggestion has been approved! "
+                                                  f"You suggested:**\n{suggestion}")
+                embed.set_footer(text='Reply to this DM if you want to stay in contact with us while we work on your suggestion!')
+                await user.send()
+                embed.set_footer(text = f"DM sent - ✅ - {user_id}")
+            except (discord.Forbidden, discord.HTTPException):
+                embed.set_footer(text = f"DM sent - ❌ - {user_id}")
+
             await message.edit(embed=embed)
+            await message.clear_reactions()
