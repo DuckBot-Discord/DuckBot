@@ -155,11 +155,3 @@ class CustomContext(commands.Context):
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False
-
-
-def setup(bot):
-    bot.context = CustomContext
-
-
-def teardown(bot):
-    bot.context = commands.Context
