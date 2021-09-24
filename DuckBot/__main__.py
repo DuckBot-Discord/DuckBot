@@ -117,6 +117,7 @@ class DuckBot(commands.Bot):
         self._dynamic_cogs()
 
     def _load_extension(self, name: str) -> None:
+        logging.info(f"Trying to load cog: {name}")
         try:
             self.load_extension(name)
         except (ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed):
@@ -127,7 +128,6 @@ class DuckBot(commands.Bot):
         for filename in os.listdir("DuckBot/cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
-                logging.info(f"Trying to load cog: {cog}")
                 self._load_extension(f'DuckBot.cogs.{cog}')
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
