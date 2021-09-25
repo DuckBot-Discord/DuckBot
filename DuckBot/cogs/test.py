@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
+from DuckBot.helpers.helper import generate_youtube_bar
 
 
 def setup(bot):
@@ -17,5 +18,5 @@ class Test(commands.Cog):
         self.bot: DuckBot = bot
 
     @commands.command()
-    async def test(self, ctx: CustomContext):
-        await ctx.send()
+    async def test(self, ctx: CustomContext, position: int, duration: int, length: int):
+        await ctx.send(generate_youtube_bar(position, duration, length))
