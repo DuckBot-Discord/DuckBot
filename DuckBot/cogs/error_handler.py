@@ -86,8 +86,8 @@ class Handler(commands.Cog, name='Handler'):
                                                     f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
                                             delete_after_confirm=True, delete_after_timeout=False,
                                             delete_after_cancel=False, buttons=(
-                                                    ('🔄', f'execute {matches[0]}', discord.ButtonStyle.blurple),
-                                                    ('🗑', None, discord.ButtonStyle.gray)
+                                                    ('🔄', f'execute {matches[0]}', discord.ButtonStyle.gray),
+                                                    ('🗑', None, discord.ButtonStyle.danger)
                                                 )
                                             )
 

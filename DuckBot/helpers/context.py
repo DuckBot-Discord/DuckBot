@@ -7,7 +7,7 @@ from discord.ext import commands
 
 
 class ConfirmButton(discord.ui.Button):
-    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle = discord.ButtonStyle.green):
+    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
         super().__init__(style=button_style, label=label, emoji=emoji, )
 
     async def callback(self, interaction: discord.Interaction):
@@ -18,7 +18,7 @@ class ConfirmButton(discord.ui.Button):
 
 
 class CancelButton(discord.ui.Button):
-    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle = discord.ButtonStyle.red):
+    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
         super().__init__(style=button_style, label=label, emoji=emoji)
 
     async def callback(self, interaction: discord.Interaction):
@@ -34,8 +34,16 @@ class Confirm(discord.ui.View):
         self.message = None
         self.value = None
         self.ctx: CustomContext = None
-        self.add_item(ConfirmButton(emoji=buttons[0][0], label=buttons[0][1], button_style=(buttons[0][2] or discord.ButtonStyle.green)))
-        self.add_item(CancelButton(emoji=buttons[1][0], label=buttons[1][1], button_style=(buttons[0][2] or discord.ButtonStyle.red)))
+        self.add_item(ConfirmButton(emoji=buttons[0][0],
+                                    label=buttons[0][1],
+                                    button_style=(
+                                            buttons[0][2] or discord.ButtonStyle.green
+                                    )))
+        self.add_item(CancelButton(emoji=buttons[1][0],
+                                   label=buttons[1][1],
+                                   button_style=(
+                                           buttons[0][2] or discord.ButtonStyle.red
+                                   )))
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         if interaction.user and interaction.user.id in (self.ctx.bot.owner_id, self.ctx.author.id):
