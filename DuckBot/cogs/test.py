@@ -18,5 +18,5 @@ class Test(commands.Cog):
         self.bot: DuckBot = bot
 
     @commands.command()
-    async def test(self, ctx: CustomContext, position: int, duration: int, length: int):
+    async def bar(self, ctx: CustomContext, position: int, duration: int, length: int):
         await ctx.send(generate_youtube_bar(position, duration, length))
