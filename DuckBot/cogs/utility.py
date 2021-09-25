@@ -443,9 +443,7 @@ class Utility(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def minecraft_uuid(self, ctx: CustomContext, *, username: str) \
             -> typing.Optional[discord.Message]:
-        """
-        Fetches the UUID of a minecraft user from the Mojang API, and avatar from craftavatar.com
-        """
+        """ Fetches the UUID of a minecraft user from the Mojang API, and avatar from craftavatar.com """
         argument = username
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
             if cs.status == 204:
@@ -455,7 +453,7 @@ class Utility(commands.Cog):
             res = await cs.json()
             user = res["name"]
             uuid = res["id"]
-            embed = discord.Embed(description="**UUID:** `{uuid}`")
+            embed = discord.Embed(description=f"**UUID:** `{uuid}`")
             embed.set_author(icon_url=f'https://crafatar.com/avatars/{uuid}?size=128&overlay=true', name=user)
             return await ctx.send(embed=embed)
 
