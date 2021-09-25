@@ -1,6 +1,7 @@
 import discord
 import typing
 
+from discord import Interaction
 from discord.ext import commands
 
 
@@ -31,8 +32,16 @@ class Confirm(discord.ui.View):
         super().__init__(timeout=timeout)
         self.message = None
         self.value = None
+        self.ctx: CustomContext = None
         self.add_item(ConfirmButton(emoji=buttons[0][0], label=buttons[0][1]))
         self.add_item(CancelButton(emoji=buttons[1][0], label=buttons[1][1]))
+
+    def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user and interaction.user.id in (self.ctx.bot.owner_id, self.ctx.author.id):
+            return True
+        await interaction.response.send_message(f'This is **{self.ctx.author}**\'s confirmation, sorry! 💖',
+                                                ephemeral=True)
+        return False
 
 
 class CustomContext(commands.Context):
@@ -130,7 +139,6 @@ class CustomContext(commands.Context):
             (None, 'Confirm', discord.ButtonStyle.green),
             (None, 'Cancel', discord.ButtonStyle.red)
         ), timeout=timeout)
-
         message = await self.send(message, view=view)
 
         await view.wait()
