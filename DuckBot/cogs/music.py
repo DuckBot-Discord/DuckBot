@@ -19,6 +19,7 @@ from lavalink.events import (NodeChangedEvent, PlayerUpdateEvent,
                              TrackStartEvent, TrackStuckEvent)
 
 from DuckBot.__main__ import DuckBot, CustomContext
+from DuckBot.helpers.helper import generate_youtube_bar
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 cancel_emote = "❌"
@@ -1060,14 +1061,12 @@ class Music(commands.Cog):
         position = str(dt.timedelta(milliseconds=player.position))
         position = position.split('.')
         thumnail = f"https://img.youtube.com/vi/{player.current.identifier}/maxresdefault.jpg"
-
-        played = int(player.position / player.current.duration * 13)
-        missing = int(13 - played)
+        values = (player.position, player.current.duration, 15)
         info = f'**Title**: **[{player.current.title}]({player.current.uri})**' \
                f'\n**Artist**: {player.current.author}' \
                f'\n**Requested By**: {player.current.requester.mention}' \
-               f'\n{position[0]} [{"▬" * played}]({player.current.uri} \"{player.current.title}\")' \
-               f'🔘{"▬" * missing} {str(dt.timedelta(milliseconds=int(player.current.duration)))}'
+               f'\n{position[0]} {generate_youtube_bar(*values)} ' \
+               f'{str(dt.timedelta(milliseconds=int(player.current.duration)))}'
         embed = discord.Embed(title=f'Current Track', color=color(ctx), description=info)
         embed.set_thumbnail(url=thumnail)
         await ctx.send(embed=embed)
