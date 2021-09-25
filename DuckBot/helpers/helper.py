@@ -138,3 +138,40 @@ def get_server_region(guild: discord.Guild):
         return "🇺🇸🌟 VIP US West"
     else:
         return "⁉ Not Found"
+
+
+def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
+    played = int(position/duration*bar_length)
+    missing = int(bar_length-played)
+
+    bars = (
+        ('<a:bar_start_full:891218466172993536>',
+         '<a:bar_start_mid:891218253513371679>',
+         None),
+        ('<a:bar_center_full:891218254553575424>',
+         '<a:bar_center_mid:891218253827940472>',
+         '<a:bar_center_empty:891218254343856168>'),
+        (None,
+         '<a:bar_end_mid:891218254327054367>',
+         '<a:bar_end_empty:891218253433679885>'
+         )
+    )
+    bar = []
+    if played == 0 and missing > 0:
+        bar += [bars[0][1]]
+        bar += [bars[1][2]*(missing-2)]
+        bar += [bars[2][2]]
+
+    elif played > 0 and missing == 0:
+        bar += [bars[0][0]]
+        bar += [bars[1][0]*(played-2)]
+        bar += [bars[2][1]]
+
+    elif played > 0 and missing > 0:
+        bar += [bars[0][0]]
+        bar += [bars[1][0]*(played-2)]
+        bar += [bars[1][1]]
+        bar += [bars[1][2]*(missing-1)]
+        bar += [bars[2][2]]
+
+    return ''.join(bar)
