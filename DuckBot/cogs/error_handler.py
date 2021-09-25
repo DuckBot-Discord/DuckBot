@@ -304,7 +304,7 @@ class Handler(commands.Cog, name='Handler'):
                 user_id = None
             suggestion = embed.description
 
-            if str(payload.emoji) == '🔽' and user_id:
+            if str(payload.emoji) == '🔼' and user_id:
                 try:
                     user = (self.bot.get_user(user_id) or (await self.bot.fetch_user(user_id)))
                     user_embed = discord.Embed(title="🎉 Suggestion approved! 🎉",
