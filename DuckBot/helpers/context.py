@@ -35,7 +35,7 @@ class Confirm(discord.ui.View):
         self.value = None
         self.ctx: CustomContext = None
         self.add_item(ConfirmButton(emoji=buttons[0][0], label=buttons[0][1], button_style=(buttons[0][2] or discord.ButtonStyle.green)))
-        self.add_item(CancelButton(emoji=buttons[1][0], label=buttons[1][1], button_style=(buttons[0][0] or discord.ButtonStyle.red)))
+        self.add_item(CancelButton(emoji=buttons[1][0], label=buttons[1][1], button_style=(buttons[0][2] or discord.ButtonStyle.red)))
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         if interaction.user and interaction.user.id in (self.ctx.bot.owner_id, self.ctx.author.id):
