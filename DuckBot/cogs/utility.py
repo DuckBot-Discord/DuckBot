@@ -456,7 +456,7 @@ class Utility(commands.Cog):
             user = res["name"]
             uuid = res["id"]
             embed = discord.Embed(description="**UUID:** `{uuid}`")
-            embed.set_author(icon_url=f'https://crafatar.com/avatars/{uuid}?size=128&overlay=true')
+            embed.set_author(icon_url=f'https://crafatar.com/avatars/{uuid}?size=128&overlay=true', name=user)
             return await ctx.send(embed=embed)
 
     @commands.command(name="commands")
