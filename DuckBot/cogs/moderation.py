@@ -979,7 +979,8 @@ class Moderation(commands.Cog):
         delta = helpers.human_timedelta(duration.dt, source=created_at)
         warning = (f"_Are you sure you want to mute yourself for **{delta}**?_"
                    f"\n**__Don't ask the moderators to undo this!__**")
-        confirm = await Confirm(warning).prompt(ctx)
+
+        confirm = await ctx.confirm(warning, delete_after_confirm=True)
         if not confirm:
             return
 

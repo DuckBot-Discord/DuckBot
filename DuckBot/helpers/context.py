@@ -1,5 +1,6 @@
 import discord
 import typing
+import random
 
 from discord import Interaction
 from discord.ext import commands
@@ -36,11 +37,25 @@ class Confirm(discord.ui.View):
         self.add_item(ConfirmButton(emoji=buttons[0][0], label=buttons[0][1]))
         self.add_item(CancelButton(emoji=buttons[1][0], label=buttons[1][1]))
 
-    def interaction_check(self, interaction: Interaction) -> bool:
+    async def interaction_check(self, interaction: Interaction) -> bool:
         if interaction.user and interaction.user.id in (self.ctx.bot.owner_id, self.ctx.author.id):
             return True
-        await interaction.response.send_message(f'This is **{self.ctx.author}**\'s confirmation, sorry! 💖',
-                                                ephemeral=True)
+        messages = [
+        "Oh no you can't do that! This belongs to **{user}**",
+        'This is **{user}**\'s confirmation, sorry! 💖',
+        '😒 Does this look yours? **No**. This is **{user}**\'s confirmation button',
+        '<a:stopit:891139227327295519>',
+        'HEYYYY!!!!! this is **{user}**\'s menu.',
+        'Sorry but you can\'t mess with **{user}**\' menu QnQ',
+        'No. just no. This is **{user}**\'s menu.',
+        '<:blobstop:749111017778184302>'*3,
+        'You don\'t look like {user} do you...',
+        '🤨 Thats not yours! Thats **{user}**\'s',
+        '🧐 Whomst! you\'re not **{user}**',
+        '_out!_ 👋'
+        ]
+        await interaction.response.send_message(random.choice(messages).format(user=self.ctx.author.display_name), ephemeral=True)
+
         return False
 
 
@@ -139,8 +154,8 @@ class CustomContext(commands.Context):
             (None, 'Confirm', discord.ButtonStyle.green),
             (None, 'Cancel', discord.ButtonStyle.red)
         ), timeout=timeout)
+        view.ctx = self
         message = await self.send(message, view=view)
-
         await view.wait()
         if view.value is None:
             try:
