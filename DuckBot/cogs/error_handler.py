@@ -100,7 +100,7 @@ class Handler(commands.Cog, name='Handler'):
                     return
 
             else:
-                return await ctx.send(f"Sorry, but the command {ctx.invoked_with} was not found.")
+                return
 
         if isinstance(error, discord.ext.commands.CheckAnyFailure):
             for e in error.errors:
