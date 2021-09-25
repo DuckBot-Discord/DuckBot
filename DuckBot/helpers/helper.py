@@ -141,7 +141,7 @@ def get_server_region(guild: discord.Guild):
 
 
 def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
-    played = int(position/duration*bar_length)
+    played = int(position/((duration if duration > 0 else 1)*bar_length))
     missing = int(bar_length-played)
 
     bars = (
