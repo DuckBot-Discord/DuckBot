@@ -439,26 +439,25 @@ class Utility(commands.Cog):
         menu = paginator.ViewPaginator(paginator.ServerEmotesEmbedPage(data=emotes, guild=guild), ctx=ctx)
         await menu.start()
 
-    @commands.command()
+    @commands.command(aliases=['uuid'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def minecraft_uuid(self, ctx: CustomContext, *, username: str) \
             -> typing.Optional[discord.Message]:
         """
-        Fetches the UUID of a minecraft user from the mojang API
+        Fetches the UUID of a minecraft user from the Mojang API, and avatar from craftavatar.com
         """
         argument = username
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
             embed = discord.Embed()
             if cs.status == 204:
-                embed.add_field(name='⚠ ERROR ⚠', value=f"`{argument}` is not a minecraft username!")
-
-            elif cs.status == 400:
-                embed.add_field(name="⛔ ERROR ⛔", value="ERROR 400! Bad request.")
-            else:
-                res = await cs.json()
-                user = res["name"]
-                uuid = res["id"]
-                embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
+                raise commands.BadArgument('That is not a valid Minecraft UUID!')
+            elif cs.status != 200:
+                raise commands.BadArgument('Something went wrong...')
+            res = await cs.json()
+            user = res["name"]
+            uuid = res["id"]
+            embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
+            embed.set_thumbnail(url=f'https://crafatar.com/avatars/{uuid}?size=128&overlay=true')
             return await ctx.send(embed=embed)
 
     @commands.command(name="commands")
