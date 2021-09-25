@@ -42,7 +42,7 @@ class Confirm(discord.ui.View):
         self.add_item(CancelButton(emoji=buttons[1][0],
                                    label=buttons[1][1],
                                    button_style=(
-                                           buttons[0][2] or discord.ButtonStyle.red
+                                           buttons[1][2] or discord.ButtonStyle.red
                                    )))
 
     async def interaction_check(self, interaction: Interaction) -> bool:
