@@ -151,7 +151,7 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
         ('<a:bar_center_full:891218254553575424>',
          '<a:bar_center_mid:891218253827940472>',
          '<a:bar_center_empty:891218254343856168>'),
-        (None,
+        ('<a:bar_end_full:891232339437453343>',
          '<a:bar_end_mid:891218254327054367>',
          '<a:bar_end_empty:891218253433679885>'
          )
@@ -173,5 +173,11 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
         bar += [bars[1][1]]
         bar += [bars[1][2]*(missing-1)]
         bar += [bars[2][2]]
+
+    elif played > 0 and missing == 0 and played > missing:
+        bar += [bars[0][0]]
+        bar += [bars[1][0]*(played-2)]
+        bar += [bars[2][0]]
+
 
     return ''.join(bar)
