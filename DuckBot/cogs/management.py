@@ -535,7 +535,7 @@ class Management(commands.Cog, name='Bot Management'):
         for i in os.scandir(path):
             if i.is_file():
                 if i.path.endswith(filetype):
-                    line_count += len(line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if file_contains in line)
+                    line_count += len([line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if file_contains in line])
             elif i.is_dir():
                 line_count += await self.count_others(i.path, filetype, file_contains)
         return line_count
