@@ -1061,12 +1061,13 @@ class Music(commands.Cog):
         position = position.split('.')
         thumnail = f"https://img.youtube.com/vi/{player.current.identifier}/maxresdefault.jpg"
 
-        played = int(player.position / player.current.duration * 15)
-        missing = int(15 - played)
+        played = int(player.position / player.current.duration * 13)
+        missing = int(13 - played)
         info = f'**Title**: **[{player.current.title}]({player.current.uri})**' \
                f'\n**Artist**: {player.current.author}' \
-               f'\n{position[0]} [{"▬" * played}]({player.current.uri} \"{player.current.title}\")🔘{"▬" * missing} {str(dt.timedelta(milliseconds=int(player.current.duration)))}' \
-               f'\n**Requested By**: {player.current.requester.mention}'
+               f'\n**Requested By**: {player.current.requester.mention}' \
+               f'\n{position[0]} [{"▬" * played}]({player.current.uri} \"{player.current.title}\")' \
+               f'🔘{"▬" * missing} {str(dt.timedelta(milliseconds=int(player.current.duration)))}'
         embed = discord.Embed(title=f'Current Track', color=color(ctx), description=info)
         embed.set_thumbnail(url=thumnail)
         await ctx.send(embed=embed)
