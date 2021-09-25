@@ -448,7 +448,6 @@ class Utility(commands.Cog):
         """
         argument = username
         async with self.bot.session.get(f"https://api.mojang.com/users/profiles/minecraft/{argument}") as cs:
-            embed = discord.Embed()
             if cs.status == 204:
                 raise commands.BadArgument('That is not a valid Minecraft UUID!')
             elif cs.status != 200:
@@ -456,8 +455,8 @@ class Utility(commands.Cog):
             res = await cs.json()
             user = res["name"]
             uuid = res["id"]
-            embed.add_field(name=f'Minecraft username: `{user}`', value=f"**UUID:** `{uuid}`")
-            embed.set_thumbnail(url=f'https://crafatar.com/avatars/{uuid}?size=128&overlay=true')
+            embed = discord.Embed(description="**UUID:** `{uuid}`")
+            embed.set_author(icon_url=f'https://crafatar.com/avatars/{uuid}?size=128&overlay=true')
             return await ctx.send(embed=embed)
 
     @commands.command(name="commands")
