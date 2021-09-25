@@ -84,11 +84,11 @@ class Handler(commands.Cog, name='Handler'):
             if matches:
                 confirm = await ctx.confirm(message=f"Sorry, but the command **{ctx.invoked_with}** was not found."
                                                     f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
-                                            delete_after_confirm=True, delete_after_timeout=False,
-                                            delete_after_cancel=False, buttons=(
-                                                    ('🔄', f'execute {matches[0]}', discord.ButtonStyle.gray),
-                                                    ('🗑', None, discord.ButtonStyle.danger)
-                                                )
+                                            delete_after_confirm=True, delete_after_timeout=True,
+                                            delete_after_cancel=True, buttons=(
+                                                    ('▶', f'execute {matches[0]}', discord.ButtonStyle.gray),
+                                                    ('🗑', None, discord.ButtonStyle.red)
+                                                ), timeout=15
                                             )
 
                 if confirm is True:
