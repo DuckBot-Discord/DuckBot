@@ -544,5 +544,5 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.is_owner()
     async def lines(self, ctx):
         await ctx.send(f"line count: {await self.count_lines('DuckBot/')}"
-                       f"\nfunction count: {await self.count_others('DuckBot/', '.py', 'def')}"
-                       f"\nclass count: {await self.count_others('DuckBot/', '.py', 'class')}")
+                       f"\nfunction count: {await self.count_others('DuckBot/', '.py', 'def ')}"
+                       f"\nclass count: {await self.count_others('DuckBot/', '.py', 'class ')}")
