@@ -176,7 +176,7 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
 
     elif played > missing:
         bar += [bars[0][0]]
-        bar += [bars[1][0]*(played-(missing-played))]
+        bar += [bars[1][0]*(played-missing-2)]
         bar += [bars[2][0]]
 
     return ''.join(bar)
