@@ -152,7 +152,7 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
          '<a:bar_center_mid:891218253827940472>',
          '<a:bar_center_empty:891218254343856168>'),
         ('<a:bar_end_full:891232339437453343>',
-         '<a:bar_end_mid:891218254327054367>',
+         '<a:bar_end_mid:891232862400028693>',
          '<a:bar_end_empty:891218253433679885>'
          )
     )
