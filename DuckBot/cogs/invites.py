@@ -26,7 +26,6 @@ import datetime
 import random
 import time
 from typing import Dict, Optional
-import unittest
 
 import discord
 from discord.ext import commands, tasks
@@ -34,12 +33,8 @@ from discord.ext import commands, tasks
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot, CustomContext
 
-# poll period in minutes for the
-# update_invite_expiry task
-# if you want to change this
-# to use seconds you need
-# to update the kwarg in the
-# decorator too
+default_message = "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
+
 POLL_PERIOD = 25
 
 
@@ -346,8 +341,29 @@ class Logging(commands.Cog):
                 INSERT INTO prefixes(guild_id, welcome_message) VALUES ($1, $2)
                 ON CONFLICT (guild_id) DO UPDATE SET welcome_message = $2
                 """
+
+        member = ctx.author
+        inviter = random.choice(ctx.guild.members)
+
+        l = {'server': str(member.guild),
+             'user': str(member.display_name),
+             'full-user': str(member),
+             'user-mention': str(member.mention),
+             'count': str(member.guild.member_count),
+             'code': "discord-api",
+             'full-code': "discord.gg/discord-api",
+             'full-url': "https://discord.gg/discord-api",
+             'inviter': str(inviter),
+             'full-inviter': str(inviter if inviter else 'N/A'),
+             'inviter-mention': str(inviter.mention if inviter else 'N/A')}
+
         if len(message) > 1000:
             raise commands.BadArgument(f"That welcome message is too long! ({len(message)}/1000)")
+
+        try:
+            str(message).format(**l)
+        except KeyError as e:
+            return await ctx.send(f'Unrecognised argument: `{e}`')
 
         await self.bot.db.execute(query, ctx.guild.id, message)
 
@@ -384,7 +400,7 @@ class Logging(commands.Cog):
             return
         message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
                                              member.guild.id)
-        message = message or "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
+        message = message or default_message
 
         l = {'server': str(member.guild),
              'user': str(member.display_name),
