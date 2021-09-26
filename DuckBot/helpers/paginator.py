@@ -415,7 +415,8 @@ class ServerEmotesEmbedPage(menus.ListPageSource):
 
     async def format_page(self, menu, entries):
         offset = menu.current_page * self.per_page
-        embed = discord.Embed(title=f"{self.guild}'s emotes ({len(self.guild.emojis)})",
+        embed = discord.Embed(title=f"{self.guild if isinstance(self.guild, discord.Guild) else 'DuckBot'}'s "
+                                    f"emotes ({len(self.guild.emojis)})",
                               description="\n".join(f'{i}. {v}' for i, v in enumerate(entries, start=offset)))
         return embed
 
