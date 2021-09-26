@@ -425,7 +425,7 @@ class Utility(commands.Cog):
     @commands.guild_only()
     async def emoji_list(self, ctx, guild: typing.Optional[typing.Union[discord.Guild, typing.Literal['bot']]]):
         """ Lists this server's emoji """
-        target_guild = guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild
+        target_guild = guild if isinstance(guild, discord.Guild) and (await self.bot.is_owner(ctx.author)) else ctx.guild
         target = target_guild.emojis if isinstance(guild, discord.Guild) else self.bot.emojis
         emotes = [f"{str(e)} **|** {e.name} **|** [`{str(e)}`]({e.url})" for e in target]
         menu = paginator.ViewPaginator(paginator.ServerEmotesEmbedPage(data=emotes, guild=guild), ctx=ctx)
