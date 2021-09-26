@@ -295,25 +295,16 @@ class Utility(commands.Cog):
 
     @commands.group(invoke_without_command=True, aliases=['em'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def emoji(self, ctx: CustomContext, custom_emojis: commands.Greedy[discord.PartialEmoji]):
+    async def emoji(self, ctx: CustomContext,
+                    custom_emojis: commands.Greedy[typing.Union[discord.Emoji, discord.PartialEmoji]]):
         """
         Makes an emoji bigger and shows it's formatting
         """
-
         if not custom_emojis:
             raise commands.MissingRequiredArgument(
                 Parameter(name='custom_emojis', kind=Parameter.POSITIONAL_ONLY))
-        embeds = []
-        for emoji in custom_emojis:
-            if emoji.animated:
-                emoticon = f"*`<`*`a:{emoji.name}:{emoji.id}>`"
-            else:
-                emoticon = f"*`<`*`:{emoji.name}:{emoji.id}>`"
-            embed = discord.Embed(description=f"{emoticon}", color=0xF4D58C, timestamp=ctx.message.created_at)
-            embed.set_footer(text=f'Requested by {ctx.author}', icon_url=ctx.author.display_avatar.url)
-            embed.set_image(url=emoji.url)
-            embeds.append(embed)
-        source = paginator.EmojiListPageSource(data=embeds)
+
+        source = paginator.EmojiListPageSource(data=custom_emojis, ctx=ctx)
         menu = paginator.ViewPaginator(source=source, ctx=ctx,
                                        check_embeds=True)
         await menu.start()

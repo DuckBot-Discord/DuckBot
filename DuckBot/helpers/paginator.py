@@ -427,10 +427,47 @@ class CharacterInformationPageSource(menus.ListPageSource):
         return embed
 
 
+def emoji_str(emoji: typing.Union[discord.Emoji, discord.PartialEmoji]) -> str:
+    return str(emoji).replace('<', '<\u200b').replace('>', '\u200b>')
+
+
 class EmojiListPageSource(menus.ListPageSource):
-    def __init__(self, data: list) -> discord.Embed:
+    def __init__(self, data: list, ctx: CustomContext) -> discord.Embed:
         self.data = data
+        self.ctx = ctx
+        self.time = discord.utils.utcnow()
         super().__init__(data, per_page=1)
 
-    async def format_page(self, menu, entry):
-        return entry
+    async def format_page(self, menu, emoji):
+
+        if isinstance(emoji, discord.Emoji):
+            roles_formatted = ' '.join([role.mention for role in emoji.roles if not role.is_default()])
+            if emoji.guild.me.guild_permissions.manage_emojis:
+                fetched = await emoji.guild.fetch_emoji(emoji.id)
+                creator = f"\n**Created by:** {fetched.user}"
+            else:
+                creator = ""
+
+            embed = discord.Embed(color=0xF4D58C, timestamp=self.time,
+                                  description=
+                                  f"**Format:** [{emoji_str(emoji)}]({emoji.url})"
+                                  f"\n**Created at:** {discord.utils.format_dt(emoji.created_at)}"
+                                  f"\n**Name:** {emoji.name}"
+                                  f"\n**Id:** {emoji.id}"
+                                  f"\n**Server:** {emoji.guild}"
+                                  f"{creator}"
+                                  f"\n**Locked to:** {roles_formatted}")
+            embed.set_footer(text=f'Requested by {self.ctx.author}', icon_url=self.ctx.author.display_avatar.url)
+            embed.set_image(url=emoji.url)
+            return embed
+
+        elif isinstance(emoji, discord.PartialEmoji):
+            embed = discord.Embed(color=0xF4D58C, timestamp=self.time,
+                                  description=
+                                  f"**Format:** [{emoji_str(emoji)}]({emoji.url})"
+                                  f"**Created at:** {discord.utils.format_dt(emoji.created_at)}")
+            embed.set_footer(text=f'Requested by {self.ctx.author}', icon_url=self.ctx.author.display_avatar.url)
+            embed.set_image(url=emoji.url)
+            return embed
+        else:
+            return discord.Embed(description='something went wrong...')
