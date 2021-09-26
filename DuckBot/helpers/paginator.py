@@ -441,7 +441,11 @@ class EmojiListPageSource(menus.ListPageSource):
     async def format_page(self, menu, emoji):
 
         if isinstance(emoji, discord.Emoji):
-            roles_formatted = ' '.join([role.mention for role in emoji.roles if not role.is_default()])
+            if emoji.roles:
+                roles_formatted = ', '.join([role.mention for role in emoji.roles])
+                roles_formatted = f"\n**Locked to:** {roles_formatted}"
+            else:
+                roles_formatted = ""
             if emoji.guild.me.guild_permissions.manage_emojis:
                 fetched = await emoji.guild.fetch_emoji(emoji.id)
                 creator = f"\n**Created by:** {fetched.user}"
@@ -456,7 +460,7 @@ class EmojiListPageSource(menus.ListPageSource):
                                   f"\n**Id:** {emoji.id}"
                                   f"\n**Server:** {emoji.guild}"
                                   f"{creator}"
-                                  f"\n**Locked to:** {roles_formatted}")
+                                  f"{roles_formatted}")
             embed.set_footer(text=f'Requested by {self.ctx.author}', icon_url=self.ctx.author.display_avatar.url)
             embed.set_image(url=emoji.url)
             return embed
