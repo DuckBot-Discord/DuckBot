@@ -428,7 +428,7 @@ class CharacterInformationPageSource(menus.ListPageSource):
 
 
 def emoji_str(emoji: typing.Union[discord.Emoji, discord.PartialEmoji]) -> str:
-    return str(emoji).replace('<', '<\u200b').replace('>', '\u200b>')
+    return f"`{str(emoji)}`".replace('<', '<``')
 
 
 class EmojiListPageSource(menus.ListPageSource):
@@ -469,7 +469,7 @@ class EmojiListPageSource(menus.ListPageSource):
             embed = discord.Embed(color=0xF4D58C, timestamp=self.time,
                                   description=
                                   f"**Format:** [{emoji_str(emoji)}]({emoji.url})"
-                                  f"**Created at:** {discord.utils.format_dt(emoji.created_at)}")
+                                  f"\n**Created at:** {discord.utils.format_dt(emoji.created_at)}")
             embed.set_footer(text=f'Requested by {self.ctx.author}', icon_url=self.ctx.author.display_avatar.url)
             embed.set_image(url=emoji.url)
             return embed
