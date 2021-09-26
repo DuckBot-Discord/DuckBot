@@ -428,7 +428,7 @@ class CharacterInformationPageSource(menus.ListPageSource):
 
 
 def emoji_str(emoji: typing.Union[discord.Emoji, discord.PartialEmoji]) -> str:
-    return f"`{str(emoji)}`".replace('<', '<``')
+    return f"*`{str(emoji)}`".replace('<', '<`*`')
 
 
 class EmojiListPageSource(menus.ListPageSource):
