@@ -25,6 +25,7 @@ import contextlib
 import datetime
 import random
 import time
+from types import SimpleNamespace
 from typing import Dict, Optional
 
 import discord
@@ -372,25 +373,28 @@ class Logging(commands.Cog):
     @welcome.command(name='fake', aliases=['test', 'try'])
     async def welcome_message_test(self, ctx: CustomContext):
         """ Sends a fake welcome message """
-        member = random.choice(ctx.guild.members)
-        inviter = random.choice(ctx.guild.members)
+        member = ctx.author
         message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
                                              member.guild.id)
-        message = message or "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
+        message = message or default_message
+        invite = SimpleNamespace(url='https://discord.gg/discord-api',
+                                 code='discord-api',
+                                 inviter=random.choice(ctx.guild.members))
 
         l = {'server': str(member.guild),
              'user': str(member.display_name),
              'full-user': str(member),
              'user-mention': str(member.mention),
              'count': str(member.guild.member_count),
-             'code': "discord-api",
-             'full-code': "discord.gg/discord-api",
-             'full-url': "https://discord.gg/discord-api",
-             'inviter': str(inviter),
-             'full-inviter': str(inviter if inviter else 'N/A'),
-             'inviter-mention': str(inviter.mention if inviter else 'N/A')}
+             'code': str(invite.code),
+             'full-code': f"discord.gg/{invite.code}",
+             'full-url': str(invite.url),
+             'inviter': str(((member.guild.get_member(
+                 invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
+             'full-inviter': str(invite.inviter if invite.inviter else 'N/A'),
+             'inviter-mention': str(invite.inviter.mention if invite.inviter else 'N/A')}
 
-        await ctx.send(message.format(**l))
+        await ctx.send(message.format(**l), allowed_mentions=discord.AllowedMentions.none())
 
     @commands.Cog.listener()
     async def on_invite_update(self, member, invite):
