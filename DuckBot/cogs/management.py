@@ -4,12 +4,10 @@ import datetime
 import importlib
 import io
 import itertools
-import os
 import textwrap
 import traceback
 import typing
 
-import aiofiles
 import emoji as unicode_emoji
 
 import discord
@@ -23,7 +21,7 @@ from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator
-
+from DuckBot.helpers.helper import count_others, count_lines
 
 def setup(bot):
     bot.add_cog(Management(bot))
@@ -520,29 +518,9 @@ class Management(commands.Cog, name='Bot Management'):
         command = self.bot.get_command('jsk git')
         await ctx.invoke(command, argument=codeblock_converter(f'add .\ngit commit =m "{message}"\ngit push origin master'))
 
-    async def count_lines(self, path: str, filetype: str = '.py'):
-        lines = 0
-        for i in os.scandir(path):
-            if i.is_file():
-                if i.path.endswith(filetype):
-                    lines += len((await (await aiofiles.open(i.path, 'r')).read()).split("\n"))
-            elif i.is_dir():
-                lines += await self.count_lines(i.path, filetype)
-        return lines
-
-    async def count_others(self, path: str, filetype: str = '.py', file_contains: str = 'def'):
-        line_count = 0
-        for i in os.scandir(path):
-            if i.is_file():
-                if i.path.endswith(filetype):
-                    line_count += len([line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if file_contains in line])
-            elif i.is_dir():
-                line_count += await self.count_others(i.path, filetype, file_contains)
-        return line_count
-
     @commands.command()
     @commands.is_owner()
     async def lines(self, ctx):
-        await ctx.send(f"line count: {await self.count_lines('DuckBot/')}"
-                       f"\nfunction count: {await self.count_others('DuckBot/', '.py', 'def ')}"
-                       f"\nclass count: {await self.count_others('DuckBot/', '.py', 'class ')}")
+        await ctx.send(f"line count: {await count_lines('DuckBot/')}"
+                       f"\nfunction count: {await count_others('DuckBot/', '.py', 'def ')}"
+                       f"\nclass count: {await count_others('DuckBot/', '.py', 'class ')}")

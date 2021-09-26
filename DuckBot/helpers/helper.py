@@ -1,3 +1,6 @@
+import os
+
+import aiofiles
 import discord
 from discord import VoiceRegion
 
@@ -182,3 +185,25 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
         bar += [bars[2][0]]
 
     return ''.join(bar)
+
+
+async def count_lines(self, path: str, filetype: str = '.py'):
+    lines = 0
+    for i in os.scandir(path):
+        if i.is_file():
+            if i.path.endswith(filetype):
+                lines += len((await (await aiofiles.open(i.path, 'r')).read()).split("\n"))
+        elif i.is_dir():
+            lines += await self.count_lines(i.path, filetype)
+    return lines
+
+
+async def count_others(self, path: str, filetype: str = '.py', file_contains: str = 'def'):
+    line_count = 0
+    for i in os.scandir(path):
+        if i.is_file():
+            if i.path.endswith(filetype):
+                line_count += len([line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if file_contains in line])
+        elif i.is_dir():
+            line_count += await self.count_others(i.path, filetype, file_contains)
+    return line_count

@@ -50,12 +50,12 @@ class Fun(commands.Cog, name='Fun'):
         self.bot: DuckBot = bot
 
     async def reddit(self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE') -> discord.Embed:
-
-        post = await (await self.bot.reddit.subreddit(subreddit)).random()
+        subreddit = await self.bot.reddit.subreddit(subreddit)
+        post = await subreddit.random()
 
         if embed_type == 'IMAGE':
             while 'i.redd.it' not in post.url or post.over_18:
-                post = await (await self.bot.reddit.subreddit(subreddit)).random()
+                post = await subreddit.random()
 
             embed = discord.Embed(color=discord.Color.random(),
                                   description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
