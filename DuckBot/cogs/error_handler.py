@@ -4,7 +4,7 @@ import itertools
 import re
 import traceback
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import BucketType
 import difflib
 
@@ -28,6 +28,10 @@ class Handler(commands.Cog, name='Handler'):
     def __init__(self, bot):
         self.bot: DuckBot = bot
         self.error_channel = 880181130408636456
+        self.do_member_count_update.start()
+
+    def cog_unload(self):
+        self.do_member_count_update.cancel()
 
     @commands.Cog.listener('on_command_error')
     async def error_handler(self, ctx: CustomContext, error):
@@ -325,3 +329,7 @@ class Handler(commands.Cog, name='Handler'):
     @commands.Cog.listener()
     async def on_dbl_vote(self, data):
         print(data)
+
+    @tasks.loop(minutes=30)
+    async def do_member_count_update(self):
+        await self.bot.top_gg.post_guild_count()
