@@ -502,12 +502,17 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.command(aliases=['pull'])
     @commands.is_owner()
-    async def git_pull(self, ctx: CustomContext):
+    async def git_pull(self, ctx: CustomContext, reload_everything: bool = False):
         """
         Attempts to pull from git
         """
         command = self.bot.get_command('jsk git')
         await ctx.invoke(command, argument=codeblock_converter('pull'))
+        if reload_everything is True:
+            mrl = self.bot.get_command('mrl')
+            await ctx.invoke(mrl)
+            rall = self.bot.get_command('rall')
+            await ctx.invoke(rall)
 
     @commands.command(aliases=['push'])
     @commands.is_owner()
