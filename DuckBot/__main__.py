@@ -13,7 +13,7 @@ import asyncpraw
 
 import aiohttp
 import discord
-import typing
+import topgg
 from discord.ext import commands
 from discord.ext.commands.errors import (
     ExtensionAlreadyLoaded,
@@ -116,6 +116,7 @@ class DuckBot(commands.Bot):
         self.welcome_channels = {}
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
+        self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
 
         for ext in initial_extensions:
             self._load_extension(ext)

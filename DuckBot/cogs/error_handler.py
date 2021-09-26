@@ -321,3 +321,7 @@ class Handler(commands.Cog, name='Handler'):
 
             await message.edit(embed=embed)
             await message.clear_reactions()
+
+    @commands.Cog.listener()
+    async def on_dbl_vote(self, data):
+        print(data)

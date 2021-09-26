@@ -516,7 +516,7 @@ class Management(commands.Cog, name='Bot Management'):
         Attempts to push to git
         """
         command = self.bot.get_command('jsk git')
-        await ctx.invoke(command, argument=codeblock_converter(f'add .\ngit commit =m "{message}"\ngit push origin master'))
+        await ctx.invoke(command, argument=codeblock_converter(f'add .\ngit commit -m "{message}"\ngit push origin master'))
 
     @commands.command()
     @commands.is_owner()
