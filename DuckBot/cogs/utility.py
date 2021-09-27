@@ -319,7 +319,10 @@ class Utility(commands.Cog):
         Locks an emoji to one or multiple roles. Input as many roles as you want in the "[roles]..." parameter.
         Note: admin/owner DOES NOT bypass this lock, so be sure to have the role if you wish to unlock the emoji.
         # If the role is removed and re-assigned, the locked emoji will not be visible until you restart your client.
+        # To unlock an emoji you can't access, use the `db.emoji unlock <emoji_name>` command
         """
+        if not roles:
+            raise commands.MissingRequiredArgument(Parameter('role', Parameter.POSITIONAL_ONLY))
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
         embed = discord.Embed(description=f"**Restricted access of {server_emoji} to:**"
@@ -338,6 +341,11 @@ class Utility(commands.Cog):
     async def emoji_unlock(self, ctx: CustomContext, server_emoji: discord.Emoji) -> discord.Message:
         """
         Unlocks a locked emoji.
+        # Note that you can also pass an emoji name, like so:
+        # db.emoji lock 💥
+        # ✅ db.emoji unlock boom
+        # ❌ db.emoji unlock :boom:
+        # ^^^^ Only for example! emoji must be a custom one, not a default one.
         """
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
