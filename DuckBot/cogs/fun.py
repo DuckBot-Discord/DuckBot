@@ -1,5 +1,6 @@
 import asyncio
 import random
+import urllib.parse
 
 import aiowiki
 import discord
@@ -266,3 +267,10 @@ class Fun(commands.Cog, name='Fun'):
 
         pages = ViewPaginator(UrbanPageSource(data), ctx=ctx)
         await pages.start()
+
+    @commands.command(name='achievement')
+    async def minecraft_achievement(self, ctx: CustomContext, *, text: commands.clean_content):
+        text = urllib.parse.quote(text)
+        await ctx.trigger_typing()
+        async with self.bot.session.get(self, url=f'https://api.cool-img-api.ml/achievement?text={text}', allow_redirects=True) as r:
+            return await ctx.send(r.url)
