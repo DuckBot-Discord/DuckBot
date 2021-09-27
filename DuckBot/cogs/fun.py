@@ -272,5 +272,5 @@ class Fun(commands.Cog, name='Fun'):
     async def minecraft_achievement(self, ctx: CustomContext, *, text: commands.clean_content):
         text = urllib.parse.quote(text)
         await ctx.trigger_typing()
-        async with self.bot.session.get(self, url=f'https://api.cool-img-api.ml/achievement?text={text}', allow_redirects=True) as r:
+        async with self.bot.session.get(f'https://api.cool-img-api.ml/achievement?text={text}', allow_redirects=True) as r:
             return await ctx.send(r.url)
