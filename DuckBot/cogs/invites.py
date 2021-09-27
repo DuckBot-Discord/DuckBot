@@ -224,7 +224,7 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member) -> None:
         invites = await self.fetch_invites(member.guild)
-
+        dispatched: bool = False
         if invites:
             # we sort the invites to ensure we are comparing
             # A.uses == A.uses
@@ -238,7 +238,11 @@ class Logging(commands.Cog):
                 if old.uses < new.uses:
                     self.bot.invites[member.guild.id][old.code] = new
                     self.bot.dispatch("invite_update", member, new)
+                    dispatched = True
                     break
+
+        if dispatched is False:
+            self.bot.dispatch("invite_update", member, None)
 
     # if you want to use this command you
     # might want to make a error handler
@@ -328,13 +332,13 @@ class Logging(commands.Cog):
         user : returns the user's name (Name)
         full-user : returns the user's full name (Name#1234)
         user-mention : will mention the user (@Name)
-        count : returns the member count of the server(953062)]
-        code : the invite code the member used to join(JKf38mZ)
-        full-code : the full invite (discord.gg/JKf38mZ)
-        full-url : the full url (https://discord.gg/JKf38mZ)
-        inviter : returns the inviter's name (Name)
-        full-inviter : returns the inviter's full name (Name#1234)
-        inviter-mention : returns the inviter's mention (@Name)
+        count : returns the member count of the server(4385)
+        code : *the invite code the member used to join(JKf38mZ)
+        full-code : *the full invite (discord.gg/JKf38mZ)
+        full-url : *the full url (https://discord.gg/JKf38mZ)
+        inviter : *returns the inviter's name (Name)
+        full-inviter : *returns the inviter's full name (Name#1234)
+        inviter-mention : *returns the inviter's mention (@Name)
         ``````yaml
         NOTE: these placeholders are CASE SENSITIVE.
         """
@@ -411,13 +415,14 @@ class Logging(commands.Cog):
              'full-user': str(member),
              'user-mention': str(member.mention),
              'count': str(member.guild.member_count),
-             'code': str(invite.code),
-             'full-code': f"discord.gg/{invite.code}",
-             'full-url': str(invite),
+             'code': (str(invite.code) if invite else 'N/A'),
+             'full-code': (f"discord.gg/{invite.code}" if invite else 'N/A'),
+             'full-url': (str(invite) if invite else 'N/A'),
              'inviter': str(((member.guild.get_member(
-                 invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
-             'full-inviter': str(invite.inviter if invite.inviter else 'N/A'),
-             'inviter-mention': str(invite.inviter.mention if invite.inviter else 'N/A')}
+                 invite.inviter.id).display_name) or invite.inviter.name)
+                            if invite and invite.inviter else 'N/A'),
+             'full-inviter': str(invite.inviter if invite and invite.inviter else 'N/A'),
+             'inviter-mention': str(invite.inviter.mention if invite and invite.inviter else 'N/A')}
 
         await channel.send(message.format(**l))
 
