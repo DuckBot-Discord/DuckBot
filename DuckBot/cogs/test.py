@@ -24,7 +24,7 @@ class Test(commands.Cog):
         await ctx.send(generate_youtube_bar(position, duration, length))
 
     @commands.command()
-    async def afk(self, ctx: CustomContext, reason: commands.clean_content = '...'):
+    async def afk(self, ctx: CustomContext, *, reason: commands.clean_content = '...'):
         await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, $2, $3) '
                                   'ON CONFLICT (user_id) DO UPDATE SET start_time = $2, reason = $3',
                                   ctx.author.id, ctx.message.created_at, reason[0:1800])
