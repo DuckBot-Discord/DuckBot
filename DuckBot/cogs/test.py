@@ -43,7 +43,8 @@ class Test(commands.Cog):
             info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', message.author.id)
             await self.bot.db.execute('DELETE FROM afk WHERE user_id = $1', message.author.id)
             await message.channel.send(f'**Welcome back, {message.author.mention}, afk since: {discord.utils.format_dt(info["start_time"], "R")}**'
-                                       f'\n**With reason:** {info["reason"]}')
+                                       f'\n**With reason:** {info["reason"]}', delete_after=10)
+            await message.add_reaction('👋')
         elif message.raw_mentions:
             pinged_afk_user_ids = list(set(message.raw_mentions).intersection(self.bot.afk_users))
             paginator = WrappedPaginator(prefix='', suffix='')
@@ -60,4 +61,5 @@ class Test(commands.Cog):
                 await ctx.send(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
                                                                               users=False,
                                                                               roles=False,
-                                                                              everyone=False))
+                                                                              everyone=False),
+                               delete_after=10)
