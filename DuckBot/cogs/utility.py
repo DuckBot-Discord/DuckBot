@@ -438,7 +438,7 @@ class Utility(commands.Cog):
             else 'bot' if isinstance(guild, str) and (await self.bot.is_owner(ctx.author)) else ctx.guild
         emojis = target_guild.emojis if isinstance(target_guild, discord.Guild) else self.bot.emojis
 
-        emotes = [f"{str(e)} **|** {e.name} **|** [`{str(e)}`]({e.url})" for e in emojis]
+        emotes = [f"{str(e)} **|** [`{e.id}`]({e.url}) **|** {e.name}" for e in emojis]
         menu = paginator.ViewPaginator(paginator.ServerEmotesEmbedPage(data=emotes,
                                                                        guild=(target_guild if isinstance(target_guild,
                                                                                                          discord.Guild)

@@ -661,9 +661,18 @@ class Moderation(commands.Cog):
         else:
             self.temporary_mutes.start()
 
+        if ctx.channel.permissions_for(role).send_messages_in_threads:
+            embed = discord.Embed(color=discord.Color.red(),
+                                  description='The mute role has permissions to create threads!'
+                                              '\nYou may want to fix that using the `muterole fix` command!'
+                                              '\nIf you don\'t want to receive security warnings, you can do `warnings off` command',
+                                  title='Warning')
+            await ctx.author.send(embed=embed)
+
         if not only_reason:
             return await ctx.send(f"**{ctx.author}** muted **{member}**",
                                   allowed_mentions=discord.AllowedMentions().none())
+
         return await ctx.send(f"**{ctx.author}** muted **{member}**"
                               f"\nReason: {only_reason}",
                               allowed_mentions=discord.AllowedMentions().none())
@@ -931,6 +940,9 @@ class Moderation(commands.Cog):
                 perms.add_reactions = False
                 perms.connect = False
                 perms.speak = False
+                perms.create_public_threads = False
+                perms.create_private_threads = False
+                perms.send_messages_in_threads = False
                 try:
                     await channel.set_permissions(role, overwrite=perms,
                                                   reason=f"DuckBot mute-role creation. Requested "
@@ -1074,6 +1086,9 @@ class Moderation(commands.Cog):
         perms.add_reactions = False
         perms.connect = False
         perms.speak = False
+        perms.create_public_threads = False
+        perms.create_private_threads = False
+        perms.send_messages_in_threads = False
         return await channel.set_permissions(role, overwrite=perms, reason="DuckBot automatic mute role permissions")
 
     @commands.command(aliases=['lock', 'ld'])
