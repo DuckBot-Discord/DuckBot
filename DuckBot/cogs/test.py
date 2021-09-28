@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers.helper import generate_youtube_bar
@@ -33,10 +34,30 @@ class Test(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.id not in self.bot.afk_users:
+        if not message.guild:
             return
-        self.bot.afk_users.pop(message.author.id)
-        info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', message.author.id)
-        await self.bot.db.execute('DELETE FROM afk WHERE user_id = $1', message.author.id)
-        await message.channel.send(f'**Welcome back, {message.author.mention}, afk since: {discord.utils.format_dt(info["start_time"], "R")}**'
-                                   f'\n**With reason:** {info["reason"]}')
+        if message.author.bot:
+            return
+        if message.author.id in self.bot.afk_users:
+            self.bot.afk_users.pop(message.author.id)
+            info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', message.author.id)
+            await self.bot.db.execute('DELETE FROM afk WHERE user_id = $1', message.author.id)
+            await message.channel.send(f'**Welcome back, {message.author.mention}, afk since: {discord.utils.format_dt(info["start_time"], "R")}**'
+                                       f'\n**With reason:** {info["reason"]}')
+        elif message.raw_mentions:
+            pinged_afk_user_ids = list(set(message.raw_mentions).intersection(self.bot.afk_users))
+            paginator = WrappedPaginator(prefix='', suffix='')
+            for user_id in pinged_afk_user_ids:
+                member = message.guild.get_member(user_id)
+                if member and member.id != message.author.id:
+                    info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', user_id)
+                    paginator.add_line(f'**woah there, {message.author.mention}, it seems like {member.mention} has been afk '
+                                       f'since {discord.utils.format_dt(info["start_time"], style="R")}!**'
+                                       f'\n**With reason:** {info["reason"]}\n')
+
+            ctx: CustomContext = await self.bot.get_context(message)
+            for page in paginator.pages:
+                await ctx.send(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
+                                                                              users=False,
+                                                                              roles=False,
+                                                                              everyone=False))
