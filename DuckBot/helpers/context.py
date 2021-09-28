@@ -5,9 +5,6 @@ import random
 from discord import Interaction
 from discord.ext import commands
 
-from DuckBot.__main__ import DuckBot
-
-
 class ConfirmButton(discord.ui.Button):
     def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
         super().__init__(style=button_style, label=label, emoji=emoji, )
