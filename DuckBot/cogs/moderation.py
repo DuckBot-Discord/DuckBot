@@ -860,10 +860,11 @@ class Moderation(commands.Cog):
             modified = 0
             for channel in ctx.guild.channels:
                 perms = channel.overwrites_for(role)
-                perms.send_messages = False
-                perms.add_reactions = False
-                perms.connect = False
-                perms.speak = False
+                perms.update(send_messages=None,
+                             add_reactions=None,
+                             create_public_threads=None,
+                             create_private_threads=None
+                             )
                 try:
                     await channel.set_permissions(role, overwrite=perms,
                                                   reason=f"DuckBot mute-role creation. Requested "
@@ -1083,13 +1084,14 @@ class Moderation(commands.Cog):
             return
 
         perms = channel.overwrites_for(role)
-        perms.send_messages = False
-        perms.add_reactions = False
-        perms.connect = False
-        perms.speak = False
-        perms.create_public_threads = False
-        perms.create_private_threads = False
-        perms.send_messages_in_threads = False
+        perms.update(send_messages=False,
+                     add_reactions=False,
+                     connect=False,
+                     speak=False,
+                     create_public_threads=False,
+                     create_private_threads=False,
+                     send_messages_in_threads=False,
+                     )
         return await channel.set_permissions(role, overwrite=perms, reason="DuckBot automatic mute role permissions")
 
     @commands.command(aliases=['lock', 'ld'])
@@ -1109,15 +1111,21 @@ class Moderation(commands.Cog):
             ctx.me).manage_roles else ctx.channel
 
         perms = channel.overwrites_for(ctx.me)
-        perms.send_messages = True
-        perms.add_reactions = True
+        perms.update(send_messages=True,
+                     add_reactions=True,
+                     create_public_threads=True,
+                     create_private_threads=True
+                     )
 
         await channel.set_permissions(ctx.me, overwrite=perms,
                                       reason=f'Channel lockdown by {ctx.author} ({ctx.author.id})')
 
         perms = channel.overwrites_for(role)
-        perms.send_messages = False
-        perms.add_reactions = False
+        perms.update(send_messages=False,
+                     add_reactions=False,
+                     create_public_threads=False,
+                     create_private_threads=False
+                     )
 
         await channel.set_permissions(role, overwrite=perms,
                                       reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
@@ -1141,8 +1149,11 @@ class Moderation(commands.Cog):
             ctx.me).manage_roles else ctx.channel
 
         perms = channel.overwrites_for(ctx.guild.default_role)
-        perms.send_messages = None
-        perms.add_reactions = None
+        perms.update(send_messages=None,
+                     add_reactions=None,
+                     create_public_threads=None,
+                     create_private_threads=None
+                     )
 
         await channel.set_permissions(role, overwrite=perms,
                                       reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})')
@@ -1196,8 +1207,8 @@ class Moderation(commands.Cog):
     # Add dj role
 
     @commands.check_any(commands.has_permissions(manage_roles=True), commands.is_owner())
-    @commands.group(invoke_without_command=True)
-    async def dj(self, ctx: CustomContext, new_role: discord.Role = None):
+    @commands.group(invoke_without_command=True, name='dj')
+    async def dj_role(self, ctx: CustomContext, new_role: discord.Role = None):
         """
         Manages the current DJ role. If no role is specified, shows the current DJ role.
         """
@@ -1229,7 +1240,7 @@ class Moderation(commands.Cog):
     # Remove dj role
 
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    @dj.command(name="clear", aliases=["unset", "remove"])
+    @dj_role.command(name="clear", aliases=["unset", "remove"])
     async def dj_remove(self, ctx: CustomContext):
         """
         Unsets the DJ role for the server.
@@ -1245,7 +1256,7 @@ class Moderation(commands.Cog):
     # Disable DJ role requirement
 
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    @dj.command(name='all', aliases=['disable'])
+    @dj_role.command(name='all', aliases=['disable'])
     async def dj_all(self, ctx: CustomContext):
         """
         Makes everyone able to control the player
