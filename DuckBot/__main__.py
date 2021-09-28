@@ -46,7 +46,8 @@ async def create_db_pool() -> asyncpg.Pool:
         "user": f"{os.getenv('PSQL_USER')}",
         "password": f"{os.getenv('PSQL_PASSWORD')}",
         "database": f"{os.getenv('PSQL_DB')}",
-        "host": f"{os.getenv('PSQL_HOST')}"
+        "host": f"{os.getenv('PSQL_HOST')}",
+        "port": f"{os.getenv('PSQL_PORT')}"
     }
 
     return await asyncpg.create_pool(**credentials)
@@ -130,7 +131,7 @@ class DuckBot(commands.Bot):
             print()  # Empty line
 
     def _dynamic_cogs(self) -> None:
-        for filename in os.listdir("DuckBot/cogs"):
+        for filename in os.listdir(f"{os.getenv('COGS_PATH')}"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
                 logging.info(f"Trying to load cog: {cog}")
