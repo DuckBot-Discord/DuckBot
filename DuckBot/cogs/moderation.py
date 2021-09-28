@@ -936,13 +936,14 @@ class Moderation(commands.Cog):
             modified = 0
             for channel in ctx.guild.channels:
                 perms = channel.overwrites_for(role)
-                perms.send_messages = False
-                perms.add_reactions = False
-                perms.connect = False
-                perms.speak = False
-                perms.create_public_threads = False
-                perms.create_private_threads = False
-                perms.send_messages_in_threads = False
+                perms.update(send_messages=False,
+                             add_reactions=False,
+                             connect=False,
+                             speak=False,
+                             create_public_threads=False,
+                             create_private_threads=False,
+                             send_messages_in_threads=False,
+                             )
                 try:
                     await channel.set_permissions(role, overwrite=perms,
                                                   reason=f"DuckBot mute-role creation. Requested "
