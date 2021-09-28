@@ -114,6 +114,7 @@ class DuckBot(commands.Bot):
         self.last_rall = datetime.datetime.utcnow()
         self.prefixes = {}
         self.blacklist = {}
+        self.afk_users = {}
         self.welcome_channels = {}
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
