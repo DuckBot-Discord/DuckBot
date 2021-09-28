@@ -173,6 +173,7 @@ class DuckBot(commands.Bot):
                 if value['prefix']:
                     self.prefixes[value['guild_id']] = (
                             (value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
+
             for guild in self.guilds:
                 if not guild.unavailable:
                     try:
@@ -187,6 +188,8 @@ class DuckBot(commands.Bot):
             values = await self.db.fetch("SELECT guild_id, welcome_channel FROM prefixes")
             for value in values:
                 self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
+
+            self.afk_users = [r['user_id'] for r in (await bot.db.fetch('SELECT user_id FROM afk'))]
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):
