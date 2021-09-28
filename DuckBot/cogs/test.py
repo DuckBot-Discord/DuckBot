@@ -61,5 +61,4 @@ class Test(commands.Cog):
                 await ctx.send(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
                                                                               users=False,
                                                                               roles=False,
-                                                                              everyone=False),
-                               delete_after=10)
+                                                                              everyone=False))
