@@ -1,5 +1,7 @@
 import asyncio
 import datetime as dt
+import os
+
 import discord
 import json
 import lavalink
@@ -24,7 +26,7 @@ from DuckBot.helpers.helper import generate_youtube_bar
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 cancel_emote = "❌"
 
-with open('DuckBot/cogs/music-config.json', "r+") as file:
+with open(f'{os.getenv("COGS_PATH")}/music-config.json', "r+") as file:
     config = json.load(file)
 
 
