@@ -264,7 +264,9 @@ class Moderation(commands.Cog):
     @commands.command(help="Bans a member from the server")
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
-    async def ban(self, ctx, user: typing.Union[discord.Member, discord.User], *, reason: typing.Optional[str] = None):
+    async def ban(self, ctx: CustomContext, user: typing.Union[discord.Member, discord.User],
+                  delete_days: typing.Optional[typing.Literal[0, 1, 2, 3, 4, 5, 6, 7]] = 1,
+                  *, reason: typing.Optional[str] = None):
         member = user
         if member == ctx.author:
             return await self.error_message(ctx, 'You can\'t ban yourself')
@@ -298,7 +300,8 @@ class Moderation(commands.Cog):
         embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
         await ctx.send(embed=embed)
 
-        await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason or ''}")
+        await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason or ''}",
+                            delete_message_days=delete_days)
 
     @commands.command(help="unbans a member # run without arguments to get a list of entries")
     @commands.has_permissions(ban_members=True)

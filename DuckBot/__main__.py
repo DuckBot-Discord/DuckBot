@@ -120,6 +120,7 @@ class DuckBot(commands.Bot):
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
+        self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
 
         for ext in initial_extensions:
             self._load_extension(ext)

@@ -33,7 +33,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def on_mail(self, message: discord.Message):
-        if message.guild or message.author == self.bot.user:
+        if message.guild or message.author == self.bot.user or self.bot.dev_mode is True:
             return
 
         ctx = await self.bot.get_context(message)
@@ -63,8 +63,9 @@ class Events(commands.Cog):
         files = [await attachment.to_file(spoiler=attachment.is_spoiler()) for attachment in message.attachments if
                  attachment.size < 8388600]
         if not files and message.attachments:
-            await message.author.send(embed = discord.Embed(description="Some files couldn't be sent because they were over 8mb",
-            color = discord.Colour.red()))
+            await message.author.send(
+                embed=discord.Embed(description="Some files couldn't be sent because they were over 8mb",
+                                    color=discord.Colour.red()))
         try:
             await wh.send(content=message.content,
                           username=message.author.name,
@@ -75,9 +76,13 @@ class Events(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def on_mail_reply(self, message):
-        if any((not message.guild, message.author.bot)):
-            return
-        if message.channel.category_id != 878123261525901342:
+        if any(
+                (not message.guild,
+                 message.author.bot,
+                 self.bot.dev_mode is True,
+                 message.channel.category_id != 878123261525901342
+                 )
+        ):
             return
 
         channel = message.channel
