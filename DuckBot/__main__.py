@@ -56,7 +56,7 @@ async def create_db_pool() -> asyncpg.Pool:
 class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)
 
-    def blacklist(self, ctx: CustomContext):
+    def user_blacklisted(self, ctx: CustomContext):
         try:
             is_blacklisted = self.blacklist[ctx.author.id]
         except KeyError:

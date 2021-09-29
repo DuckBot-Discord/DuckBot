@@ -39,7 +39,7 @@ class Events(commands.Cog):
         ctx = await self.bot.get_context(message)
 
         try:
-            self.bot.blacklist(ctx)
+            self.bot.user_blacklisted(ctx)
         except errors.UserBlacklisted:
             return await ctx.send("Sorry but that message wasn't delivered! You are blacklisted.")
 
