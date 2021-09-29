@@ -283,14 +283,19 @@ class Utility(commands.Cog):
         menu = paginator.ViewPaginator(source=source, ctx=ctx)
         await menu.start()
 
-    @commands.command()
-    async def avatar(self, ctx: CustomContext, user: discord.User = None):
+    @commands.command(aliases=['av', 'pfp'])
+    async def avatar(self, ctx: CustomContext, member: typing.Union[discord.Member, discord.User] = None):
         """
         Displays a user's avatar. If not specified, shows your own.
         """
-        user: discord.Member = user or ctx.author
+        user: discord.User = member or ctx.author
         embed = discord.Embed(title=user, url=user.display_avatar.url)
+        if isinstance(user, discord.Member) and user.guild_avatar:
+            embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
+            embed.description = f"[avatar]({user.avatar.url if user.avatar else user.default_avatar.url}) | " \
+                                f"[server avatar]({user.display_avatar.url})"
         embed.set_image(url=user.display_avatar.url)
+
         await ctx.send(embed=embed, footer=False)
 
     @commands.group(invoke_without_command=True, aliases=['em'])
