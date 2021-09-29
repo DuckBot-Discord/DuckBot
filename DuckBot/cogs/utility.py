@@ -43,9 +43,6 @@ class Utility(commands.Cog):
                                delete_message_after=True)
         await menu.start(ctx)
 
-    # .s <text>
-    # resends the message as the bot
-
     @commands.command(aliases=['s', 'send'],
                       help="Speak as if you were me. # URLs/Invites not allowed!")
     @commands.check_any(commands.bot_has_permissions(send_messages=True), commands.is_owner())
@@ -72,9 +69,6 @@ class Utility(commands.Cog):
                                                                                     users=allowed),
                               reference=ctx.message.reference,
                               reply=False)
-
-    # .a <TextChannel> <text>
-    # sends the message in a channel
 
     @commands.command(
         aliases=['a', 'an', 'announce'],
@@ -499,3 +493,14 @@ class Utility(commands.Cog):
 
         await ctx.send(f"{discord.utils.format_dt(relative_time.dt, style='F')} "
                        f"({discord.utils.format_dt(relative_time.dt, style='R')})")
+
+    @commands.command()
+    async def afk(self, ctx: CustomContext, *, reason: commands.clean_content = '...'):
+        if ctx.author.id in self.bot.afk_users:
+            return
+        await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, $2, $3) '
+                                  'ON CONFLICT (user_id) DO UPDATE SET start_time = $2, reason = $3',
+                                  ctx.author.id, ctx.message.created_at, reason[0:1800])
+        self.bot.afk_users[ctx.author.id] = True
+        await ctx.send('**You are now afk!** <:RooSleep:892425348078256138>'
+                       f'\n**with reason:** {reason}')

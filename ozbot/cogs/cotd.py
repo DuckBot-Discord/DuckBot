@@ -1,24 +1,28 @@
 import typing, discord, asyncio, random, datetime
 from discord.ext import commands, tasks
 
-async def do_cotd(ctx: commands.Context, color: discord.Color = None, manual: bool = False):
+
+async def do_cotd(ctx: typing.Union[commands.Context, commands.Bot], color: discord.Color = None, manual: bool = False):
     color = color or discord.Color.random()
-    guild = ctx.bot.get_guild(706624339595886683)
+    guild = (ctx.bot if isinstance(ctx, commands.Context) else ctx).get_guild(706624339595886683)
+
     await guild.get_role(800407956323434556).edit(colour=color)
     await guild.get_role(800295689585819659).edit(colour=color)
     log_channel = guild.get_channel(869282490160926790)
     embed = discord.Embed(color=color)
     embed.set_author(icon_url=f"https://singlecolorimage.com/get/{str(color)[1:]}/64x64",
-                    name=f"Color of the day{' manually ' if manual is True else ' '}changed to {color}")
+                     name=f"Color of the day{' manually ' if manual is True else ' '}changed to {color}")
 
     if manual is True:
         embed.set_footer(text=f"Requested by {ctx.author}",
                          icon_url=ctx.author.display_avatar.url)
 
         embed.timestamp = discord.utils.utcnow()
-        await ctx.send(embed=embed, delete_after = 1)
+        await ctx.send(embed=embed, delete_after=1)
+
     await log_channel.send(embed=embed)
     return color
+
 
 class daily_color(commands.Cog):
     """🎨 A role that changes color every day."""
@@ -34,7 +38,7 @@ class daily_color(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_task(self):
-        await do_cotd(ctx)
+        await do_cotd(self.bot, manual=False)
 
     @daily_task.before_loop
     async def wait_until_midnight(self):
