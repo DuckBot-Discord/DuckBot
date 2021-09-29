@@ -94,7 +94,7 @@ class DuckBot(commands.Bot):
                                        username=os.getenv('ASYNC_PRAW_UN'),
                                        password=os.getenv('ASYNC_PRAW_PA'))
 
-        self.add_check(self.blacklist)
+        self.add_check(self.user_blacklisted)
 
         self.owner_id = 349373972103561218
 
