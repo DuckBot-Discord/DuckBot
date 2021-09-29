@@ -523,7 +523,7 @@ class Utility(commands.Cog):
         Toggles weather to remove the AFK status automatically or not.
         mode: either enabled or disabled. If none, it will toggle it.
         """
-        mode = mode or (False if ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[ctx.author.id] is True else True)
+        mode = mode or (False if (ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[ctx.author.id] is True) or ctx.author.id not in self.bot.auto_un_afk else True)
         self.bot.auto_un_afk[ctx.author.id] = mode
         await self.bot.db.execute('INSERT INTO afk (user_id, auto_un_afk) VALUES ($1, $2) '
                                   'ON CONFLICT (user_id) DO UPDATE SET auto_un_afk = $2', ctx.author.id, mode)
