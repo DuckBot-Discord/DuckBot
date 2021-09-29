@@ -115,6 +115,7 @@ class DuckBot(commands.Bot):
         self.prefixes = {}
         self.blacklist = {}
         self.afk_users = {}
+        self.auto_un_afk = {}
         self.welcome_channels = {}
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
         self.session = aiohttp.ClientSession(loop=self.loop)
@@ -189,7 +190,8 @@ class DuckBot(commands.Bot):
             for value in values:
                 self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
 
-            self.afk_users = dict([(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id FROM afk'))])
+            self.afk_users = dict([(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if r['start_time']])
+            self.auto_un_afk = dict([(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk')) if r['auto_un_afk'] is not None])
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if all((self.maintenance is True, message.author.id != self.owner_id)):
