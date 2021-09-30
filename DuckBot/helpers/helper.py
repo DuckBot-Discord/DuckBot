@@ -2,6 +2,7 @@ import os
 
 import aiofiles
 import discord
+import typing
 from discord import VoiceRegion
 
 
@@ -143,7 +144,8 @@ def get_server_region(guild: discord.Guild):
         return "⁉ Not Found"
 
 
-def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
+def generate_youtube_bar(position: int, duration: int, bar_length: int,
+                         bar_style: typing.Tuple[typing.Tuple[str, str, str]] = None) -> str:
     bar_length = bar_length if bar_length > 0 else 1
     duration = duration if duration > 0 else 1
     played = int(position/(duration*bar_length))
@@ -161,6 +163,7 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int) -> str:
          '<a:bar_end_empty:891218253433679885>'
          )
     )
+    bars = bar_style or bars
     bar = []
     if played == 0 and missing > 0:
         bar += [bars[0][1]]

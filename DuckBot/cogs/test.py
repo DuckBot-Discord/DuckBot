@@ -12,8 +12,10 @@ def setup(bot):
 
 
 class LookingForButton(discord.ui.Button):
-    def __init__(self, disabled: bool = False):
-        super().__init__(style=discord.ButtonStyle.green, label='\u200b          Click to play          \u200b',
+    sep = '\u2001'
+
+    def __init__(self, disabled: bool = False, label: str = None):
+        super().__init__(style=discord.ButtonStyle.blurple, label=(label or f'{self.sep*8}Join this game!{self.sep*8}'),
                          disabled=disabled)
 
     async def callback(self, interaction: discord.Interaction):
@@ -41,7 +43,10 @@ class Confirm(discord.ui.View):
         return False
 
     async def on_timeout(self) -> None:
-        await self.message.edit(content='Timed out! Nobody is playing', view=None)
+        for button in self.children:
+            button.disabled = True
+            button.label = button.label.replace('Join this game!', 'Game has ended!')
+        await self.message.edit(content='⏰ | **Timed out!** - game has ended.', view=self)
 
 
 # Defines a custom button that contains the logic of the game.
@@ -67,24 +72,22 @@ class TicTacToeButton(discord.ui.Button['TicTacToe']):
             return
 
         if view.current_player == view.player1:
-            self.style = discord.ButtonStyle.danger
-            self.label = 'X'
+            self.style = discord.ButtonStyle.blurple
+            self.emoji = '\U0001f1fd'
             self.disabled = True
             view.board[self.y][self.x] = view.X
-            view.current_player = view.player2
-            content = f"It is now **{view.current_player.name}**'s turn"
         else:
-            self.style = discord.ButtonStyle.success
-            self.label = 'O'
+            self.style = discord.ButtonStyle.red
+            self.emoji = '🅾'
             self.disabled = True
             view.board[self.y][self.x] = view.O
-            view.current_player = view.player1
-            content = f"It is now **{view.current_player.name}**'s turn"
 
         winner = view.check_board_winner()
         if winner is not None:
-            if winner == view.X or winner == view.O:
-                content = f'**{view.current_player.name}** won!'
+            if winner == view.X:
+                content = f'\U0001f1fd | **{view.current_player.name}** won! 🎉'
+            elif winner == view.O:
+                content = f'🅾 | **{view.current_player.name}** won! 🎉'
             else:
                 content = "It's a tie!"
 
@@ -92,6 +95,14 @@ class TicTacToeButton(discord.ui.Button['TicTacToe']):
                 child.disabled = True
 
             view.stop()
+
+        else:
+            if view.current_player == view.player1:
+                view.current_player = view.player2
+                content = f"🅾 | It's **{view.current_player.name}**'s turn"
+            else:
+                view.current_player = view.player1
+                content = f"\U0001f1fd | It's **{view.current_player.name}**'s turn"
 
         await interaction.response.edit_message(content=content, view=view)
 
@@ -163,7 +174,10 @@ class TicTacToe(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user and interaction.user.id == self.current_player.id:
             return True
-        await interaction.response.send_message('Not your turn!', ephemeral=True)
+        elif interaction.user and interaction.user.id in (self.player1.id, self.player2.id):
+            await interaction.response.send_message('Not your turn!', ephemeral=True)
+        elif interaction.user:
+            await interaction.response.send_message('You aren\'t a part of this game!', ephemeral=True)
         return False
 
 
@@ -176,16 +190,17 @@ class Test(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
 
+    @commands.max_concurrency(1, commands.BucketType.user, wait=False)
     @commands.command(aliases=['ttt', 'tic'])
     async def tictactoe(self, ctx: CustomContext):
         """Starts a tic-tac-toe game."""
         player1 = ctx.author
-        view = Confirm()
+        view = Confirm(timeout=120)
         view.ctx = ctx
-        view.message = await ctx.send(f'**{ctx.author}** is looking to play Tic Tac Toe', view=view)
+        view.message = await ctx.send(f'🔎 | **{ctx.author.name}** is looking to play **Tic-Tac-Toe**', view=view)
         await view.wait()
         player2 = view.value
         if player2:
             starter = random.choice([player1, player2])
             ttt = TicTacToe(ctx, player1, player2, starter=starter)
-            ttt.message = await ctx.send(f'Tic Tac Toe: **{starter.name}** goes first', view=ttt)
+            ttt.message = await view.message.edit(content=f'#️⃣ | **{starter.name}** goes first', view=ttt)
