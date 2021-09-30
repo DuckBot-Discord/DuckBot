@@ -1,5 +1,20 @@
 import typing, discord, asyncio, random, datetime
+import urllib
+
 from discord.ext import commands, tasks
+
+
+q = "'"
+t = ' now'
+n = ''
+
+
+def get_complementary(color):
+    color = color[1:]
+    color = int(color, 16)
+    comp_color = 0xFFFFFF ^ color
+    comp_color = "#%06X" % comp_color
+    return comp_color
 
 
 async def do_cotd(ctx: typing.Union[commands.Context, commands.Bot], color: discord.Color = None, manual: bool = False):
@@ -10,9 +25,9 @@ async def do_cotd(ctx: typing.Union[commands.Context, commands.Bot], color: disc
     await guild.get_role(800295689585819659).edit(colour=color)
     log_channel = guild.get_channel(869282490160926790)
     embed = discord.Embed(color=color)
-    embed.set_author(icon_url=f"https://singlecolorimage.com/get/{str(color)[1:]}/64x64",
-                     name=f"Color of the day{' manually ' if manual is True else ' '}changed to {color}")
-
+    embed.set_author(icon_url='https://imgur.com/izRBtg9', name='Color of the Day')
+    embed.set_image(url=f'https://fakeimg.pl/1200x500/{str(color)[1:]}/{get_complementary(str(color))[1:]}/'
+                    f'?text={urllib.parse.quote(f"Today{q}s color is{t if manual is True else n} {color}")}')
     if manual is True:
         embed.set_footer(text=f"Requested by {ctx.author}",
                          icon_url=ctx.author.display_avatar.url)

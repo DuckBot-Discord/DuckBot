@@ -7,6 +7,8 @@ from typing import (
     List,
     Optional
 )
+
+import typing
 from dotenv import load_dotenv
 import asyncpg
 import asyncpraw
@@ -232,7 +234,7 @@ class DuckBot(commands.Bot):
 
     async def _fetch_role_icon(self, guild_id: int, role_id: int, size: int = 64) -> str:
         guild = self.get_guild(guild_id)
-        if not guild:
+        if not guild or 'ROLE_ICONS' not in guild.features:
             return None
         role = guild.get_role(role_id)
         if not role:
