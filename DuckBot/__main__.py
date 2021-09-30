@@ -230,7 +230,7 @@ class DuckBot(commands.Bot):
             raise errors.NoWelcomeChannel
         return welcome_channel
 
-    async def _fetch_role_icon(self, guild_id: int, role_id: int) -> str:
+    async def _fetch_role_icon(self, guild_id: int, role_id: int, size: int = 64) -> str:
         guild = self.get_guild(guild_id)
         if not guild:
             return None
@@ -244,7 +244,7 @@ class DuckBot(commands.Bot):
         if not role_asset:
             return None
 
-        return f"https://cdn.discordapp.com/role-icons/{role_id}/{role_asset}.png?size=16"
+        return f"https://cdn.discordapp.com/role-icons/{role_id}/{role_asset}.png?size={size}"
 
 
 if __name__ == '__main__':
