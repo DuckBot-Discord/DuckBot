@@ -9,6 +9,7 @@ from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
+from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
 
 _8ball_good = ['It is certain',
                'It is decidedly so',
@@ -274,3 +275,18 @@ class Fun(commands.Cog, name='Fun'):
         await ctx.trigger_typing()
         async with self.bot.session.get(f'https://api.cool-img-api.ml/achievement?text={text}', allow_redirects=True) as r:
             return await ctx.send(r.url)
+
+    @commands.max_concurrency(1, commands.BucketType.user, wait=False)
+    @commands.command(aliases=['ttt', 'tic'])
+    async def tictactoe(self, ctx: CustomContext):
+        """Starts a tic-tac-toe game."""
+        player1 = ctx.author
+        view = LookingToPlay(timeout=120)
+        view.ctx = ctx
+        view.message = await ctx.send(f'🔎 | **{ctx.author.name}** is looking to play **Tic-Tac-Toe**', view=view)
+        await view.wait()
+        player2 = view.value
+        if player2:
+            starter = random.choice([player1, player2])
+            ttt = TicTacToe(ctx, player1, player2, starter=starter)
+            ttt.message = await view.message.edit(content=f'#️⃣ | **{starter.name}** goes first', view=ttt)
