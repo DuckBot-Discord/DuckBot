@@ -336,8 +336,8 @@ class Handler(commands.Cog, name='Handler'):
     async def do_member_count_update(self):
         await self.bot.top_gg.post_guild_count()
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    @commands.Cog.listener('on_message')
+    async def remove_afk(self, message: discord.Message):
         if not message.guild:
             return
         if message.author.bot:
@@ -359,8 +359,11 @@ class Handler(commands.Cog, name='Handler'):
                                        f'\n**With reason:** {info["reason"]}', delete_after=10)
 
             await message.add_reaction('👋')
-        if message.raw_mentions:
-            pinged_afk_user_ids = list(set(message.raw_mentions).intersection(self.bot.afk_users))
+
+    @commands.Cog.listener('on_message')
+    async def notify_users(self, message: discord.Message):
+        if message.mentions:
+            pinged_afk_user_ids = list(set([u.id for u in message.mentions]).intersection(self.bot.afk_users))
             paginator = WrappedPaginator(prefix='', suffix='')
             for user_id in pinged_afk_user_ids:
                 member = message.guild.get_member(user_id)
