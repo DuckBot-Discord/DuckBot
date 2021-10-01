@@ -359,7 +359,7 @@ class Handler(commands.Cog, name='Handler'):
                                        f'\n**With reason:** {info["reason"]}', delete_after=10)
 
             await message.add_reaction('👋')
-        elif message.raw_mentions:
+        if message.raw_mentions:
             pinged_afk_user_ids = list(set(message.raw_mentions).intersection(self.bot.afk_users))
             paginator = WrappedPaginator(prefix='', suffix='')
             for user_id in pinged_afk_user_ids:
