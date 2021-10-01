@@ -362,6 +362,10 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_message')
     async def notify_users(self, message: discord.Message):
+        if not message.guild:
+            return
+        if message.author == self.bot.user:
+            return
         if message.mentions:
             pinged_afk_user_ids = list(set([u.id for u in message.mentions]).intersection(self.bot.afk_users))
             paginator = WrappedPaginator(prefix='', suffix='')
