@@ -4,6 +4,7 @@ import datetime
 import importlib
 import io
 import itertools
+import os
 import textwrap
 import traceback
 import typing
@@ -376,6 +377,7 @@ class Management(commands.Cog, name='Bot Management'):
 
         body = cleanup_code(body)
         stdout = io.StringIO()
+        to_send: str = None
 
         to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
 
@@ -408,10 +410,16 @@ class Management(commands.Cog, name='Bot Management'):
 
             if ret is None:
                 if value:
-                    await ctx.send(f'```py\n{value}\n```')
+                    to_send = f'```py\n{value}\n```'
             else:
                 self._last_result = ret
-                await ctx.send(f'```py\n{value}{ret}\n```')
+                to_send = f'```py\n{value}{ret}\n```'
+            if to_send:
+                to_send = to_send.replace(self.bot.http.token, '[discord token redacted]')
+                if len(to_send) > 2000:
+                    await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
+                else:
+                    await ctx.send(to_send)
 
     @commands.group(invoke_without_command=True, aliases=['bl'])
     @commands.is_owner()
