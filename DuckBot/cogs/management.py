@@ -410,16 +410,16 @@ class Management(commands.Cog, name='Bot Management'):
 
             if ret is None:
                 if value:
-                    to_send = f'```py\n{value}\n```'
+                    to_send = f'{value}'
             else:
                 self._last_result = ret
-                to_send = f'```py\n{value}{ret}\n```'
+                to_send = f'{value}{ret}'
             if to_send:
                 to_send = to_send.replace(self.bot.http.token, '[discord token redacted]')
-                if len(to_send) > 2000:
+                if len(to_send) > 1985:
                     await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
                 else:
-                    await ctx.send(to_send)
+                    await ctx.send(f"```py\n{to_send}\n```")
 
     @commands.group(invoke_without_command=True, aliases=['bl'])
     @commands.is_owner()
