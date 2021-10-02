@@ -337,7 +337,7 @@ class Handler(commands.Cog, name='Handler'):
         await self.bot.top_gg.post_guild_count()
 
     @commands.Cog.listener('on_message')
-    async def remove_afk(self, message: discord.Message):
+    async def on_afk_user_message(self, message: discord.Message):
         if not message.guild:
             return
         if message.author.bot:
@@ -361,7 +361,7 @@ class Handler(commands.Cog, name='Handler'):
             await message.add_reaction('👋')
 
     @commands.Cog.listener('on_message')
-    async def notify_users(self, message: discord.Message):
+    async def on_afk_user_mention(self, message: discord.Message):
         if not message.guild:
             return
         if message.author == self.bot.user:
@@ -384,3 +384,16 @@ class Handler(commands.Cog, name='Handler'):
                                                                               roles=False,
                                                                               everyone=False))
 
+    @commands.Cog.listener('on_message')
+    async def on_suggestion_receive(self, message: discord.Message):
+        if message.author.bot:
+            return
+        if message.channel.id not in self.bot.suggestion_channels:
+            return
+        if self.bot.suggestion_channels[message.channel.id] is True and not message.attachments and \
+                not message.channel.permissions_for(message.author).manage_messages:
+            await message.delete(delay=0)
+            return await message.channel.send(f'⚠ | {message.author.mention} this **suggestions channel** is set to **image-only** mode!', delete_after=5)
+
+        await message.add_reaction('<:upvote:893588750242832424>')
+        await message.add_reaction('<:downvote:893588792164892692>')

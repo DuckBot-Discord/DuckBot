@@ -51,7 +51,7 @@ class TicTacToeButton(discord.ui.Button['TicTacToe']):
         # The row parameter tells the View which row to place the button under.
         # A View can only contain up to 5 rows -- each row can only have 5 buttons.
         # Since a Tic Tac Toe grid is 3x3 that means we have 3 rows and 3 columns.
-        super().__init__(style=discord.ButtonStyle.secondary, label='\u200b', row=y)
+        super().__init__(style=discord.ButtonStyle.secondary, label='  ', row=y)
         self.x = x
         self.y = y
 
@@ -66,12 +66,12 @@ class TicTacToeButton(discord.ui.Button['TicTacToe']):
 
         if view.current_player == view.player1:
             self.style = discord.ButtonStyle.blurple
-            self.emoji = '\U0001f1fd'
+            self.label = '\U0001f1fd'
             self.disabled = True
             view.board[self.y][self.x] = view.X
         else:
             self.style = discord.ButtonStyle.red
-            self.emoji = '🅾'
+            self.label = '🅾'
             self.disabled = True
             view.board[self.y][self.x] = view.O
 
