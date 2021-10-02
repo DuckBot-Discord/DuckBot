@@ -20,6 +20,8 @@ class Test(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
 
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_messages=True, add_reactions=True)
     @commands.command(name='enable-suggestions', aliases=['enable_suggestions'])
     async def enable_suggestions(self, ctx: CustomContext,
                                  channel: discord.TextChannel,
@@ -30,6 +32,7 @@ class Test(commands.Cog):
         await ctx.send(f'💞 | **Enabled** suggestions mode for {channel.mention}'
                        f'\n📸 | With image-only mode **{"disabled" if image_only is False else "enabled"}**.')
 
+    @commands.has_permissions(manage_channels=True)
     @commands.command(name='disable-suggestions', aliases=['disable_suggestions'])
     async def disable_suggestions(self, ctx: CustomContext,
                                   channel: discord.TextChannel):
@@ -47,7 +50,8 @@ class Test(commands.Cog):
             return
         if message.channel.id not in self.bot.suggestion_channels:
             return
-        if self.bot.suggestion_channels[message.channel.id] is True and not message.attachments and not message.channel.permissions_for(message.author).manage_messages:
+        if self.bot.suggestion_channels[message.channel.id] is True and not message.attachments and \
+                not message.channel.permissions_for(message.author).manage_messages:
             await message.delete(delay=0)
             return await message.channel.send(f'⚠ | {message.author.mention} this **suggestions channel** is set to **image-only** mode!', delete_after=5)
 
