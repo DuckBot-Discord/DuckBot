@@ -1,10 +1,94 @@
-import random
+import asyncio
 
 import discord
+from discord import Interaction
 from discord.ext import commands
-from typing import List
 
-from DuckBot.__main__ import DuckBot, CustomContext
+from DuckBot.__main__ import DuckBot
+from DuckBot.helpers.context import CustomContext
+from DuckBot.helpers.tictactoe import LookingToPlay
+
+
+class ObjectSelector(discord.ui.Select):
+    def __init__(self):
+        # Set the options that will be presented inside the dropdown
+        options = [
+            discord.SelectOption(label='Rock', description='Rock beats Scissors', emoji='🗿'),
+            discord.SelectOption(label='Paper', description='Paper beats Rock', emoji='📄'),
+            discord.SelectOption(label='Scissors', description='Scissors beats Paper', emoji='✂')
+        ]
+        super().__init__(placeholder='Select your object...', min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        assert self.view is not None
+        view: RockPaperScissors = self.view
+        view.responses[interaction.user.id] = self.values[0]
+
+        embed = view.message.embeds[0].copy()
+        embed.description = f"> {view.ctx.default_tick(view.player1.id in view.responses)} {view.player1.display_name}" \
+                            f"\n> {view.ctx.default_tick(view.player2.id in view.responses)} {view.player2.display_name}"
+
+        await view.message.edit(embed=embed)
+
+        if len(view.responses) == 2:
+            response = view.check_winner()
+            embed.description = f"> ✅ **{view.player1.display_name}** chose **{view.responses[view.player1.id]}**" \
+                                f"\n> ✅ **{view.player2.display_name}** chose **{view.responses[view.player2.id]}**" \
+                                f"\n" \
+                                f"\n{response}"
+
+            for item in view.children:
+                if isinstance(item, discord.ui.Select):
+                    item.placeholder = "Game has ended!"
+                item.disabled = True
+
+            await asyncio.sleep(1)
+            await view.message.edit(embed=embed, view=view)
+
+
+class RockPaperScissors(discord.ui.View):
+
+    def __init__(self, ctx: CustomContext, player1: discord.Member, player2: discord.Member):
+        super().__init__()
+        self.message: discord.Message = None
+        self.ctx: CustomContext = ctx
+        self.player1: discord.Member = player1
+        self.player2: discord.Member = player2
+        self.responses = {}
+        self.add_item(ObjectSelector())
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if not interaction.user or interaction.user.id not in (self.player1.id, self.player2.id):
+            await interaction.response.send_message('You are not a part of this game!', ephemeral=True)
+            return False
+        if interaction.user.id in self.responses:
+            await interaction.response.send_message(f'You already selected **{self.responses[interaction.user.id]}**, sorry!', ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self) -> None:
+        for item in self.children:
+            if isinstance(item, discord.ui.Select):
+                item.placeholder = "Timed out! Please try again."
+            item.disabled = True
+        await self.message.edit(view=self)
+
+    def check_winner(self):
+        mapping = {
+            'Rock': 0,
+            'Paper': 1,
+            'Scissors': 2
+        }
+        win_1 = f'**{self.responses[self.player1.id]}** beats **{self.responses[self.player2.id]}** - **{self.player1.display_name}** wins! 🎉'
+        win_2 = f'**{self.responses[self.player2.id]}** beats **{self.responses[self.player1.id]}** - **{self.player2.display_name}** wins! 🎉'
+        tie = f'It\'s a **tie**! both players loose.'
+
+        if self.responses[self.player1.id] == self.responses[self.player2.id]:
+            return tie
+        elif (mapping[self.responses[self.player1.id]] + 1) % 3 == mapping[self.responses[self.player2.id]]:
+            return win_2
+        else:
+            return win_1
 
 
 def setup(bot):
@@ -20,26 +104,26 @@ class Test(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
 
-    @commands.has_permissions(manage_channels=True)
-    @commands.bot_has_permissions(manage_messages=True, add_reactions=True)
-    @commands.command(name='enable-suggestions', aliases=['enable_suggestions'])
-    async def enable_suggestions(self, ctx: CustomContext,
-                                 channel: discord.TextChannel,
-                                 image_only: bool):
-        self.bot.suggestion_channels[channel.id] = image_only
-        await self.bot.db.execute('INSERT INTO suggestions (channel_id, image_only) VALUES ($1, $2) ON CONFLICT '
-                                  '(channel_id) DO UPDATE SET image_only = $2', channel.id, image_only)
-        await ctx.send(f'💞 | **Enabled** suggestions mode for {channel.mention}'
-                       f'\n📸 | With image-only mode **{"disabled" if image_only is False else "enabled"}**.')
+    @commands.command()
+    async def rps(self, ctx: CustomContext):
+        embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
+                                          f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
+        embed.set_thumbnail(url='https://i.imgur.com/DZhQwnD.gif')
+        embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
 
-    @commands.has_permissions(manage_channels=True)
-    @commands.command(name='disable-suggestions', aliases=['disable_suggestions'])
-    async def disable_suggestions(self, ctx: CustomContext,
-                                  channel: discord.TextChannel):
-        try:
-            self.bot.suggestion_channels.pop(channel.id)
-        except KeyError:
-            pass
-        await self.bot.db.execute('DELETE FROM suggestions WHERE channel_id = $1', channel.id)
-        await ctx.send(f'💞 | **Disabled** suggestions mode for {channel.mention}'
-                       f'\n📸 | With image-only mode **N/A**.')
+        sep = '\u2001'
+        view = LookingToPlay(timeout=120, label=f'{sep*13}Join this game!{sep*13}')
+        view.ctx = ctx
+        view.message = await ctx.send(embed=embed,
+                                      view=view, footer=False)
+        await view.wait()
+        player1 = ctx.author
+        player2 = view.value
+
+        if player2:
+            embed = discord.Embed(description=f"> ❌ {player1.display_name}"
+                                              f"\n> ❌ {player2.display_name}",
+                                  colour=discord.Colour.blurple())
+            embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
+            rps = RockPaperScissors(ctx, player1, player2)
+            rps.message = await view.message.edit(embed=embed, view=rps)

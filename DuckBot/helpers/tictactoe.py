@@ -15,18 +15,16 @@ class LookingForButton(discord.ui.Button):
         assert self.view is not None
         view: LookingToPlay = self.view
         view.value = interaction.user
-        await view.message.edit(content=f'**{interaction.user}** is now playing '
-                                        f'Tic Tac Toe with **{view.ctx.author}**', view=None)
         view.stop()
 
 
 class LookingToPlay(discord.ui.View):
-    def __init__(self, timeout: int = 120):
+    def __init__(self, timeout: int = 120, label: str = None):
         super().__init__(timeout=timeout)
         self.message: discord.Message = None
         self.value: discord.User = None
         self.ctx: CustomContext = None
-        self.add_item(LookingForButton())
+        self.add_item(LookingForButton(label=label))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user and interaction.user.id != self.ctx.author.id:
@@ -38,7 +36,7 @@ class LookingToPlay(discord.ui.View):
     async def on_timeout(self) -> None:
         for button in self.children:
             button.disabled = True
-            button.label = button.label.replace('Join this game!', 'Game has ended!')
+            button.label = button.label.replace('Join this game!\u2001', 'Game has ended!')
         await self.message.edit(content='⏰ | **Timed out!** - game has ended.', view=self)
 
 
