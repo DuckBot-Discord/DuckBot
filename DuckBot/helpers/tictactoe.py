@@ -8,7 +8,7 @@ class LookingForButton(discord.ui.Button):
     sep = '\u2001'
 
     def __init__(self, disabled: bool = False, label: str = None):
-        super().__init__(style=discord.ButtonStyle.blurple, label=(label or f'{self.sep*8}Join this game!{self.sep*8}'),
+        super().__init__(style=discord.ButtonStyle.blurple, label=(label or f'{self.sep*11}Join this game!{self.sep*11}'),
                          disabled=disabled)
 
     async def callback(self, interaction: discord.Interaction):
@@ -31,7 +31,7 @@ class LookingToPlay(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user and interaction.user.id != self.ctx.author.id:
             return True
-        await interaction.response.send_message('**Congratulations, you player yourself!**\nWait... You can\'t...',
+        await interaction.response.send_message('**Congratulations, you played yourself!**\nWait... You can\'t...',
                                                 ephemeral=True)
         return False
 

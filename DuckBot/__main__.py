@@ -73,9 +73,9 @@ class DuckBot(commands.Bot):
 
     def __init__(self) -> None:
         self.invites = None
-        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False,
+        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False, presences=True,
                                   **{k: v for k, v in dict(discord.Intents.default()).items()
-                                     if k not in ('members', 'guild_typing', 'dm_typing')})
+                                     if k not in ('members', 'guild_typing', 'dm_typing', 'presences')})
 
         super().__init__(
             intents=intents,

@@ -2,7 +2,6 @@ import asyncio
 import random
 import urllib.parse
 
-import aiowiki
 import discord
 import typing
 from discord.ext import commands
@@ -10,6 +9,8 @@ from discord.ext import commands
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
+
+aiowiki = None
 
 _8ball_good = ['It is certain',
                'It is decidedly so',
@@ -280,13 +281,18 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(aliases=['ttt', 'tic'])
     async def tictactoe(self, ctx: CustomContext):
         """Starts a tic-tac-toe game."""
+        embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
+                                          f'\n👀 | User is looking for someone to play **Tic-Tac-Toe**')
+        embed.set_thumbnail(url='https://i.imgur.com/DZhQwnD.gif')
+        embed.set_author(name='Tic-Tac-Toe', icon_url='https://i.imgur.com/SrRrarG.png')
         player1 = ctx.author
         view = LookingToPlay(timeout=120)
         view.ctx = ctx
-        view.message = await ctx.send(f'🔎 | **{ctx.author.name}** is looking to play **Tic-Tac-Toe**', view=view)
+        view.message = await ctx.send(embed=embed,
+                                      view=view, footer=None)
         await view.wait()
         player2 = view.value
         if player2:
             starter = random.choice([player1, player2])
             ttt = TicTacToe(ctx, player1, player2, starter=starter)
-            ttt.message = await view.message.edit(content=f'#️⃣ | **{starter.name}** goes first', view=ttt)
+            ttt.message = await view.message.edit(content=f'#️⃣ | **{starter.name}** goes first', view=ttt, embed=None)

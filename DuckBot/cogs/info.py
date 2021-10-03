@@ -261,7 +261,7 @@ class MyHelp(commands.HelpCommand):
             f"\n- Usage: <required argument> [optional argument]"
             f"\n- [optional that accepts a list of arguments]..."
             f"\n``````fix"
-            f"\nLatest commands:\"welcome\", \"emoji list\", \"afk\""
+            f"\nLatest commands:\"emoji list\", \"afk\", \"tictactoe\""
             f"\nFor more, check the {self.context.clean_prefix}news```"
             f"\n> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** "
             f"{len(await self.filter_commands(list(self.context.bot.commands), sort=True))} 🔄"
@@ -572,7 +572,7 @@ DuckBot's top role position
         Shows the latest changes of the bot. ""
         """
         embed = discord.Embed(color=ctx.me.color,
-                              title="📰 Latest News - <t:1632870000:d> (<t:1632870000:R>)",
+                              title="📰 Latest News - <t:1633210000:d> (<t:1633210000:R>)",
                               description=f"\u200b"
                                           f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
                                           f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
@@ -604,7 +604,11 @@ DuckBot's top role position
                                           f"\n"
                                           f"\n> **😴 <t:1632870000:R> New afk command!**"
                                           f"\n> Use the `{ctx.clean_prefix}afk` command, and others will get notified when mentioning you. "
-                                          f"Get out of AFK mode by simply sending a message somewhere the bot can see")
+                                          f"Get out of AFK mode by simply sending a message somewhere the bot can see"
+                                          f"\n"
+                                          f"\n> **<t:1633210000:R> You're now able to play Tic-Tac-Toe**"
+                                          f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "
+                                          f"pressing the 'Join this game!' button 🎫")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
