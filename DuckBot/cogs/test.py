@@ -81,7 +81,7 @@ class RockPaperScissors(discord.ui.View):
         }
         win_1 = f'**{self.responses[self.player1.id]}** beats **{self.responses[self.player2.id]}** - **{self.player1.display_name}** wins! 🎉'
         win_2 = f'**{self.responses[self.player2.id]}** beats **{self.responses[self.player1.id]}** - **{self.player2.display_name}** wins! 🎉'
-        tie = f'It\'s a **tie**! both players loose.'
+        tie = f'It\'s a **tie**! both players lose. 👔'
 
         if self.responses[self.player1.id] == self.responses[self.player2.id]:
             return tie
