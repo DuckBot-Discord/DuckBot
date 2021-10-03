@@ -104,8 +104,8 @@ class Test(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
 
-    @commands.command()
-    async def rps(self, ctx: CustomContext):
+    @commands.command(name='rock-paper-scissors', aliases=['rps', 'rock_paper_scissors'])
+    async def rock_paper_scissors(self, ctx: CustomContext):
         embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
                                           f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
         embed.set_thumbnail(url='https://i.imgur.com/DZhQwnD.gif')
