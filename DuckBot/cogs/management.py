@@ -138,7 +138,7 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.command(aliases=['mm'], help="puts the bot under maintenance", usage="[on|off]")
     @commands.is_owner()
     @commands.bot_has_permissions(add_reactions=True)
-    async def maintenance(self, ctx, reason: str = None):
+    async def maintenance(self, ctx, *, reason: str = None):
         if reason:
             await ctx.message.add_reaction(ctx.toggle(True))
             self.bot.maintenance = reason

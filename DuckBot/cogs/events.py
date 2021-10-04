@@ -72,6 +72,9 @@ class Handler(commands.Cog, name='Handler'):
             else:
                 return
 
+        if isinstance(error, errors.BotUnderMaintenance):
+            return await ctx.send(self.bot.maintenance or 'I am under maintenance... sorry!')
+
         if isinstance(error, commands.CommandNotFound):
             ignored_cogs = ('Bot Management', 'jishaku') if ctx.author.id != self.bot.owner_id else ()
             command_names = []

@@ -71,6 +71,12 @@ class DuckBot(commands.Bot):
         else:
             raise errors.UserBlacklisted
 
+    def maintenance_mode(self, ctx: CustomContext):
+        if not self.maintenance or ctx.author.id == bot.owner_id:
+            return True
+        else:
+            raise errors.BotUnderMaintenance
+
     def __init__(self) -> None:
         self.invites = None
         intents = discord.Intents(members=True, dm_typing=False, guild_typing=False, presences=True,
@@ -97,6 +103,7 @@ class DuckBot(commands.Bot):
                                        password=os.getenv('ASYNC_PRAW_PA'))
 
         self.add_check(self.user_blacklisted)
+        self.add_check(self.maintenance_mode)
 
         self.owner_id = 349373972103561218
 
@@ -199,9 +206,6 @@ class DuckBot(commands.Bot):
             self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
-        if all((self.maintenance, message.author.id != self.owner_id, not message.author.bot)):
-            return await message.reply(self.maintenance or 'Currently under maintenance...')
-
         if self.user:
             if message.content == f'<@!{self.user.id}>':  # Sets faster
                 prefix = await self.get_pre(self, message, raw_prefix=True)
