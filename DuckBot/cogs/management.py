@@ -388,7 +388,10 @@ class Management(commands.Cog, name='Bot Management'):
                 await ctx.message.add_reaction('⚠')
             except (discord.Forbidden, discord.HTTPException):
                 pass
-            return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
+            to_send = f'{e.__class__.__name__}: {e}'
+            if len(to_send) > 1880:
+                return await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
+            return await ctx.send(f'```py\n{to_send}\n```')
 
         func = env['func']
         try:
@@ -400,7 +403,11 @@ class Management(commands.Cog, name='Bot Management'):
                 await ctx.message.add_reaction('⚠')
             except (discord.Forbidden, discord.HTTPException):
                 pass
-            await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
+            to_send = f'\n{value}{traceback.format_exc()}'
+            if len(to_send) > 1880:
+                return await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
+            return await ctx.send(f'```py\n{to_send}\n```')
+
         else:
             value = stdout.getvalue()
             try:
