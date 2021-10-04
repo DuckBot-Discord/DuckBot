@@ -23,24 +23,6 @@ class automod(commands.Cog):
         self.token = full_yaml['sus_url_token']
         self.urlBanRole = self.bot.get_guild(yaml_data['guildID']).get_role(yaml_data['urlBanRole'])
 
-    @commands.command(aliases=['test'])
-    @commands.has_permissions(manage_messages=True)
-    async def urltest(self, ctx, *, url):
-        results = re.findall("http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", url)
-        if not results:
-            await ctx.send('no results found')
-            return
-        await ctx.message.add_reaction('🔃')
-        for link in results:
-            url = urllib.parse.quote(link, safe='')
-            async with aiohttp.ClientSession() as cs:
-                async with cs.get(
-                        yarl.URL(f"https://ipqualityscore.com/api/json/url/{self.token}/{url}", encoded=True)) as r:
-                    text = await r.json()
-                    await ctx.send(text)
-
-        await ctx.message.remove_reaction('🔃', self.bot.user)
-
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
