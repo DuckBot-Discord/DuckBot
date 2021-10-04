@@ -28,3 +28,7 @@ class UserBlacklisted(commands.CheckFailure):
 
 class NoWelcomeChannel(commands.CheckFailure):
     pass
+
+
+class BotUnderMaintenance(commands.CheckFailure):
+    pass
