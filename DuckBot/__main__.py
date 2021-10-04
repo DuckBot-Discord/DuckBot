@@ -199,7 +199,7 @@ class DuckBot(commands.Bot):
             self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
-        if all((self.maintenance, message.author.id != self.owner_id)):
+        if all((self.maintenance, message.author.id != self.owner_id, not message.author.bot)):
             return await message.reply(self.maintenance or 'Currently under maintenance...')
 
         if self.user:
