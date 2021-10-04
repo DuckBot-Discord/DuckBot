@@ -108,7 +108,7 @@ class DuckBot(commands.Bot):
         self.vote_top_gg = "https://top.gg/bot/788278464474120202#/"
         self.vote_bots_gg = "https://discord.bots.gg/bots/788278464474120202"
         self.repo = "https://github.com/LeoCx1000/discord-bots"
-        self.maintenance = False
+        self.maintenance = None
         self.noprefix = False
         self.started = False
         self.persistent_views_added = False
@@ -199,8 +199,8 @@ class DuckBot(commands.Bot):
             self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
-        if all((self.maintenance is True, message.author.id != self.owner_id)):
-            return
+        if all((self.maintenance, message.author.id != self.owner_id)):
+            return await message.reply(self.maintenance or 'Currently under maintenance...')
 
         if self.user:
             if message.content == f'<@!{self.user.id}>':  # Sets faster

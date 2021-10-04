@@ -138,20 +138,13 @@ class Management(commands.Cog, name='Bot Management'):
     @commands.command(aliases=['mm'], help="puts the bot under maintenance", usage="[on|off]")
     @commands.is_owner()
     @commands.bot_has_permissions(add_reactions=True)
-    async def maintenance(self, ctx, state: typing.Optional[str] = None):
-        if state == 'on':
+    async def maintenance(self, ctx, reason: str = None):
+        if reason:
             await ctx.message.add_reaction(ctx.toggle(True))
-            self.bot.maintenance = True
-        elif state == 'off':
-            await ctx.message.add_reaction(ctx.toggle(False))
-            self.bot.maintenance = False
+            self.bot.maintenance = reason
         else:
-            if not self.bot.maintenance:
-                await ctx.message.add_reaction(ctx.toggle(True))
-                self.bot.maintenance = True
-            elif self.bot.maintenance:
-                await ctx.message.add_reaction(ctx.toggle(False))
-                self.bot.maintenance = False
+            await ctx.message.add_reaction(ctx.toggle(False))
+            self.bot.maintenance = None
 
     @commands.command(aliases=['sp'], help="toggles no-prefix mode on or off",
                       usage="[on|off]")
