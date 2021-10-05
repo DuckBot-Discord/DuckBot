@@ -696,9 +696,9 @@ class Moderation(commands.Cog):
             await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
                                       ctx.guild.id, member.id)
 
-        await ctx.send(f"Successfully muted **{len(successful)} / {len(members)}**:"
-                       f"\nSuccessful: {', '.join([m.mention for m in successful])}"
-                       f"\nFailed: {', '.join([m.mention for m in failed_perms+failed_internal])}")
+        await ctx.send(f"**Successfully muted {len(successful)}/{len(members)}**:"
+                       f"\n**Successful:** {', '.join([m.display_name for m in successful])}"
+                       f"\n**Failed:** {', '.join([m.display_name for m in failed_perms+failed_internal])}")
 
         if self.temporary_mutes.is_running():
             self.temporary_mutes.restart()
@@ -852,9 +852,9 @@ class Moderation(commands.Cog):
             await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
                                       ctx.guild.id, member.id)
 
-        await ctx.send(f"Successfully unmuted **{len(successful)} / {len(members)}**:"
-                       f"\n**Successful:** {', '.join([m.mention for m in successful])}"
-                       f"\n**Failed:** {', '.join([m.mention for m in failed_perms+failed_internal])}")
+        await ctx.send(f"**Successfully unmuted {len(successful)}/{len(members)}**:"
+                       f"\n**Successful:** {', '.join([m.display_name for m in successful])}"
+                       f"\n**Failed:** {', '.join([m.display_name for m in failed_perms+failed_internal])}")
 
         if self.temporary_mutes.is_running():
             self.temporary_mutes.restart()
