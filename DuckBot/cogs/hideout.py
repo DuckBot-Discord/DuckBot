@@ -10,7 +10,7 @@ from DuckBot.__main__ import DuckBot
 
 
 def setup(bot):
-    bot.add_cog(Test(bot))
+    bot.add_cog(Hideout(bot))
 
 
 def finder(text, collection, *, key=None, lazy=True):
