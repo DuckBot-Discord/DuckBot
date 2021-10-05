@@ -869,12 +869,7 @@ class Moderation(commands.Cog):
                                   title='Warning')
             await ctx.author.send(embed=embed)
 
-
-
-
-
     # Add mute role
-
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
