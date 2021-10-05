@@ -261,7 +261,7 @@ class MyHelp(commands.HelpCommand):
             f"\n- Usage: <required argument> [optional argument]"
             f"\n- [optional that accepts a list of arguments]..."
             f"\n``````fix"
-            f"\nLatest commands:\"emoji list\", \"afk\", \"tictactoe\""
+            f"\nLatest commands:\"tictactoe\", \"rps\", \"multimute\""
             f"\nFor more, check the {self.context.clean_prefix}news```"
             f"\n> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** "
             f"{len(await self.filter_commands(list(self.context.bot.commands), sort=True))} 🔄"
@@ -572,7 +572,7 @@ DuckBot's top role position
         Shows the latest changes of the bot. ""
         """
         embed = discord.Embed(color=ctx.me.color,
-                              title="📰 Latest News - <t:1633210000:d> (<t:1633210000:R>)",
+                              title="📰 Latest News - <t:1633447880:d> (<t:1633447880:R>)",
                               description=f"\u200b"
                                           f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
                                           f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
@@ -608,7 +608,14 @@ DuckBot's top role position
                                           f"\n"
                                           f"\n> **<t:1633210000:R> You're now able to play Tic-Tac-Toe**"
                                           f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "
-                                          f"pressing the 'Join this game!' button 🎫")
+                                          f"pressing the 'Join this game!' button 🎫"
+                                          f"\n"
+                                          f"\n> **<t:1633110000:R> You're now able to play Rock-Paper-Scissors**"
+                                          f"\n> Just run the `{ctx.clean_prefix}rps` command. Other users will be able to join your game by "
+                                          f"pressing the 'Join this game!' button 🎫"
+                                          f"\n"
+                                          f"\n> **<t:1633447880:R> New multi-mute command**"
+                                          f"\n> mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason`")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)

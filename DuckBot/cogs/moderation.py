@@ -656,7 +656,62 @@ class Moderation(commands.Cog):
                               f"\nReason: {only_reason}",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    # Indefinitely mute member
+    @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute'], name='multi-mute')
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def multi_mute(self, ctx: CustomContext, members: commands.Greedy[discord.Member], reason: str = None) -> discord.Message:
+        """
+        Mutes a lot of members indefinitely indefinitely.
+        """
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        if not mute_role:
+            raise errors.MuteRoleNotFound
+
+        role = ctx.guild.get_role(int(mute_role))
+        if not isinstance(role, discord.Role):
+            raise errors.MuteRoleNotFound
+
+        if role > ctx.me.top_role:
+            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+
+        only_reason = reason
+        reason = f"Mute by {ctx.author} ({ctx.author.id}){f': {reason}' if only_reason else ''}"
+
+        successful: typing.List[discord.Member] = []
+        failed_perms: typing.List[discord.Member] = []
+        failed_internal: typing.List[discord.Member] = []
+
+        for member in members:
+            if not can_execute_action(ctx, ctx.author, member):
+                failed_perms.append(member)
+                continue
+
+            try:
+                await member.add_roles(role, reason=reason)
+                successful.append(member)
+            except (discord.Forbidden, discord.HTTPException):
+                failed_internal.append(member)
+                continue
+
+            await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
+                                      ctx.guild.id, member.id)
+
+        await ctx.send(f"Successfully muted **{len(successful)} / {len(members)}**:"
+                       f"\nSuccessful: {', '.join([m.mention for m in successful])}"
+                       f"\nFailed: {', '.join([m.mention for m in failed_perms+failed_internal])}")
+
+        if self.temporary_mutes.is_running():
+            self.temporary_mutes.restart()
+        else:
+            self.temporary_mutes.start()
+
+        if ctx.channel.permissions_for(role).send_messages_in_threads:
+            embed = discord.Embed(color=discord.Color.red(),
+                                  description='The mute role has permissions to create threads!'
+                                              '\nYou may want to fix that using the `muterole fix` command!'
+                                              '\nIf you don\'t want to receive security warnings, you can do `warnings off` command',
+                                  title='Warning')
+            await ctx.author.send(embed=embed)
 
     @commands.command()
     @commands.has_permissions(manage_roles=True)
