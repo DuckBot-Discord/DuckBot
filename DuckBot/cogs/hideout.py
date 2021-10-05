@@ -68,7 +68,7 @@ class SphinxObjectFileReader:
                 pos = buf.find(b'\n')
 
 
-class Test(commands.Cog):
+class Hideout(commands.Cog, name='DuckBot Hideout'):
     """
     🧪 Test commands. 💀 These may not work, or not be what you think they will.
     Remember that these commands are all a work in progress, and they may or may not ever be released
