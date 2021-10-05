@@ -272,7 +272,7 @@ class MyHelp(commands.HelpCommand):
 
         embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
 
-        ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management']
+        ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management', 'DuckBot Hideout']
         for cog, cog_commands in mapping.items():
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue

@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
+from DuckBot.helpers.rock_paper_scissors import RockPaperScissors
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
 
 aiowiki = None
@@ -296,3 +297,27 @@ class Fun(commands.Cog, name='Fun'):
             starter = random.choice([player1, player2])
             ttt = TicTacToe(ctx, player1, player2, starter=starter)
             ttt.message = await view.message.edit(content=f'#️⃣ | **{starter.name}** goes first', view=ttt, embed=None)
+
+    @commands.command(name='rock-paper-scissors', aliases=['rps', 'rock_paper_scissors'])
+    async def rock_paper_scissors(self, ctx: CustomContext):
+        embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
+                                          f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
+        embed.set_thumbnail(url='https://i.imgur.com/DZhQwnD.gif')
+        embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
+
+        sep = '\u2001'
+        view = LookingToPlay(timeout=120, label=f'{sep*13}Join this game!{sep*13}')
+        view.ctx = ctx
+        view.message = await ctx.send(embed=embed,
+                                      view=view, footer=False)
+        await view.wait()
+        player1 = ctx.author
+        player2 = view.value
+
+        if player2:
+            embed = discord.Embed(description=f"> ❌ {player1.display_name}"
+                                              f"\n> ❌ {player2.display_name}",
+                                  colour=discord.Colour.blurple())
+            embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
+            rps = RockPaperScissors(ctx, player1, player2)
+            rps.message = await view.message.edit(embed=embed, view=rps)
