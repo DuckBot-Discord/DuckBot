@@ -656,7 +656,7 @@ class Moderation(commands.Cog):
                               f"\nReason: {only_reason}",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute'], name='multi-mute')
+    @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute', 'multimute'], name='multi-mute')
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def multi_mute(self, ctx: CustomContext, members: commands.Greedy[discord.Member], reason: str = None) -> discord.Message:
@@ -812,10 +812,10 @@ class Moderation(commands.Cog):
                            f"\nReason: {only_reason}",
                            allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute'], name='multi-mute')
+    @commands.command(aliases=['mass-unmute', 'multi_unmute', 'mass_unmute', 'massunmute'], name='multi-unmute')
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def multi_mute(self, ctx: CustomContext, members: commands.Greedy[discord.Member], reason: str = None) -> discord.Message:
+    async def multi_unmute(self, ctx: CustomContext, members: commands.Greedy[discord.Member], reason: str = None) -> discord.Message:
         """
         Mutes a lot of members indefinitely indefinitely.
         """
