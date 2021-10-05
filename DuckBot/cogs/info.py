@@ -614,8 +614,8 @@ DuckBot's top role position
                                           f"\n> Just run the `{ctx.clean_prefix}rps` command. Other users will be able to join your game by "
                                           f"pressing the 'Join this game!' button 🎫"
                                           f"\n"
-                                          f"\n> **<t:1633447880:R> New multi-mute command**"
-                                          f"\n> mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason`")
+                                          f"\n> **<t:1633447880:R> New `multi-mute` and `multi-unmute` commands**"
+                                          f"\n> mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
