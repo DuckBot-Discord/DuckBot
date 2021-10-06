@@ -1,6 +1,7 @@
 import copy
 import io
 import itertools
+import logging
 import re
 import traceback
 import discord
@@ -236,7 +237,6 @@ class Handler(commands.Cog, name='Handler'):
 
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))
-
         if ctx.guild:
             command_data = f"by: {ctx.author.name} ({ctx.author.id})" \
                            f"\ncommand: {ctx.message.content[0:1700]}" \
@@ -268,7 +268,8 @@ class Handler(commands.Cog, name='Handler'):
             await sent_error.add_reaction('🗑')
         except (discord.HTTPException, discord.Forbidden):
             pass
-        raise error
+        for line in traceback_string.split('\n'):
+            logging.info(line)
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def wastebasket(self, payload: discord.RawReactionActionEvent):
