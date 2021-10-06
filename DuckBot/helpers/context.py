@@ -186,3 +186,11 @@ class CustomContext(commands.Context):
             except (discord.Forbidden, discord.HTTPException):
                 pass
             return False
+
+    def color(self):
+        return self.me.color if self.me.color not in (discord.Color.default(), discord.Embed.Empty, None) \
+            else self.author.color if self.author.color not in (discord.Color.default(), discord.Embed.Empty, None) \
+            else discord.Color.blurple()
+
+    def colour(self):
+        return self.color()

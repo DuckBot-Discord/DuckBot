@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import aiohttp
 import asyncio
 import discord
@@ -10,6 +12,7 @@ import time
 from discord.ext import commands, menus
 
 from DuckBot.__main__ import DuckBot, CustomContext
+from DuckBot.helpers import paginator
 
 suggestions_channel = 882634213516521473
 
@@ -252,39 +255,23 @@ class MyHelp(commands.HelpCommand):
 
     # !help
     async def send_bot_help(self, mapping):
-        embed = discord.Embed()
-        embed.description = (
-            "```diff"
-            f"\n+ {self.context.clean_prefix}help [command] - get information on a command"
-            f"\n+ {self.context.clean_prefix}help [category] - get information on a category"
-            f"\n``````diff"
-            f"\n- Usage: <required argument> [optional argument]"
-            f"\n- [optional that accepts a list of arguments]..."
-            f"\n``````fix"
-            f"\nLatest commands:\"tictactoe\", \"rps\", \"multimute\""
-            f"\nFor more, check the {self.context.clean_prefix}news```"
-            f"\n> 🔄 **Total Commands:** {len(list(self.context.bot.commands))} | **Usable by you (here):** "
-            f"{len(await self.filter_commands(list(self.context.bot.commands), sort=True))} 🔄"
-            f"\n> 📰 **Do `{self.context.clean_prefix}news` to see the latest "
-            f"additions to {self.context.me.display_name}** 📰"
-            f"\n"
-            f"\n **Here is a list of all my command categories, with their associated commands:**")
-
-        embed.set_author(name=self.context.author, icon_url=self.context.author.display_avatar.url)
-
+        data = []
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management', 'DuckBot Hideout']
         for cog, cog_commands in mapping.items():
+
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
             filtered = await self.filter_commands(cog_commands, sort=True)
             command_signatures = [self.get_command_name(c) for c in filtered]
             if command_signatures:
-                val = "`, `".join(command_signatures)
-                embed.add_field(name=f"Category: {cog.qualified_name}",
-                                value=f"{cog.description or 'No description given...'}\n`{val}`\n _ \u200b _",
-                                inline=False)
+                val = cog.description + '\n`' + "`, `".join(command_signatures) + '`'
+                info = ('Category: ' + cog.qualified_name, val)
 
-        await self.context.send(embed=embed, view=InvSrc())
+                data.append(info)
+
+        source = paginator.HelpMenuPageSource(data=data, ctx=self.context, help_class=self)
+        menu = paginator.ViewPaginator(source=source, ctx=self.context)
+        await menu.start()
 
     def common_command_formatting(self, embed_like, command):
         embed_like.title = self.get_command_signature(command)
