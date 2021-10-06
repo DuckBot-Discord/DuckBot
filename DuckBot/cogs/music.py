@@ -1014,7 +1014,7 @@ class Music(commands.Cog):
                  "2": 2,
                  "q": 2
                  }
-        if mode.lower() in tuple(modes.keys()):
+        if mode in tuple(modes.keys()):
             mode = modes[mode.lower()]
             messages = {
                 0: "No longer looping.",
