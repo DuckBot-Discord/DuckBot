@@ -1,6 +1,7 @@
 import asyncio
 import random
 import urllib.parse
+import aiowiki
 
 import discord
 import typing
@@ -11,7 +12,6 @@ from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
 from DuckBot.helpers.rock_paper_scissors import RockPaperScissors
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
 
-aiowiki = None
 
 _8ball_good = ['It is certain',
                'It is decidedly so',
