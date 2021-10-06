@@ -1,6 +1,7 @@
 from __future__ import annotations
 import re
 import asyncio
+from types import SimpleNamespace
 from typing import Any, Dict, Optional
 import discord
 import typing
@@ -476,3 +477,26 @@ class EmojiListPageSource(menus.ListPageSource):
             return embed
         else:
             return discord.Embed(description='something went wrong...')
+
+
+class HelpMenuPageSource(menus.ListPageSource):
+    def __init__(self, data: typing.List[SimpleNamespace], ctx: CustomContext,
+                 help_class: commands.HelpCommand) -> discord.Embed:
+        self.data = data
+        self.ctx = ctx
+        self.help = help_class
+        super().__init__(data, per_page=1)
+
+    async def format_page(self, menu, data):
+        embed = discord.Embed(color=self.ctx.color(),
+                              description=f"\n> 🔄 **Total Commands:** {len(list(self.ctx.bot.commands))} | **Usable by you (here):** "
+                                          f"{len(await self.help.filter_commands(list(self.ctx.bot.commands), sort=True))} 🔄"
+                                          f"\n> 📰 **Do `{self.ctx.clean_prefix}news` to see the latest "
+                                          f"additions to {self.ctx.me.display_name}** 📰"
+                                          f"\n```diff"
+                                          f"\n+ {self.ctx.clean_prefix}help [command] - get information on a command"
+                                          f"\n+ {self.ctx.clean_prefix}help [category] - get information on a category"
+                                          f"\n```")
+        embed.add_field(name=data[0], value=data[1])
+        embed.set_footer(text="Click the blue buttons to navigate these pages")
+        return embed
