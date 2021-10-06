@@ -12,7 +12,7 @@ import time
 from discord.ext import commands, menus
 
 from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.helpers import paginator
+from DuckBot.helpers import paginator, constants
 
 suggestions_channel = 882634213516521473
 
@@ -88,23 +88,23 @@ class DuckPaginator(menus.views.ViewMenuPages):
 class InviteButtons(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.add_item(discord.ui.Button(emoji="<:topgg:870133913102721045>", label='top.gg',
+        self.add_item(discord.ui.Button(emoji=constants.top_gg, label='top.gg',
                                         url="https://top.gg/bot/788278464474120202#/"))
-        self.add_item(discord.ui.Button(emoji="<:botsgg:870134146972938310>", label='bots.gg',
+        self.add_item(discord.ui.Button(emoji=constants.bots_gg, label='bots.gg',
                                         url="https://discord.bots.gg/bots/788278464474120202"))
 
 
 class ServerInvite(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.add_item(discord.ui.Button(emoji="<:servers:870152102759006208>", label='discord.gg/TdRfGKg8Wh',
+        self.add_item(discord.ui.Button(emoji=constants.guilds, label='discord.gg/TdRfGKg8Wh',
                                         url="https://discord.gg/TdRfGKg8Wh"))
 
 
 class InvMe(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me',
+        self.add_item(discord.ui.Button(emoji=constants.invite, label='Invite me',
                                         url="https://discord.com/api/oauth2/authorize?client_id="
                                             "788278464474120202&permissions=8&scope=bot%20applications.commands"))
 
@@ -113,7 +113,7 @@ class OzAd(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji="<:minecraft:799344306166956052>",
+    @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji=constants.minecraft_logo,
                        custom_id='OzSmpAd')
     async def advertisement(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = discord.Embed(description="\u200b"
@@ -149,24 +149,24 @@ class OzAd(discord.ui.View):
 class InvSrc(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(emoji="<:invite:860644752281436171>", label='Invite me',
+        self.add_item(discord.ui.Button(emoji=constants.invite, label='Invite me',
                                         url="https://discord.com/api/oauth2/authorize?client_id="
                                             "788278464474120202&permissions=8&scope=bot%20applications.commands"))
-        self.add_item(discord.ui.Button(emoji="<:github:744345792172654643>", label='Source code',
+        self.add_item(discord.ui.Button(emoji=constants.github, label='Source code',
                                         url="https://github.com/LeoCx1000/discord-bots"))
 
-    @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji="<:topgg:870133913102721045>",
+    @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji=constants.top_gg,
                        custom_id='BotVoteSites')
     async def votes(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = discord.Embed(description="<:topgg:870133913102721045> **vote here!** <:botsgg:870134146972938310>",
+        embed = discord.Embed(description=f"{constants.top_gg} **vote here!** {constants.top_gg}",
                               color=discord.Colour.blurple())
         await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
 
-    @discord.ui.button(label='Discord Server', style=discord.ButtonStyle.gray, emoji="<:servers:870152102759006208>",
+    @discord.ui.button(label='Discord Server', style=discord.ButtonStyle.gray, emoji=constants.guilds,
                        custom_id='ServerInvite')
     async def invite(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = discord.Embed(
-            description="<:servers:870152102759006208> **Join my server!** <:servers:870152102759006208>"
+            description=f"{constants.guilds} **Join my server!** {constants.guilds}"
                         "\nNote that this **will not ask for consent** to join! "
                         "\nIt will just yoink you into the server",
             color=discord.Colour.blurple())
@@ -358,7 +358,7 @@ class About(commands.Cog):
     @commands.command(help="Sends a link to invite the bot to your server")
     async def invite(self, ctx):
         await ctx.send(
-            embed=discord.Embed(description=f"[**<:invite:860644752281436171> invite me**]({self.bot.invite_url})"),
+            embed=discord.Embed(description=f"[**{constants.invite} invite me**]({self.bot.invite_url})"),
             view=InvMe())
 
     @commands.command(help="Checks the bot's ping to Discord")
@@ -395,13 +395,13 @@ class About(commands.Cog):
         await asyncio.sleep(0.7)
 
         await message.edit(content=re.sub('\n *', '\n',
-                                          f"\n<:open_site:854786097363812352> **| `Websocket ═╣ "
+                                          f"\n{constants.website} **| `Websocket ═╣ "
                                           f"{round(latency_ms, 3)}ms{' ' * (9 - len(str(round(latency_ms, 3))))}`** "
-                                          f"\n<a:typing:597589448607399949> **| `Typing ════╣ "
+                                          f"\n{constants.typing} **| `Typing ════╣ "
                                           f"{round(typing_ms, 3)}ms{' ' * (9 - len(str(round(typing_ms, 3))))}`**"
                                           f"\n:speech_balloon: **| `Message ═══╣ "
                                           f"{round(message_ms, 3)}ms{' ' * (9 - len(str(round(message_ms, 3))))}`**"
-                                          f"\n<:psql:871758815345901619> **| `Database ══╣ "
+                                          f"\n{constants.postgre} **| `Database ══╣ "
                                           f"{round(postgres_ms, 3)}ms{' ' * (9 - len(str(round(postgres_ms, 3))))}`**"
                                           f"\n:infinity: **| `Average ═══╣ "
                                           f"{round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
@@ -411,10 +411,10 @@ class About(commands.Cog):
     async def about(self, ctx):
         """Tells you information about the bot itself."""
         information = await self.bot.application_info()
-        embed = discord.Embed(description=f"<:github:744345792172654643> [source]({self.bot.repo}) | "
-                                          f"<:invite:860644752281436171> [invite me]({self.bot.invite_url}) | "
-                                          f"<:topgg:870133913102721045> [top.gg]({self.bot.vote_top_gg}) | "
-                                          f"<:botsgg:870134146972938310> [bots.gg]({self.bot.vote_bots_gg})"
+        embed = discord.Embed(description=f"{constants.github} [source]({self.bot.repo}) | "
+                                          f"{constants.invite} [invite me]({self.bot.invite_url}) | "
+                                          f"{constants.top_gg} [top.gg]({self.bot.vote_top_gg}) | "
+                                          f"{constants.bots_gg} [bots.gg]({self.bot.vote_bots_gg})"
                                           f"\n> Try also `{ctx.prefix}source [command]`"
                                           f"\n> or `{ctx.prefix}source [command.subcommand]`")
 

@@ -8,6 +8,7 @@ import typing
 from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
+from DuckBot.helpers import constants
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
 from DuckBot.helpers.rock_paper_scissors import RockPaperScissors
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
@@ -63,7 +64,7 @@ class Fun(commands.Cog, name='Fun'):
 
             embed = discord.Embed(color=discord.Color.random(),
                                   description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
-                                              f"<:upvote:274492025678856192> {post.score} ({post.upvote_ratio * 100}%) "
+                                              f"{constants.reddit_upvote} {post.score} ({post.upvote_ratio * 100}%) "
                                               f"• from [r/{subreddit}](https://reddit.com/r/{subreddit})")
             embed.title = post.title if title is True else None
             embed.set_image(url=post.url)
@@ -212,10 +213,7 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(aliases=['cf', 'flip', 'coin'])
     async def coinflip(self, ctx: CustomContext) -> discord.Message:
         """ Flips a VirtualCoin™ """
-        return await ctx.send(random.choice([
-            '<:heads:883577184499953734> Heads!',
-            '<:tails:883577184273461268> Tails!'
-        ]))
+        return await ctx.send(random.choice(constants.coins))
 
     @commands.command(aliases=['RandomNumber', 'dice'])
     async def roll(self, ctx: CustomContext, number: typing.Optional[int]) -> discord.Message:
@@ -224,13 +222,7 @@ class Fun(commands.Cog, name='Fun'):
         """
         number = number if number and number > 0 else None
         if not number:
-            dices = ['<:dice_1:883581027744907304>',
-                     '<:dice_2:883581054626177105>',
-                     '<:dice_3:883581082803511336>',
-                     '<:dice_4:883581104026681365>',
-                     '<:dice_5:883581129360285726>',
-                     '<:dice_6:883581159412490250>']
-            return await ctx.send(random.choice(dices))
+            return await ctx.send(random.choice(constants.dices))
         return await ctx.send(random.randint(0, number))
 
     @commands.command(aliases=['wiki'])

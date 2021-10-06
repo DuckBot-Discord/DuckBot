@@ -5,6 +5,7 @@ from discord.ext.commands.errors import UserNotFound
 
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot
+from DuckBot.helpers import constants
 
 
 def setup(bot):
@@ -49,8 +50,8 @@ class Events(commands.Cog):
             if not message.reference:
                 await message.author.send(
                     "**Warning! This is DuckBot's ModMail thread.** \nThis conversation will be sent to the bot "
-                    "developers. \n_They will reply to you as soon as possible! 💞_\n\n**<:nickname:850914031953903626> "
-                    "Message edits are not saved! <:nickname:850914031953903626>**\nIf the message receives a ⚠ reaction, "
+                    f"developers. \n_They will reply to you as soon as possible! 💞_\n\n**{constants.nickname} "
+                    f"Message edits are not saved! {constants.nickname}**\nIf the message receives a ⚠ reaction, "
                     "there was an issue delivering the message.")
             channel = await category.create_text_channel(
                 name=f"{message.author}",
