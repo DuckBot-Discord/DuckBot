@@ -5,6 +5,8 @@ import discord
 import typing
 from discord import VoiceRegion
 
+from DuckBot.helpers import constants
+
 
 def get_perms(permissions):
     perms = []
@@ -60,29 +62,13 @@ def get_user_badges(user, bot: bool = False):
     if bot is True:
         return True if flags['verified_bot'] else False
 
-    base_flags = {
-    'staff': '<:staff:314068430787706880>',
-    'partner': '<:partnernew:754032603081998336>',
-    'hypesquad': '<:hypesquad:314068430854684672>',
-    'bug_hunter': '<:hypesquad:314068430854684672>',
-    'hypesquad_bravery': '<:bravery:585763004218343426>',
-    'hypesquad_brilliance': '<:brilliance:585763004495298575>',
-    'hypesquad_balance': '<:balance:585763004574859273>',
-    'early_supporter': '<:supporter:585763690868113455>',
-    'bug_hunter_level_2': '<:bughunter_gold:850843414953984041>',
-    'verified_bot_developer': '<:earlybotdev:850843591756349450>',
-    'premium_since': '<:nitro:314068430611415041>',
-    'discord_certified_moderator': '<:certified_moderator:851224958825660497>'
-    }
-
-
     if user.premium_since:
         flags['premium_since'] = True
     else:
         flags['premium_since'] = False
 
     user_flags = []
-    for flag, emoji in base_flags.items():
+    for flag, emoji in constants.base_flags.items():
         if flags[flag]:
             user_flags.append(emoji)
 
@@ -140,6 +126,10 @@ def get_server_region(guild: discord.Guild):
         return "🇺🇸🌟 VIP US East"
     if region == VoiceRegion.vip_us_west:
         return "🇺🇸🌟 VIP US West"
+    if str(region) == 'atlanta':
+        return "🇺🇸 Atlanta"
+    if str(region) == 'santa-clara':
+        return "🇺🇸 Santa Clara"
     else:
         return "⁉ Not Found"
 
@@ -150,20 +140,7 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int,
     duration = duration if duration > 0 else 1
     played = int(position/(duration*bar_length))
     missing = int(bar_length-played)
-
-    bars = (
-        ('<a:bar_start_full:891218466172993536>',
-         '<a:bar_start_mid:891218253513371679>',
-         None),
-        ('<a:bar_center_full:891218254553575424>',
-         '<a:bar_center_mid:891218253827940472>',
-         '<a:bar_center_empty:891218254343856168>'),
-        ('<a:bar_end_full:891232339437453343>',
-         '<a:bar_end_mid:891232862400028693>',
-         '<a:bar_end_empty:891218253433679885>'
-         )
-    )
-    bars = bar_style or bars
+    bars = bar_style or constants.bars
     bar = []
     if played == 0 and missing > 0:
         bar += [bars[0][1]]

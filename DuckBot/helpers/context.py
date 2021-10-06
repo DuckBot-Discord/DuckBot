@@ -5,6 +5,8 @@ import random
 from discord import Interaction
 from discord.ext import commands
 
+from DuckBot.helpers import constants
+
 
 class ConfirmButton(discord.ui.Button):
     def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
@@ -52,11 +54,11 @@ class Confirm(discord.ui.View):
             "Oh no you can't do that! This belongs to **{user}**",
             'This is **{user}**\'s confirmation, sorry! 💖',
             '😒 Does this look yours? **No**. This is **{user}**\'s confirmation button',
-            '<a:stopit:891139227327295519>',
+            f'{constants.get_some_help}',
             'HEYYYY!!!!! this is **{user}**\'s menu.',
             'Sorry but you can\'t mess with **{user}**\' menu QnQ',
             'No. just no. This is **{user}**\'s menu.',
-            '<:blobstop:749111017778184302>' * 3,
+            constants.blob_stop_sign * 3,
             'You don\'t look like {user} do you...',
             '🤨 Thats not yours! Thats **{user}**\'s',
             '🧐 Whomst! you\'re not **{user}**',
@@ -71,60 +73,28 @@ class Confirm(discord.ui.View):
 class CustomContext(commands.Context):
     @staticmethod
     def tick(opt: bool, text: str = None) -> str:
-        ticks = {
-            True: '<:greenTick:596576670815879169>',
-            False: '<:redTick:596576672149667840>',
-            None: '<:greyTick:860644729933791283>',
-        }
-        emoji = ticks.get(opt, "<:redTick:596576672149667840>")
+        emoji = constants.emoji_ticks.get(opt, constants.emoji_ticks[False])
         if text:
             return f"{emoji} {text}"
         return emoji
 
     @staticmethod
     def default_tick(opt: bool, text: str = None) -> str:
-        ticks = {
-            True: '✅',
-            False: '❌',
-            None: '➖',
-        }
-        emoji = ticks.get(opt, "❌")
+        emoji = constants.ticks.get(opt, constants.ticks[False])
         if text:
             return f"{emoji} {text}"
         return emoji
 
     @staticmethod
     def square_tick(opt: bool, text: str = None) -> str:
-        ticks = {
-            True: '🟩',
-            False: '🟥',
-            None: '⬛',
-        }
-        emoji = ticks.get(opt, "🟥")
-        if text:
-            return f"{emoji} {text}"
-        return emoji
-
-    @staticmethod
-    def dc_toggle(opt: bool, text: str = None) -> str:
-        ticks = {
-            True: '<:DiscordON:882991627541565461>',
-            False: '<:DiscordOFF:882991627994542080>',
-            None: '<:DiscordNONE:882991627994546237>',
-        }
-        emoji = ticks.get(opt, "<:DiscordOFF:882991627994542080>")
+        emoji = constants.square_ticks.get(opt, constants.square_ticks[False])
         if text:
             return f"{emoji} {text}"
         return emoji
 
     @staticmethod
     def toggle(opt: bool, text: str = None) -> str:
-        ticks = {
-            True: '<:toggle_on:857842924729270282>',
-            False: '<:toggle_off:857842924544065536>',
-            None: '<:toggle_off:857842924544065536>',
-        }
-        emoji = ticks.get(opt, "<:toggle_off:857842924544065536>")
+        emoji = constants.toggles.get(opt, constants.toggles[False])
         if text:
             return f"{emoji} {text}"
         return emoji

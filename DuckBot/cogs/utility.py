@@ -9,7 +9,7 @@ from typing import Optional
 from discord.ext import commands, menus
 
 from DuckBot import errors
-from DuckBot.helpers import paginator, time_inputs
+from DuckBot.helpers import paginator, time_inputs, constants
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import helper
 
@@ -128,118 +128,46 @@ class Utility(commands.Cog):
         embed.set_author(name=member, icon_url=member.display_avatar.url)
         embed.set_thumbnail(url=member.display_avatar.url)
 
-        embed.add_field(name="<:info:860295406349058068> General information",
+        embed.add_field(name=f"{constants.information_source} General information",
                         value=f"**ID:** {member.id}"
                               f"\n**Name:** {member.name}"
                               f"\n╰ **Nick:** {(member.nick or '✖')}"
                               f"\n**Owner:** {ctx.tick(member == member.guild.owner)} • "
                               f"**Bot:** {ctx.tick(member.bot)}", inline=True)
 
-        embed.add_field(name="<:store_tag:658538492409806849> Badges",
-                        value=(helper.get_user_badges(member) or "No Badges"), inline=True)
+        embed.add_field(name=f"{constants.store_tag} Badges",
+                        value=(helper.get_user_badges(member) or "No Badges") + '\u200b', inline=True)
 
-        embed.add_field(name="<:invite:860644752281436171> Created At",
+        embed.add_field(name=f"{constants.invite} Created At",
                         value=f"╰ {discord.utils.format_dt(member.created_at, style='f')} "
                               f"({discord.utils.format_dt(member.created_at, style='R')})",
                         inline=False)
 
-        embed.add_field(name="<:joined:849392863557189633> Created At",
+        embed.add_field(name=f"{constants.joined} Created At",
                         value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
-                               f"\n\u200b \u200b \u200b \u200b ╰ <:moved:848312880666640394> **Join Position:** "
+                               f"\n\u200b \u200b \u200b \u200b ╰ {constants.moved} **Join Position:** "
                                f"{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}")
                         if member else "Could not get data",
                         inline=False)
 
         perms = helper.get_perms(member.guild_permissions)
         if perms:
-            embed.add_field(name="<:store_tag:658538492409806849> Staff Perms",
+            embed.add_field(name=f"{constants.store_tag} Staff Perms:",
                             value=f"`{'` `'.join(perms)}`", inline=False)
 
         roles = [r.mention for r in member.roles if r != ctx.guild.default_role]
         if roles:
-            embed.add_field(name="<:role:808826577785716756>**Roles:** Roles",
+            embed.add_field(name=f"{constants.roles} Roles:",
                             value=" ".join(roles), inline=False)
 
         if member.premium_since:
-            embed.add_field(name="<:booster4:860644548887969832> Boosting since:",
+            embed.add_field(name=f"{constants.boost} Boosting since:",
                             value=f"╰ {discord.utils.format_dt(member.premium_since, style='f')} "
                                   f"({discord.utils.format_dt(member.premium_since, style='R')})",
                             inline=False)
 
         return await ctx.send(embed=embed)
-
-    @commands.command(hidden=True)
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    @commands.guild_only()
-    async def old_userinfo(self, ctx, *, user: typing.Optional[discord.Member]):
-        """
-        Shows a user's information. If not specified, shows your own.
-        """
-        user = user or ctx.author
-        # BADGES
-        badges = helper.get_user_badges(user)
-        if badges:
-            badges = f"\n<:store_tag:658538492409806849>**Badges:**{badges}"
-        else:
-            badges = ''
-        # BADGES
-        perms = helper.get_perms(user.guild_permissions)
-        if perms:
-            perms = f"\n<:store_tag:658538492409806849>**Staff permissions:** {', '.join(perms)}"
-        else:
-            perms = ''
-        # USERID
-        userid = f"\n<:greyTick:596576672900186113>**ID:** `{user.id}`"
-        # NICKNAME
-        if user.nick:
-            nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
-        else:
-            nick = ""
-        # CREATION DATE
-        date = f"<t:{round(user.created_at.timestamp())}:F>"
-        rounded_date = f"<t:{round(user.created_at.timestamp())}:R>"
-        created = f"\n<:invite:860644752281436171>**Created:** {date} ({rounded_date})"
-        # JOIN DATE
-        if user.joined_at:
-            date = f"<t:{round(user.joined_at.timestamp())}:F>"
-            rounded_date = f"<t:{round(user.joined_at.timestamp())}:R>"
-            joined = f"\n<:joined:849392863557189633>**joined:** {date} ({rounded_date})"
-        else:
-            joined = ""
-        # GUILD OWNER
-        if user is ctx.guild.owner:
-            owner = f"\n<:owner:585789630800986114>**Owner:** <:check:314349398811475968>"
-        else:
-            owner = ""
-        # BOT
-        if user.bot:
-            bot = f"\n<:botTag:230105988211015680>**Bot:** <:check:314349398811475968>"
-        else:
-            bot = ""
-        # Join Order
-        order = f"\n<:moved:848312880666640394>**Join position:** " \
-                f"`{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(user) + 1}`"
-
-        if user.premium_since:
-            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
-            boost = f"\n<:booster4:585764446178246657>**Boosting since:** `{date} UTC`"
-        else:
-            boost = ""
-        # ROLES
-        roles = ""
-        for role in user.roles:
-            if role is ctx.guild.default_role:
-                continue
-            roles = f"{roles} {role.mention}"
-        if roles != "":
-            roles = f"\n<:role:808826577785716756>**Roles:** {roles}"
-        # EMBED
-        embed = discord.Embed(
-            description=f"{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}{perms}")
-        embed.set_author(name=user, icon_url=user.display_avatar.url)
-        embed.set_thumbnail(url=user.display_avatar.url)
-        await ctx.send(embed=embed)
 
     @commands.command(aliases=['perms'])
     @commands.guild_only()
@@ -437,7 +365,7 @@ class Utility(commands.Cog):
             else 'bot' if isinstance(guild, str) and (await self.bot.is_owner(ctx.author)) else ctx.guild
         emojis = target_guild.emojis if isinstance(target_guild, discord.Guild) else self.bot.emojis
 
-        emotes = [f"{str(e)} **|** [`{e.id}`]({e.url}) **|** {e.name}" for e in emojis]
+        emotes = [f"{str(e)} **|** `{e.id}` **|** [{e.name}]({e.url})" for e in emojis]
         menu = paginator.ViewPaginator(paginator.ServerEmotesEmbedPage(data=emotes,
                                                                        guild=(target_guild if isinstance(target_guild,
                                                                                                          discord.Guild)
@@ -503,7 +431,7 @@ class Utility(commands.Cog):
                                       'ON CONFLICT (user_id) DO UPDATE SET start_time = $2, reason = $3',
                                       ctx.author.id, ctx.message.created_at, reason[0:1800])
             self.bot.afk_users[ctx.author.id] = True
-            await ctx.send('**You are now afk!** <:RooSleep:892425348078256138>'
+            await ctx.send(f'**You are now afk!** {constants.roo_sleep}'
                            f'\n**with reason:** {reason}')
         else:
             self.bot.afk_users.pop(ctx.author.id)

@@ -9,7 +9,7 @@ from discord.ext import commands
 from discord.ext.commands import Paginator as CommandPaginator
 from discord.ext import menus
 
-from DuckBot.helpers import helper
+from DuckBot.helpers import helper, constants
 from DuckBot.__main__ import CustomContext
 
 
@@ -339,12 +339,6 @@ class ServerInfoPageSource(menus.ListPageSource):
             'THREE_DAY_THREAD_ARCHIVE': '3 Day Thread Archive',
             'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
         }
-        boosting_level_emojis = {
-            '0': '<:Level0_guild:883081706918252604>',
-            '1': '<:Level1_guild:883072977430794240>',
-            '2': '<:Level2_guild:883073003984916491>',
-            '3': '<:Level3_guild:883073034817245234>'
-        }
 
         for feature, label in all_features.items():
             if feature in features:
@@ -352,41 +346,41 @@ class ServerInfoPageSource(menus.ListPageSource):
 
         embed = discord.Embed(title=guild.name)
 
-        embed.add_field(name="<:rich_presence:658538493521166336> Features:",
+        embed.add_field(name=f"{constants.rich_presence} Features:",
                         value=('\n'.join(enabled_features) if enabled_features else 'No features...'), inline=True)
 
-        embed.add_field(name="<:info:860295406349058068> General Info:",
+        embed.add_field(name=f"{constants.information_source} General Info:",
                         value=f"🆔 {guild.id}"
-                              f"\n<:owner_crown:845946530452209734> {guild.owner}"
+                              f"\n{constants.owner_crown} {guild.owner}"
                               f"\n👤 {len([m for m in guild.members if not m.bot])} "
                               f"(🤖 {len([m for m in guild.members if m.bot])})"
                               f"\n╰ ➕ {guild.member_count}/{guild.max_members}"
                               f"\n🌐 Server Region: {helper.get_server_region(guild)}"
-                              f"\n<:role:860644904048132137> Roles: {len(guild.roles)}")
+                              f"\n{constants.roles} Roles: {len(guild.roles)}")
 
         if guild.description:
             desc = guild.description
         else:
-            desc = "<:toggle_off:857842924544065536> Feature toggled off." \
+            desc = f"{constants.toggles[False]} Feature toggled off." \
                    "\nEnable it in `community -> overview` in server settings!"
 
-        embed.add_field(name="<:info:860295406349058068> Server description:",
+        embed.add_field(name=f"{constants.information_source} Server description:",
                         value=desc, inline=False)
 
-        embed.add_field(name="<:rich_presence:658538493521166336> Channels:",
-                        value=f"<:voice:860330111377866774> "
+        embed.add_field(name=f"{constants.rich_presence} Channels:",
+                        value=f"{constants.voice_channel} "
                               f"{len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
-                              f"\n<:view_channel:854786097023549491> Channels: "
+                              f"\n{constants.text_channel} Channels: "
                               f"{len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
-                              f"\n<:category:882685952999428107> Categories: "
+                              f"\n{constants.category_channel} Categories: "
                               f"{len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
-                              f"\n<:stagechannel:824240882793447444> Stages: "
+                              f"\n{constants.stage_channel} Stages: "
                               f"{len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
-                              f"\n<:threadnew:833432474347372564> Threads: {len(guild.threads)}"
+                              f"\n{constants.text_channel_with_thread} Threads: {len(guild.threads)}"
                               f"\n╰ (visible by me)",
                         inline=True)
 
-        embed.add_field(name="<:emoji_ghost:658538492321595393> Emojis:",
+        embed.add_field(name=f"{constants.emoji_ghost} Emojis:",
                         value=f"Static: {len([e for e in guild.emojis if not e.animated])}/{guild.emoji_limit} "
                               f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} ",
                         inline=True)
@@ -398,10 +392,10 @@ class ServerInfoPageSource(menus.ListPageSource):
         else:
             boost = "\n╰ No active boosters"
 
-        embed.add_field(name="<:booster4:860644548887969832> Boosts:",
-                        value=f"{boosting_level_emojis[str(guild.premium_tier)]} Level: {guild.premium_tier}"
+        embed.add_field(name=f"{constants.boost} Boosts:",
+                        value=f"{constants.boosting_level_emojis[str(guild.premium_tier)]} Level: {guild.premium_tier}"
                               f"\n╰ Amount: {guild.premium_subscription_count}"
-                              f"\n**<:booster4:860644548887969832> Last booster:**{boost}")
+                              f"\n**{constants.boost} Last booster:**{boost}")
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)

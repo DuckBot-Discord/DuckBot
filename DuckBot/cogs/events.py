@@ -15,6 +15,7 @@ import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.cogs import music as music_cog
 from DuckBot.cogs.info import suggestions_channel, ServerInvite
+from DuckBot.helpers import constants
 
 warned = []
 
@@ -199,7 +200,7 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(embed=embed)
 
         if isinstance(error, errors.NoQuotedMessage):
-            return await ctx.send("<:reply:824240882488180747> Missing reply!")
+            return await ctx.send(f"{constants.reply_symbol} Missing reply!")
 
         if isinstance(error, errors.MuteRoleNotFound):
             return await ctx.send("This server doesn't have a mute role, or it was deleted!"
@@ -399,5 +400,5 @@ class Handler(commands.Cog, name='Handler'):
             await message.delete(delay=0)
             return await message.channel.send(f'⚠ | {message.author.mention} this **suggestions channel** is set to **image-only** mode!', delete_after=5)
 
-        await message.add_reaction('<:upvote:893588750242832424>')
-        await message.add_reaction('<:downvote:893588792164892692>')
+        await message.add_reaction(constants.upvote)
+        await message.add_reaction(constants.downvote)
