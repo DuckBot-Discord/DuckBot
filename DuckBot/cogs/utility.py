@@ -328,7 +328,7 @@ class Utility(commands.Cog):
     async def emoji_clone(self, ctx: CustomContext,
                           server_emoji: typing.Optional[typing.Union[discord.Embed,
                                                                      discord.PartialEmoji]],
-                          index: int = 1):
+                          index: typing.Optional[int] = 1, name: typing.Optional[str] = None):
         """
         Clones an emoji into the current server.
         # To steal an emoji from someone else, quote their message to grab the emojis from there.
@@ -352,9 +352,9 @@ class Utility(commands.Cog):
 
         file = await server_emoji.read()
         guild = ctx.guild
-        server_emoji = await guild.create_custom_emoji(name=server_emoji.name, image=file,
+        server_emoji = await guild.create_custom_emoji(name=name or server_emoji.name, image=file,
                                                        reason=f"Cloned emoji, requested by {ctx.author}")
-        await ctx.send(f"Done! cloned {server_emoji}")
+        await ctx.send(f"**Done!** cloned {server_emoji} **|** `{server_emoji}`")
 
     @emoji.command(usage="", name='list')
     @commands.guild_only()
