@@ -71,6 +71,11 @@ class Confirm(discord.ui.View):
 
 
 class CustomContext(commands.Context):
+
+    @property
+    def clean_prefix(self) -> str:
+        return super().clean_prefix.replace('@', '(at)')
+
     @staticmethod
     def tick(opt: bool, text: str = None) -> str:
         emoji = constants.emoji_ticks.get(opt, constants.emoji_ticks[False])
@@ -125,9 +130,15 @@ class CustomContext(commands.Context):
     async def confirm(self, message: str = 'Do you want to confirm?',
                       buttons: typing.Tuple[typing.Union[discord.PartialEmoji, str],
                                             str, discord.ButtonStyle] = None, timeout: int = 30,
-                      delete_after_confirm: bool = False, delete_after_timeout: bool = False,
-                      delete_after_cancel: bool = None):
+
+                      delete_after_confirm: bool = False,
+                      delete_after_timeout: bool = False,
+                      delete_after_cancel: bool = None,
+                      return_message: bool = False) \
+            -> typing.Union[bool, typing.Tuple[bool, discord.Message]]:
+
         delete_after_cancel = delete_after_cancel if delete_after_cancel is not None else delete_after_confirm
+
         view = Confirm(buttons=buttons or (
             (None, 'Confirm', discord.ButtonStyle.green),
             (None, 'Cancel', discord.ButtonStyle.red)
@@ -136,26 +147,32 @@ class CustomContext(commands.Context):
         message = await self.send(message, view=view)
         await view.wait()
         if view.value is None:
+
             try:
-                (await message.edit(view=None)) if \
-                    delete_after_timeout is False else (await message.delete())
+                if return_message is False:
+                    (await message.edit(view=None)) if delete_after_timeout is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
-            return False
+            return (None, message) if delete_after_timeout is False and return_message is True else None
+
         elif view.value:
+
             try:
-                (await message.edit(view=None)) if \
-                    delete_after_confirm is False else (await message.delete())
+                if return_message is False:
+                    (await message.edit(view=None)) if delete_after_confirm is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
-            return True
+            return (True, message) if delete_after_confirm is False and return_message is True else True
+
         else:
+
             try:
-                (await message.edit(view=None)) if \
-                    delete_after_cancel is False else (await message.delete())
+                if return_message is False:
+                    (await message.edit(view=None)) if delete_after_cancel is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
-            return False
+
+            return (False, message) if delete_after_cancel is False and return_message is True else False
 
     def color(self):
         return self.me.color if self.me.color not in (discord.Color.default(), discord.Embed.Empty, None) \

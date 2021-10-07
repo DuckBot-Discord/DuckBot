@@ -270,9 +270,10 @@ class Utility(commands.Cog):
         Unlocks a locked emoji.
         # Note that you can also pass an emoji name, like so:
         # db.emoji lock 💥
-        # ✅ db.emoji unlock boom
-        # ❌ db.emoji unlock :boom:
+        # GOOD: db.emoji unlock boom
+        # BAD: db.emoji unlock :boom:
         # ^^^^ Only for example! emoji must be a custom one, not a default one.
+        Note: theres also "emoji unlock all"
         """
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
@@ -322,13 +323,14 @@ class Utility(commands.Cog):
         except discord.NotFound:
             pass
 
-    @emoji.command(name="clone", usage="<server_emoji>")
+    @emoji.command(name="clone", aliases=['create'], usage="<server_emoji> [name]")
+    @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_clone(self, ctx: CustomContext,
                           server_emoji: typing.Optional[typing.Union[discord.Embed,
                                                                      discord.PartialEmoji]],
-                          index: typing.Optional[int] = 1, name: typing.Optional[str] = None):
+                          index: typing.Optional[int] = 1, name: typing.Optional[str] = '#'):
         """
         Clones an emoji into the current server.
         # To steal an emoji from someone else, quote their message to grab the emojis from there.
@@ -352,7 +354,10 @@ class Utility(commands.Cog):
 
         file = await server_emoji.read()
         guild = ctx.guild
-        server_emoji = await guild.create_custom_emoji(name=name or server_emoji.name, image=file,
+
+        valid_name = re.compile('^[a-zA-Z0-9_]+$')
+
+        server_emoji = await guild.create_custom_emoji(name=name if valid_name.match(name) else server_emoji.name, image=file,
                                                        reason=f"Cloned emoji, requested by {ctx.author}")
         await ctx.send(f"**Done!** cloned {server_emoji} **|** `{server_emoji}`")
 
@@ -371,6 +376,45 @@ class Utility(commands.Cog):
                                                                                                          discord.Guild)
                                                                               else ctx.bot)), ctx=ctx)
         await menu.start()
+
+    @emoji.command(name='delete')
+    @commands.guild_only()
+    @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
+    async def emoji_delete(self, ctx: CustomContext, server_emoji: discord.Emoji):
+        """
+        Deletes an emoji from this server.
+        """
+        if server_emoji.guild != ctx.guild:
+            raise commands.MissingRequiredArgument(Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
+        confirm = await ctx.confirm(f'❓ | Are you sure you want to delete {server_emoji}?', return_message=True)
+
+        if confirm[0]:
+            await server_emoji.delete(reason=f'Deletion requested by {ctx.author} ({ctx.author.id})')
+            await confirm[1].edit(content=f'🚮 | Successfully deleted `{server_emoji}`', view=None)
+        else:
+            await confirm[1].edit(content='❌ | Cancelled!', view=None)
+
+    @emoji.command(name='rename')
+    @commands.guild_only()
+    @commands.has_permissions(manage_emojis=True)
+    @commands.bot_has_permissions(manage_emojis=True)
+    async def emoji_rename(self, ctx, server_emoji: discord.Emoji, new_name: commands.clean_content):
+        """
+        Renames an emoji from this server.
+        """
+        if server_emoji.guild != ctx.guild:
+            raise commands.MissingRequiredArgument(Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
+        if len(new_name) > 32:
+            raise commands.BadArgument('⚠ | **new_name** must be less than **32 characters** in long.')
+        if server_emoji.name == new_name:
+            raise commands.BadArgument(f"⚠ | {server_emoji} is already named {new_name}")
+
+        valid_name = re.compile('^[a-zA-Z0-9_]+$')
+        if not valid_name.match(new_name):
+            raise commands.BadArgument('⚠ | **new_name** can only contain **alphanumeric characters** and **underscores**')
+        new_emoji = await server_emoji.edit(name=new_name, reason='Deletion requested by {ctx.author} ({ctx.author.id})')
+        await ctx.send(f"{constants.nickname} | Successfully renamed {new_emoji} from `{server_emoji.name}` to `{new_emoji.name}`!")
 
     @commands.command(aliases=['uuid'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)

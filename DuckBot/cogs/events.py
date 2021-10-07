@@ -144,8 +144,9 @@ class Handler(commands.Cog, name='Handler'):
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
             separator = (' ' * (len([item[::-1] for item in command[::-1].split(missing[::-1], 1)][::-1][0]) - 1))
             indicator = ('^' * (len(missing) + 2))
-            return await ctx.send(f"```\n{command}\n{separator}{indicator}\n{missing} "
-                                  f"is a required argument that is missing.\n```")
+            return await ctx.send(f"> **Usage: `<required>` - `[optional]` - `[multiple]...`**"
+                                  f"\n```css\n{command}\n{separator}{indicator}"
+                                  f'\n"{missing}" is a required argument that is missing.\n```')
 
         if isinstance(error, commands.errors.PartialEmojiConversionFailure):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
