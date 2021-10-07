@@ -21,71 +21,8 @@ def setup(bot):
     bot.add_cog(About(bot))
 
 
-class DuckPaginator(menus.views.ViewMenuPages):
-    def __init__(self, source):
-        super().__init__(source=source, check_embeds=True, delete_message_after=True)
-        self.input_lock = asyncio.Lock()
-
-    async def finalize(self, timed_out):
-        try:
-            if timed_out:
-                await self.message.edit(view=None)
-            else:
-                await self.message.delete()
-        except discord.HTTPException:
-            pass
-
-    @menus.button('\N{INFORMATION SOURCE}\ufe0f', position=menus.Last(3))
-    async def show_help(self, payload):
-        """shows this message"""
-        embed = discord.Embed(title='Paginator help', description='Hello! Welcome to the help page.')
-        messages = []
-        for (emoji, button) in self.buttons.items():
-            messages.append(f'{emoji}: {button.action.__doc__}')
-
-        embed.add_field(name='What are these reactions for?', value='\n'.join(messages), inline=False)
-        embed.set_footer(text=f'We were on page {self.current_page + 1} before this message.')
-        await self.message.edit(content=None, embed=embed)
-
-        async def go_back_to_current_page():
-            await asyncio.sleep(30.0)
-            await self.show_page(self.current_page)
-
-        self.bot.loop.create_task(go_back_to_current_page())
-
-    @menus.button('\N{INPUT SYMBOL FOR NUMBERS}', position=menus.Last(1.5), lock=False)
-    async def numbered_page(self, payload):
-        """lets you type a page number to go to"""
-        if self.input_lock.locked():
-            return
-
-        async with self.input_lock:
-            channel = self.message.channel
-            author_id = payload.user_id
-            to_delete = [await channel.send('What page do you want to go to?')]
-
-            def message_check(m):
-                return m.author.id == author_id and \
-                       channel == m.channel and \
-                       m.content.isdigit()
-
-            try:
-                msg = await self.bot.wait_for('message', check=message_check, timeout=30.0)
-            except asyncio.TimeoutError:
-                to_delete.append(await channel.send('Took too long.'))
-                await asyncio.sleep(5)
-            else:
-                page = int(msg.content)
-                to_delete.append(msg)
-                await self.show_checked_page(page - 1)
-
-            try:
-                await channel.delete_messages(to_delete)
-            except (discord.Forbidden, discord.HTTPException, discord.NotFound):
-                pass
-
-
 class InviteButtons(discord.ui.View):
+    """ Buttons to the top.gg and bots.gg voting sites """
     def __init__(self):
         super().__init__()
         self.add_item(discord.ui.Button(emoji=constants.top_gg, label='top.gg',
@@ -95,6 +32,7 @@ class InviteButtons(discord.ui.View):
 
 
 class ServerInvite(discord.ui.View):
+    """ Buttons to the support server invite """
     def __init__(self):
         super().__init__()
         self.add_item(discord.ui.Button(emoji=constants.guilds, label='discord.gg/TdRfGKg8Wh',
@@ -173,42 +111,6 @@ class InvSrc(discord.ui.View):
         await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
 
 
-class HelpMenu(DuckPaginator):
-    def __init__(self, source):
-        super().__init__(source)
-
-    @menus.button('\N{WHITE QUESTION MARK ORNAMENT}', position=menus.Last(5))
-    async def show_bot_help(self, payload):
-        """shows how to use the bot"""
-
-        embed = discord.Embed(title='Using the bot', colour=discord.Colour.blurple())
-        embed.title = 'Using the bot'
-        embed.description = 'Hello! Welcome to the help page.'
-
-        entries = (
-            ('<argument>', 'This means the argument is __**required**__.'),
-            ('[argument]', 'This means the argument is __**optional**__.'),
-            ('[A|B]', 'This means that it can be __**either A or B**__.'),
-            ('[argument...]', 'This means you can have multiple arguments.\n'
-                              'Now that you know the basics, it should be noted that...\n'
-                              '__**You do not type in the brackets!**__')
-        )
-
-        embed.add_field(name='How do I use this bot?', value='Reading the bot signature is pretty simple.')
-
-        for name, value in entries:
-            embed.add_field(name=name, value=value, inline=False)
-
-        embed.set_footer(text=f'We were on page {self.current_page + 1} before this message.')
-        await self.message.edit(embed=embed)
-
-        async def go_back_to_current_page():
-            await asyncio.sleep(30.0)
-            await self.show_page(self.current_page)
-
-        self.bot.loop.create_task(go_back_to_current_page())
-
-
 class GroupHelpPageSource(menus.ListPageSource):
     def __init__(self, group, cog_commands, *, prefix):
         super().__init__(entries=cog_commands, per_page=6)
@@ -270,7 +172,7 @@ class MyHelp(commands.HelpCommand):
                 data.append(info)
 
         source = paginator.HelpMenuPageSource(data=data, ctx=self.context, help_class=self)
-        menu = paginator.ViewPaginator(source=source, ctx=self.context)
+        menu = paginator.HelpMenuPaginator(source=source, ctx=self.context, compact=True)
         await menu.start()
 
     def common_command_formatting(self, embed_like, command):
@@ -305,8 +207,8 @@ description: {command_help}
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = HelpMenu(GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix))
-        await menu.start(self.context)
+        menu = paginator.HelpMenuPaginator(GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix), ctx=self.context, compact=True)
+        await menu.start()
 
     async def send_group_help(self, group):
         subcommands = group.commands
@@ -318,8 +220,8 @@ description: {command_help}
             return await self.send_command_help(group)
 
         source = GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
-        menu = HelpMenu(source)
-        await menu.start(self.context)
+        menu = paginator.HelpMenuPaginator(source, ctx=self.context, compact=True)
+        await menu.start()
 
     async def send_error_message(self, error):
         await self.context.send(f"{error}"

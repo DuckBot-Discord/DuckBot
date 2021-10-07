@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.ext.commands import Paginator as CommandPaginator
 from discord.ext import menus
 
+from DuckBot.cogs.info import InviteButtons, ServerInvite
 from DuckBot.helpers import helper, constants
 from DuckBot.__main__ import CustomContext
 
@@ -494,3 +495,41 @@ class HelpMenuPageSource(menus.ListPageSource):
         embed.add_field(name=data[0], value=data[1])
         embed.set_footer(text="Click the blue buttons to navigate these pages")
         return embed
+
+
+class VotesButton(discord.ui.Button):
+    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
+        super().__init__(style=button_style, label=label, emoji=emoji, )
+
+    async def callback(self, interaction: discord.Interaction):
+        embed = discord.Embed(description=f"{constants.top_gg} **vote here!** {constants.top_gg}",
+                              color=discord.Colour.blurple())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
+
+
+class InviteButton(discord.ui.Button):
+    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
+        super().__init__(style=button_style, label=label, emoji=emoji, )
+
+    async def callback(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            description=f"{constants.guilds} **Join my server!** {constants.guilds}"
+                        "\nNote that this **will not ask for consent** to join! "
+                        "\nIt will just yoink you into the server",
+            color=discord.Colour.blurple())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
+
+
+class HelpMenuPaginator(ViewPaginator):
+    def __init__(self, source: menus.PageSource, *, ctx: commands.Context, check_embeds: bool = True, compact: bool = False):
+        super().__init__(source, ctx=ctx, check_embeds=check_embeds, compact=compact)
+
+    def fill_items(self) -> None:
+        super().fill_items()
+        self.add_item(VotesButton(label='Vote', button_style=discord.ButtonStyle.grey, emoji=constants.top_gg))
+        self.add_item(InviteButton(label='Support', button_style=discord.ButtonStyle.grey, emoji=constants.guilds))
+        self.add_item(discord.ui.Button(emoji=constants.invite, label='Invite me',
+                                        url="https://discord.com/api/oauth2/authorize?client_id="
+                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
+        self.add_item(discord.ui.Button(emoji=constants.github, label='Source', url="https://github.com/LeoCx1000/discord-bots"))
+
