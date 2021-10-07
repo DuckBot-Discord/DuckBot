@@ -262,10 +262,10 @@ class MyHelp(commands.HelpCommand):
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
             filtered = await self.filter_commands(cog_commands, sort=True)
-            command_signatures = [self.get_command_name(c) for c in filtered]
+            command_signatures = [self.get_minimal_command_signature(c) for c in filtered]
             if command_signatures:
-                val = cog.description + '\n`' + "`, `".join(command_signatures) + '`'
-                info = ('Category: ' + cog.qualified_name, val)
+                val = cog.description + '```css\n' + "\n".join(command_signatures) + '\n```'
+                info = ('Category: ' + cog.qualified_name, f'{val}')
 
                 data.append(info)
 

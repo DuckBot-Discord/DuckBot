@@ -381,21 +381,34 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
-    async def emoji_delete(self, ctx, server_emoji: discord.Emoji):
+    async def emoji_delete(self, ctx: CustomContext, server_emoji: discord.Emoji):
+        """
+        Deletes an emoji from this server.
+        """
         if server_emoji.guild != ctx.guild:
             raise commands.MissingRequiredArgument(Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
-        await server_emoji.delete(reason=f'Deletion requested by {ctx.author} ({ctx.author.id})')
-        await ctx.send(f'🚮 | Successfully deleted `{server_emoji}`')
+        confirm = await ctx.confirm(f'❓ | Are you sure you want to delete {server_emoji}?', return_message=True)
+
+        if confirm[0]:
+            await server_emoji.delete(reason=f'Deletion requested by {ctx.author} ({ctx.author.id})')
+            await confirm[1].edit(content=f'🚮 | Successfully deleted `{server_emoji}`', view=None)
+        else:
+            await confirm[1].edit(content='❌ | Cancelled!', view=None)
 
     @emoji.command(name='rename')
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_rename(self, ctx, server_emoji: discord.Emoji, new_name: commands.clean_content):
+        """
+        Renames an emoji from this server.
+        """
         if server_emoji.guild != ctx.guild:
             raise commands.MissingRequiredArgument(Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
         if len(new_name) > 32:
             raise commands.BadArgument('⚠ | **new_name** must be less than **32 characters** in long.')
+        if server_emoji.name == new_name:
+            raise commands.BadArgument(f"⚠ | {server_emoji} is already named {new_name}")
 
         valid_name = re.compile('^[a-zA-Z0-9_]+$')
         if not valid_name.match(new_name):
