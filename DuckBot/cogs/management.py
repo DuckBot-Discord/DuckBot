@@ -4,7 +4,6 @@ import datetime
 import importlib
 import io
 import itertools
-import os
 import textwrap
 import traceback
 import typing
@@ -23,6 +22,7 @@ from jishaku.paginators import WrappedPaginator
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator
 from DuckBot.helpers.helper import count_others, count_lines
+
 
 def setup(bot):
     bot.add_cog(Management(bot))
@@ -498,9 +498,9 @@ class Management(commands.Cog, name='Bot Management'):
     async def react(self, ctx, emoji: typing.Union[UnicodeEmoji, discord.Emoji]):
         await ctx.message.reference.resolved.add_reaction(emoji)
 
-    @commands.command()
+    @commands.command(name='server-list', aliases=['guilds-list', 'bot-servers'])
     @commands.is_owner()
-    async def servers(self, ctx: CustomContext):
+    async def g_list(self, ctx: CustomContext):
         """
         Shows the bots servers info.
         """

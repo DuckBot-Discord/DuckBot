@@ -128,41 +128,41 @@ class Utility(commands.Cog):
         embed.set_author(name=member, icon_url=member.display_avatar.url)
         embed.set_thumbnail(url=member.display_avatar.url)
 
-        embed.add_field(name=f"{constants.information_source} General information",
+        embed.add_field(name=f"{constants.INFORMATION_SOURCE} General information",
                         value=f"**ID:** {member.id}"
                               f"\n**Name:** {member.name}"
                               f"\n╰ **Nick:** {(member.nick or '✖')}"
                               f"\n**Owner:** {ctx.tick(member == member.guild.owner)} • "
                               f"**Bot:** {ctx.tick(member.bot)}", inline=True)
 
-        embed.add_field(name=f"{constants.store_tag} Badges",
+        embed.add_field(name=f"{constants.STORE_TAG} Badges",
                         value=(helper.get_user_badges(member) or "No Badges") + '\u200b', inline=True)
 
-        embed.add_field(name=f"{constants.invite} Created At",
+        embed.add_field(name=f"{constants.INVITE} Created At",
                         value=f"╰ {discord.utils.format_dt(member.created_at, style='f')} "
                               f"({discord.utils.format_dt(member.created_at, style='R')})",
                         inline=False)
 
-        embed.add_field(name=f"{constants.joined} Created At",
+        embed.add_field(name=f"{constants.JOINED_SERVER} Created At",
                         value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
-                               f"\n\u200b \u200b \u200b \u200b ╰ {constants.moved} **Join Position:** "
+                               f"\n\u200b \u200b \u200b \u200b ╰ {constants.LEFT_SERVER} **Join Position:** "
                                f"{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}")
                         if member else "Could not get data",
                         inline=False)
 
         perms = helper.get_perms(member.guild_permissions)
         if perms:
-            embed.add_field(name=f"{constants.store_tag} Staff Perms:",
+            embed.add_field(name=f"{constants.STORE_TAG} Staff Perms:",
                             value=f"`{'` `'.join(perms)}`", inline=False)
 
         roles = [r.mention for r in member.roles if r != ctx.guild.default_role]
         if roles:
-            embed.add_field(name=f"{constants.roles} Roles:",
+            embed.add_field(name=f"{constants.ROLES_ICON} Roles:",
                             value=" ".join(roles), inline=False)
 
         if member.premium_since:
-            embed.add_field(name=f"{constants.boost} Boosting since:",
+            embed.add_field(name=f"{constants.BOOST} Boosting since:",
                             value=f"╰ {discord.utils.format_dt(member.premium_since, style='f')} "
                                   f"({discord.utils.format_dt(member.premium_since, style='R')})",
                             inline=False)
@@ -414,7 +414,7 @@ class Utility(commands.Cog):
         if not valid_name.match(new_name):
             raise commands.BadArgument('⚠ | **new_name** can only contain **alphanumeric characters** and **underscores**')
         new_emoji = await server_emoji.edit(name=new_name, reason='Deletion requested by {ctx.author} ({ctx.author.id})')
-        await ctx.send(f"{constants.nickname} | Successfully renamed {new_emoji} from `{server_emoji.name}` to `{new_emoji.name}`!")
+        await ctx.send(f"{constants.EDIT_NICKNAME} | Successfully renamed {new_emoji} from `{server_emoji.name}` to `{new_emoji.name}`!")
 
     @commands.command(aliases=['uuid'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -475,7 +475,7 @@ class Utility(commands.Cog):
                                       'ON CONFLICT (user_id) DO UPDATE SET start_time = $2, reason = $3',
                                       ctx.author.id, ctx.message.created_at, reason[0:1800])
             self.bot.afk_users[ctx.author.id] = True
-            await ctx.send(f'**You are now afk!** {constants.roo_sleep}'
+            await ctx.send(f'**You are now afk!** {constants.ROO_SLEEP}'
                            f'\n**with reason:** {reason}')
         else:
             self.bot.afk_users.pop(ctx.author.id)

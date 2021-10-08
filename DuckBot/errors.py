@@ -32,3 +32,7 @@ class NoWelcomeChannel(commands.CheckFailure):
 
 class BotUnderMaintenance(commands.CheckFailure):
     pass
+
+
+class NoHideout(commands.CheckFailure):
+    pass

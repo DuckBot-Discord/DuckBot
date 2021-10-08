@@ -64,7 +64,7 @@ class Fun(commands.Cog, name='Fun'):
 
             embed = discord.Embed(color=discord.Color.random(),
                                   description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
-                                              f"{constants.reddit_upvote} {post.score} ({post.upvote_ratio * 100}%) "
+                                              f"{constants.REDDIT_UPVOTE} {post.score} ({post.upvote_ratio * 100}%) "
                                               f"• from [r/{subreddit}](https://reddit.com/r/{subreddit})")
             embed.title = post.title if title is True else None
             embed.set_image(url=post.url)
@@ -213,7 +213,7 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(aliases=['cf', 'flip', 'coin'])
     async def coinflip(self, ctx: CustomContext) -> discord.Message:
         """ Flips a VirtualCoin™ """
-        return await ctx.send(random.choice(constants.coins))
+        return await ctx.send(random.choice(constants.COINS_STRING))
 
     @commands.command(aliases=['RandomNumber', 'dice'])
     async def roll(self, ctx: CustomContext, number: typing.Optional[int]) -> discord.Message:
@@ -222,13 +222,13 @@ class Fun(commands.Cog, name='Fun'):
         """
         number = number if number and number > 0 else None
         if not number:
-            return await ctx.send(random.choice(constants.dices))
+            return await ctx.send(random.choice(constants.DICES))
         return await ctx.send(random.randint(0, number))
 
     @commands.command(aliases=['wiki'])
     async def wikipedia(self, ctx, *, search: str):
         """ Searches on wikipedia, and shows the 10 best returns """
-        async with ctx.typing():
+        async with ctx.TYPING_INDICATOR():
             async with aiowiki.Wiki.wikipedia('en') as w:
                 hyperlinked_titles = [f"[{p.title}]({(await p.urls()).view})" for p in (await w.opensearch(search))]
 

@@ -9,6 +9,8 @@ import pkg_resources
 import psutil
 import re
 import time
+
+import typing
 from discord.ext import commands, menus
 
 from DuckBot.__main__ import DuckBot, CustomContext
@@ -19,130 +21,6 @@ suggestions_channel = 882634213516521473
 
 def setup(bot):
     bot.add_cog(About(bot))
-
-
-class InviteButtons(discord.ui.View):
-    """ Buttons to the top.gg and bots.gg voting sites """
-    def __init__(self):
-        super().__init__()
-        self.add_item(discord.ui.Button(emoji=constants.top_gg, label='top.gg',
-                                        url="https://top.gg/bot/788278464474120202#/"))
-        self.add_item(discord.ui.Button(emoji=constants.bots_gg, label='bots.gg',
-                                        url="https://discord.bots.gg/bots/788278464474120202"))
-
-
-class ServerInvite(discord.ui.View):
-    """ Buttons to the support server invite """
-    def __init__(self):
-        super().__init__()
-        self.add_item(discord.ui.Button(emoji=constants.guilds, label='discord.gg/TdRfGKg8Wh',
-                                        url="https://discord.gg/TdRfGKg8Wh"))
-
-
-class InvMe(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(emoji=constants.invite, label='Invite me',
-                                        url="https://discord.com/api/oauth2/authorize?client_id="
-                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
-
-
-class OzAd(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji=constants.minecraft_logo,
-                       custom_id='OzSmpAd')
-    async def advertisement(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = discord.Embed(description="\u200b"
-                                          "\nWe’re not in Kansas anymore Toto. 🧙"
-                                          "\n"
-                                          "\n**Welcome to OZ SMP, your home away from home.** "
-                                          "\nWe all know there's no place like home. "
-                                          "Inspired by The Wizard of OZ, we are a small tight knit community "
-                                          "from across the world with 20 active players and we’re "
-                                          "looking for more to join us!"
-                                          "\n"
-                                          "\n**We’re a 1.17.1 JAVA server complete with McMMO, TPA, "
-                                          "nether highways, `/sethome` and more!**"
-                                          "\n"
-                                          "\nCome join us, and remember- There's no place like home."
-                                          "\n"
-                                          "\n**Here's our [discord server](https://discord.gg/z5tuvXGFqX "
-                                          "\"https://discord.gg/z5tuvXGFqX\")**"
-                                          "\n**Take a peek at our [interactive web map](http://oz_smp.apexmc.co:7380"
-                                          " \"http://oz_smp.apexmc.co:7380\")**"
-                                          "\n**Server IP:** `OZ.apexmc.co`"
-                                          "\n"
-                                          "\n> _Note: You need to join the discord for whitelisting. "
-                                          "Whitelisting is automatic, just read and agree to the rules._ 💞",
-                              color=discord.Colour.blurple())
-        embed.set_image(url="https://media.discordapp.net/attachments/861134063489777664/888558076804857876/"
-                            "PicsArt_09-03-03.png?width=806&height=676")
-        embed.set_author(name="Hey! Thanks for being interested in OZ SMP",
-                         icon_url="https://i.imgur.com/CC9AWcz.png")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-class InvSrc(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(emoji=constants.invite, label='Invite me',
-                                        url="https://discord.com/api/oauth2/authorize?client_id="
-                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
-        self.add_item(discord.ui.Button(emoji=constants.github, label='Source code',
-                                        url="https://github.com/LeoCx1000/discord-bots"))
-
-    @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji=constants.top_gg,
-                       custom_id='BotVoteSites')
-    async def votes(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = discord.Embed(description=f"{constants.top_gg} **vote here!** {constants.top_gg}",
-                              color=discord.Colour.blurple())
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
-
-    @discord.ui.button(label='Discord Server', style=discord.ButtonStyle.gray, emoji=constants.guilds,
-                       custom_id='ServerInvite')
-    async def invite(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = discord.Embed(
-            description=f"{constants.guilds} **Join my server!** {constants.guilds}"
-                        "\nNote that this **will not ask for consent** to join! "
-                        "\nIt will just yoink you into the server",
-            color=discord.Colour.blurple())
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
-
-
-class GroupHelpPageSource(menus.ListPageSource):
-    def __init__(self, group, cog_commands, *, prefix):
-        super().__init__(entries=cog_commands, per_page=6)
-        self.group = group
-        self.prefix = prefix
-        if isinstance(group, discord.ext.commands.Group):
-            self.title = self.get_minimal_command_signature(group)
-            self.description = f"```yaml\n{(self.group.help or 'No help given...').replace('%PRE%', self.prefix)}```"
-        else:
-            self.title = f'{self.group.qualified_name} Commands'
-            self.description = self.group.description
-
-    async def format_page(self, menu, cog_commands):
-        embed = discord.Embed(title=self.title, description=self.description, colour=discord.Colour.blurple())
-
-        for command in cog_commands:
-            signature = f'{command.qualified_name} {command.signature}'
-            if command.help:
-                command_help = command.help.replace("%PRE%", self.prefix)
-            else:
-                command_help = 'No help given...'
-            embed.add_field(name=signature, value=f"```yaml\n{command_help}```", inline=False)
-
-        maximum = self.get_max_pages()
-        if maximum > 1:
-            embed.set_author(name=f'Page {menu.current_page + 1}/{maximum} ({len(self.entries)} commands)')
-
-        embed.set_footer(text=f'Use "{self.prefix}help command" for more info on a command.')
-        return embed
-
-    def get_minimal_command_signature(self, group):
-        return '%s%s %s' % (self.prefix, group.qualified_name, group.signature)
 
 
 class MyHelp(commands.HelpCommand):
@@ -163,8 +41,7 @@ class MyHelp(commands.HelpCommand):
 
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
-            filtered = await self.filter_commands(cog_commands, sort=True)
-            command_signatures = [self.get_minimal_command_signature(c) for c in filtered]
+            command_signatures = [self.get_minimal_command_signature(c) for c in cog_commands]
             if command_signatures:
                 val = cog.description + '```css\n' + "\n".join(command_signatures) + '\n```'
                 info = ('Category: ' + cog.qualified_name, f'{val}')
@@ -207,7 +84,7 @@ description: {command_help}
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = paginator.HelpMenuPaginator(GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix), ctx=self.context, compact=True)
+        menu = paginator.HelpMenuPaginator(paginator.GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix), ctx=self.context, compact=True)
         await menu.start()
 
     async def send_group_help(self, group):
@@ -219,7 +96,7 @@ description: {command_help}
         if len(entries) == 0:
             return await self.send_command_help(group)
 
-        source = GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
+        source = paginator.GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
         menu = paginator.HelpMenuPaginator(source, ctx=self.context, compact=True)
         await menu.start()
 
@@ -247,8 +124,8 @@ class About(commands.Cog):
     @commands.Cog.listener('on_ready')
     async def register_views(self):
         if not self.bot.persistent_views_added:
-            self.bot.add_view(InvSrc())
-            self.bot.add_view(OzAd())
+            self.bot.add_view(paginator.InvSrc())
+            self.bot.add_view(paginator.OzAd())
             self.bot.persistent_views_added = True
 
     def get_bot_uptime(self):
@@ -260,8 +137,8 @@ class About(commands.Cog):
     @commands.command(help="Sends a link to invite the bot to your server")
     async def invite(self, ctx):
         await ctx.send(
-            embed=discord.Embed(description=f"[**{constants.invite} invite me**]({self.bot.invite_url})"),
-            view=InvMe())
+            embed=discord.Embed(description=f"[**{constants.INVITE} invite me**]({self.bot.invite_url})"),
+            view=paginator.InvMe())
 
     @commands.command(help="Checks the bot's ping to Discord")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -297,13 +174,13 @@ class About(commands.Cog):
         await asyncio.sleep(0.7)
 
         await message.edit(content=re.sub('\n *', '\n',
-                                          f"\n{constants.website} **| `Websocket ═╣ "
+                                          f"\n{constants.WEBSITE} **| `Websocket ═╣ "
                                           f"{round(latency_ms, 3)}ms{' ' * (9 - len(str(round(latency_ms, 3))))}`** "
-                                          f"\n{constants.typing} **| `Typing ════╣ "
+                                          f"\n{constants.TYPING_INDICATOR} **| `Typing ════╣ "
                                           f"{round(typing_ms, 3)}ms{' ' * (9 - len(str(round(typing_ms, 3))))}`**"
                                           f"\n:speech_balloon: **| `Message ═══╣ "
                                           f"{round(message_ms, 3)}ms{' ' * (9 - len(str(round(message_ms, 3))))}`**"
-                                          f"\n{constants.postgre} **| `Database ══╣ "
+                                          f"\n{constants.POSTGRE_LOGO} **| `Database ══╣ "
                                           f"{round(postgres_ms, 3)}ms{' ' * (9 - len(str(round(postgres_ms, 3))))}`**"
                                           f"\n:infinity: **| `Average ═══╣ "
                                           f"{round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
@@ -313,10 +190,10 @@ class About(commands.Cog):
     async def about(self, ctx):
         """Tells you information about the bot itself."""
         information = await self.bot.application_info()
-        embed = discord.Embed(description=f"{constants.github} [source]({self.bot.repo}) | "
-                                          f"{constants.invite} [invite me]({self.bot.invite_url}) | "
-                                          f"{constants.top_gg} [top.gg]({self.bot.vote_top_gg}) | "
-                                          f"{constants.bots_gg} [bots.gg]({self.bot.vote_bots_gg})"
+        embed = discord.Embed(description=f"{constants.GITHUB} [source]({self.bot.repo}) | "
+                                          f"{constants.INVITE} [invite me]({self.bot.invite_url}) | "
+                                          f"{constants.TOP_GG} [top.gg]({self.bot.vote_top_gg}) | "
+                                          f"{constants.BOTS_GG} [bots.gg]({self.bot.vote_bots_gg})"
                                           f"\n> Try also `{ctx.prefix}source [command]`"
                                           f"\n> or `{ctx.prefix}source [command.subcommand]`")
 
@@ -411,6 +288,10 @@ class About(commands.Cog):
         embed = discord.Embed(title=f'{ctx.me.name} Privacy Policy', description=f"""
 > We store your `server id` for purpose of custom prefixes.
 
+> We store role_IDs for mute-role
+
+> We store user_IDs for AFK / temporary mutes
+
 > when a command error happens, we get the following data for troubleshooting purposes:
 ```yaml
 The command executed
@@ -504,11 +385,23 @@ DuckBot's top role position
                                           f"pressing the 'Join this game!' button 🎫"
                                           f"\n"
                                           f"\n> **<t:1633447880:R> New `multi-mute` and `multi-unmute` commands**"
-                                          f"\n> mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason")
+                                          f"\n> mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason"
+                                          f"\n"
+                                          f"\n> **<t:1633642000:R> New `mutual-servers` command**"
+                                          f"\n"
+                                          f"\n> **")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
     async def oz_ad(self, ctx):
         embed = discord.Embed(title="Here's a cool minecraft server!",
                               description="Press the button for more info.")
-        await ctx.send(embed=embed, view=OzAd(), footer=False)
+        await ctx.send(embed=embed, view=paginator.OzAd(), footer=False)
+
+    @commands.command(name='mutual-servers', aliases=['servers', 'mutual'])
+    async def mutual_servers(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
+        member = ctx.author if not await self.bot.is_owner(ctx.author) else (member or ctx.author)
+        guilds = sorted(member.mutual_guilds, key=lambda g: g.member_count, reverse=True)[0:30]
+        embed = discord.Embed(title=f'My top {len(guilds)} mutual servers with {member}:',
+                              description='\n'.join([f"[`{guild.member_count}`] **{guild.name}** " for guild in guilds]))
+        await ctx.send(embed=embed)
