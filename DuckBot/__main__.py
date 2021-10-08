@@ -78,7 +78,6 @@ class DuckBot(commands.Bot):
             raise errors.BotUnderMaintenance
 
     def __init__(self) -> None:
-        self.invites = None
         intents = discord.Intents(members=True, dm_typing=False, guild_typing=False, presences=True,
                                   **{k: v for k, v in dict(discord.Intents.default()).items()
                                      if k not in ('members', 'guild_typing', 'dm_typing', 'presences')})
@@ -131,6 +130,8 @@ class DuckBot(commands.Bot):
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
+        self.lavalink = None
+        self.invites = None
 
         for ext in initial_extensions:
             self._load_extension(ext)

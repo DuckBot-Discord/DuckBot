@@ -623,7 +623,7 @@ class Music(commands.Cog):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
-        if not hasattr(bot, 'lavalink'):
+        if bot.lavalink is None:
             bot.lavalink = lavalink.Client(config['user_id'], CustomPlayer)
             for node in config['nodes']:
                 bot.lavalink.add_node(**node)
