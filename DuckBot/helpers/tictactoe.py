@@ -14,8 +14,31 @@ class LookingForButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         assert self.view is not None
         view: LookingToPlay = self.view
+        if interaction.user and interaction.user.id == view.ctx.author.id:
+            return await interaction.response.send_message('**Congratulations, you played yourself!**\nWait... You can\'t...',
+                                                           ephemeral=True)
         view.value = interaction.user
         view.stop()
+
+
+class CancelGame(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False, label: str = None):
+        super().__init__(style=discord.ButtonStyle.red, label='cancel', row=2,
+                         disabled=disabled)
+
+    async def callback(self, interaction: discord.Interaction):
+        assert self.view is not None
+        view: LookingToPlay = self.view
+        if interaction.user.id == view.ctx.author.id:
+            view.value = None
+            for item in view.children:
+                item.disabled = True
+                item.label = item.label.replace('cancel', 'Cancelled!').replace('Join this game!\u2001', 'Game has ended!')
+            await view.message.edit(view=view)
+            view.stop()
+        else:
+            await interaction.response.send_message('Only the game author can do that action!', ephemeral=True)
 
 
 class LookingToPlay(discord.ui.View):
@@ -25,13 +48,7 @@ class LookingToPlay(discord.ui.View):
         self.value: discord.User = None
         self.ctx: CustomContext = None
         self.add_item(LookingForButton(label=label))
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user and interaction.user.id != self.ctx.author.id:
-            return True
-        await interaction.response.send_message('**Congratulations, you played yourself!**\nWait... You can\'t...',
-                                                ephemeral=True)
-        return False
+        self.add_item(CancelGame())
 
     async def on_timeout(self) -> None:
         for button in self.children:

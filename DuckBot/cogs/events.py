@@ -80,9 +80,10 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(self.bot.maintenance or 'I am under maintenance... sorry!')
 
         if isinstance(error, commands.CommandNotFound):
-            ignored_cogs = ('Bot Management', 'jishaku') if ctx.author.id != self.bot.owner_id else ()
+            if self.bot.maintenance is not None or ctx.author.id in self.bot.blacklist:
+                return
             command_names = []
-            for command in [c for c in self.bot.commands if c.cog_name not in ignored_cogs]:
+            for command in [c for c in self.bot.commands]:
                 # noinspection PyBroadException
                 try:
                     if await command.can_run(ctx):
