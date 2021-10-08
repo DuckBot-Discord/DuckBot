@@ -1,9 +1,13 @@
 import io
 import os
 import re
+import urllib
 import zlib
+from inspect import Parameter
 
 import discord
+import typing
+import yarl
 from discord.ext import commands
 
 from DuckBot import errors
@@ -18,6 +22,9 @@ def hideout_only():
         else:
             raise errors.NoHideout
     return commands.check(predicate)
+
+
+url_regex = re.compile(r"^http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+$")
 
 
 def setup(bot):
@@ -238,13 +245,14 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
 
     @commands.command()
     @hideout_only()
-    async def addbot(self, ctx: CustomContext, bot: discord.User, reason: commands.clean_content):
+    async def addbot(self, ctx: CustomContext, bot: discord.User, *, reason: commands.clean_content):
         bot_queue = self.bot.get_channel(870784166705393714)
         if not bot.bot:
             raise commands.BadArgument('That dos not seem to be a bot...')
         if bot in ctx.guild.members:
             raise commands.BadArgument('That bot is already on this server...')
-        confirm = await ctx.confirm('Are you sure you want to do that?', return_message=True)
+        confirm = await ctx.confirm(f'Does your bot comply with {ctx.guild.rules_channel.mention if ctx.guild.rules_channel else "<channel deleted?>"}?'
+                                    f'\n If so, press one of these:', return_message=True)
         if confirm[0]:
             await confirm[1].edit(content='✅ Done, you will be @pinged when the bot is added!', view=None)
             embed = discord.Embed(description=reason)
@@ -253,3 +261,52 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             await bot_queue.send(embed=embed)
         else:
             await confirm[1].edit(content='Aborting...', view=None)
+
+    @commands.command(name='decode-qr-code', aliases=['qr-decode', 'decode-qr', 'qr'])
+    @commands.cooldown(2, 30, commands.BucketType.user)
+    async def decode_qr_code(self, ctx: CustomContext, *, qr_code: typing.Optional[typing.Union[discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]]):
+        """
+        Attempts to decode a QR code
+        Can decode from the following:
+          - A direct URL to an image
+          - An Emoji
+          - A user's profile picture
+          - A server icon:
+            - from an ID/name (if the bot is in that server)
+            - from an invite URL (if the bot is not in the server)
+          - Others? Will attempt to decode if a link is passed.
+        """
+        if qr_code is None:
+            if ctx.message.attachments:
+                qr_code = ctx.message.attachments[0]
+            elif ctx.message.reference:
+                if ctx.message.reference.resolved.attachments:
+                    qr_code = ctx.message.reference.resolved.attachments[0]
+                elif ctx.message.reference.resolved.embeds:
+                    if ctx.message.reference.resolved.embeds[0].thumbnail:
+                        qr_code = ctx.message.reference.resolved.embeds[0].thumbnail.proxy_url
+                    elif ctx.message.reference.resolved.embeds[0].image:
+                        qr_code = ctx.message.reference.resolved.embeds[0].image.proxy_url
+        if not qr_code:
+            raise commands.MissingRequiredArgument(Parameter(name='qr_code', kind=Parameter.POSITIONAL_ONLY))
+
+        async with ctx.typing():
+            link = getattr(
+                getattr(
+                    getattr(qr_code, 'display_avatar', None)
+                    or getattr(qr_code, 'icon', None)
+                    or getattr(qr_code, 'guild', None)
+                    or qr_code, 'icon', None)
+                or qr_code, 'url', None) or qr_code
+            if url_regex.match(link):
+                url = urllib.parse.quote(link, safe='')
+                async with self.bot.session.get(yarl.URL(f"http://api.qrserver.com/v1/read-qr-code/?fileurl={url}", encoded=True)) as r:
+                    if r.status == 200:
+                        data = await r.json()
+                        if data[0]['symbol'][0]['data'] is None:
+                            raise commands.BadArgument(data[0]['symbol'][0]['error'])
+                        await ctx.send(data[0]['symbol'][0]['data'])
+                    else:
+                        raise commands.BadArgument(f'API failed with status {r.status}')
+            else:
+                raise commands.BadArgument('No URL was found')

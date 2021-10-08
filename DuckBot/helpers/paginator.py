@@ -572,9 +572,9 @@ class EmojiListPageSource(menus.ListPageSource):
 
             embed = discord.Embed(color=0xF4D58C, timestamp=self.time,
                                   description=
-                                  f"**Format:** [{emoji_str(emoji)}]({emoji.url})"
+                                  f"**Format:** {emoji_str(emoji)}"
                                   f"\n**Created at:** {discord.utils.format_dt(emoji.created_at)}"
-                                  f"\n**Name:** {emoji.name}"
+                                  f"\n**Name:** {emoji.name} **Url:** [url]({emoji.url})"
                                   f"\n**Id:** {emoji.id}"
                                   f"\n**Server:** {emoji.guild}"
                                   f"{creator}"
@@ -587,7 +587,9 @@ class EmojiListPageSource(menus.ListPageSource):
             embed = discord.Embed(color=0xF4D58C, timestamp=self.time,
                                   description=
                                   f"**Format:** [{emoji_str(emoji)}]({emoji.url})"
-                                  f"\n**Created at:** {discord.utils.format_dt(emoji.created_at)}")
+                                  f"\n**Created at:** {discord.utils.format_dt(emoji.created_at)}"
+                                  f"\n**Name:** {emoji.name} **Url:** [url]({emoji.url})"
+                                  f"\n**Id:** {emoji.id}")
             embed.set_footer(text=f'Requested by {self.ctx.author}', icon_url=self.ctx.author.display_avatar.url)
             embed.set_image(url=emoji.url)
             return embed
