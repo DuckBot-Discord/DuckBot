@@ -293,7 +293,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         async with ctx.typing():
             link = getattr(
                 getattr(
-                    getattr(qr_code, 'display_avatar', None)
+                    getattr(qr_code, 'avatar', None)
                     or getattr(qr_code, 'icon', None)
                     or getattr(qr_code, 'guild', None)
                     or qr_code, 'icon', None)
@@ -305,7 +305,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
                         data = await r.json()
                         if data[0]['symbol'][0]['data'] is None:
                             raise commands.BadArgument(data[0]['symbol'][0]['error'])
-                        await ctx.send(data[0]['symbol'][0]['data'])
+                        await ctx.send(data[0]['symbol'][0]['data'], allowed_mentions=discord.AllowedMentions.none())
                     else:
                         raise commands.BadArgument(f'API failed with status {r.status}')
             else:
