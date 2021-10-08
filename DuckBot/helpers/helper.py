@@ -68,7 +68,7 @@ def get_user_badges(user, bot: bool = False):
         flags['premium_since'] = False
 
     user_flags = []
-    for flag, emoji in constants.base_flags.items():
+    for flag, emoji in constants.USER_FLAGS.items():
         if flags[flag]:
             user_flags.append(emoji)
 
@@ -140,7 +140,7 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int,
     duration = duration if duration > 0 else 1
     played = int((position/duration)*bar_length)
     missing = int(bar_length-played)
-    bars = bar_style or constants.bars
+    bars = bar_style or constants.YOUTUBE_BARS
     bar = []
     if played == 0 and missing > 0:
         bar += [bars[0][1]]

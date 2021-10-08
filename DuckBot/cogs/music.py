@@ -657,7 +657,7 @@ class Music(commands.Cog):
 
         if isinstance(error, IncorrectTextChannelError):
             player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
-            channel = self.bot.get_channel(int(player.text_channel))
+            channel = self.bot.get_channel(int(player.TEXT_CHANNEL))
             return await ctx.send(embed=discord.Embed(title='Error occured', color=0xD7332A,
                                                       description=f'{ctx.author.mention}, you can only use commands in '
                                                                   f'{channel.mention} for this session.'))
@@ -707,13 +707,13 @@ class Music(commands.Cog):
                     raise FullVoiceChannel
             if not permissions.connect or not permissions.speak:
                 raise NoPerms
-            player.text_channel = ctx.channel.id
+            player.TEXT_CHANNEL = ctx.channel.id
             player.dj = ctx.author.id
             await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
         else:
             if int(player.channel_id) != ctx.author.voice.channel.id:
                 raise IncorrectChannelError
-            if int(player.text_channel) != ctx.channel.id:
+            if int(player.TEXT_CHANNEL) != ctx.channel.id:
                 raise IncorrectTextChannelError
 
     @commands.Cog.listener()
@@ -727,7 +727,7 @@ class Music(commands.Cog):
         if not player.channel_id:
             return
         channel = self.bot.get_channel(int(player.channel_id))
-        text_channel = self.bot.get_channel(int(player.text_channel))
+        text_channel = self.bot.get_channel(int(player.TEXT_CHANNEL))
         members = 0
         for m in channel.members:
             if not m.bot:
@@ -762,13 +762,13 @@ class Music(commands.Cog):
                 return
             guild = self.bot.get_guild(int(event.player.guild_id))
             await guild.change_voice_state(channel=None)
-            channel = self.bot.get_channel(int(event.player.text_channel))
+            channel = self.bot.get_channel(int(event.player.TEXT_CHANNEL))
             embed = discord.Embed(title=f'Inactive player', color=0xD7332A,
                                   description='There were no tracks played in the past 3 minutes.')
             await channel.send(embed=embed)
         if isinstance(event, TrackStartEvent):
             if event.player.loop != 1:
-                channel = self.bot.get_channel(int(event.player.text_channel))
+                channel = self.bot.get_channel(int(event.player.TEXT_CHANNEL))
                 thumnail = f"https://img.youtube.com/vi/{event.track.identifier}/maxresdefault.jpg"
                 info = f'**Title**: **[{event.track.title}]({event.track.uri})**' \
                        f'\n**Artist**: {event.track.author}' \

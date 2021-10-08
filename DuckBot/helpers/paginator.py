@@ -5,13 +5,138 @@ from types import SimpleNamespace
 from typing import Any, Dict, Optional
 import discord
 import typing
+
+import humanize
 from discord.ext import commands
 from discord.ext.commands import Paginator as CommandPaginator
 from discord.ext import menus
 
-from DuckBot.cogs.info import InviteButtons, ServerInvite
 from DuckBot.helpers import helper, constants
 from DuckBot.__main__ import CustomContext
+
+
+class GroupHelpPageSource(menus.ListPageSource):
+    def __init__(self, group, cog_commands, *, prefix):
+        super().__init__(entries=cog_commands, per_page=6)
+        self.group = group
+        self.prefix = prefix
+        if isinstance(group, discord.ext.commands.Group):
+            self.title = self.get_minimal_command_signature(group)
+            self.description = f"```yaml\n{(self.group.help or 'No help given...').replace('%PRE%', self.prefix)}```"
+        else:
+            self.title = f'{self.group.qualified_name} Commands'
+            self.description = self.group.description
+
+    async def format_page(self, menu, cog_commands):
+        embed = discord.Embed(title=self.title, description=self.description, colour=discord.Colour.blurple())
+
+        for command in cog_commands:
+            signature = f'{command.qualified_name} {command.signature}'
+            if command.help:
+                command_help = command.help.replace("%PRE%", self.prefix)
+            else:
+                command_help = 'No help given...'
+            embed.add_field(name=signature, value=f"```yaml\n{command_help}```", inline=False)
+
+        maximum = self.get_max_pages()
+        if maximum > 1:
+            embed.set_author(name=f'Page {menu.current_page + 1}/{maximum} ({len(self.entries)} commands)')
+
+        embed.set_footer(text=f'Use "{self.prefix}help command" for more info on a command.')
+        return embed
+
+    def get_minimal_command_signature(self, group):
+        return '%s%s %s' % (self.prefix, group.qualified_name, group.signature)
+
+
+class InviteButtons(discord.ui.View):
+    """ Buttons to the top.gg and bots.gg voting sites """
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.Button(emoji=constants.TOP_GG, label='top.gg',
+                                        url="https://top.gg/bot/788278464474120202#/"))
+        self.add_item(discord.ui.Button(emoji=constants.BOTS_GG, label='bots.gg',
+                                        url="https://discord.bots.gg/bots/788278464474120202"))
+
+
+class ServerInvite(discord.ui.View):
+    """ Buttons to the support server invite """
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='discord.gg/TdRfGKg8Wh',
+                                        url="https://discord.gg/TdRfGKg8Wh"))
+
+
+class InvMe(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
+                                        url="https://discord.com/api/oauth2/authorize?client_id="
+                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
+
+
+class OzAd(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label='Advertisement', style=discord.ButtonStyle.gray, emoji=constants.MINECRAFT_LOGO,
+                       custom_id='OzSmpAd')
+    async def advertisement(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = discord.Embed(description="\u200b"
+                                          "\nWe’re not in Kansas anymore Toto. 🧙"
+                                          "\n"
+                                          "\n**Welcome to OZ SMP, your home away from home.** "
+                                          "\nWe all know there's no place like home. "
+                                          "Inspired by The Wizard of OZ, we are a small tight knit community "
+                                          "from across the world with 20 active players and we’re "
+                                          "looking for more to join us!"
+                                          "\n"
+                                          "\n**We’re a 1.17.1 JAVA server complete with McMMO, TPA, "
+                                          "nether highways, `/sethome` and more!**"
+                                          "\n"
+                                          "\nCome join us, and remember- There's no place like home."
+                                          "\n"
+                                          "\n**Here's our [discord server](https://discord.gg/z5tuvXGFqX "
+                                          "\"https://discord.gg/z5tuvXGFqX\")**"
+                                          "\n**Take a peek at our [interactive web map](http://oz_smp.apexmc.co:7380"
+                                          " \"http://oz_smp.apexmc.co:7380\")**"
+                                          "\n**Server IP:** `OZ.apexmc.co`"
+                                          "\n"
+                                          "\n> _Note: You need to join the discord for whitelisting. "
+                                          "Whitelisting is automatic, just read and agree to the rules._ 💞",
+                              color=discord.Colour.blurple())
+        embed.set_image(url="https://media.discordapp.net/attachments/861134063489777664/888558076804857876/"
+                            "PicsArt_09-03-03.png?width=806&height=676")
+        embed.set_author(name="Hey! Thanks for being interested in OZ SMP",
+                         icon_url="https://i.imgur.com/CC9AWcz.png")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+class InvSrc(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
+                                        url="https://discord.com/api/oauth2/authorize?client_id="
+                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
+        self.add_item(discord.ui.Button(emoji=constants.GITHUB, label='Source code',
+                                        url="https://github.com/LeoCx1000/discord-bots"))
+
+    @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji=constants.TOP_GG,
+                       custom_id='BotVoteSites')
+    async def votes(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = discord.Embed(description=f"{constants.TOP_GG} **vote here!** {constants.TOP_GG}",
+                              color=discord.Colour.blurple())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
+
+    @discord.ui.button(label='Discord Server', style=discord.ButtonStyle.gray, emoji=constants.SERVERS_ICON,
+                       custom_id='ServerInvite')
+    async def invite(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = discord.Embed(
+            description=f"{constants.SERVERS_ICON} **Join my server!** {constants.SERVERS_ICON}"
+                        "\nNote that this **will not ask for consent** to join! "
+                        "\nIt will just yoink you into the server",
+            color=discord.Colour.blurple())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
 
 
 class ViewPaginator(discord.ui.View):
@@ -316,72 +441,54 @@ class ServerInfoPageSource(menus.ListPageSource):
     async def format_page(self, menu, guild: discord.Guild) -> discord.Embed:
         enabled_features = []
         features = set(guild.features)
-        all_features = {
-            'COMMUNITY': 'Community Server',
-            'VERIFIED': 'Verified',
-            'DISCOVERABLE': 'Discoverable',
-            'PARTNERED': 'Partnered',
-            'FEATURABLE': 'Featured',
-            'COMMERCE': 'Commerce',
-            'MONETIZATION_ENABLED': 'Monetization',
-            'NEWS': 'News Channels',
-            'PREVIEW_ENABLED': 'Preview Enabled',
-            'INVITE_SPLASH': 'Invite Splash',
-            'VANITY_URL': 'Vanity Invite URL',
-            'ANIMATED_ICON': 'Animated Server Icon',
-            'BANNER': 'Server Banner',
-            'MORE_EMOJI': 'More Emoji',
-            'MORE_STICKERS': 'More Stickers',
-            'WELCOME_SCREEN_ENABLED': 'Welcome Screen',
-            'MEMBER_VERIFICATION_GATE_ENABLED': 'Membership Screening',
-            'TICKETED_EVENTS_ENABLED': 'Ticketed Events',
-            'VIP_REGIONS': 'VIP Voice Regions',
-            'PRIVATE_THREADS': 'Private Threads',
-            'THREE_DAY_THREAD_ARCHIVE': '3 Day Thread Archive',
-            'SEVEN_DAY_THREAD_ARCHIVE': '1 Week Thread Archive',
-        }
 
-        for feature, label in all_features.items():
+        for feature, label in constants.GUILD_FEATURES.items():
             if feature in features:
                 enabled_features.append(f'{self.context.tick(True)} {label}')
 
         embed = discord.Embed(title=guild.name)
 
-        embed.add_field(name=f"{constants.rich_presence} Features:",
-                        value=('\n'.join(enabled_features) if enabled_features else 'No features...'), inline=True)
-
-        embed.add_field(name=f"{constants.information_source} General Info:",
-                        value=f"🆔 {guild.id}"
-                              f"\n{constants.owner_crown} {guild.owner}"
-                              f"\n👤 {len([m for m in guild.members if not m.bot])} "
-                              f"(🤖 {len([m for m in guild.members if m.bot])})"
-                              f"\n╰ ➕ {guild.member_count}/{guild.max_members}"
-                              f"\n🌐 Server Region: {helper.get_server_region(guild)}"
-                              f"\n{constants.roles} Roles: {len(guild.roles)}")
-
-        if guild.description:
-            desc = guild.description
-        else:
-            desc = f"{constants.toggles[False]} Feature toggled off." \
-                   "\nEnable it in `community -> overview` in server settings!"
-
-        embed.add_field(name=f"{constants.information_source} Server description:",
-                        value=desc, inline=False)
-
-        embed.add_field(name=f"{constants.rich_presence} Channels:",
-                        value=f"{constants.voice_channel} "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
-                              f"\n{constants.text_channel} Channels: "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
-                              f"\n{constants.category_channel} Categories: "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
-                              f"\n{constants.stage_channel} Stages: "
-                              f"{len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
-                              f"\n{constants.text_channel_with_thread} Threads: {len(guild.threads)}"
-                              f"\n╰ (visible by me)",
+        embed.add_field(name=f"{constants.RICH_PRESENCE} Features:",
+                        value=(('\n'.join(enabled_features) if enabled_features else 'No features...') + '\n\u200b _ _'),
                         inline=True)
 
-        embed.add_field(name=f"{constants.emoji_ghost} Emojis:",
+        embed.add_field(name=f"{constants.INFORMATION_SOURCE} General Info:",
+                        value=f"🆔 {guild.id}"
+                              f"\n{constants.OWNER_CROWN} {guild.owner}"
+                              f"\n🌐 Server Region:\n╰ {helper.get_server_region(guild)}"
+                              f"\n{constants.VERIFICATION_LEVEL[guild.verification_level]} "
+                              f"{str(guild.verification_level).replace('_', ' ').replace('none', 'no').title()} Verification Level"
+                              f"\n📁 File size limit: {humanize.naturalsize(guild.filesize_limit)}"
+                              f"\n{constants.ROLES_ICON} Role amount: {len(guild.roles)}"
+                              f"\n\u200b _ _"
+                        )
+
+        embed.add_field(name=f"{constants.INFORMATION_SOURCE} Server description:",
+                        value=guild.description or f"{constants.TOGGLES[False]} Description disabled!",
+                        inline=False)
+
+        embed.add_field(name=f"{constants.JOINED_SERVER} Created at:",
+                        value=f"{discord.utils.format_dt(guild.created_at, 'F')} ({discord.utils.format_dt(guild.created_at, 'R')})",
+                        inline=False)
+
+        embed.add_field(name=f"{constants.VERIFICATION_LEVEL[guild.verification_level]} Server content filter:",
+                        value=f"{constants.CONTENT_FILTER[guild.explicit_content_filter]}\n\u200b _ _",
+                        inline=False)
+
+        embed.add_field(name=f"{constants.RICH_PRESENCE} Channels:",
+                        value=f"{constants.VOICE_CHANNEL} "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.VoiceChannel)])}"
+                              f"\n{constants.TEXT_CHANNEL} Channels: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.TextChannel)])}"
+                              f"\n{constants.CATEGORY_CHANNEL} Categories: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.CategoryChannel)])}"
+                              f"\n{constants.STAGE_CHANNEL} Stages: "
+                              f"{len([c for c in guild.channels if isinstance(c, discord.StageChannel)])}"
+                              f"\n{constants.TEXT_CHANNEL_WITH_THREAD} Threads: {len(guild.threads)}"
+                              f"\n╰ (only threads visible by me)",
+                        inline=True)
+
+        embed.add_field(name=f"{constants.EMOJI_GHOST} Emojis:",
                         value=f"Static: {len([e for e in guild.emojis if not e.animated])}/{guild.emoji_limit} "
                               f"\nAnimated: {len([e for e in guild.emojis if e.animated])}/{guild.emoji_limit} ",
                         inline=True)
@@ -393,13 +500,27 @@ class ServerInfoPageSource(menus.ListPageSource):
         else:
             boost = "\n╰ No active boosters"
 
-        embed.add_field(name=f"{constants.boost} Boosts:",
-                        value=f"{constants.boosting_level_emojis[str(guild.premium_tier)]} Level: {guild.premium_tier}"
+        embed.add_field(name=f"{constants.BOOST} Boosts:",
+                        value=f"{constants.GUILD_BOOST_LEVEL_EMOJI[str(guild.premium_tier)]} Level: {guild.premium_tier}"
                               f"\n╰ Amount: {guild.premium_subscription_count}"
-                              f"\n**{constants.boost} Last booster:**{boost}")
+                              f"\n**{constants.BOOST} Last booster:**{boost}")
+
+        embed.add_field(name=f'👥 Member information:',
+                        value=f"\n👤 Humans: {len([m for m in guild.members if not m.bot])} "
+                              f"\n🤖 Bots: {len([m for m in guild.members if m.bot])}"
+                              f"\n♾ Total: {guild.member_count}"
+                              f"\n📂 Limit: {guild.max_members}"
+                        )
+        embed.add_field(name=f"{constants.ROLES_ICON} Member statuses:",
+                        value=f"\n{constants.statuses.ONLINE} Online: {len(list(filter(lambda m: m.status == discord.Status.online, guild.members)))}"
+                              f"\n{constants.statuses.IDLE} Idle: {len(list(filter(lambda m: m.status == discord.Status.idle, guild.members)))}"
+                              f"\n{constants.statuses.DND} DND: {len(list(filter(lambda m: m.status == discord.Status.do_not_disturb, guild.members)))}"
+                              f"\n{constants.statuses.OFFLINE} Offline: {len(list(filter(lambda m: m.status == discord.Status.offline, guild.members)))}"
+)
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
+
         return embed
 
 
@@ -502,7 +623,7 @@ class VotesButton(discord.ui.Button):
         super().__init__(style=button_style, label=label, emoji=emoji, )
 
     async def callback(self, interaction: discord.Interaction):
-        embed = discord.Embed(description=f"{constants.top_gg} **vote here!** {constants.top_gg}",
+        embed = discord.Embed(description=f"{constants.TOP_GG} **vote here!** {constants.TOP_GG}",
                               color=discord.Colour.blurple())
         await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
 
@@ -513,7 +634,7 @@ class InviteButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            description=f"{constants.guilds} **Join my server!** {constants.guilds}"
+            description=f"{constants.SERVERS_ICON} **Join my server!** {constants.SERVERS_ICON}"
                         "\nNote that this **will not ask for consent** to join! "
                         "\nIt will just yoink you into the server",
             color=discord.Colour.blurple())
@@ -521,15 +642,16 @@ class InviteButton(discord.ui.Button):
 
 
 class HelpMenuPaginator(ViewPaginator):
-    def __init__(self, source: menus.PageSource, *, ctx: commands.Context, check_embeds: bool = True, compact: bool = False):
+    def __init__(self, source: menus.PageSource, *, ctx: commands.Context, check_embeds: bool = True,
+                 compact: bool = False):
         super().__init__(source, ctx=ctx, check_embeds=check_embeds, compact=compact)
 
     def fill_items(self) -> None:
         super().fill_items()
-        self.add_item(VotesButton(label='Vote', button_style=discord.ButtonStyle.grey, emoji=constants.top_gg))
-        self.add_item(InviteButton(label='Support', button_style=discord.ButtonStyle.grey, emoji=constants.guilds))
-        self.add_item(discord.ui.Button(emoji=constants.invite, label='Invite me',
+        self.add_item(VotesButton(label='Vote', button_style=discord.ButtonStyle.grey, emoji=constants.TOP_GG))
+        self.add_item(InviteButton(label='Support', button_style=discord.ButtonStyle.grey, emoji=constants.SERVERS_ICON))
+        self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
                                         url="https://discord.com/api/oauth2/authorize?client_id="
                                             "788278464474120202&permissions=8&scope=bot%20applications.commands"))
-        self.add_item(discord.ui.Button(emoji=constants.github, label='Source', url="https://github.com/LeoCx1000/discord-bots"))
-
+        self.add_item(
+            discord.ui.Button(emoji=constants.GITHUB, label='Source', url="https://github.com/LeoCx1000/discord-bots"))

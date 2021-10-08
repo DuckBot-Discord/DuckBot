@@ -54,11 +54,11 @@ class Confirm(discord.ui.View):
             "Oh no you can't do that! This belongs to **{user}**",
             'This is **{user}**\'s confirmation, sorry! 💖',
             '😒 Does this look yours? **No**. This is **{user}**\'s confirmation button',
-            f'{constants.get_some_help}',
+            f'{constants.GET_SOME_HELP}',
             'HEYYYY!!!!! this is **{user}**\'s menu.',
             'Sorry but you can\'t mess with **{user}**\' menu QnQ',
             'No. just no. This is **{user}**\'s menu.',
-            constants.blob_stop_sign * 3,
+            constants.BLOB_STOP_SIGN * 3,
             'You don\'t look like {user} do you...',
             '🤨 Thats not yours! Thats **{user}**\'s',
             '🧐 Whomst! you\'re not **{user}**',
@@ -78,28 +78,28 @@ class CustomContext(commands.Context):
 
     @staticmethod
     def tick(opt: bool, text: str = None) -> str:
-        emoji = constants.emoji_ticks.get(opt, constants.emoji_ticks[False])
+        emoji = constants.CUSTOM_TICKS.get(opt, constants.CUSTOM_TICKS[False])
         if text:
             return f"{emoji} {text}"
         return emoji
 
     @staticmethod
     def default_tick(opt: bool, text: str = None) -> str:
-        emoji = constants.ticks.get(opt, constants.ticks[False])
+        emoji = constants.DEFAULT_TICKS.get(opt, constants.DEFAULT_TICKS[False])
         if text:
             return f"{emoji} {text}"
         return emoji
 
     @staticmethod
     def square_tick(opt: bool, text: str = None) -> str:
-        emoji = constants.square_ticks.get(opt, constants.square_ticks[False])
+        emoji = constants.SQUARE_TICKS.get(opt, constants.SQUARE_TICKS[False])
         if text:
             return f"{emoji} {text}"
         return emoji
 
     @staticmethod
     def toggle(opt: bool, text: str = None) -> str:
-        emoji = constants.toggles.get(opt, constants.toggles[False])
+        emoji = constants.TOGGLES.get(opt, constants.TOGGLES[False])
         if text:
             return f"{emoji} {text}"
         return emoji

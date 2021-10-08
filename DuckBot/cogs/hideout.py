@@ -6,7 +6,18 @@ import zlib
 import discord
 from discord.ext import commands
 
+from DuckBot import errors
 from DuckBot.__main__ import DuckBot
+from DuckBot.helpers.context import CustomContext
+
+
+def hideout_only():
+    def predicate(ctx: CustomContext):
+        if ctx.guild.id == 774561547930304536:
+            return True
+        else:
+            raise errors.NoHideout
+    return commands.check(predicate)
 
 
 def setup(bot):
@@ -224,3 +235,21 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     async def rtfm_master(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a discord.py entity (master branch)"""
         await self.do_rtfm(ctx, 'master', obj)
+
+    @commands.command()
+    @hideout_only()
+    async def addbot(self, ctx: CustomContext, bot: discord.User, reason: commands.clean_content):
+        bot_queue = self.bot.get_channel(870784166705393714)
+        if not bot.bot:
+            raise commands.BadArgument('That dos not seem to be a bot...')
+        if bot in ctx.guild.members:
+            raise commands.BadArgument('That bot is already on this server...')
+        confirm = await ctx.confirm('Are you sure you want to do that?', return_message=True)
+        if confirm[0]:
+            await confirm[1].edit(content='✅ Done, you will be @pinged when the bot is added!', view=None)
+            embed = discord.Embed(description=reason)
+            embed.set_author(icon_url=bot.display_avatar.url, name=str(bot), url=discord.utils.oauth_url(bot.id))
+            embed.set_footer(text=f"Requested by {ctx.author} ({ctx.author.id})")
+            await bot_queue.send(embed=embed)
+        else:
+            await confirm[1].edit(content='Aborting...', view=None)
