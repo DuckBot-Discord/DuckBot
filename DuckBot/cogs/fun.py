@@ -289,6 +289,7 @@ class Fun(commands.Cog, name='Fun'):
             starter = random.choice([player1, player2])
             ttt = TicTacToe(ctx, player1, player2, starter=starter)
             ttt.message = await view.message.edit(content=f'#️⃣ | **{starter.name}** goes first', view=ttt, embed=None)
+            await ttt.wait()
 
     @commands.command(name='rock-paper-scissors', aliases=['rps', 'rock_paper_scissors'])
     async def rock_paper_scissors(self, ctx: CustomContext):
@@ -313,3 +314,4 @@ class Fun(commands.Cog, name='Fun'):
             embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
             rps = RockPaperScissors(ctx, player1, player2)
             rps.message = await view.message.edit(embed=embed, view=rps)
+            await rps.wait()
