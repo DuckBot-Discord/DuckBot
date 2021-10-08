@@ -100,9 +100,9 @@ class Handler(commands.Cog, name='Handler'):
                                                     f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
                                             delete_after_confirm=True, delete_after_timeout=True,
                                             delete_after_cancel=True, buttons=(
-                                                    ('▶', f'execute {matches[0]}', discord.ButtonStyle.gray),
-                                                    ('🗑', None, discord.ButtonStyle.red)
-                                                ), timeout=15
+                        ('▶', f'execute {matches[0]}', discord.ButtonStyle.gray),
+                        ('🗑', None, discord.ButtonStyle.red)
+                    ), timeout=15
                                             )
 
                 if confirm is True:
@@ -365,10 +365,12 @@ class Handler(commands.Cog, name='Handler'):
 
             info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', message.author.id)
             await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, null, null) '
-                                      'ON CONFLICT (user_id) DO UPDATE SET start_time = null, reason = null', message.author.id)
+                                      'ON CONFLICT (user_id) DO UPDATE SET start_time = null, reason = null',
+                                      message.author.id)
 
-            await message.channel.send(f'**Welcome back, {message.author.mention}, afk since: {discord.utils.format_dt(info["start_time"], "R")}**'
-                                       f'\n**With reason:** {info["reason"]}', delete_after=10)
+            await message.channel.send(
+                f'**Welcome back, {message.author.mention}, afk since: {discord.utils.format_dt(info["start_time"], "R")}**'
+                f'\n**With reason:** {info["reason"]}', delete_after=10)
 
             await message.add_reaction('👋')
 
@@ -376,7 +378,7 @@ class Handler(commands.Cog, name='Handler'):
     async def on_afk_user_mention(self, message: discord.Message):
         if not message.guild:
             return
-        if message.author == self.bot.user:
+        if message.author.bot:
             return
         if message.mentions:
             pinged_afk_user_ids = list(set([u.id for u in message.mentions]).intersection(self.bot.afk_users))
@@ -385,16 +387,16 @@ class Handler(commands.Cog, name='Handler'):
                 member = message.guild.get_member(user_id)
                 if member and member.id != message.author.id:
                     info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', user_id)
-                    paginator.add_line(f'**woah there, {message.author.mention}, it seems like {member.mention} has been afk '
-                                       f'since {discord.utils.format_dt(info["start_time"], style="R")}!**'
-                                       f'\n**With reason:** {info["reason"]}\n')
+                    paginator.add_line(
+                        f'**woah there, {message.author.mention}, it seems like {member.mention} has been afk '
+                        f'since {discord.utils.format_dt(info["start_time"], style="R")}!**'
+                        f'\n**With reason:** {info["reason"]}\n')
 
-            ctx: CustomContext = await self.bot.get_context(message)
             for page in paginator.pages:
-                await ctx.send(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
-                                                                              users=False,
-                                                                              roles=False,
-                                                                              everyone=False))
+                await message.reply(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
+                                                                                   users=False,
+                                                                                   roles=False,
+                                                                                   everyone=False))
 
     @commands.Cog.listener('on_message')
     async def on_suggestion_receive(self, message: discord.Message):
@@ -405,7 +407,9 @@ class Handler(commands.Cog, name='Handler'):
         if self.bot.suggestion_channels[message.channel.id] is True and not message.attachments and \
                 not message.channel.permissions_for(message.author).manage_messages:
             await message.delete(delay=0)
-            return await message.channel.send(f'⚠ | {message.author.mention} this **suggestions channel** is set to **image-only** mode!', delete_after=5)
+            return await message.channel.send(
+                f'⚠ | {message.author.mention} this **suggestions channel** is set to **image-only** mode!',
+                delete_after=5)
 
         await message.add_reaction(constants.UPVOTE)
         await message.add_reaction(constants.DOWNVOTE)
