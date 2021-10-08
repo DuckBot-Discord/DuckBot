@@ -399,9 +399,9 @@ DuckBot's top role position
         await ctx.send(embed=embed, view=paginator.OzAd(), footer=False)
 
     @commands.command(name='mutual-servers', aliases=['servers', 'mutual'])
-    async def mutual_servers(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
-        member = ctx.author if not await self.bot.is_owner(ctx.author) else (member or ctx.author)
-        guilds = sorted(member.mutual_guilds, key=lambda g: g.member_count, reverse=True)[0:30]
-        embed = discord.Embed(title=f'My top {len(guilds)} mutual servers with {member}:',
+    async def mutual_servers(self, ctx: CustomContext, user: typing.Optional[discord.User]):
+        user = ctx.author if not await self.bot.is_owner(ctx.author) else (user or ctx.author)
+        guilds = sorted(user.mutual_guilds, key=lambda g: g.member_count, reverse=True)[0:30]
+        embed = discord.Embed(title=f'My top {len(guilds)} mutual servers with {user}:',
                               description='\n'.join([f"[`{guild.member_count}`] **{guild.name}** " for guild in guilds]))
         await ctx.send(embed=embed)
