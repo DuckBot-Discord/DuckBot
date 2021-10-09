@@ -283,7 +283,7 @@ class Logging(commands.Cog):
         # join it into one string with str.join
         description = f'**__Top server {amount} invites__**\n```py\n' + tabulate.tabulate(
             [(f'{i + 1}. [{invites[i].code}] {invites[i].inviter.name}', f'{invites[i].uses}') for i in range(amount)],
-            headers=['Invite', 'Uses']) + (f'\n``` There are {len(invites) - max_table_length} more invites in this server.' if amount > max_table_length else '\n```')
+            headers=['Invite', 'Uses']) + (f'\n``` There are {len(invites) - max_table_length} more invites in this server.' if len(invites) > max_table_length else '\n```')
 
         inv = collections.defaultdict(int)
         for t in [(invite.inviter.name, invite.uses) for invite in invites]:
@@ -294,7 +294,7 @@ class Logging(commands.Cog):
         table = tabulate.tabulate(invites[0:value], headers=['Inviter', 'Added'])
 
         description = description + f'\n**__Top server {value} inviters__**\n```' + table + '```' + \
-            (f' There are {len(invites) - max_table_length} more inviters in this server.' if value > max_table_length else '')
+            (f' There are {len(invites) - max_table_length} more inviters in this server.' if len(invites) > max_table_length else '')
 
         embed.description = description
 
