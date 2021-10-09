@@ -14,7 +14,7 @@ import typing
 from discord.ext import commands, menus
 
 from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.helpers import paginator, constants
+from DuckBot.helpers import paginator, constants, helper
 
 suggestions_channel = 882634213516521473
 
@@ -245,9 +245,19 @@ class About(commands.Cog):
         """
         source_url = 'https://github.com/LeoCx1000/discord-bots'
         branch = 'master'
+        license_url = f'{source_url}/blob/{branch}/LICENSE'
+
+        mpl_advice = f'**This code is licensed under [MPL]({license_url})**' \
+                     f'\nRemember that you must use the ' \
+                     f'\nsame license! [[read more]]({license_url}#L160-L168)'
+
         if command is None:
-            embed = discord.Embed(description=f"**[Here's my source code]({source_url})**")
-            return await ctx.send(embed=embed)
+            embed = discord.Embed(title=f'Here\'s my source code.',
+                                  description=mpl_advice)
+            embed.set_image(
+                url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
+            return await ctx.send(embed=embed,
+                                  view=helper.Url(source_url, label='Open on GitHub', emoji=constants.GITHUB), footer=False)
 
         if command == 'help':
             src = type(self.bot.help_command)
@@ -256,9 +266,11 @@ class About(commands.Cog):
         else:
             obj = self.bot.get_command(command.replace('.', ' '))
             if obj is None:
-                embed = discord.Embed(description=f"**[Here's my source code]({source_url})**",
-                                      title="command not found")
-                return await ctx.send(embed=embed)
+                embed = discord.Embed(title=f'Couldn\'t find command.',
+                                      description=mpl_advice)
+                embed.set_image(
+                    url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
+                return await ctx.send(embed=embed, view=helper.Url(source_url, label='Open on GitHub', emoji=constants.GITHUB), footer=False)
 
             src = obj.callback.__code__
             module = obj.callback.__module__
@@ -273,11 +285,12 @@ class About(commands.Cog):
             source_url = 'https://github.com/Rapptz/discord.py'
             branch = 'master'
 
-        final_url = f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>'
-        embed = discord.Embed(color=ctx.me.color,
-                              description=f"**[source for `{command}`]({final_url})**")
+        final_url = f'{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}'
+        embed = discord.Embed(title=f'Here\'s {command}',
+                              description=mpl_advice)
+        embed.set_image(url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
         embed.set_footer(text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, view=helper.Url(final_url, label=f'Here\'s {command}', emoji=constants.GITHUB), footer=False)
 
     @commands.command(description="hiii")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)

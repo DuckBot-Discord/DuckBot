@@ -187,3 +187,9 @@ async def count_others(path: str, filetype: str = '.py', file_contains: str = 'd
         elif i.is_dir():
             line_count += await count_others(i.path, filetype, file_contains)
     return line_count
+
+
+class Url(discord.ui.View):
+    def __init__(self, url: str, label: str = 'Open', emoji: str = None):
+        super().__init__()
+        self.add_item(discord.ui.Button(label=label, emoji=emoji, url=url))
