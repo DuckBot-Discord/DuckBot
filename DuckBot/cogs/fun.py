@@ -320,7 +320,7 @@ class Fun(commands.Cog, name='Fun'):
     async def cag(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
         """Catches a gay. (for comedic purposes only)"""
         upper_hand = await ctx.send(constants.CAG_UP, reply=False)
-        message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel)
+        message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
