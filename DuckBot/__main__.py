@@ -86,7 +86,7 @@ class DuckBot(commands.Bot):
             intents=intents,
             command_prefix=self.get_pre,
             case_insensitive=True,
-            activity=discord.Activity(type=discord.ActivityType.listening, name='db.help'),
+            activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             enable_debug_events=True,
             strip_after_prefix=True
         )
