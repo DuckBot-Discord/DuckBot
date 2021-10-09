@@ -228,7 +228,7 @@ class Fun(commands.Cog, name='Fun'):
     @commands.command(aliases=['wiki'])
     async def wikipedia(self, ctx, *, search: str):
         """ Searches on wikipedia, and shows the 10 best returns """
-        async with ctx.TYPING_INDICATOR():
+        async with ctx.typing():
             async with aiowiki.Wiki.wikipedia('en') as w:
                 hyperlinked_titles = [f"[{p.title}]({(await p.urls()).view})" for p in (await w.opensearch(search))]
 

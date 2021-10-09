@@ -405,7 +405,7 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(manage_threads=True)
     @remove.command(name='threads', aliases=['thread'])
     async def remove_threads(self, ctx, search: int = 100):
-        async with ctx.TYPING_INDICATOR():
+        async with ctx.typing():
             if search > 2000:
                 return await ctx.send(f'Too many messages to search given ({search}/2000)')
 
@@ -445,7 +445,7 @@ class Moderation(commands.Cog):
     @remove.command(name='reactions')
     async def remove_reactions(self, ctx, search=100):
         """Removes all reactions from messages that have them."""
-        async with ctx.TYPING_INDICATOR():
+        async with ctx.typing():
             if search > 2000:
                 return await ctx.send(f'Too many messages to search for ({search}/2000)')
 
