@@ -286,7 +286,7 @@ class About(commands.Cog):
             branch = 'master'
 
         final_url = f'{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}'
-        embed = discord.Embed(title=f'Here\'s {command}',
+        embed = discord.Embed(title=f'Here\'s `{command}`',
                               description=mpl_advice)
         embed.set_image(url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
         embed.set_footer(text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
