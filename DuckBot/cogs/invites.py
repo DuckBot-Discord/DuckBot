@@ -257,6 +257,7 @@ class Logging(commands.Cog):
     # to handle commands.NoPrivateMessage
     @commands.guild_only()
     @commands.command()
+    @commands.bot_has_guild_permissions(manage_guild=True)
     async def invitestats(self, ctx: CustomContext):
         """Displays the top 10 most used invites in the guild, and the top 10 inviters."""
         max_table_length = 10
@@ -267,7 +268,7 @@ class Logging(commands.Cog):
         if not invites:
             # if there is no invites send this information
             # in an embed and return
-            raise commands.BadArgument('I couldn\'t find any Invites')
+            raise commands.BadArgument('I couldn\'t find any Invites. (try again?)')
 
         # if you got here there are invites in the cache
         embed = discord.Embed(colour=discord.Colour.green(), title=f'{ctx.guild.name}\'s invite stats')
