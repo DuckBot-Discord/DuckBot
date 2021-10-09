@@ -265,7 +265,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     async def ban(self, ctx: CustomContext, user: typing.Union[discord.Member, discord.User],
-                  delete_days: typing.Optional[int],
+                  delete_days: typing.Optional[int] = 1,
                   *, reason: typing.Optional[str] = None):
         if delete_days and 7 < delete_days < 0:
             return self.error_message(ctx, f"**delete_days** must be between 0 and 7")
