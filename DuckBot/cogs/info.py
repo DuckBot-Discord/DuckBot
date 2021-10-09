@@ -137,7 +137,7 @@ class About(commands.Cog):
     @commands.command(help="Sends a link to invite the bot to your server")
     async def invite(self, ctx):
         await ctx.send(
-            embed=discord.Embed(description=f"[**{constants.INVITE} invite me**]({self.bot.invite_url})"),
+            embed=discord.Embed(description=f"{constants.INVITE} **i[nvite me]({self.bot.invite_url})**"),
             view=paginator.InvMe())
 
     @commands.command(help="Checks the bot's ping to Discord")
