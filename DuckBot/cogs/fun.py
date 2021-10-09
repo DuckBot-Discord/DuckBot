@@ -316,9 +316,9 @@ class Fun(commands.Cog, name='Fun'):
             rps.message = await view.message.edit(embed=embed, view=rps)
             await rps.wait()
 
-    @commands.command()
-    async def cag(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
-        """Catches a gay. (for comedic purposes only)"""
+    @commands.command(aliases=['cag'])
+    async def catch(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
+        """Catches someone. (for comedic purposes only)"""
         upper_hand = await ctx.send(constants.CAG_UP, reply=False)
         message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
