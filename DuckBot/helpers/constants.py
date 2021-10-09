@@ -149,3 +149,6 @@ statuses = st_nt('<:status_online:895808180637020181>',
                  '<:status_idle:895808212580827256>',
                  '<:status_dnd:895808261801009193>',
                  '<:status_offline:895808306222886932>')
+
+CAG_UP = 'https://cdn.discordapp.com/attachments/879251951714467840/896293818096291840/Sv6kz8f.png'
+CAG_DOWN = 'https://cdn.discordapp.com/attachments/879251951714467840/896293899713257482/oqcptj21hq151.png'

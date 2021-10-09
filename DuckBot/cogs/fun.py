@@ -315,3 +315,12 @@ class Fun(commands.Cog, name='Fun'):
             rps = RockPaperScissors(ctx, player1, player2)
             rps.message = await view.message.edit(embed=embed, view=rps)
             await rps.wait()
+
+    @commands.command()
+    async def cag(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
+        """Catches a gay. (for comedic purposes only)"""
+        upper_hand = await ctx.send(constants.CAG_UP, reply=False)
+        message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel)
+        if (member and message.author != member) or message.author == ctx.author:
+            return await upper_hand.delete()
+        await ctx.send(constants.CAG_DOWN, reply=False)
