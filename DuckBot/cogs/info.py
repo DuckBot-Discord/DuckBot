@@ -291,7 +291,7 @@ class About(commands.Cog):
                               description=mpl_advice)
         embed.set_image(url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
         embed.set_footer(text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
-        await ctx.send(embed=embed, view=helper.Url(final_url, label=f'Here\'s {command}', emoji=constants.GITHUB), footer=False)
+        await ctx.send(embed=embed, view=helper.Url(final_url, label=f'Here\'s {str(obj)}', emoji=constants.GITHUB), footer=False)
 
     @commands.command(description="hiii")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
