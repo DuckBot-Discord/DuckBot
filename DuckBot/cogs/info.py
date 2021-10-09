@@ -342,7 +342,7 @@ DuckBot's top role position
         Shows the latest changes of the bot. ""
         """
         embed = discord.Embed(color=ctx.me.color,
-                              title="📰 Latest News - <t:1633447880:d> (<t:1633447880:R>)",
+                              title="📰 Latest News - <t:1633753000:d> (<t:1633753000:R>)",
                               description=f"\u200b"
                                           f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
                                           f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
@@ -389,7 +389,7 @@ DuckBot's top role position
                                           f"\n"
                                           f"\n> **<t:1633642000:R> New `mutual-servers` command**"
                                           f"\n"
-                                          f"\n> **")
+                                          f"\n> **<t:1633753000:R> Improved upon the invitestats command**")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)

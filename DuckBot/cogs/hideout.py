@@ -21,6 +21,7 @@ def hideout_only():
             return True
         else:
             raise errors.NoHideout
+
     return commands.check(predicate)
 
 
@@ -251,8 +252,9 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             raise commands.BadArgument('That dos not seem to be a bot...')
         if bot in ctx.guild.members:
             raise commands.BadArgument('That bot is already on this server...')
-        confirm = await ctx.confirm(f'Does your bot comply with {ctx.guild.rules_channel.mention if ctx.guild.rules_channel else "<channel deleted?>"}?'
-                                    f'\n If so, press one of these:', return_message=True)
+        confirm = await ctx.confirm(
+            f'Does your bot comply with {ctx.guild.rules_channel.mention if ctx.guild.rules_channel else "<channel deleted?>"}?'
+            f'\n If so, press one of these:', return_message=True)
         if confirm[0]:
             await confirm[1].edit(content='✅ Done, you will be @pinged when the bot is added!', view=None)
             embed = discord.Embed(description=reason)
@@ -264,7 +266,13 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
 
     @commands.command(name='decode-qr-code', aliases=['qr-decode', 'decode-qr', 'qr'])
     @commands.cooldown(2, 30, commands.BucketType.user)
-    async def decode_qr_code(self, ctx: CustomContext, *, qr_code: typing.Optional[typing.Union[discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]]):
+    async def decode_qr_code(self, ctx: CustomContext, *, qr_code: typing.Optional[
+        typing.Union[discord.Member,
+                     discord.User,
+                     discord.PartialEmoji,
+                     discord.Guild,
+                     discord.Invite, str]
+    ]):
         """
         Attempts to decode a QR code
         Can decode from the following:
@@ -279,6 +287,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         if qr_code is None:
             if ctx.message.attachments:
                 qr_code = ctx.message.attachments[0]
+            elif ctx.message.stickers:
+                qr_code = ctx.message.stickers[0].url
             elif ctx.message.reference:
                 if ctx.message.reference.resolved.attachments:
                     qr_code = ctx.message.reference.resolved.attachments[0]
@@ -291,21 +301,23 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             raise commands.MissingRequiredArgument(Parameter(name='qr_code', kind=Parameter.POSITIONAL_ONLY))
 
         async with ctx.typing():
-            link = getattr(
-                getattr(
-                    getattr(qr_code, 'avatar', None)
-                    or getattr(qr_code, 'icon', None)
-                    or getattr(qr_code, 'guild', None)
-                    or qr_code, 'icon', None)
-                or qr_code, 'url', None) or qr_code
+            link = getattr(qr_code, 'avatar', None) \
+                   or getattr(qr_code, 'icon', None) \
+                   or getattr(qr_code, 'guild', None) \
+                   or qr_code
+            link = getattr(getattr(link, 'icon', link), 'url', link)
             if url_regex.match(link):
                 url = urllib.parse.quote(link, safe='')
-                async with self.bot.session.get(yarl.URL(f"http://api.qrserver.com/v1/read-qr-code/?fileurl={url}", encoded=True)) as r:
+                async with self.bot.session.get(
+                        yarl.URL(f"http://api.qrserver.com/v1/read-qr-code/?fileurl={url}", encoded=True)) as r:
                     if r.status == 200:
                         data = await r.json()
                         if data[0]['symbol'][0]['data'] is None:
                             raise commands.BadArgument(data[0]['symbol'][0]['error'])
-                        await ctx.send(data[0]['symbol'][0]['data'], allowed_mentions=discord.AllowedMentions.none())
+                        embed = discord.Embed(title='I found the following data:',
+                                              description=data[0]['symbol'][0]['data'])
+                        embed.set_thumbnail(url=link)
+                        await ctx.send(embed=embed)
                     else:
                         raise commands.BadArgument(f'API failed with status {r.status}')
             else:

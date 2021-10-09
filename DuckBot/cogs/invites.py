@@ -21,14 +21,18 @@ https://github.com/cyrus01337/invites/
 """
 
 import asyncio
+import collections
 import contextlib
 import datetime
+import operator
 import random
 import time
 from types import SimpleNamespace
 from typing import Dict, Optional
 
 import discord
+import tabulate
+import typing
 from discord.ext import commands, tasks
 
 from DuckBot import errors
@@ -253,8 +257,9 @@ class Logging(commands.Cog):
     # to handle commands.NoPrivateMessage
     @commands.guild_only()
     @commands.command()
-    async def invitestats(self, ctx):
-        """Displays the top 10 most used invites in the guild."""
+    async def invitestats(self, ctx: CustomContext):
+        """Displays the top 10 most used invites in the guild, and the top 10 inviters."""
+        max_table_length = 10
         # PEP8 + same code, more readability
         invites = self.bot.invites.get(ctx.guild.id, None)
 
@@ -262,12 +267,10 @@ class Logging(commands.Cog):
         if not invites:
             # if there is no invites send this information
             # in an embed and return
-            embed = discord.Embed(colour=discord.Colour.red(), description='No invites found...')
-            await ctx.send(embed=embed)
-            return
+            raise commands.BadArgument('I couldn\'t find any Invites')
 
         # if you got here there are invites in the cache
-        embed = discord.Embed(colour=discord.Colour.green(), title='Most used invites')
+        embed = discord.Embed(colour=discord.Colour.green(), title=f'{ctx.guild.name}\'s invite stats')
         # sort the invites by the amount of uses
         # by default this would make it in increasing
         # order so we pass True to the reverse kwarg
@@ -275,17 +278,26 @@ class Logging(commands.Cog):
         # if there are 10 or more invites in the cache we will
         # display 10 invites, otherwise display the amount
         # of invites
-        amount = 10 if len(invites) >= 10 else len(invites)
+        amount = max_table_length if len(invites) >= max_table_length else len(invites)
         # list comp on the sorted invites and then
         # join it into one string with str.join
-        description = '\n'.join(
-            [f'{i + 1}. {invites[i].inviter.mention} {invites[i].code} - {invites[i].uses}' for i in range(amount)])
+        description = f'**__Top server {amount} invites__**\n```py\n' + tabulate.tabulate(
+            [(f'{i + 1}. [{invites[i].code}] {invites[i].inviter.name}', f'{invites[i].uses}') for i in range(amount)],
+            headers=['Invite', 'Uses']) + (f'\n``` There are {len(invites) - max_table_length} more invites in this server.' if amount > max_table_length else '\n```')
+
+        inv = collections.defaultdict(int)
+        for t in [(invite.inviter.name, invite.uses) for invite in invites]:
+            inv[t[0]] += t[1]
+        invites = dict(inv)
+        invites = sorted(invites.items(), key=operator.itemgetter(1), reverse=True)
+        value = max_table_length if len(invites) >= max_table_length else len(invites)
+        table = tabulate.tabulate(invites[0:value], headers=['Inviter', 'Added'])
+
+        description = description + f'\n**__Top server {value} inviters__**\n```' + table + '```' + \
+            (f' There are {len(invites) - max_table_length} more inviters in this server.' if value > max_table_length else '')
+
         embed.description = description
-        # if there are more than 10 invites
-        # add a footer saying how many more
-        # invites there are
-        if amount > 10:
-            embed.set_footer(text=f'There are {len(invites) - 10} more invites in this guild.')
+
         await ctx.send(embed=embed)
 
     @commands.group()
