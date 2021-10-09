@@ -243,13 +243,14 @@ class About(commands.Cog):
         """
         Links to the bot's code, or a specific command's
         """
+        global obj
         source_url = 'https://github.com/LeoCx1000/discord-bots'
         branch = 'master'
         license_url = f'{source_url}/blob/{branch}/LICENSE'
-
         mpl_advice = f'**This code is licensed under [MPL]({license_url})**' \
                      f'\nRemember that you must use the ' \
                      f'\nsame license! [[read more]]({license_url}#L160-L168)'
+        obj = None
 
         if command is None:
             embed = discord.Embed(title=f'Here\'s my source code.',
@@ -286,7 +287,7 @@ class About(commands.Cog):
             branch = 'master'
 
         final_url = f'{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}'
-        embed = discord.Embed(title=f'Here\'s `{command}`',
+        embed = discord.Embed(title=f'Here\'s `{str(obj)}`',
                               description=mpl_advice)
         embed.set_image(url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
         embed.set_footer(text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
