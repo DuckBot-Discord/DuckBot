@@ -293,7 +293,7 @@ class Logging(commands.Cog):
         value = max_table_length if len(invites) >= max_table_length else len(invites)
         table = tabulate.tabulate(invites[0:value], headers=['Inviter', 'Added'])
 
-        description = description + f'\n**__Top server {value} inviters__**\n```' + table + '```' + \
+        description = description + f'\n**__Top server {value} inviters__**\n```\n' + table + '```' + \
             (f' ___There are {len(invites) - max_table_length} more inviters in this server.___' if len(invites) > max_table_length else '')
 
         description = f'**__Top server {amount} invites__**\n```py\n' + tabulate.tabulate(
