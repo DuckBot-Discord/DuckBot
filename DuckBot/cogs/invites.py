@@ -293,7 +293,22 @@ class Logging(commands.Cog):
         value = max_table_length if len(invites) >= max_table_length else len(invites)
         table = tabulate.tabulate(invites[0:value], headers=['Inviter', 'Added'])
 
-        description = description + f'\n**__Top server {value} inviters__**\n```' + table + '```' + \
+        description = description + f'\n**__Top server {value} inviters__**\n```\n' + table + '```' + \
+            (f' ___There are {len(invites) - max_table_length} more inviters in this server.___' if len(invites) > max_table_length else '')
+
+        description = f'**__Top server {amount} invites__**\n```py\n' + tabulate.tabulate(
+            [(f'{i + 1}. [{invites[i].code}] {invites[i].inviter.name}', f'{invites[i].uses}') for i in range(amount)],
+            headers=['Invite', 'Uses']) + (f'\n``` ___There are {len(invites) - max_table_length} more invites in this server.___\n' if len(invites) > max_table_length else '\n```')
+
+        inv = collections.defaultdict(int)
+        for t in [(invite.inviter.name, invite.uses) for invite in invites]:
+            inv[t[0]] += t[1]
+        invites = dict(inv)
+        invites = sorted(invites.items(), key=operator.itemgetter(1), reverse=True)
+        value = max_table_length if len(invites) >= max_table_length else len(invites)
+        table = tabulate.tabulate(invites[0:value], headers=['Inviter', 'Added'])
+
+        description = description + f'\n**__Top server {value} inviters__**\n```\n' + table + '```' + \
             (f' ___There are {len(invites) - max_table_length} more inviters in this server.___' if len(invites) > max_table_length else '')
 
         embed.description = description
