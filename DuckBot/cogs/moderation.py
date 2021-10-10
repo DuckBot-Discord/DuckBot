@@ -661,7 +661,8 @@ class Moderation(commands.Cog):
     @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute', 'multimute'], name='multi-mute')
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def multi_mute(self, ctx: CustomContext, members: commands.Greedy[discord.Member], reason: str = None) -> discord.Message:
+    async def multi_mute(self, ctx: CustomContext, members: commands.Greedy[discord.Member],
+                         reason: str = None) -> discord.Message:
         """
         Mutes a lot of members indefinitely indefinitely.
         """
@@ -700,7 +701,7 @@ class Moderation(commands.Cog):
 
         await ctx.send(f"**Successfully muted {len(successful)}/{len(members)}**:"
                        f"\n**Successful:** {', '.join([m.display_name for m in successful])}"
-                       f"\n**Failed:** {', '.join([m.display_name for m in failed_perms+failed_internal])}")
+                       f"\n**Failed:** {', '.join([m.display_name for m in failed_perms + failed_internal])}")
 
         if self.temporary_mutes.is_running():
             self.temporary_mutes.restart()
@@ -817,7 +818,8 @@ class Moderation(commands.Cog):
     @commands.command(aliases=['mass-unmute', 'multi_unmute', 'mass_unmute', 'massunmute'], name='multi-unmute')
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def multi_unmute(self, ctx: CustomContext, members: commands.Greedy[discord.Member], reason: str = None) -> discord.Message:
+    async def multi_unmute(self, ctx: CustomContext, members: commands.Greedy[discord.Member],
+                           reason: str = None) -> discord.Message:
         """
         Mutes a lot of members indefinitely indefinitely.
         """
@@ -856,7 +858,7 @@ class Moderation(commands.Cog):
 
         await ctx.send(f"**Successfully unmuted {len(successful)}/{len(members)}**:"
                        f"\n**Successful:** {', '.join([m.display_name for m in successful])}"
-                       f"\n**Failed:** {', '.join([m.display_name for m in failed_perms+failed_internal])}")
+                       f"\n**Failed:** {', '.join([m.display_name for m in failed_perms + failed_internal])}")
 
         if self.temporary_mutes.is_running():
             self.temporary_mutes.restart()
@@ -1362,3 +1364,49 @@ class Moderation(commands.Cog):
         return await ctx.send(f"Everyone is the dj now! 💃"
                               "\nDo `help dj` for more commends",
                               allowed_mentions=discord.AllowedMentions().none())
+
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def block(self, ctx, *, member: discord.Member):
+        """Blocks a user from your channel."""
+
+        if not can_execute_action(ctx, ctx.author, member):
+            return await ctx.send('You are not high enough in role hierarchy to do that!')
+
+        reason = f'Block by {ctx.author} (ID: {ctx.author.id})'
+
+        try:
+            await ctx.channel.set_permissions(member, reason=reason,
+                                              send_messages=False,
+                                              add_reactions=False,
+                                              create_public_threads=False,
+                                              create_private_threads=False,
+                                              send_messages_in_threads=False)
+        except (discord.Forbidden, discord.HTTPException):
+            await ctx.send('Something went wrong...')
+        else:
+            await ctx.send(f'✅ **|** Blocked **{discord.utils.remove_markdown(str(member))}** from **{ctx.channel}**')
+
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def unblock(self, ctx, *, member: discord.Member):
+        """Unblocks a user from your channel."""
+
+        if not can_execute_action(ctx, ctx.author, member):
+            return await ctx.send('You are not high enough in role hierarchy to do that!')
+
+        reason = f'Unblock by {ctx.author} (ID: {ctx.author.id})'
+
+        try:
+            await ctx.channel.set_permissions(member, reason=reason,
+                                              send_messages=None,
+                                              add_reactions=None,
+                                              create_public_threads=None,
+                                              create_private_threads=None,
+                                              send_messages_in_threads=None)
+        except (discord.Forbidden, discord.HTTPException):
+            await ctx.send('Something went wrong...')
+        else:
+            await ctx.send(f'✅ **|** Unblocked **{discord.utils.remove_markdown(str(member))}** from **{ctx.channel}**')
