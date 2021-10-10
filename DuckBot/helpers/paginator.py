@@ -650,33 +650,6 @@ class InviteButton(discord.ui.Button):
         await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
 
 
-class HelpMenuPaginator(ViewPaginator):
-    def __init__(self, source: menus.PageSource, *, ctx: commands.Context, check_embeds: bool = True,
-                 compact: bool = False):
-        super().__init__(source, ctx=ctx, check_embeds=check_embeds, compact=compact)
-
-    def fill_items(self) -> None:
-        super().fill_items()
-        if self.children:
-            self.add_item(VotesButton(label='Vote',
-                                      button_style=discord.ButtonStyle.grey,
-                                      emoji=constants.TOP_GG,
-                                      row=2))
-            self.add_item(InviteButton(label='Support',
-                                       button_style=discord.ButtonStyle.grey,
-                                       emoji=constants.SERVERS_ICON,
-                                       row=2))
-            self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
-                                            url="https://discord.com/api/oauth2/authorize?client_id="
-                                                "788278464474120202&permissions=8&scope=bot%20applications.commands",
-                                            row=2))
-            self.add_item(
-                discord.ui.Button(emoji=constants.GITHUB,
-                                  label='Source',
-                                  url="https://github.com/LeoCx1000/discord-bots",
-                                  row=2))
-
-
 class PaginatedStringListPageSource(menus.ListPageSource):
     def __init__(self, entries, *, per_page=1, ctx: CustomContext):
         super().__init__(entries, per_page=per_page)

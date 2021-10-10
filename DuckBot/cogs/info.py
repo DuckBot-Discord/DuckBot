@@ -23,13 +23,6 @@ def setup(bot):
 
 class MyHelp(commands.HelpCommand):
 
-    def get_bot_mapping(self):
-        """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
-        bot = self.context.bot
-        mapping = {cog: cog.get_commands() for cog in sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True)}
-        mapping[None] = [c for c in bot.commands if c.cog is None]
-        return mapping
-
     # Formatting
     def get_minimal_command_signature(self, command):
         return '%s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
@@ -54,7 +47,7 @@ class MyHelp(commands.HelpCommand):
                 data.append(info)
 
         source = paginator.HelpMenuPageSource(data=data, ctx=self.context, help_class=self)
-        menu = paginator.HelpMenuPaginator(source=source, ctx=self.context, compact=True)
+        menu = paginator.ViewPaginator(source=source, ctx=self.context, compact=True)
         await menu.start()
 
     def common_command_formatting(self, embed_like, command):
