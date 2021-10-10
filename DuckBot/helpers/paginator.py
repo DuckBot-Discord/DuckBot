@@ -650,10 +650,49 @@ class HelpMenuPaginator(ViewPaginator):
 
     def fill_items(self) -> None:
         super().fill_items()
-        self.add_item(VotesButton(label='Vote', button_style=discord.ButtonStyle.grey, emoji=constants.TOP_GG))
-        self.add_item(InviteButton(label='Support', button_style=discord.ButtonStyle.grey, emoji=constants.SERVERS_ICON))
-        self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
-                                        url="https://discord.com/api/oauth2/authorize?client_id="
-                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
-        self.add_item(
-            discord.ui.Button(emoji=constants.GITHUB, label='Source', url="https://github.com/LeoCx1000/discord-bots"))
+        if self.children:
+            self.add_item(VotesButton(label='Vote', button_style=discord.ButtonStyle.grey, emoji=constants.TOP_GG))
+            self.add_item(InviteButton(label='Support', button_style=discord.ButtonStyle.grey, emoji=constants.SERVERS_ICON))
+            self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
+                                            url="https://discord.com/api/oauth2/authorize?client_id="
+                                                "788278464474120202&permissions=8&scope=bot%20applications.commands"))
+            self.add_item(
+                discord.ui.Button(emoji=constants.GITHUB, label='Source', url="https://github.com/LeoCx1000/discord-bots"))
+
+
+class PaginatedStringListPageSource(menus.ListPageSource):
+    def __init__(self, entries, *, per_page=1, ctx: CustomContext):
+        super().__init__(entries, per_page=per_page)
+        self.ctx = ctx
+
+    def format_page(self, menu, page):
+        embed = discord.Embed(color=discord.Colour.blurple(),
+                              description=page)
+        embed.set_author(icon_url=self.ctx.author.display_avatar.url, name=str(self.ctx.author))
+        return embed
+
+
+class StopButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(style=discord.ButtonStyle.danger, label='Quit')
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        await interaction.delete_original_message()
+        self.view.stop()
+
+
+class TodoListPaginator(ViewPaginator):
+    def __init__(self, source: menus.PageSource, *, ctx: commands.Context, check_embeds: bool = True,
+                 compact: bool = False):
+        super().__init__(source, ctx=ctx, check_embeds=check_embeds, compact=compact)
+
+    def fill_items(self) -> None:
+        super().fill_items()
+        if not self.children:
+            self.add_item(StopButton())
+
+    async def on_timeout(self) -> None:
+        if self.message:
+            await self.message.edit(view=None)
+        self.stop()

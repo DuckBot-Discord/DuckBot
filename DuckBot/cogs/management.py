@@ -4,6 +4,7 @@ import datetime
 import importlib
 import io
 import itertools
+import os
 import textwrap
 import traceback
 import typing
@@ -122,19 +123,6 @@ class Management(commands.Cog, name='Bot Management'):
         await ctx.message.add_reaction('✅')
         await ctx.send(f"Activity changed to `Competing in {text}`")
 
-    @commands.command(help="Adds something to de to-do list")
-    @commands.is_owner()
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def todo(self, ctx, *, message=None):
-        channel = self.bot.get_channel(830992446434312192)
-        if ctx.message.reference:
-            message = ctx.message.reference.resolved.content
-        if ctx.message.channel == channel:
-            await ctx.message.delete()
-        embed = discord.Embed(description=message, color=0x47B781)
-        await channel.send(embed=embed)
-        await ctx.message.add_reaction('✅')
-
     @commands.command(aliases=['mm'], help="puts the bot under maintenance", usage="[on|off]")
     @commands.is_owner()
     @commands.bot_has_permissions(add_reactions=True)
@@ -187,7 +175,7 @@ class Management(commands.Cog, name='Bot Management'):
             embed = discord.Embed(color=ctx.me.color, description=f"❌ Extension not loaded")
             await message.edit(embed=embed)
 
-    @commands.command(help="Reloads all extensions", aliases=['relall', 'rall', 'reloadall'])
+    @commands.command(help="Reloads all extensions", aliases=['relall', 'rall', 'reloadall', 'load'])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reload(self, ctx, *extensions: jishaku.modules.ExtensionConverter):
@@ -247,7 +235,7 @@ class Management(commands.Cog, name='Bot Management'):
         for page in pages.pages:
             await ctx.send(page)
 
-    @commands.command(name="mreload", aliases=['mload', 'mrl'])
+    @commands.command(name="mreload", aliases=['mload', 'mrl', 'rlm'])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def reload_module(self, ctx, *extensions: jishaku.modules.ExtensionConverter):
@@ -257,7 +245,7 @@ class Management(commands.Cog, name='Bot Management'):
         pages = WrappedPaginator(prefix='', suffix='')
 
         if not extensions:
-            extensions = [await jishaku.modules.ExtensionConverter.convert(self, ctx, 'DuckBot.helpers.*')]
+            extensions = [await jishaku.modules.ExtensionConverter.convert(self, ctx, os.getenv('COGS_PATH').replace('cogs', 'helpers') + '.*')]
 
         for extension in itertools.chain(*extensions):
             method, icon = (
