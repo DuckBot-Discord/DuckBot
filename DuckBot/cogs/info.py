@@ -410,7 +410,10 @@ DuckBot's top role position
                                           f"\n> **<t:1633753000:R> Improved upon the invitestats command**"
                                           f"\n"
                                           f"\n> **<t:1633848000:R> New `todo` command**"
-                                          f"\n> _save things for later! don't forget about anything anymore.")
+                                          f"\n> _save things for later! don't forget about anything anymore."
+                                          f"\n"
+                                          f"\n>  **<t:1633908200 `block` and `unblock` commands**"
+                                          f"\n> Block troublesome people from messaging in your current channel")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
