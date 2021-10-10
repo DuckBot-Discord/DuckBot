@@ -1,6 +1,7 @@
 from __future__ import annotations
 import re
 import asyncio
+import traceback
 from types import SimpleNamespace
 from typing import Any, Dict, Optional
 import discord
@@ -13,6 +14,7 @@ from discord.ext import menus
 
 from DuckBot.helpers import helper, constants
 from DuckBot.__main__ import CustomContext
+sep = '\u200b '
 
 
 class GroupHelpPageSource(menus.ListPageSource):
@@ -255,7 +257,12 @@ class ViewPaginator(discord.ui.View):
         if interaction.response.is_done():
             await interaction.followup.send('An unknown error occurred, sorry', ephemeral=True)
         else:
-            await interaction.response.send_message('An unknown error occurred, sorry', ephemeral=True)
+            try:
+                await interaction.response.send_message('An unknown error occurred, sorry', ephemeral=True)
+            except discord.NotFound:
+                for child in self.children:
+                    child.disabled = True
+                await self.message.edit(view=self)
 
     async def start(self) -> None:
         if self.check_embeds and not self.ctx.channel.permissions_for(self.ctx.me).embed_links:
@@ -586,9 +593,9 @@ class EmojiListPageSource(menus.ListPageSource):
         elif isinstance(emoji, discord.PartialEmoji):
             embed = discord.Embed(color=0xF4D58C, timestamp=self.time,
                                   description=
-                                  f"**Format:** [{emoji_str(emoji)}]({emoji.url})"
+                                  f"**Format:** {emoji_str(emoji)}"
                                   f"\n**Created at:** {discord.utils.format_dt(emoji.created_at)}"
-                                  f"\n**Name:** {emoji.name} **Url:** [url]({emoji.url})"
+                                  f"\n**Name:** {emoji.name}{sep*12}**Url:** [here]({emoji.url})"
                                   f"\n**Id:** {emoji.id}")
             embed.set_footer(text=f'Requested by {self.ctx.author}', icon_url=self.ctx.author.display_avatar.url)
             embed.set_image(url=emoji.url)
@@ -621,8 +628,8 @@ class HelpMenuPageSource(menus.ListPageSource):
 
 
 class VotesButton(discord.ui.Button):
-    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
-        super().__init__(style=button_style, label=label, emoji=emoji, )
+    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle, row: int = None):
+        super().__init__(style=button_style, label=label, emoji=emoji, row=row)
 
     async def callback(self, interaction: discord.Interaction):
         embed = discord.Embed(description=f"{constants.TOP_GG} **vote here!** {constants.TOP_GG}",
@@ -631,8 +638,8 @@ class VotesButton(discord.ui.Button):
 
 
 class InviteButton(discord.ui.Button):
-    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle):
-        super().__init__(style=button_style, label=label, emoji=emoji, )
+    def __init__(self, label: str, emoji: str, button_style: discord.ButtonStyle, row: int = None):
+        super().__init__(style=button_style, label=label, emoji=emoji, row=row)
 
     async def callback(self, interaction: discord.Interaction):
         embed = discord.Embed(
@@ -651,13 +658,23 @@ class HelpMenuPaginator(ViewPaginator):
     def fill_items(self) -> None:
         super().fill_items()
         if self.children:
-            self.add_item(VotesButton(label='Vote', button_style=discord.ButtonStyle.grey, emoji=constants.TOP_GG))
-            self.add_item(InviteButton(label='Support', button_style=discord.ButtonStyle.grey, emoji=constants.SERVERS_ICON))
+            self.add_item(VotesButton(label='Vote',
+                                      button_style=discord.ButtonStyle.grey,
+                                      emoji=constants.TOP_GG,
+                                      row=2))
+            self.add_item(InviteButton(label='Support',
+                                       button_style=discord.ButtonStyle.grey,
+                                       emoji=constants.SERVERS_ICON,
+                                       row=2))
             self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
                                             url="https://discord.com/api/oauth2/authorize?client_id="
-                                                "788278464474120202&permissions=8&scope=bot%20applications.commands"))
+                                                "788278464474120202&permissions=8&scope=bot%20applications.commands",
+                                            row=2))
             self.add_item(
-                discord.ui.Button(emoji=constants.GITHUB, label='Source', url="https://github.com/LeoCx1000/discord-bots"))
+                discord.ui.Button(emoji=constants.GITHUB,
+                                  label='Source',
+                                  url="https://github.com/LeoCx1000/discord-bots",
+                                  row=2))
 
 
 class PaginatedStringListPageSource(menus.ListPageSource):
