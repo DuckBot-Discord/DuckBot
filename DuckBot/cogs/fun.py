@@ -278,7 +278,7 @@ class Fun(commands.Cog, name='Fun'):
         """Starts a tic-tac-toe game."""
         embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
                                           f'\n👀 | User is looking for someone to play **Tic-Tac-Toe**')
-        embed.set_thumbnail(url='https://i.imgur.com/DZhQwnD.gif')
+        embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
         embed.set_author(name='Tic-Tac-Toe', icon_url='https://i.imgur.com/SrRrarG.png')
         player1 = ctx.author
         view = LookingToPlay(timeout=120)
@@ -297,7 +297,7 @@ class Fun(commands.Cog, name='Fun'):
     async def rock_paper_scissors(self, ctx: CustomContext):
         embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
                                           f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
-        embed.set_thumbnail(url='https://i.imgur.com/DZhQwnD.gif')
+        embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
         embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
 
         sep = '\u2001'
@@ -326,7 +326,6 @@ class Fun(commands.Cog, name='Fun'):
         if (member and message.author != member) or message.author == ctx.author:
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
-
     @commands.group()
     async def todo(self, ctx: CustomContext):
         """ Sends help about the to​do command """
