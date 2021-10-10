@@ -43,53 +43,59 @@ db.emoji lock <server_emoji> <roles>...
 - change_node \<node>
 
 ## Logging
-- invitestats
-- welcome
-- - channel \[new_channel]
-- - message \<message>
+- invitestats 
+- welcome 
+  + fake-message 
+  + channel \[new_channel]
+  + message \<message>
+- enable-suggestions \<channel> \<image_only>
+- disable-suggestions \<channel>
 
 ## About
-- invite
-- ping
-- about
+- invite 
+- ping 
+- about 
 - source \[command|command.subcommand]
-- privacy
+- privacy 
 - suggest \<suggestion>
-- news
-- oz_ad
+- news 
+- oz_ad 
+- mutual-servers \[user]
 - help \[command]
 
 ## Moderation
-- prefix
-- - remove \<prefix>
-- - clear
-- - add \<new>
+- prefix 
+  + add \<new>
+  + remove \<prefix>
+  + clear 
 - kick \<member> \[reason]
-- ban \<user> \[reason]
+- ban \<user> \[delete_days=1] \[reason]
 - unban \<user>
 - setnick \<member> \[new]
 - clean \[search=100]
-- - threads \[search=100]
-- - all \[search=100]
-- - bot \[prefix] \[search=100]
-- - files \[search=100]
-- - user \<member> \[search=100]
-- - help
-- - emoji \[search=100]
-- - embeds \[search=100]
-- - images \[search=100]
-- - contains \<text>
-- - reactions \[search=100]
-- - custom \<args>
+  + reactions \[search=100]
+  + images \[search=100]
+  + threads \[search=100]
+  + all \[search=100]
+  + custom \<args>
+  + bot \[prefix] \[search=100]
+  + embeds \[search=100]
+  + user \<member> \[search=100]
+  + emoji \[search=100]
+  + files \[search=100]
+  + help 
+  + contains \<text>
 - cleanup \[amount=25]
 - mute \<member> \[reason]
+- multi-mute \[members]... \[reason]
 - hardmute \<member> \[reason]
 - unmute \<member> \[reason]
+- multi-unmute \[members]... \[reason]
 - muterole \[new_role]
-- - create
-- - delete
-- - fix
-- - remove
+  + delete 
+  + remove 
+  + fix 
+  + create 
 - selfmute \<duration>
 - tempmute \<member> \<duration>
 - lockdown \[channel] \[role]
@@ -97,8 +103,8 @@ db.emoji lock <server_emoji> <roles>...
 - slowmode \[channel] \<duration|reset>
 - archive \[channel] \[reason]
 - dj \[new_role]
-- - clear
-- - all
+  + all 
+  + clear 
 
 ## Utility
 - charinfo \<characters>
@@ -106,34 +112,46 @@ db.emoji lock <server_emoji> <roles>...
 - echo \<channel> \<message_or_reply>
 - edit_message \[new message] \[--d|--s]
 - userinfo \[member]
-- old_userinfo \[user]
 - permissions \[target]
-- serverinfo \[guild_id]
-- avatar \[user]
+- serverinfo \[guild]
+- avatar \[member]
 - emoji \[custom_emojis]...
-- - unlock \<server_emoji>
-- - lock \<server_emoji> \[roles]...
-- - steal \[index=1]
-- - clone \[server_emoji] \[index=1]
+  + steal \[index=1]
+  + unlock \<server_emoji>
+  + delete \<server_emoji>
+  + list 
+  + rename \<server_emoji> \<new_name>
+  + lock \<server_emoji> \[roles]...
+  + clone \<server_emoji> \[name]
 - minecraft_uuid \<username>
-- commands
+- commands 
+- in \<relative_time>
+- afk \[reason=...]
+- auto-afk-remove \[mode]
+
+## Test
+- chart 
 
 ## Fun
-- cat
-- dog
-- duck
-- tias
-- inspireme
+- cat 
+- dog 
+- duck 
+- tias 
+- inspireme 
 - banana \[member]
-- meme
-- would_you_rather
-- aww
+- meme 
+- would_you_rather 
+- aww 
 - 8ball \<question>
 - choose \[choices...]
-- coinflip
+- coinflip 
 - roll \[number]
 - wikipedia \<search>
 - urban \<word>
+- achievement \<text>
+- tictactoe 
+- rock-paper-scissors 
+- catch \[member]
 
 
 # Created by `LeoCx1000#9999`
