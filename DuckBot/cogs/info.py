@@ -89,7 +89,7 @@ description: {command_help}
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = paginator.HelpMenuPaginator(paginator.GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix), ctx=self.context, compact=True)
+        menu = paginator.ViewPaginator(paginator.GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix), ctx=self.context, compact=True)
         await menu.start()
 
     async def send_group_help(self, group):
@@ -102,7 +102,7 @@ description: {command_help}
             return await self.send_command_help(group)
 
         source = paginator.GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
-        menu = paginator.HelpMenuPaginator(source, ctx=self.context, compact=True)
+        menu = paginator.ViewPaginator(source, ctx=self.context, compact=True)
         await menu.start()
 
     async def send_error_message(self, error):
@@ -199,8 +199,7 @@ class About(commands.Cog):
                                           f"{constants.INVITE} [invite me]({self.bot.invite_url}) | "
                                           f"{constants.TOP_GG} [top.gg]({self.bot.vote_top_gg}) | "
                                           f"{constants.BOTS_GG} [bots.gg]({self.bot.vote_bots_gg})"
-                                          f"\n> Try also `{ctx.prefix}source [command]`"
-                                          f"\n> or `{ctx.prefix}source [command.subcommand]`")
+                                          f"\n> Try also `{ctx.prefix}source [command]`")
 
         embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.display_avatar.url)
         # statistics
@@ -231,7 +230,7 @@ class About(commands.Cog):
 
         embed.add_field(name='Process', value=f'{memory_usage:.2f} MiB\n{cpu_usage:.2f}% CPU')
         embed.add_field(name='Bot servers',
-                        value=f"**total servers:** {guilds}\n**average server bot%:** {round(sum(avg) / len(avg), 2)}%")
+                        value=f"**total servers:** {guilds}\n**avg bot/human:** {round(sum(avg) / len(avg), 2)}%")
         embed.add_field(name='Command info:',
                         value=f"**Last reboot:**\n{self.get_bot_uptime()}"
                               f"\n**Last command reload:**\n{self.get_bot_last_rall()}")
