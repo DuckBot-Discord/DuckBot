@@ -11,7 +11,7 @@ from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import constants
-from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource, PaginatedStringListPageSource, TodoListPaginator
+from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource, PaginatedStringListPageSource
 from DuckBot.helpers.rock_paper_scissors import RockPaperScissors
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
 
@@ -322,8 +322,7 @@ class Fun(commands.Cog, name='Fun'):
     async def catch(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
         """Catches someone. (for comedic purposes only)"""
         upper_hand = await ctx.send(constants.CAG_UP, reply=False)
-        message: discord.Message = await self.bot.wait_for('message', check=lambda
-            m: m.channel == ctx.channel and m.author != ctx.me)
+        message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
@@ -341,9 +340,10 @@ class Fun(commands.Cog, name='Fun'):
                                                "ON CONFLICT (user_id, text) DO UPDATE SET user_id = $1 RETURNING jump_url, added_time",
                                                ctx.author.id, text, ctx.message.jump_url, ctx.message.created_at)
         if insertion['added_time'] != ctx.message.created_at:
-            return await ctx.send(embed=discord.Embed(description=
-                                                      '**That is already added to your todo list:**'
-                                                      f'\n> [added here]({insertion["jump_url"]}) ({discord.utils.format_dt(insertion["added_time"], style="R")})'))
+            embed = discord.Embed(description=f'⚠ **That is already added to your todo list:**'
+                                              f'\n\u200b  → [added here]({insertion["jump_url"]}) '
+                                              f'{discord.utils.format_dt(insertion["added_time"], style="R")}')
+            return await ctx.send(embed=embed, footer=False)
         await ctx.send('**Added to todo list:**'
                        f'\n\u200b  → {text[0:1900]}{"..." if len(text) > 1900 else ""}')
 
@@ -360,7 +360,7 @@ class Fun(commands.Cog, name='Fun'):
             pages.add_line(page[0:4098])
 
         source = PaginatedStringListPageSource(pages.pages, ctx=ctx)
-        paginator = TodoListPaginator(source, ctx=ctx, compact=True)
+        paginator = ViewPaginator(source, ctx=ctx, compact=True)
         await paginator.start()
 
     @todo.command(name='clear')

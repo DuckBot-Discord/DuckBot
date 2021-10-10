@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 import aiohttp
 import asyncio
 import discord
@@ -11,7 +9,7 @@ import re
 import time
 
 import typing
-from discord.ext import commands, menus
+from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants, helper
@@ -24,6 +22,13 @@ def setup(bot):
 
 
 class MyHelp(commands.HelpCommand):
+
+    def get_bot_mapping(self):
+        """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
+        bot = self.context.bot
+        mapping = {cog: cog.get_commands() for cog in sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True)}
+        mapping[None] = [c for c in bot.commands if c.cog is None]
+        return mapping
 
     # Formatting
     def get_minimal_command_signature(self, command):
