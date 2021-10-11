@@ -13,7 +13,7 @@ from DuckBot import errors
 from DuckBot.helpers import paginator, time_inputs, constants
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import helper
-from DuckBot.helpers.paginator import ViewPaginator, PaginatedStringListPageSource
+from DuckBot.helpers.paginator import ViewPaginator, PaginatedStringListPageSource, TodoListPaginator
 
 
 def setup(bot):
@@ -516,8 +516,8 @@ class Utility(commands.Cog):
             pages.add_line(page[0:4098])
 
         source = PaginatedStringListPageSource(pages.pages, ctx=ctx)
-        paginator = ViewPaginator(source, ctx=ctx, compact=True)
-        await paginator.start()
+        view = TodoListPaginator(source, ctx=ctx, compact=True)
+        await view.start()
 
     @todo.command(name='clear')
     async def todo_clear(self, ctx: CustomContext):
