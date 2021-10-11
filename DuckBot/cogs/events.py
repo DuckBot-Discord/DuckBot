@@ -413,3 +413,8 @@ class Handler(commands.Cog, name='Handler'):
 
         await message.add_reaction(constants.UPVOTE)
         await message.add_reaction(constants.DOWNVOTE)
+
+    @commands.command()
+    async def on_guild_remove(self, guild: discord.Guild):
+        await self.bot.db.execute('DELETE FROM prefixes WHERE guild_id = $1;'
+                                  '\nDELETE FROM temporary_mutes WHERE guild_id = $1;', guild.id)

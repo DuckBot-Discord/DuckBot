@@ -931,9 +931,10 @@ class Moderation(commands.Cog):
 
         mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
 
-        role = ctx.guild.get_role(int(mute_role))
-        if isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
+        if mute_role:
+            mute_role = ctx.guild.get_role(mute_role)
+            if mute_role:
+                raise commands.BadArgument('You already have a mute role')
 
         await ctx.send(f"Creating Muted role, and applying it to all channels."
                        f"\nThis may take awhile ETA: {len(ctx.guild.channels)} seconds.")
