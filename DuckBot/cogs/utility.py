@@ -13,7 +13,7 @@ from DuckBot import errors
 from DuckBot.helpers import paginator, time_inputs, constants
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import helper
-from DuckBot.helpers.paginator import ViewPaginator, PaginatedStringListPageSource
+from DuckBot.helpers.paginator import ViewPaginator, PaginatedStringListPageSource, TodoListPaginator
 
 
 def setup(bot):
@@ -436,27 +436,6 @@ class Utility(commands.Cog):
             embed.set_author(icon_url=f'https://crafatar.com/avatars/{uuid}?size=128&overlay=true', name=user)
             return await ctx.send(embed=embed)
 
-    @commands.command(name="commands")
-    async def _commands(self, ctx: CustomContext) -> discord.Message:
-        """
-        Shows all the bot commands, even the ones you can't run.
-        """
-
-        ignored_cogs = ("Bot Management", "Jishaku")
-
-        def divide_chunks(str_list, n):
-            for i in range(0, len(str_list), n):
-                yield str_list[i:i + n]
-
-        shown_commands = [c.name for c in self.bot.commands if c.cog_name not in ignored_cogs]
-        ml = max([len(c.name) for c in self.bot.commands if c.cog_name not in ignored_cogs]) + 1
-
-        all_commands = list(divide_chunks(shown_commands, 3))
-        all_commands = '\n'.join([''.join([f"{x}{' ' * (ml - len(x))}" for x in c]).strip() for c in all_commands])
-
-        return await ctx.send(embed=discord.Embed(title=f"Here are ALL my commands ({len(shown_commands)})",
-                                                  description=f"```fix\n{all_commands}\n```"))
-
     @commands.command(name="in")
     async def _in_command(self, ctx, *, relative_time: time_inputs.ShortTime):
         """
@@ -537,8 +516,8 @@ class Utility(commands.Cog):
             pages.add_line(page[0:4098])
 
         source = PaginatedStringListPageSource(pages.pages, ctx=ctx)
-        paginator = ViewPaginator(source, ctx=ctx, compact=True)
-        await paginator.start()
+        view = TodoListPaginator(source, ctx=ctx, compact=True)
+        await view.start()
 
     @todo.command(name='clear')
     async def todo_clear(self, ctx: CustomContext):

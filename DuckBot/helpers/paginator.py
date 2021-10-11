@@ -254,6 +254,8 @@ class ViewPaginator(discord.ui.View):
             await self.message.edit(view=None)
 
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        if interaction.user.id in self.ctx.bot.owner_ids:
+            await self.ctx.reply('```py' + ''.join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__) + '\n```'))
         if interaction.response.is_done():
             await interaction.followup.send('An unknown error occurred, sorry', ephemeral=True)
         else:

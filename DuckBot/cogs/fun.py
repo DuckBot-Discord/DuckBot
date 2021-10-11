@@ -1,5 +1,7 @@
 import asyncio
+import logging
 import random
+import traceback
 import urllib.parse
 import aiowiki
 
@@ -56,40 +58,46 @@ class Fun(commands.Cog, name='Fun'):
         self.bot: DuckBot = bot
 
     async def reddit(self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE') -> discord.Embed:
-        subreddit = await self.bot.reddit.subreddit(subreddit)
-        post = await subreddit.random()
+        try:
+            subreddit = await self.bot.reddit.subreddit(subreddit)
+            post = await subreddit.random()
 
-        if embed_type == 'IMAGE':
-            while 'i.redd.it' not in post.url or post.over_18:
-                post = await subreddit.random()
+            if embed_type == 'IMAGE':
+                while 'i.redd.it' not in post.url or post.over_18:
+                    post = await subreddit.random()
 
-            embed = discord.Embed(color=discord.Color.random(),
-                                  description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
-                                              f"{constants.REDDIT_UPVOTE} {post.score} ({post.upvote_ratio * 100}%) "
-                                              f"• from [r/{subreddit}](https://reddit.com/r/{subreddit})")
-            embed.title = post.title if title is True else None
-            embed.set_image(url=post.url)
-            return embed
+                embed = discord.Embed(color=discord.Color.random(),
+                                      description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
+                                                  f"{constants.REDDIT_UPVOTE} {post.score} ({post.upvote_ratio * 100}%) "
+                                                  f"• from [r/{subreddit}](https://reddit.com/r/{subreddit})")
+                embed.title = post.title if title is True else None
+                embed.set_image(url=post.url)
+                return embed
 
-        if embed_type == 'POLL':
-            while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18:
-                post = await (await self.bot.reddit.subreddit(subreddit)).random()
+            if embed_type == 'POLL':
+                while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18:
+                    post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
-            iterations: int = 1
-            options = []
-            emojis = []
-            for option in post.poll_data.options:
-                num = f"{iterations}\U0000fe0f\U000020e3"
-                options.append(f"{num} {option.text}")
-                emojis.append(num)
-                iterations += 1
-                if iterations > 9:
-                    iterations = 1
+                iterations: int = 1
+                options = []
+                emojis = []
+                for option in post.poll_data.options:
+                    num = f"{iterations}\U0000fe0f\U000020e3"
+                    options.append(f"{num} {option.text}")
+                    emojis.append(num)
+                    iterations += 1
+                    if iterations > 9:
+                        iterations = 1
 
-            embed = discord.Embed(color=discord.Color.random(),
-                                  description='\n'.join(options))
-            embed.title = post.title if title is True else None
-            return embed, emojis
+                embed = discord.Embed(color=discord.Color.random(),
+                                      description='\n'.join(options))
+                embed.title = post.title if title is True else None
+                return embed, emojis
+        except Exception as error:
+            for line in "".join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__)).split('\n'):
+                logging.info(line)
+            await self.bot.get_channel(880181130408636456).send('A reddit error occurred! Please check the console.')
+            return discord.Embed(description='Whoops! An unexpected error occurred')
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
