@@ -26,7 +26,8 @@ class MyHelp(commands.HelpCommand):
     def get_bot_mapping(self):
         """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
         bot = self.context.bot
-        mapping = {cog: cog.get_commands() for cog in sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True)}
+        mapping = {cog: cog.get_commands() for cog in
+                   sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True)}
         mapping[None] = [c for c in bot.commands if c.cog is None]
         return mapping
 
@@ -89,7 +90,8 @@ description: {command_help}
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = paginator.ViewPaginator(paginator.GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix), ctx=self.context, compact=True)
+        menu = paginator.ViewPaginator(paginator.GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix),
+                                       ctx=self.context, compact=True)
         await menu.start()
 
     async def send_group_help(self, group):
@@ -262,7 +264,8 @@ class About(commands.Cog):
             embed.set_image(
                 url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
             return await ctx.send(embed=embed,
-                                  view=helper.Url(source_url, label='Open on GitHub', emoji=constants.GITHUB), footer=False)
+                                  view=helper.Url(source_url, label='Open on GitHub', emoji=constants.GITHUB),
+                                  footer=False)
 
         if command == 'help':
             src = type(self.bot.help_command)
@@ -275,7 +278,9 @@ class About(commands.Cog):
                                       description=mpl_advice)
                 embed.set_image(
                     url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
-                return await ctx.send(embed=embed, view=helper.Url(source_url, label='Open on GitHub', emoji=constants.GITHUB), footer=False)
+                return await ctx.send(embed=embed,
+                                      view=helper.Url(source_url, label='Open on GitHub', emoji=constants.GITHUB),
+                                      footer=False)
 
             src = obj.callback.__code__
             module = obj.callback.__module__
@@ -295,7 +300,8 @@ class About(commands.Cog):
                               description=mpl_advice)
         embed.set_image(url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
         embed.set_footer(text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
-        await ctx.send(embed=embed, view=helper.Url(final_url, label=f'Here\'s {str(obj)}', emoji=constants.GITHUB), footer=False)
+        await ctx.send(embed=embed, view=helper.Url(final_url, label=f'Here\'s {str(obj)}', emoji=constants.GITHUB),
+                       footer=False)
 
     @commands.command(description="hiii")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -359,62 +365,29 @@ DuckBot's top role position
         """
         Shows the latest changes of the bot. ""
         """
-        embed = discord.Embed(color=ctx.me.color,
-                              title="📰 Latest News - <t:1633848000:d> (<t:1633848000:R>)",
+        embed = discord.Embed(title="📰 Latest News - <t:1633848000:d> (<t:1633848000:R>)",
                               description=f"\u200b"
-                                          f"\n> <:commands:861817699729145901> **NEW! Mute commands**"
-                                          f"\n> _`mute`, `unmute`, `tempmute`, `muterole`, `selfmute` 🔇_"
-                                          f"\n"
-                                          f"\n> **😂 New fun commands added to the Fun category!**"
-                                          f"\n> `meme`, `choose`, `coinFlip`, `roll`, `8ball`, `wikipedia`"
-                                          f"\n"
-                                          f"\n> **👷 Added support for multiple prefixes:**"
-                                          f"\n> Now you can do `prefix add`, `prefix remove` and `prefix clear` 💞"
-                                          f"\n"
-                                          f"\n> 🆘 **The old new help command is back!!!**"
-                                          f"\n> To make it easier to read at a glance, the old help command is back! "
-                                          f"And with it, this new command, `news`."
-                                          f"\n> _Note that the source code for the old help "
-                                          f"command is still [here](https://github.com/LeoCx1000/"
-                                          f"discord-bots/blob/master/DuckBot/cogs/OldCharlesHelp.pyi)_"
-                                          f"\n"
-                                          f"\n> **🗑 New! `remove threads` command!**"
-                                          f"\n> Deletes all messages with threads, and their associated threads."
-                                          f"\n"
-                                          f"\n> **📜 <t:1631593960:R>: New would you rather command!**"
-                                          f"\ndo `{ctx.clean_prefix}wyr` or `{ctx.clean_prefix}would_you_rather` ⚖"
-                                          f"\n"
-                                          f"\n> **👋 <t:1632334420:R>: New welcome messages!**"
-                                          f"\n> _use the `{ctx.clean_prefix}welcome` command to configure it!_"
-                                          f"\n"
-                                          f"\n> **☺ <t:1632409234:R> New emoji list comand!**"
-                                          f"\n> Do `{ctx.clean_prefix}emoji list` for a list of this server's emoji!"
-                                          f"\n"
-                                          f"\n> **😴 <t:1632870000:R> New afk command!**"
-                                          f"\n> Use the `{ctx.clean_prefix}afk` command, and others will get notified when mentioning you. "
-                                          f"Get out of AFK mode by simply sending a message somewhere the bot can see"
-                                          f"\n"
-                                          f"\n> **<t:1633210000:R> You're now able to play Tic-Tac-Toe**"
+                                          f"\n> **#\️⃣ <t:1633210000:R> You're now able to play Tic-Tac-Toe**"
                                           f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "
-                                          f"pressing the 'Join this game!' button 🎫"
+                                          f"pressing the 'Join this game!' button \🎫"
                                           f"\n"
-                                          f"\n> **<t:1633110000:R> You're now able to play Rock-Paper-Scissors**"
+                                          f"\n> **\✌ <t:1633110000:R> You're now able to play Rock-Paper-Scissors**"
                                           f"\n> Just run the `{ctx.clean_prefix}rps` command. Other users will be able to join your game by "
-                                          f"pressing the 'Join this game!' button 🎫"
+                                          f"pressing the 'Join this game!' button \🎫"
                                           f"\n"
-                                          f"\n> **<t:1633447880:R> New `multi-mute` and `multi-unmute` commands**"
-                                          f"\n> mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason"
+                                          f"\n> **\🔇 <t:1633447880:R> New `multi-mute` and `multi-unmute` commands**"
+                                          f"\n> Mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason`"
                                           f"\n"
-                                          f"\n> **<t:1633642000:R> New `mutual-servers` command**"
+                                          f"\n> **\👥 <t:1633642000:R> New `mutual-servers` command**"
                                           f"\n"
-                                          f"\n> **<t:1633753000:R> Improved upon the invitestats command**"
+                                          f"\n> **\🎉 <t:1633753000:R> Improved upon the invitestats command**"
                                           f"\n"
-                                          f"\n> **<t:1633848000:R> New `todo` command**"
-                                          f"\n> _save things for later! don't forget about anything anymore."
+                                          f"\n> **\📜 <t:1633848000:R> New `todo` command**"
+                                          f"\n> _save things for later! don't forget about anything anymore._"
                                           f"\n"
-                                          f"\n>  **<t:1633908200 `block` and `unblock` commands**"
+                                          f"\n>  **\⛔ <t:1633908200:R> `block` and `unblock` commands**"
                                           f"\n> Block troublesome people from messaging in your current channel")
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, footer=None)
 
     @commands.command(hidden=True)
     async def oz_ad(self, ctx):
@@ -427,7 +400,8 @@ DuckBot's top role position
         user = ctx.author if not await self.bot.is_owner(ctx.author) else (user or ctx.author)
         guilds = sorted(user.mutual_guilds, key=lambda g: g.member_count, reverse=True)[0:30]
         embed = discord.Embed(title=f'My top {len(guilds)} mutual servers with {user}:',
-                              description='\n'.join([f"[`{guild.member_count}`] **{guild.name}** " for guild in guilds]))
+                              description='\n'.join(
+                                  [f"[`{guild.member_count}`] **{guild.name}** " for guild in guilds]))
         await ctx.send(embed=embed)
 
     @commands.command(name="commands")
