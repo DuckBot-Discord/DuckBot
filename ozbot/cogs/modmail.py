@@ -1,10 +1,10 @@
-import discord, asyncio, typing, re, yaml
+import discord
+import yaml
 from discord.errors import HTTPException
 from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
-from discord.ext.commands.cooldowns import BucketType
 
-from ozbot import constants
+import constants
 
 
 async def get_webhook(channel):
