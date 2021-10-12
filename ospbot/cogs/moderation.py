@@ -10,7 +10,7 @@ from collections import Counter
 import helpers
 from discord.ext import commands, menus
 
-from ospbot.files import constants, helper
+from files import constants, helper
 
 
 class Arguments(argparse.ArgumentParser):
