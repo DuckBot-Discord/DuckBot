@@ -2,18 +2,17 @@ import asyncio
 import logging
 import random
 import traceback
-import urllib.parse
-import aiowiki
-
-import discord
 import typing
+import urllib.parse
 
-import jishaku.paginators
+import aiowiki
+import discord
 from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
+from DuckBot.cogs.management import get_webhook
 from DuckBot.helpers import constants
-from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource, PaginatedStringListPageSource
+from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
 from DuckBot.helpers.rock_paper_scissors import RockPaperScissors
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
 

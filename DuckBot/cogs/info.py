@@ -33,7 +33,9 @@ class MyHelp(commands.HelpCommand):
 
     # Formatting
     def get_minimal_command_signature(self, command):
-        return '%s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
+        if isinstance(command, commands.Group):
+            return '[G] %s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
+        return '(c) %s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
 
     @staticmethod
     def get_command_name(command):

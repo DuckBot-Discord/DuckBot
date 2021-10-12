@@ -618,12 +618,15 @@ class HelpMenuPageSource(menus.ListPageSource):
         embed = discord.Embed(color=self.ctx.color(),
                               description=f"\n> 🔄 **Total Commands:** {len(list(self.ctx.bot.commands))} | **Usable by you (here):** "
                                           f"{len(await self.help.filter_commands(list(self.ctx.bot.commands), sort=True))} 🔄"
-                                          f"\n> 📰 **Do `{self.ctx.clean_prefix}news` to see the latest "
-                                          f"additions to {self.ctx.me.display_name}** 📰"
-                                          f"\n```diff"
-                                          f"\n+ {self.ctx.clean_prefix}help [command] - get information on a command"
-                                          f"\n+ {self.ctx.clean_prefix}help [category] - get information on a category"
-                                          f"\n```")
+                                          f"\n> 📰 **Do `{self.ctx.clean_prefix}news` to see the latest additions to {self.ctx.me.display_name}** 📰"
+                                          f"\n"
+                                          f"\n```css"
+                                          f"\n{self.ctx.clean_prefix}help [command|category|group] - get more info."
+                                          f"\n``````fix"
+                                          f"\n(c) means command - [g] means command group."
+                                          f'\nGroups have sub-commands = do "help [group]"'
+                                          f"\n```"
+                                          f"\n")
         embed.add_field(name=data[0], value=data[1])
         embed.set_footer(text="Click the blue buttons to navigate these pages")
         return embed
