@@ -29,14 +29,12 @@ def setup(bot):
     bot.add_cog(Management(bot))
 
 
-async def get_webhook(channel):
+async def get_webhook(channel) -> discord.Webhook:
     webhook_list = await channel.webhooks()
     if webhook_list:
         for hook in webhook_list:
             if hook.token:
                 return hook
-            else:
-                continue
     hook = await channel.create_webhook(name="DuckBot ModMail")
     return hook
 
