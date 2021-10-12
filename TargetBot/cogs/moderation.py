@@ -175,37 +175,6 @@ class Moderation(commands.Cog):
         await asyncio.sleep(self.yaml_data['ErrorMessageTimeout'])
         await ctx.message.delete(delay=1)
 
-    # all the emoji are from the bots.gg discord server.
-    # If your bot is in there, it'll be able to use them
-    def get_user_badges(self, user):
-        author_flags = user.public_flags
-        flags = dict(author_flags)
-        emoji_flags = ""
-        if flags['staff'] is True:
-            emoji_flags = f"{emoji_flags} <:staff:860644241800429639>"
-        if flags['partner'] is True:
-            emoji_flags = f"{emoji_flags} <:partnernew:860644259107569685>"
-        if flags['hypesquad'] is True:
-            emoji_flags = f"{emoji_flags} <:hypesquad:860644277687943208>"
-        if flags['bug_hunter'] is True:
-            emoji_flags = f"{emoji_flags} <:bughunter:585765206769139723>"
-        if flags['hypesquad_bravery'] is True:
-            emoji_flags = f"{emoji_flags} <:bravery:860644425319710760>"
-        if flags['hypesquad_brilliance'] is True:
-            emoji_flags = f"{emoji_flags} <:brilliance:860644445435199539>"
-        if flags['hypesquad_balance'] is True:
-            emoji_flags = f"{emoji_flags} <:balance:860644467933839410>"
-        if flags['early_supporter'] is True:
-            emoji_flags = f"{emoji_flags} <:supporter:860644501067268106>"
-        if user.premium_since:
-            emoji_flags = f"{emoji_flags} <:booster4:860644548887969832>"
-        if flags['bug_hunter_level_2'] is True:
-            emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>"  # not from bots.gg
-        if flags['verified_bot_developer'] is True:
-            emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>"  # not from bots.gg
-        if emoji_flags == "": emoji_flags = None
-        return emoji_flags
-
     @commands.command()
     async def invites(self, ctx, member: discord.Member = None):
         member = member or ctx.author
@@ -215,70 +184,6 @@ class Moderation(commands.Cog):
                 invites += invite.uses
         embed = discord.Embed(description=f"{member} has invited **{invites}** member(s) to **{ctx.guild.name}**!",
                               color=0x2F3136)
-        await ctx.send(embed=embed)
-
-    @commands.command(aliases=['userinfo', 'ui'])
-    async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
-        if not user: user = ctx.author
-        # BADGES
-        badges = self.get_user_badges(user)
-        if badges:
-            badges = f"\n<:store_tag:860644620857507901>**Badges:**{badges}"
-        else:
-            badges = ''
-        # USERID
-        userid = f"\n<:greyTick:860644729933791283>**ID:** `{user.id}`"
-        # NICKNAME
-        if user.nick:
-            nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
-        else:
-            nick = ""
-        # CREATION DATE
-        date = user.created_at.strftime("%b %-d %Y at %-H:%M")
-        created = f"\n<:invite:860644752281436171>**Created:** `{date} UTC`"
-        # JOIN DATE
-        if user.joined_at:
-            date = user.joined_at.strftime("%b %-d %Y at %-H:%M")
-            joined = f"\n<:joined:849392863557189633>**joined:** `{date} UTC`"
-        else:
-            joined = ""
-        # GUILD OWNER
-        if user is ctx.guild.owner:
-            owner = f"\n<:owner:860644790005399573>**Owner:** <:check:314349398811475968>"
-        else:
-            owner = ""
-        # BOT
-        if user.bot:
-            bot = f"\n<:botTag:860645571076030525>**Bot:** <:check:314349398811475968>"
-        else:
-            bot = ""
-        # BOOSTER SINCE
-        if user.premium_since:
-            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
-            boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
-        else:
-            boost = ""
-
-        # Join Order
-        order = f"\n<:moved:848312880666640394>**Join position:** `{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
-
-        if user.premium_since:
-            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
-            boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
-        else:
-            boost = ""
-        # ROLES
-        roles = ""
-        for role in user.roles:
-            if role is ctx.guild.default_role: continue
-            roles = f"{roles} {role.mention}"
-        if roles != "":
-            roles = f"\n<:role:860644904048132137>**roles:** {roles}"
-        # EMBED
-        embed = discord.Embed(color=ctx.me.color,
-                              description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
-        embed.set_author(name=user, icon_url=user.display_avatar.url)
-        embed.set_thumbnail(url=user.display_avatar.url)
         await ctx.send(embed=embed)
 
     # ------------------------------------------------------------#

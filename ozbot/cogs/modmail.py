@@ -4,6 +4,8 @@ from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 from discord.ext.commands.cooldowns import BucketType
 
+from ozbot import constants
+
 
 async def get_webhook(channel):
     hookslist = await channel.webhooks()
@@ -135,12 +137,12 @@ class modmail(commands.Cog):
     async def on_member_join(self, member):
         if member.guild.id != 706624339595886683: return
         if not member.bot: await self.bot.get_channel(706624465378738217).send(f"""{member.mention}, Welcome to {member.guild.name}! Make sure to read and agree to the <#706825075516768297> to get access to the rest of {member.guild.name}.""")
-        await self.bot.get_channel(708316690638700607).send(f"""<:outgoingarrow:848312880679354368> **{member.name}#{member.discriminator}** joined **{member.guild.name}**!""")
+        await self.bot.get_channel(708316690638700607).send(f"""{constants.JOINED_SERVER} **{member.name}#{member.discriminator}** joined **{member.guild.name}**!""")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         if member.guild.id != 706624339595886683: return
-        await self.bot.get_channel(708316690638700607).send(f"""<:incomingarrow:848312881070080001> **{member.name}#{member.discriminator}** left **{member.guild.name}**!""")
+        await self.bot.get_channel(708316690638700607).send(f"""{constants.LEFT_SERVER} **{member.name}#{member.discriminator}** left **{member.guild.name}**!""")
 
 def setup(bot):
     bot.add_cog(modmail(bot))

@@ -2,6 +2,7 @@ import typing, discord, asyncio, random, datetime, argparse, shlex, re, asyncpg,
 from discord.ext import commands, tasks, menus
 from collections import Counter, defaultdict
 import helpers
+import constants
 
 
 class Confirm(menus.Menu):
@@ -105,100 +106,80 @@ class moderation(commands.Cog):
                     user = res["name"]
                 return user
 
-    # all the emoji are from the bots.gg discord server.
-    # If your bot is in there, it'll be able to use them
-    def get_user_badges(self, user):
-        author_flags = user.public_flags
-        flags = dict(author_flags)
-        emoji_flags = ""
-        if flags['staff'] is True:
-            emoji_flags = f"{emoji_flags} <:staff:860644241800429639>"
-        if flags['partner'] is True:
-            emoji_flags = f"{emoji_flags} <:partnernew:860644259107569685>"
-        if flags['hypesquad'] is True:
-            emoji_flags = f"{emoji_flags} <:hypesquad:860644277687943208>"
-        if flags['bug_hunter'] is True:
-            emoji_flags = f"{emoji_flags} <:bughunter:585765206769139723>"
-        if flags['hypesquad_bravery'] is True:
-            emoji_flags = f"{emoji_flags} <:bravery:860644425319710760>"
-        if flags['hypesquad_brilliance'] is True:
-            emoji_flags = f"{emoji_flags} <:brilliance:860644445435199539>"
-        if flags['hypesquad_balance'] is True:
-            emoji_flags = f"{emoji_flags} <:balance:860644467933839410>"
-        if flags['early_supporter'] is True:
-            emoji_flags = f"{emoji_flags} <:supporter:860644501067268106>"
-        if user.premium_since:
-            emoji_flags = f"{emoji_flags} <:booster4:860644548887969832>"
-        if flags['bug_hunter_level_2'] is True:
-            emoji_flags = f"{emoji_flags} <:bughunter_gold:850843414953984041>"  # not from bots.gg
-        if flags['verified_bot_developer'] is True:
-            emoji_flags = f"{emoji_flags} <:earlybotdev:850843591756349450>"  # not from bots.gg
-        if emoji_flags == "": emoji_flags = None
-        return emoji_flags
 
-    @commands.command(aliases=['userinfo', 'ui'])
-    async def uinfo(self, ctx, user: typing.Optional[discord.Member]):
-        if not user: user = ctx.author
-        # BADGES
-        badges = self.get_user_badges(user)
-        if badges:
-            badges = f"\n<:store_tag:860644620857507901>**Badges:**{badges}"
-        else:
-            badges = ''
-        # USERID
-        userid = f"\n<:greyTick:860644729933791283>**ID:** `{user.id}`"
-        # NICKNAME
-        if user.nick:
-            nick = f"\n<:nickname:850914031953903626>**Nickname:** `{user.nick}`"
-        else:
-            nick = ""
-        # CREATION DATE
-        date = user.created_at.strftime("%b %-d %Y at %-H:%M")
-        created = f"\n<:invite:860644752281436171>**Created:** `{date} UTC`"
-        # JOIN DATE
-        if user.joined_at:
-            date = user.joined_at.strftime("%b %-d %Y at %-H:%M")
-            joined = f"\n<:joined:849392863557189633>**joined:** `{date} UTC`"
-        else:
-            joined = ""
-        # GUILD OWNER
-        if user is ctx.guild.owner:
-            owner = f"\n<:owner:860644790005399573>**Owner:** <:check:314349398811475968>"
-        else:
-            owner = ""
-        # BOT
-        if user.bot:
-            bot = f"\n<:botTag:860645571076030525>**Bot:** <:check:314349398811475968>"
-        else:
-            bot = ""
-        # BOOSTER SINCE
-        if user.premium_since:
-            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
-            boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
-        else:
-            boost = ""
+    def get_user_badges(self, user, bot: bool = False):
+        flags = dict(user.public_flags)
 
-        # Join Order
-        order = f"\n<:moved:848312880666640394>**Join position:** `{sorted(ctx.guild.members, key=lambda user: user.joined_at).index(user) + 1}`"
+        if bot is True:
+            return True if flags['verified_bot'] else False
 
         if user.premium_since:
-            date = user.premium_since.strftime("%b %-d %Y at %-H:%M")
-            boost = f"\n<:booster4:860644548887969832>**Boosting since:** `{date} UTC`"
+            flags['premium_since'] = True
         else:
-            boost = ""
-        # ROLES
-        roles = ""
-        for role in user.roles:
-            if role is ctx.guild.default_role: continue
-            roles = f"{roles} {role.mention}"
-        if roles != "":
-            roles = f"\n<:role:860644904048132137>**roles:** {roles}"
-        # EMBED
-        embed = discord.Embed(color=ctx.me.color,
-                              description=f"""{badges}{owner}{bot}{userid}{created}{nick}{joined}{order}{boost}{roles}""")
-        embed.set_author(name=user,
-                         icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{user.status}.png")
-        embed.set_thumbnail(url=user.display_avatar.url)
+            flags['premium_since'] = False
+
+        user_flags = []
+        for flag, emoji in constants.USER_FLAGS.items():
+            if flags[flag]:
+                user_flags.append(emoji)
+
+        return ' '.join(user_flags) if user_flags else None
+
+
+    @commands.command(aliases=['uinfo', 'ui', 'whois', 'whoami'])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.guild_only()
+    async def userinfo(self, ctx: commands.Context, *, member: typing.Optional[discord.Member]):
+        """
+        Shows a user's information. If not specified, shows your own.
+        """
+        member = member or ctx.author
+
+        embed = discord.Embed(color=(member.color if member.color != discord.Colour.default() else discord.Embed.Empty))
+        embed.set_author(name=member, icon_url=member.display_avatar.url)
+        embed.set_thumbnail(url=member.display_avatar.url)
+
+        embed.add_field(name=f"{constants.INFORMATION_SOURCE} General information",
+                        value=f"**ID:** {member.id}"
+                              f"\n**Name:** {member.name}"
+                              f"\n╰ **Nick:** {(member.nick or '✖')}"
+                              f"\n**Owner:** {ctx.tick(member == member.guild.owner)} • "
+                              f"**Bot:** {ctx.tick(member.bot)}", inline=True)
+
+        embed.add_field(name=f"{constants.STORE_TAG} Badges",
+                        value=(self.get_user_badges(member) or "No Badges") + '\u200b', inline=True)
+
+        embed.add_field(name=f"{constants.INVITE} Created At",
+                        value=f"╰ {discord.utils.format_dt(member.created_at, style='f')} "
+                              f"({discord.utils.format_dt(member.created_at, style='R')})",
+                        inline=False)
+
+        embed.add_field(name=f"{constants.JOINED_SERVER} Created At",
+                        value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
+                               f"({discord.utils.format_dt(member.joined_at, style='R')})"
+                               f"\n\u200b \u200b \u200b \u200b ╰ {constants.LEFT_SERVER} **Join Position:** "
+                               f"{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}")
+                        if member else "Could not get data",
+                        inline=False)
+
+        perms = helpers.get_perms(member.guild_permissions)
+        if perms:
+            embed.add_field(name=f"{constants.STORE_TAG} Staff Perms:",
+                            value=f"`{'` `'.join(perms)}`", inline=False)
+
+        roles = [r.mention for r in member.roles if r != ctx.guild.default_role]
+        if roles:
+            embed.add_field(name=f"{constants.ROLES_ICON} Roles:",
+                            value=" ".join(roles), inline=False)
+
+        if member.premium_since:
+            embed.add_field(name=f"{constants.BOOST} Boosting since:",
+                            value=f"╰ {discord.utils.format_dt(member.premium_since, style='f')} "
+                                  f"({discord.utils.format_dt(member.premium_since, style='R')})",
+                            inline=False)
+
+        embed.set_author(name=member, icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{member.status}.png")
+        embed.set_thumbnail(url=member.display_avatar.url)
         await ctx.send(embed=embed)
 
     # ------------------------------------------------------------#
@@ -739,7 +720,7 @@ class moderation(commands.Cog):
         else:
             self.autounmute.start()
 
-        await ctx.send("<:shut:876856376842944582> 👍")
+        await ctx.send(f"{constants.SHUT_SEAGULL} 👍")
 
     # ---------------------------------------------------------------#
     # ------------------------ LOCKDOWN -----------------------------#
