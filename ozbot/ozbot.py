@@ -40,10 +40,6 @@ async def create_db_pool():
     bot.db = await asyncpg.create_pool(**credentials)
     print("connection successful")
 
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS selfmutes(member_id bigint PRIMARY KEY, end_time timestamp);")
-    print("table done")
-
-
 @bot.event
 async def on_ready():
     print("\033[42m======[ BOT ONLINE! ]=======")
