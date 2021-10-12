@@ -148,7 +148,7 @@ class Utility(commands.Cog):
         embed.add_field(name=f"{constants.JOINED_SERVER} Created At",
                         value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
-                               f"\n\u200b \u200b \u200b \u200b ╰ {constants.LEFT_SERVER} **Join Position:** "
+                               f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** "
                                f"{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}")
                         if member else "Could not get data",
                         inline=False)
