@@ -2,6 +2,8 @@ import datetime
 import logging
 import os
 import traceback
+from collections import defaultdict
+
 import tekore as tk
 from typing import (
     List,
@@ -159,15 +161,15 @@ class DuckBot(commands.Bot):
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
-            prefix = (await self.db.fetchval('SELECT prefix FROM prefixes WHERE guild_id = $1',
-                                             message.guild.id)) or self.PRE
-            prefix = prefix if prefix[0] else self.PRE
-
+            prefix = [x['prefix'] for x in await bot.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)] or self.PRE
             self.prefixes[message.guild.id] = prefix
 
         if await bot.is_owner(message.author) and bot.noprefix is True:
             return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
         return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
+
+    async def fetch_prefixes(self, message):
+        return tuple([x['prefix'] for x in await self.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)]) or self.PRE
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
@@ -180,19 +182,16 @@ class DuckBot(commands.Bot):
         if not self.started:
             self.started = True
 
-            values = await self.db.fetch("SELECT guild_id, prefix FROM prefixes")
-
-            for value in values:
-                if value['prefix']:
-                    self.prefixes[value['guild_id']] = (
-                            (value['prefix'] if value['prefix'][0] else self.PRE) or self.PRE)
+            _temp_prefixes = defaultdict(list)
+            for x in await bot.db.fetch('SELECT * FROM pre'):
+                _temp_prefixes[x['guild_id']].append(x['prefix'] or self.PRE)
+            self.prefixes = dict(_temp_prefixes)
 
             for guild in self.guilds:
-                if not guild.unavailable:
-                    try:
-                        self.prefixes[guild.id]
-                    except KeyError:
-                        self.prefixes[guild.id] = self.PRE
+                try:
+                    self.prefixes[guild.id]
+                except KeyError:
+                    self.prefixes[guild.id] = self.PRE
 
             values = await self.db.fetch("SELECT user_id, is_blacklisted FROM blacklist")
             for value in values:
