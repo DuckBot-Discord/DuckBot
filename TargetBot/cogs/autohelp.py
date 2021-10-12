@@ -1,9 +1,5 @@
-import aiohttp
 import discord
-import re
-import urllib
 import yaml
-import yarl
 from discord.ext import commands
 
 

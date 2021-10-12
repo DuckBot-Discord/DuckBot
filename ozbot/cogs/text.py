@@ -1,8 +1,9 @@
-import discord, asyncio, typing, aiohttp, random, json, yaml, re, psutil, pkg_resources, time, datetime, os, inspect, \
-    itertools, contextlib, datetime
+import aiohttp
+import asyncio
+import discord
+import time
+import typing
 from discord.ext import commands, menus
-from discord.ext.commands import Paginator as CommandPaginator
-from jishaku.models import copy_context_with
 
 
 class Duckinator(menus.MenuPages):
@@ -226,20 +227,6 @@ class text(commands.Cog):
         help_command = MyHelp()
         help_command.cog = self
         bot.help_command = help_command
-
-    words = ['nothing', 'nothing']
-    with open(r'files/banned-words.yaml') as file:
-        words = yaml.full_load(file)
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot: return
-        if not message.guild: return
-        if message.guild.id != 706624339595886683: return
-        banned_words = self.words['pogwords']
-        if any(ele in message.content.lower() for ele in banned_words):
-            await message.add_reaction('<:nopog:848312880516562945>')
-            await message.add_reaction('😡')
 
     ##### .s command ####
     # resends the message as the bot

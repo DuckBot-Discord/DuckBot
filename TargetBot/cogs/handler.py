@@ -1,11 +1,9 @@
-import copy
 import io
-import itertools
 import traceback
+
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.ext.commands import BucketType
-import difflib
 
 warned = []
 
