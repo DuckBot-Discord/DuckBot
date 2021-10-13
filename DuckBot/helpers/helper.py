@@ -13,7 +13,7 @@ def get_perms(permissions: discord.Permissions):
     if permissions.administrator:
         return ['Administrator']
     return [p.replace('_', ' ').replace('guild', 'server').title()
-            for p in dict(set(permissions) - set(discord.Permissions(521942724161)))]
+            for p in dict(set(permissions) - set(discord.Permissions(517647756865)))]
 
 
 def get_user_badges(user: discord.Member, bot: DuckBot, fetched_user: discord.User = None):
