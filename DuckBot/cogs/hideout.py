@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import re
 import urllib
@@ -335,3 +336,23 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         wh: discord.Webhook = await get_webhook(ctx.channel)
         await wh.send(message, avatar_url=member.display_avatar.url, username=member.display_name)
         await ctx.message.delete(delay=0)
+
+    @commands.command(name='raw-message', aliases=['rmsg', 'raw'])
+    @commands.cooldown(rate=1, per=40, type=commands.BucketType.user)
+    @commands.max_concurrency(1, commands.BucketType.user)
+    async def raw_message(self, ctx: CustomContext, message: typing.Optional[discord.Message]):
+        async with ctx.typing():
+            message: discord.Message = getattr(ctx.message.reference, 'resolved', message)
+            if not message:
+                raise commands.BadArgument('You must specify a message, or quote (reply to) one.')
+            try:
+                data = await self.bot.http.get_message(message.channel.id, message.id)
+            except discord.HTTPException:
+                raise commands.BadArgument('There was an error retrieving that message.')
+            pretty_data = json.dumps(data, indent=4)
+            if len(pretty_data) > 1990:
+                gist = await self.bot.create_gist(filename='raw_message.json', description='Raw Message created by DuckBot', content=pretty_data)
+                to_send = f"<{gist}>"
+            else:
+                to_send = f"```json\n{pretty_data}\n```"
+            return await ctx.send(to_send)

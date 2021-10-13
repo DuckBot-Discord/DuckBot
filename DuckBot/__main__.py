@@ -221,6 +221,26 @@ class DuckBot(commands.Bot):
         mapping[None] = [c for c in self.commands if c.cog is None]
         return mapping
 
+    async def create_gist(self, *, filename: str, description: str, content: str, public: bool = True):
+        headers = {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'DuckBot-Discord',
+            'Authorization': f'token {os.getenv("GH_TOKEN")}'
+        }
+
+        data = {
+            'public': public,
+            'files': {
+                filename: {
+                    'content': content
+                }
+            },
+            'description': description
+        }
+        output = await self.session.request("POST", "https://api.github.com/gists", json=data, headers=headers)
+        info = await output.json()
+        return info['html_url']
+
     async def get_welcome_channel(self, member: discord.Member):
         if not isinstance(member, discord.Member):
             raise errors.NoWelcomeChannel

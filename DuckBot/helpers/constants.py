@@ -143,13 +143,24 @@ CATEGORY_CHANNEL = '<:category:895414388528406549>'
 STAGE_CHANNEL = '<:stagechannel:895414409445380096>'
 TEXT_CHANNEL_WITH_THREAD = '<:threadnew:895414437916332062>'
 EMOJI_GHOST = '<:emoji_ghost:895414463354785853>'
+SPOTIFY = '<:spotify:897661396022607913>'
 
-st_nt = namedtuple('statuses', ['ONLINE', 'IDLE', 'DND', 'OFFLINE'])
+st_nt = namedtuple('statuses', ['ONLINE', 'IDLE', 'DND', 'OFFLINE',
+                                'ONLINE_WEB', 'IDLE_WEB', 'DND_WEB', 'OFFLINE_WEB',
+                                'ONLINE_MOBILE', 'IDLE_MOBILE', 'DND_MOBILE', 'OFFLINE_MOBILE'])
 
-statuses = st_nt('<:status_online:895808180637020181>',
-                 '<:status_idle:895808212580827256>',
-                 '<:status_dnd:895808261801009193>',
-                 '<:status_offline:895808306222886932>')
+statuses = st_nt(ONLINE='<:desktop_online:897644406344130600>',
+                 ONLINE_WEB='<:web_online:897644406801313832>',
+                 ONLINE_MOBILE='<:mobile_online:897644405102616586>',
+                 IDLE='<:desktop_idle:897644406344130603>',
+                 IDLE_WEB='<:web_idle:897644403244544010>',
+                 IDLE_MOBILE='<:mobile_idle:897644402938347540>',
+                 DND='<:desktop_dnd:897644406675497061>',
+                 DND_WEB='<:web_dnd:897644405383643137>',
+                 DND_MOBILE='<:mobile_dnd:897644405014532107>',
+                 OFFLINE='<:desktop_offline:897644406792937532>',
+                 OFFLINE_WEB='<:web_offline:897644403395547208>',
+                 OFFLINE_MOBILE='<:mobile_offline:897644403345227776>')
 
 CAG_UP = 'https://cdn.discordapp.com/attachments/879251951714467840/896293818096291840/Sv6kz8f.png'
 CAG_DOWN = 'https://cdn.discordapp.com/attachments/879251951714467840/896297890396389377/wvUPp3d.png'

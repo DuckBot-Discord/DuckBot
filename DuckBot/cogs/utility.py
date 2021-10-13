@@ -153,6 +153,23 @@ class Utility(commands.Cog):
                         if member else "Could not get data",
                         inline=False)
 
+        custom_activity = discord.utils.find(lambda act: isinstance(act, discord.CustomActivity), member.activities)
+        activity_string = f"`{discord.utils.remove_markdown(custom_activity.name)}`" if custom_activity else 'User has no custom status.'
+        embed.add_field(name=f'Activity:',
+                        value=f"\n{helper.generate_user_statuses(member)}"
+                              f"\n**Custom status:**"
+                              f"\n{activity_string}")
+
+        spotify = discord.utils.find(lambda act: isinstance(act, discord.Spotify), member.activities)
+
+        embed.add_field(name=f"{constants.SPOTIFY} Spotify:",
+                        value=f"**[{spotify.title}]({spotify.track_url})**"
+                              f"\nBy __{spotify.artist}__"
+                              f"\nOn __{spotify.album}__"
+                              f"\n**Time:** {helper.deltaconv((ctx.message.created_at - spotify.start).total_seconds())}/"
+                              f"{helper.deltaconv(spotify.duration.total_seconds())}"
+                        if spotify else 'Not listening to anything.')
+
         perms = helper.get_perms(member.guild_permissions)
         if perms:
             embed.add_field(name=f"{constants.STORE_TAG} Staff Perms:",

@@ -1,10 +1,12 @@
 import os
 
 import aiofiles
+import aiohttp
 import discord
 import typing
 from discord import VoiceRegion
 
+from DuckBot.__main__ import DuckBot
 from DuckBot.helpers import constants
 
 
@@ -12,7 +14,7 @@ def get_perms(permissions: discord.Permissions):
     if permissions.administrator:
         return ['Administrator']
     return [p.replace('_', ' ').replace('guild', 'server').title()
-            for p in dict(set(permissions) - set(discord.Permissions(517580642880)))]
+            for p in dict(set(permissions) - set(discord.Permissions(517647756865)))]
 
 
 def get_user_badges(user, bot: bool = False):
@@ -35,7 +37,6 @@ def get_user_badges(user, bot: bool = False):
 
 
 def get_server_region(guild: discord.Guild):
-
     r = discord.VoiceRegion.us_central
     region = guild.region
 
@@ -97,30 +98,30 @@ def generate_youtube_bar(position: int, duration: int, bar_length: int,
                          bar_style: typing.Tuple[typing.Tuple[str, str, str]] = None) -> str:
     bar_length = bar_length if bar_length > 0 else 1
     duration = duration if duration > 0 else 1
-    played = int((position/duration)*bar_length)
-    missing = int(bar_length-played)
+    played = int((position / duration) * bar_length)
+    missing = int(bar_length - played)
     bars = bar_style or constants.YOUTUBE_BARS
     bar = []
     if played == 0 and missing > 0:
         bar += [bars[0][1]]
-        bar += [bars[1][2]*(missing-2)]
+        bar += [bars[1][2] * (missing - 2)]
         bar += [bars[2][2]]
 
     elif played > 0 and missing == 0:
         bar += [bars[0][0]]
-        bar += [bars[1][0]*(played-2)]
+        bar += [bars[1][0] * (played - 2)]
         bar += [bars[2][1]]
 
     elif played > 0 and missing > 0:
         bar += [bars[0][0]]
-        bar += [bars[1][0]*(played-1)]
+        bar += [bars[1][0] * (played - 1)]
         bar += [bars[1][1]]
-        bar += [bars[1][2]*(missing-2)]
+        bar += [bars[1][2] * (missing - 2)]
         bar += [bars[2][2]]
 
     elif played > missing:
         bar += [bars[0][0]]
-        bar += [bars[1][0]*(bar_length-2)]
+        bar += [bars[1][0] * (bar_length - 2)]
         bar += [bars[2][0]]
 
     return ''.join(bar)
@@ -142,7 +143,8 @@ async def count_others(path: str, filetype: str = '.py', file_contains: str = 'd
     for i in os.scandir(path):
         if i.is_file():
             if i.path.endswith(filetype):
-                line_count += len([line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if file_contains in line])
+                line_count += len([line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if
+                                   file_contains in line])
         elif i.is_dir():
             line_count += await count_others(i.path, filetype, file_contains)
     return line_count
@@ -152,3 +154,35 @@ class Url(discord.ui.View):
     def __init__(self, url: str, label: str = 'Open', emoji: str = None):
         super().__init__()
         self.add_item(discord.ui.Button(label=label, emoji=emoji, url=url))
+
+
+def deltaconv(s):
+    hours = s // 3600
+    s = s - (hours * 3600)
+    minutes = s // 60
+    seconds = s - (minutes * 60)
+    if hours > 0:
+        return '{:02}:{:02}:{:02}'.format(int(hours), int(minutes), int(seconds))
+    return '{:02}:{:02}'.format(int(minutes), int(seconds))
+
+
+def generate_user_statuses(member: discord.Member):
+    mobile = {
+        discord.Status.online: constants.statuses.ONLINE_MOBILE,
+        discord.Status.idle: constants.statuses.IDLE_MOBILE,
+        discord.Status.dnd: constants.statuses.DND_MOBILE,
+        discord.Status.offline: constants.statuses.OFFLINE_MOBILE
+    }[member.mobile_status]
+    web = {
+        discord.Status.online: constants.statuses.ONLINE_WEB,
+        discord.Status.idle: constants.statuses.IDLE_WEB,
+        discord.Status.dnd: constants.statuses.DND_WEB,
+        discord.Status.offline: constants.statuses.OFFLINE_WEB
+    }[member.web_status]
+    desktop = {
+        discord.Status.online: constants.statuses.ONLINE,
+        discord.Status.idle: constants.statuses.IDLE,
+        discord.Status.dnd: constants.statuses.DND,
+        discord.Status.offline: constants.statuses.OFFLINE
+    }[member.desktop_status]
+    return f"\u200b{desktop}\u200b{web}\u200b{mobile}"
