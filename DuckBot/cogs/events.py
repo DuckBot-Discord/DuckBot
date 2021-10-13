@@ -155,9 +155,9 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
 
         if isinstance(error, commands.errors.CommandOnCooldown):
-            if error.type in (commands.BucketType.user,
-                              commands.BucketType.member):
-                return ctx.command.reset_cooldown(ctx)
+            if error.type in (commands.BucketType.user, commands.BucketType.member) and await self.bot.is_owner(ctx.author):
+                ctx.command.reset_cooldown(ctx)
+                return await self.bot.process_commands(ctx.message)
             embed = discord.Embed(color=0xD7342A,
                                   description=f'Please try again in {round(error.retry_after, 2)} seconds')
             embed.set_author(name='Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
