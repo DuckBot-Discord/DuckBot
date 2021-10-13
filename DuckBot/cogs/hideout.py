@@ -352,7 +352,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             pretty_data = json.dumps(data, indent=4)
             if len(pretty_data) > 1990:
                 gist = await self.bot.create_gist(filename='raw_message.json', description='Raw Message created by DuckBot', content=pretty_data)
-                to_send = f"<{gist}>"
+                to_send = f"**Output too long:**\n<{gist}>"
             else:
                 to_send = f"```json\n{pretty_data}\n```"
-            return await ctx.send(to_send)
+            return await ctx.send(to_send, reference=ctx.message)
