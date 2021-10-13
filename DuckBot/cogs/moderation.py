@@ -1047,7 +1047,7 @@ class Moderation(commands.Cog):
         await channel.edit(archived=True)
 
     @commands.command()
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def block(self, ctx, *, member: discord.Member):
         """Blocks a user from your channel."""
@@ -1070,7 +1070,7 @@ class Moderation(commands.Cog):
             await ctx.send(f'✅ **|** Blocked **{discord.utils.remove_markdown(str(member))}** from **{ctx.channel}**')
 
     @commands.command()
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def unblock(self, ctx, *, member: discord.Member):
         """Unblocks a user from your channel."""
