@@ -338,7 +338,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         await ctx.message.delete(delay=0)
 
     @commands.command(name='raw-message', aliases=['rmsg', 'raw'])
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=40, type=commands.BucketType.user)
     @commands.max_concurrency(1, commands.BucketType.user)
     async def raw_message(self, ctx: CustomContext, message: typing.Optional[discord.Message]):
         async with ctx.typing():

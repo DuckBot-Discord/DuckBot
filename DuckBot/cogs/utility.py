@@ -153,18 +153,22 @@ class Utility(commands.Cog):
                         if member else "Could not get data",
                         inline=False)
 
-        embed.add_field(name=f'Status:',
-                        value=helper.generate_user_statuses(member))
+        custom_activity = discord.utils.find(lambda act: isinstance(act, discord.CustomActivity), member.activities)
+        activity_string = f"`{discord.utils.remove_markdown(custom_activity.name)}`" if custom_activity else 'User has no custom status.'
+        embed.add_field(name=f'Activity:',
+                        value=f"\n{helper.generate_user_statuses(member)}"
+                              f"\n**Custom status:**"
+                              f"\n{activity_string}")
 
-        a = discord.utils.find(lambda act: isinstance(act, discord.Spotify), ctx.author.activities)
+        spotify = discord.utils.find(lambda act: isinstance(act, discord.Spotify), member.activities)
 
         embed.add_field(name=f"{constants.SPOTIFY} Spotify:",
-                        value=f"**[{a.title}]({a.track_url})**"
-                              f"\nBy __{a.artist}__"
-                              f"\nOn __{a.album}__"
-                              f"\n**Time:** {helper.deltaconv((ctx.message.created_at - a.start).total_seconds())}/"
-                              f"{helper.deltaconv(a.duration.total_seconds())}"
-                        if a else 'Not listening to anything.')
+                        value=f"**[{spotify.title}]({spotify.track_url})**"
+                              f"\nBy __{spotify.artist}__"
+                              f"\nOn __{spotify.album}__"
+                              f"\n**Time:** {helper.deltaconv((ctx.message.created_at - spotify.start).total_seconds())}/"
+                              f"{helper.deltaconv(spotify.duration.total_seconds())}"
+                        if spotify else 'Not listening to anything.')
 
         perms = helper.get_perms(member.guild_permissions)
         if perms:
