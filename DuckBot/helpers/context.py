@@ -74,10 +74,12 @@ class CustomContext(commands.Context):
 
     @property
     def clean_prefix(self) -> str:
+        """ Prefix with escaped MarkDown """
         return super().clean_prefix.replace('@', '(at)')
 
     @staticmethod
     def tick(opt: bool, text: str = None) -> str:
+        """ Tick """
         emoji = constants.CUSTOM_TICKS.get(opt, constants.CUSTOM_TICKS[False])
         if text:
             return f"{emoji} {text}"
@@ -85,6 +87,7 @@ class CustomContext(commands.Context):
 
     @staticmethod
     def default_tick(opt: bool, text: str = None) -> str:
+        """ Tick """
         emoji = constants.DEFAULT_TICKS.get(opt, constants.DEFAULT_TICKS[False])
         if text:
             return f"{emoji} {text}"
@@ -92,6 +95,7 @@ class CustomContext(commands.Context):
 
     @staticmethod
     def square_tick(opt: bool, text: str = None) -> str:
+        """ Tick """
         emoji = constants.SQUARE_TICKS.get(opt, constants.SQUARE_TICKS[False])
         if text:
             return f"{emoji} {text}"
@@ -99,6 +103,7 @@ class CustomContext(commands.Context):
 
     @staticmethod
     def toggle(opt: bool, text: str = None) -> str:
+        """ Tick """
         emoji = constants.TOGGLES.get(opt, constants.TOGGLES[False])
         if text:
             return f"{emoji} {text}"
@@ -106,7 +111,8 @@ class CustomContext(commands.Context):
 
     async def send(self, content: str = None, embed: discord.Embed = None,
                    reply: bool = True, footer: bool = True,
-                   reference: typing.Union[discord.Message, discord.MessageReference] = None, **kwargs):
+                   reference: typing.Union[discord.Message, discord.MessageReference] = None,
+                   gist: bool = False, extension: str = 'py', **kwargs):
 
         reference = (reference or self.message.reference or self.message) if reply is True else reference
 
@@ -117,8 +123,14 @@ class CustomContext(commands.Context):
                 embed.timestamp = discord.utils.utcnow()
 
         if embed:
-            colors = {embed.color, self.me.color, self.author.color} - {discord.Color.default(), discord.Embed.Empty}
-            embed.colour = next(iter(colors), discord.Color.blurple())
+            colors = {embed.color} - {discord.Color.default(), discord.Embed.Empty}
+            embed.colour = next(iter(colors), self.color)
+
+        if gist and content and len(content) > 2000:
+            content = await self.bot.create_gist(filename=f'output.{extension}',
+                                                 description='DuckBot send',
+                                                 content=content, public=True)
+
         try:
             return await super().send(content=content, embed=embed, reference=reference, **kwargs)
         except discord.HTTPException:
@@ -133,6 +145,7 @@ class CustomContext(commands.Context):
                       delete_after_cancel: bool = None,
                       return_message: bool = False) \
             -> typing.Union[bool, typing.Tuple[bool, discord.Message]]:
+        """ A confirmation menu. """
 
         delete_after_cancel = delete_after_cancel if delete_after_cancel is not None else delete_after_confirm
 
@@ -171,10 +184,19 @@ class CustomContext(commands.Context):
 
             return (False, message) if delete_after_cancel is False and return_message is True else False
 
+    @property
     def color(self):
+        """ Returns DuckBot's color, or the author's color. Falls back to blurple """
         return self.me.color if self.me.color not in (discord.Color.default(), discord.Embed.Empty, None) \
             else self.author.color if self.author.color not in (discord.Color.default(), discord.Embed.Empty, None) \
             else discord.Color.blurple()
 
+    @property
     def colour(self):
-        return self.color()
+        """ Returns DuckBot's color, or the author's color. Falls back to blurple """
+        return self.color
+
+    async def gist(self, content: str, filename: str = 'output.py', description: str = 'Uploaded by DuckBot', public: bool = True):
+        """ Shortcut of bot.create_gist + ctx.send(gist) """
+        gist = await self.bot.create_gist(filename=filename, description=description, content=content, public=public)
+        await self.send(f'<{gist}>')

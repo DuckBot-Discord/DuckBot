@@ -615,7 +615,7 @@ class HelpMenuPageSource(menus.ListPageSource):
         super().__init__(data, per_page=1)
 
     async def format_page(self, menu, data):
-        embed = discord.Embed(color=self.ctx.color(),
+        embed = discord.Embed(color=self.ctx.color,
                               description=f"\n> 🔄 **Total Commands:** {len(list(self.ctx.bot.commands))} | **Usable by you (here):** "
                                           f"{len(await self.help.filter_commands(list(self.ctx.bot.commands), sort=True))} 🔄"
                                           f"\n> 📰 **Do `{self.ctx.clean_prefix}news` to see the latest additions to {self.ctx.me.display_name}** 📰"

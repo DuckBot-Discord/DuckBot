@@ -153,6 +153,19 @@ class Utility(commands.Cog):
                         if member else "Could not get data",
                         inline=False)
 
+        embed.add_field(name=f'Status:',
+                        value=helper.generate_user_statuses(member))
+
+        a = discord.utils.find(lambda act: isinstance(act, discord.Spotify), ctx.author.activities)
+
+        embed.add_field(name=f"{constants.SPOTIFY} Spotify:",
+                        value=f"**[{a.title}]({a.track_url})**"
+                              f"\nBy __{a.artist}__"
+                              f"\nOn __{a.album}__"
+                              f"\n**Time:** {helper.deltaconv((ctx.message.created_at - a.start).total_seconds())}/"
+                              f"{helper.deltaconv(a.duration.total_seconds())}"
+                        if a else 'Not listening to anything.')
+
         perms = helper.get_perms(member.guild_permissions)
         if perms:
             embed.add_field(name=f"{constants.STORE_TAG} Staff Perms:",
