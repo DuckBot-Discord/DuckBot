@@ -159,6 +159,12 @@ class Utility(commands.Cog):
                         if member else "Could not get data",
                         inline=False)
 
+        if member.premium_since:
+            embed.add_field(name=f"{constants.BOOST} Boosting since:",
+                            value=f"╰ {discord.utils.format_dt(member.premium_since, style='f')} "
+                                  f"({discord.utils.format_dt(member.premium_since, style='R')})",
+                            inline=False)
+
         custom_activity = discord.utils.find(lambda act: isinstance(act, discord.CustomActivity), member.activities)
         activity_string = f"`{discord.utils.remove_markdown(custom_activity.name)}`" if custom_activity else 'User has no custom status.'
         embed.add_field(name=f'Activity:',
@@ -188,12 +194,6 @@ class Utility(commands.Cog):
                             value=", ".join(roles) +
                             f"\n**Top Role:** {member.top_role} • "
                             f"**Color:** {member.color if member.color is not discord.Color.default() else 'Default'}", inline=False)
-
-        if member.premium_since:
-            embed.add_field(name=f"{constants.BOOST} Boosting since:",
-                            value=f"╰ {discord.utils.format_dt(member.premium_since, style='f')} "
-                                  f"({discord.utils.format_dt(member.premium_since, style='R')})",
-                            inline=False)
 
         return await ctx.send(embed=embed)
 
