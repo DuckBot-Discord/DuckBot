@@ -62,18 +62,19 @@ COINS_STRING = ['<:heads:895391679044005949> Heads!',
                 '<:tails:895391716356522057> Tails!']
 
 USER_FLAGS = {
-    'staff': '<:staff:895391901778346045>',
-    'partner': '<:partnernew:895391927271309412>',
-    'hypesquad': '<:hypesquad:895391957638070282>',
-    'bug_hunter': '<:bughunter:895392105386631249>',
-    'hypesquad_bravery': '<:bravery:895392137225584651>',
-    'hypesquad_brilliance': '<:brilliance:895392183950131200>',
-    'hypesquad_balance': '<:balance:895392209564733492>',
-    'early_supporter': '<:supporter:895392239356903465>',
-    'bug_hunter_level_2': '<:bughunter_gold:895392270369579078>',
-    'verified_bot_developer': '<:earlybotdev:895392298895032364>',
-    'premium_since': '<:nitro:895392323519799306>',
-    'discord_certified_moderator': '<:certified_moderator:895393984308981930>'
+    'staff': '<:staff:895391901778346045> Discord Staff',
+    'partner': '<:partnernew:895391927271309412> Partnered Server Owner',
+    'hypesquad': '<:hypesquad:895391957638070282> HypeSquad Events',
+    'bug_hunter': '<:bughunter:895392105386631249> Discord Bug Hunter',
+    'hypesquad_bravery': '<:bravery:895392137225584651> HypeSquad Bravery',
+    'hypesquad_brilliance': '<:brilliance:895392183950131200> HypeSquad Brilliance',
+    'hypesquad_balance': '<:balance:895392209564733492> HypeSquad Balance',
+    'early_supporter': '<:supporter:895392239356903465> Early Supporter',
+    'bug_hunter_level_2': '<:bughunter_gold:895392270369579078> Discord Bug Hunter',
+    'verified_bot_developer': '<:earlybotdev:895392298895032364> Early Verified Bot Developer',
+    'verified_bot': '<:verified_bot:897876151219912754> Verified Bot',
+    'discord_certified_moderator': '<:certified_moderator:895393984308981930> Certified Moderator',
+    'premium_since': '<:booster4:895413288219861032>'
 }
 
 CONTENT_FILTER = {
@@ -165,3 +166,10 @@ statuses = st_nt(ONLINE='<:desktop_online:897644406344130600>',
 CAG_UP = 'https://cdn.discordapp.com/attachments/879251951714467840/896293818096291840/Sv6kz8f.png'
 CAG_DOWN = 'https://cdn.discordapp.com/attachments/879251951714467840/896297890396389377/wvUPp3d.png'
 SPINNING_MAG_GLASS = 'https://cdn.discordapp.com/attachments/879251951714467840/896903391085748234/DZhQwnD.gif'
+
+COMMON_DISCRIMINATORS = ['0001', '0002', '0003', '0004', '0005', '0006', '0007', '0008', '0009',
+                         '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999',
+                         '1010', '2020', '3030', '4040', '5050', '6060', '7070', '8080', '9090',
+                         '1001', '2002', '3003', '5004', '5005', '6006', '7007', '8008', '9009',
+                         '1000', '2000', '3000', '4000', '5000', '6000', '7000', '8000', '9000',
+                         '1337', '6969', '0420', '2021', '0666', '0333']

@@ -1,7 +1,6 @@
 import os
 
 import aiofiles
-import aiohttp
 import discord
 import typing
 from discord import VoiceRegion
@@ -17,23 +16,38 @@ def get_perms(permissions: discord.Permissions):
             for p in dict(set(permissions) - set(discord.Permissions(517647756865)))]
 
 
-def get_user_badges(user, bot: bool = False):
+def get_user_badges(user: discord.Member, bot: DuckBot, fetched_user: discord.User = None):
     flags = dict(user.public_flags)
 
-    if bot is True:
-        return True if flags['verified_bot'] else False
-
-    if user.premium_since:
-        flags['premium_since'] = True
-    else:
-        flags['premium_since'] = False
-
     user_flags = []
-    for flag, emoji in constants.USER_FLAGS.items():
-        if flags[flag]:
-            user_flags.append(emoji)
+    for flag, text in constants.USER_FLAGS.items():
+        try:
+            if flags[flag]:
+                user_flags.append(text)
+        except KeyError:
+            continue
 
-    return ' '.join(user_flags) if user_flags else None
+    if user.avatar.is_animated():
+        user_flags.append(f'<:nitro:895392323519799306> Nitro')
+
+    elif fetched_user and (fetched_user.accent_color or fetched_user.banner):
+        user_flags.append(f'<:nitro:895392323519799306> Nitro')
+
+    elif user.premium_since:
+        user_flags.append(f'<:nitro:895392323519799306> Nitro [guess: Boosting]')
+
+    elif user.discriminator in constants.COMMON_DISCRIMINATORS:
+        print('this triggered')
+        user_flags.append(f'<:nitro:895392323519799306> Nitro [guess: Nitro #tag]')
+
+    elif user.discriminator in bot.common_discrims:
+        print('this triggered')
+        user_flags.append(f'<:nitro:895392323519799306> Nitro [guess: Nitro #tag]')
+
+    else:
+        pass
+
+    return '\n'.join(user_flags) if user_flags else None
 
 
 def get_server_region(guild: discord.Guild):

@@ -117,14 +117,19 @@ class Utility(commands.Cog):
         else:
             raise errors.NoQuotedMessage
 
-    @commands.command(aliases=['uinfo', 'ui', 'whois', 'whoami'])
+    @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info')
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
     async def userinfo(self, ctx: CustomContext, *, member: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
+        try:
+            await ctx.trigger_typing()
+        except (discord.Forbidden, discord.HTTPException):
+            pass
         member = member or ctx.author
+        fetched_user = await self.bot.fetch_user(member.id)
 
         embed = discord.Embed(color=(member.color if member.color != discord.Colour.default() else discord.Embed.Empty))
         embed.set_author(name=member, icon_url=member.display_avatar.url)
@@ -134,11 +139,12 @@ class Utility(commands.Cog):
                         value=f"**ID:** {member.id}"
                               f"\n**Name:** {member.name}"
                               f"\n╰ **Nick:** {(member.nick or '✖')}"
+                              f"\n**Profile Color:** {str(fetched_user.accent_color).upper() or 'Not set'}"
                               f"\n**Owner:** {ctx.tick(member == member.guild.owner)} • "
                               f"**Bot:** {ctx.tick(member.bot)}", inline=True)
 
         embed.add_field(name=f"{constants.STORE_TAG} Badges",
-                        value=(helper.get_user_badges(member) or "No Badges") + '\u200b', inline=True)
+                        value=helper.get_user_badges(user=member, fetched_user=fetched_user, bot=self.bot) or "No Badges", inline=True)
 
         embed.add_field(name=f"{constants.INVITE} Created At",
                         value=f"╰ {discord.utils.format_dt(member.created_at, style='f')} "
@@ -168,17 +174,20 @@ class Utility(commands.Cog):
                               f"\nOn __{spotify.album}__"
                               f"\n**Time:** {helper.deltaconv((ctx.message.created_at - spotify.start).total_seconds())}/"
                               f"{helper.deltaconv(spotify.duration.total_seconds())}"
-                        if spotify else 'Not listening to anything.')
+                        if spotify else 'Not listening to anything...')
 
         perms = helper.get_perms(member.guild_permissions)
         if perms:
             embed.add_field(name=f"{constants.STORE_TAG} Staff Perms:",
                             value=f"`{'` `'.join(perms)}`", inline=False)
 
-        roles = [r.mention for r in member.roles if r != ctx.guild.default_role]
+        roles = [r.mention for r in member.roles if not r.is_default()]
+        roles.reverse()
         if roles:
             embed.add_field(name=f"{constants.ROLES_ICON} Roles:",
-                            value=" ".join(roles), inline=False)
+                            value=", ".join(roles) +
+                            f"\n**Top Role:** {member.top_role} • "
+                            f"**Color:** {member.color if member.color is not discord.Color.default() else 'Default'}", inline=False)
 
         if member.premium_since:
             embed.add_field(name=f"{constants.BOOST} Boosting since:",
@@ -213,9 +222,9 @@ class Utility(commands.Cog):
             embed.add_field(name="denied", value="\n".join(denied))
         return await ctx.send(embed=embed)
 
-    @commands.command(aliases=["si"])
+    @commands.command(aliases=['si', 'serverinfo'], name='server-info')
     @commands.guild_only()
-    async def serverinfo(self, ctx: CustomContext, guild: typing.Optional[discord.Guild]):
+    async def server_info(self, ctx: CustomContext, guild: typing.Optional[discord.Guild]):
         """
         Shows the current server's information.
         """

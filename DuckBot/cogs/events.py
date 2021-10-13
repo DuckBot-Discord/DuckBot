@@ -34,9 +34,11 @@ class Handler(commands.Cog, name='Handler'):
         self.bot: DuckBot = bot
         self.error_channel = 880181130408636456
         self.do_member_count_update.start()
+        self.cache_common_discriminators.start()
 
     def cog_unload(self):
         self.do_member_count_update.cancel()
+        self.cache_common_discriminators.cancel()
 
     @commands.Cog.listener('on_command_error')
     async def error_handler(self, ctx: CustomContext, error):
@@ -347,6 +349,16 @@ class Handler(commands.Cog, name='Handler'):
     @tasks.loop(minutes=30)
     async def do_member_count_update(self):
         await self.bot.top_gg.post_guild_count()
+
+    @tasks.loop(minutes=5)
+    async def cache_common_discriminators(self):
+        discrims = [[m.discriminator for m in g.members if (m.premium_since or m.display_avatar.is_animated()) and (len(set(m.discriminator)) < 3)] for g in self.bot.guilds]
+        self.bot.common_discrims = sorted(list(set(itertools.chain(*discrims))))
+
+    @cache_common_discriminators.before_loop
+    @do_member_count_update.before_loop
+    async def wait(self):
+        await self.bot.wait_until_ready()
 
     @commands.Cog.listener('on_message')
     async def on_afk_user_message(self, message: discord.Message):

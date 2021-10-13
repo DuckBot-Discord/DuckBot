@@ -134,6 +134,7 @@ class DuckBot(commands.Bot):
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
         self.lavalink = None
         self.invites = None
+        self.common_discrims = []
 
         for ext in initial_extensions:
             self._load_extension(ext)
