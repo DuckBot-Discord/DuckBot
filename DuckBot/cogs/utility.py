@@ -151,7 +151,7 @@ class Utility(commands.Cog):
                               f"({discord.utils.format_dt(member.created_at, style='R')})",
                         inline=False)
 
-        embed.add_field(name=f"{constants.JOINED_SERVER} Created At",
+        embed.add_field(name=f"{constants.JOINED_SERVER} Joined At",
                         value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
                                f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** "
