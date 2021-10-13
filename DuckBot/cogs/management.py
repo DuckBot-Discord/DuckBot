@@ -20,6 +20,7 @@ from jishaku.features.baseclass import Feature
 from jishaku.models import copy_context_with
 from jishaku.paginators import WrappedPaginator
 
+from DuckBot import errors
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator
 from DuckBot.helpers.helper import count_others, count_lines
@@ -65,7 +66,7 @@ class UnicodeEmoji:
     @classmethod
     async def convert(cls, ctx, argument):
         if argument not in list(unicode_emoji.EMOJI_UNICODE_ENGLISH.values()):
-            raise commands.BadArgument('That is not an emoji I can use!')
+            return None
         return argument
 
 
@@ -481,8 +482,10 @@ class Management(commands.Cog, name='Bot Management'):
     @is_reply()
     @commands.is_owner()
     @commands.command()
-    async def react(self, ctx, emoji: typing.Union[UnicodeEmoji, discord.Emoji]):
-        await ctx.message.reference.resolved.add_reaction(emoji)
+    async def react(self, ctx, emoji: typing.Optional[typing.Union[UnicodeEmoji, discord.Emoji]]):
+        if emoji:
+            await ctx.message.reference.resolved.add_reaction(emoji)
+        await ctx.message.delete(delay=0)
 
     @commands.command(name='server-list', aliases=['guilds-list', 'bot-servers'])
     @commands.is_owner()
