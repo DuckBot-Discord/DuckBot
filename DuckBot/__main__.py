@@ -80,9 +80,9 @@ class DuckBot(commands.Bot):
             raise errors.BotUnderMaintenance
 
     def __init__(self) -> None:
-        intents = discord.Intents(members=True, dm_typing=False, guild_typing=False, presences=True,
-                                  **{k: v for k, v in dict(discord.Intents.default()).items()
-                                     if k not in ('members', 'guild_typing', 'dm_typing', 'presences')})
+        intents = discord.Intents.all()
+        # noinspection PyDunderSlots,PyUnresolvedReferences
+        intents.typing = False
 
         super().__init__(
             intents=intents,

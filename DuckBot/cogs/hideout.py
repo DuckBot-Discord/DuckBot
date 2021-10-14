@@ -14,6 +14,7 @@ from discord.ext import commands
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot
 from DuckBot.cogs.management import get_webhook
+from DuckBot.helpers import constants
 from DuckBot.helpers.context import CustomContext
 
 
@@ -356,3 +357,18 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             else:
                 to_send = f"```json\n{pretty_data}\n```"
             return await ctx.send(to_send, reference=ctx.message)
+
+    @commands.command()
+    @commands.is_owner()
+    async def promotional(self, ctx: CustomContext, channel: discord.TextChannel):
+        wh = await get_webhook(channel)
+        embed = discord.Embed(title='Minecon Live 2021 is coming soon!',
+                              url='https://www.minecraft.net/live',
+                              colour=0x53A334,
+                              description='Minecraft Live 2021 will be streamed <t:1634397600>:'
+                                          f'\n{constants.YOUTUBE_LOGO} **[Minecraft Live 2021](https://www.youtube.com/watch?v=w6zLprHHZOk)**'
+                                          f'\n{constants.YOUTUBE_LOGO} **[[AUDIO DESCRIPTION] Minecraft Live 2021](https://www.youtube.com/watch?v=vQnfKoikihE)**'
+                                          f'\n{constants.YOUTUBE_LOGO} **[[AMERICAN SIGN LANGUAGE] Minecraft Live 2021](https://www.youtube.com/watch?v=nGKwHKSBtWA)**')
+        embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/879251951714467840/898050057947992104/minecraft_live1.png')
+        await wh.send(username='Minecraft', avatar_url='https://yt3.ggpht.com/VjFl0g2OJs6f08q0hVoiij3-CibesgwfV8RNZ-dbu7s3I-LvVTXrAu4J32MI_NlvE8v9EdYoWao=s88-c-k-c0x00ffffff-no-rj', embed=embed)
+        await ctx.message.add_reaction("💌")
