@@ -535,7 +535,7 @@ class Moderation(commands.Cog):
     @commands.command(aliases=['stfu', 'shut', 'silence'])
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def mute(self, ctx: CustomContext, member: discord.Member, reason: str = None) -> discord.Message:
+    async def mute(self, ctx: CustomContext, member: discord.Member, *, reason: str = None) -> discord.Message:
         """
         Mutes a member indefinitely.
         """
@@ -647,7 +647,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def hardmute(self, ctx: CustomContext, member: discord.Member, reason: str = None) -> discord.Message:
+    async def hardmute(self, ctx: CustomContext, member: discord.Member, *, reason: str = None) -> discord.Message:
         """
         Mutes a member indefinitely, and removes all their roles.
         """
@@ -666,33 +666,32 @@ class Moderation(commands.Cog):
             raise errors.MuteRoleNotFound
 
         if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+            return await ctx.send("I'm not high enough in role hierarchy to assign the mute role.")
 
-        roles = [r for r in member.roles if r < ctx.me.top_role and not any([r.is_bot_managed(),
-                                                                             r.is_default(),
-                                                                             r.is_integration(),
-                                                                             r.is_premium_subscriber()])]
+        roles = [r for r in member.roles if not r.is_assignable()] + [role]
 
         try:
-            await member.remove_roles(*roles)
-            await member.add_roles(role, reason=reason)
+            await member.edit(roles=roles, reason=reason[0:500])
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
 
         await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
                                   ctx.guild.id, member.id)
 
-        # in a command that adds new task in db
         if self.temporary_mutes.is_running():
             self.temporary_mutes.restart()
         else:
             self.temporary_mutes.start()
 
+        not_removed = [r for r in member.roles if not r.is_assignable() and not r.is_default()]
+        nl = '\n'
         if not only_reason:
-            return await ctx.send(f"**{ctx.author}** muted **{member}**",
+            return await ctx.send(f"✅ **|** **{ctx.author}** hard-muted **{member}** "
+                                  f"{f'{nl}⚠ **|** Could not remove **{len(not_removed)}** role(s).' if not_removed else ''}",
                                   allowed_mentions=discord.AllowedMentions().none())
-        return await ctx.send(f"**{ctx.author}** muted **{member}**"
-                              f"\nReason: {only_reason}",
+        return await ctx.send(f"✅ **|** **{ctx.author}** hard-muted **{member}**"
+                              f"\nℹ **| With reason:** {only_reason[0:1600]}"
+                              f"{f'{nl}⚠ **|** Could not remove **{len(not_removed)}** role(s).' if not_removed else ''}",
                               allowed_mentions=discord.AllowedMentions().none())
 
     # Get mute role
@@ -700,7 +699,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def unmute(self, ctx: CustomContext, member: discord.Member, reason: str = None):
+    async def unmute(self, ctx: CustomContext, member: discord.Member, *, reason: str = None):
         """
         Unmutes a member
         """
