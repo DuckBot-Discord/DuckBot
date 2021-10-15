@@ -387,6 +387,6 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
 
     @commands.command(name='check-user')
     async def check_user(self, ctx: CustomContext, member: typing.Union[discord.Member, discord.User]):
-        if member.guild:
+        if isinstance(member, discord.Member):
             return await ctx.send(f"✅ **|** **{discord.utils.escape_markdown(str(member))}** is in this server!")
         await ctx.send(f"❌ **|** **{discord.utils.escape_markdown(str(member))}** is not in this server!")
