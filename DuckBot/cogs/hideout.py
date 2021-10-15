@@ -245,7 +245,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         await self.do_rtfm(ctx, 'edpy', obj)
 
     @rtfm.command(name='asyncbing', aliases=['bing'])
-    async def rtfm_edpy(self, ctx, *, obj: str = None):
+    async def rtfm_asyncbing(self, ctx, *, obj: str = None):
         """Gives you a documentation link for an asyncbing entity """
         await self.do_rtfm(ctx, 'bing', obj)
 
@@ -255,7 +255,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         await self.do_rtfm(ctx, 'chai', obj)
 
     @rtfm.command(name='pycord')
-    async def rtfm_chai(self, ctx, *, obj: str = None):
+    async def rtfm_pycord(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a pycord entity"""
         await self.do_rtfm(ctx, 'pycord', obj)
 
