@@ -174,6 +174,10 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             'python': 'https://docs.python.org/3',
             'python-jp': 'https://docs.python.org/ja/3',
             'master': 'https://discordpy.readthedocs.io/en/master',
+            'edpy': 'https://enhanced-dpy.readthedocs.io/en/latest/',
+            'chai': 'https://chaidiscordpy.readthedocs.io/en/latest/',
+            'bing': 'https://asyncbing.readthedocs.io/en/latest',
+            'pycord': 'https://pycord.readthedocs.io/en/latest/'
         }
 
         if obj is None:
@@ -207,24 +211,13 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         e.description = '\n'.join(f'[`{key}`]({url})' for key, url in matches)
         await ctx.send(embed=e)
 
-    def transform_rtfm_language_key(self, ctx, prefix):
-        if ctx.guild is not None:
-            #                             日本語 category
-            if ctx.channel.category_id == 490287576670928914:
-                return prefix + '-jp'
-            #                    d.py unofficial JP   Discord Bot Portal JP
-            elif ctx.guild.id in (463986890190749698, 494911447420108820):
-                return prefix + '-jp'
-        return prefix
-
     @commands.group(aliases=['rtfd'], invoke_without_command=True)
     async def rtfm(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a discord.py entity.
         Events, objects, and functions are all supported through
         a cruddy fuzzy algorithm.
         """
-        key = self.transform_rtfm_language_key(ctx, 'latest')
-        await self.do_rtfm(ctx, key, obj)
+        await self.do_rtfm(ctx, 'latest', obj)
 
     @rtfm.command(name='jp')
     async def rtfm_jp(self, ctx, *, obj: str = None):
@@ -234,8 +227,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     @rtfm.command(name='python', aliases=['py'])
     async def rtfm_python(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a Python entity."""
-        key = self.transform_rtfm_language_key(ctx, 'python')
-        await self.do_rtfm(ctx, key, obj)
+        await self.do_rtfm(ctx, 'python', obj)
 
     @rtfm.command(name='py-jp', aliases=['py-ja'])
     async def rtfm_python_jp(self, ctx, *, obj: str = None):
@@ -246,6 +238,26 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     async def rtfm_master(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a discord.py entity (master branch)"""
         await self.do_rtfm(ctx, 'master', obj)
+
+    @rtfm.command(name='enhanced-dpy', aliases=['edpy'])
+    async def rtfm_edpy(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a enhanced-discord.py entity"""
+        await self.do_rtfm(ctx, 'edpy', obj)
+
+    @rtfm.command(name='asyncbing', aliases=['bing'])
+    async def rtfm_edpy(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for an asyncbing entity """
+        await self.do_rtfm(ctx, 'bing', obj)
+
+    @rtfm.command(name='chaidiscordpy', aliases=['chaidpy', 'cdpy'])
+    async def rtfm_chai(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a chaidiscord.py entity"""
+        await self.do_rtfm(ctx, 'chai', obj)
+
+    @rtfm.command(name='pycord')
+    async def rtfm_chai(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a pycord entity"""
+        await self.do_rtfm(ctx, 'pycord', obj)
 
     @commands.command()
     @hideout_only()
