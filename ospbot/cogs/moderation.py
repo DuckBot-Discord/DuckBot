@@ -116,6 +116,7 @@ class moderation(commands.Cog):
 
     @commands.command(aliases=['uinfo', 'ui', 'whois', 'whoami'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def userinfo(self, ctx: commands.Context, *, member: typing.Optional[discord.Member]):
         """
