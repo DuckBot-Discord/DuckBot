@@ -384,3 +384,9 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/879251951714467840/898050057947992104/minecraft_live1.png')
         await wh.send(username='Minecraft', avatar_url='https://yt3.ggpht.com/VjFl0g2OJs6f08q0hVoiij3-CibesgwfV8RNZ-dbu7s3I-LvVTXrAu4J32MI_NlvE8v9EdYoWao=s88-c-k-c0x00ffffff-no-rj', embed=embed)
         await ctx.message.add_reaction("💌")
+
+    @commands.command(name='check-user')
+    async def check_user(self, ctx: CustomContext, member: typing.Union[discord.Member, discord.User]):
+        if member.guild:
+            return await ctx.send(f"✅ **|** **{discord.utils.escape_markdown(str(member))}** is in this server!")
+        await ctx.send(f"❌ **|** **{discord.utils.escape_markdown(str(member))}** is not in this server!")
