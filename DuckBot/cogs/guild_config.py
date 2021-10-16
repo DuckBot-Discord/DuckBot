@@ -892,30 +892,6 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         def int_check(m: discord.Message):
             return m.channel == ctx.channel and m.author == ctx.author and m.content.isdigit()
 
-        def role_check(m: discord.Message):
-            if m.channel == ctx.channel and m.author == ctx.author:
-                if m.content.lower() in ('cancel', 'skip'):
-                    return True
-                try:
-                    self.bot.loop.run_until_complete(commands.RoleConverter().convert(ctx, m.content))
-                    return True
-                except commands.RoleNotFound:
-                    return False
-            return False
-
-        def emoji_check(m: discord.Message):
-            if m.channel == ctx.channel and m.author == ctx.author:
-                if m.content.lower() in ('cancel', 'skip'):
-                    return True
-                if m.content in list(unicode_emoji.EMOJI_UNICODE_ENGLISH.values()):
-                    return True
-                try:
-                    self.bot.loop.run_until_complete(commands.RoleConverter().convert(ctx, m.content))
-                    return True
-                except commands.EmojiNotFound:
-                    return False
-            return False
-
         try:
             await ctx.send('1️⃣ **|** What **number** would this reward be assigned to?')
             number = int((await self.bot.wait_for('message', check=int_check, timeout=120)).content)
@@ -929,17 +905,27 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
             await ctx.send('3️⃣ **|** What **role** would you want to be assigned to the person who reached this number?'
                            '\nℹ **|** Type `skip` to skip, and `cancel` to cancel')
-            role = (await self.bot.wait_for('message', check=role_check, timeout=120)).content
-            if role.lower() == 'cancel':
-                return
-            role = await commands.RoleConverter().convert(ctx, role) if role.lower() != 'skip' else None
+            role = False
+            while role is False:
+                role = (await self.bot.wait_for('message', check=check, timeout=120)).content
+                if role.lower() == 'cancel':
+                    return
+                try:
+                    role = await commands.RoleConverter().convert(ctx, role) if role.lower() != 'skip' else None
+                except commands.RoleNotFound:
+                    role = False
 
             await ctx.send('4️⃣ **|** What **reaction** would you like to be added to the message?'
                            '\nℹ **|** Type `skip` to skip, and `cancel` to cancel')
-            emoji = (await self.bot.wait_for('message', check=emoji_check, timeout=120)).content
-            if emoji.lower() == 'cancel':
-                return
-            emoji = str((await UnicodeEmoji().convert(ctx, emoji)) or (await commands.RoleConverter().convert(ctx, emoji))) if emoji.lower() != 'skip' else None
+            emoji = False
+            while emoji is False:
+                emoji = (await self.bot.wait_for('message', check=check, timeout=120)).content
+                if emoji.lower() == 'cancel':
+                    return
+                try:
+                    emoji = str((await UnicodeEmoji().convert(ctx, emoji)) or (await commands.RoleConverter().convert(ctx, emoji))) if emoji.lower() != 'skip' else None
+                except commands.RoleNotFound:
+                    emoji = False
 
             try:
                 if number in self.bot.counting_rewards[ctx.guild.id]:
