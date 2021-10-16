@@ -30,6 +30,7 @@ import time
 from types import SimpleNamespace
 from typing import Dict, Optional
 from collections import deque
+import emoji as unicode_emoji
 
 import asyncpg.exceptions
 import discord
@@ -906,8 +907,10 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             if m.channel == ctx.channel and m.author == ctx.author:
                 if m.content.lower() in ('cancel', 'skip'):
                     return True
+                if m.content in list(unicode_emoji.EMOJI_UNICODE_ENGLISH.values()):
+                    return True
                 try:
-                    (self.bot.loop.run_until_complete(UnicodeEmoji().convert(ctx, m.content))) or (self.bot.loop.run_until_complete(commands.RoleConverter().convert(ctx, m.content)))
+                    self.bot.loop.run_until_complete(commands.RoleConverter().convert(ctx, m.content))
                     return True
                 except commands.EmojiNotFound:
                     return False
