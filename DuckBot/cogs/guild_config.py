@@ -789,8 +789,6 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             await ctx.send(f"done! took {round(complete_time, 2)} seconds"
                            f"\nSet permissions for {modified} channel{'' if modified == 1 else 's'}!")
 
-    @commands.has_permissions(manage_guild=True)
-    @commands.bot_has_permissions(manage_messages=True)
     @commands.group(aliases=['ct'])
     async def counting(self, ctx: CustomContext):
         """ Base command for setting up counting """
@@ -815,6 +813,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                               f'\n`{p}ct all-rewards`'
                                               f'\n`{p}ct check-reward <level>`'
                                               f'\n`{p}ct override-number <number>`')
+            embed.set_footer(text='All sub-commands require Manage Server permission')
             return await ctx.send(embed=embed)
 
     @commands.has_permissions(manage_guild=True)
