@@ -828,7 +828,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         try:
             await self.bot.db.execute('INSERT INTO count_settings (guild_id, channel_id) VALUES ($1, $2)', ctx.guild.id,
                                       channel.id)
-            self.bot.counting_channels[ctx.guild.id] = {'channel': ctx.channel.id,
+            self.bot.counting_channels[ctx.guild.id] = {'channel': channel.id,
                                                         'number': 0,
                                                         'last_counter': None,
                                                         'delete_messages': True,
