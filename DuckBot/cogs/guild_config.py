@@ -885,29 +885,29 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
     @counting.command(name='add-reward')
     async def ct_add_reward(self, ctx: CustomContext):
         """ An interactive way to add a reward to the counting game. """
-        async def check(m: discord.Message):
+        def check(m: discord.Message):
             return m.channel == ctx.channel and m.author == ctx.author
 
-        async def int_check(m: discord.Message):
+        def int_check(m: discord.Message):
             return m.channel == ctx.channel and m.author == ctx.author and m.content.isdigit()
 
-        async def role_check(m: discord.Message):
+        def role_check(m: discord.Message):
             if m.channel == ctx.channel and m.author == ctx.author:
                 if m.content.lower() in ('cancel', 'skip'):
                     return True
                 try:
-                    await commands.RoleConverter().convert(ctx, m.content)
+                    self.bot.loop.run_until_complete(commands.RoleConverter().convert(ctx, m.content))
                     return True
                 except commands.RoleNotFound:
                     return False
             return False
 
-        async def emoji_check(m: discord.Message):
+        def emoji_check(m: discord.Message):
             if m.channel == ctx.channel and m.author == ctx.author:
                 if m.content.lower() in ('cancel', 'skip'):
                     return True
                 try:
-                    (await UnicodeEmoji().convert(ctx, m.content)) or (await commands.RoleConverter().convert(ctx, m.content))
+                    (self.bot.loop.run_until_complete(UnicodeEmoji().convert(ctx, m.content))) or (self.bot.loop.run_until_complete(commands.RoleConverter().convert(ctx, m.content)))
                     return True
                 except commands.EmojiNotFound:
                     return False
