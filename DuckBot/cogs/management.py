@@ -20,7 +20,6 @@ from jishaku.features.baseclass import Feature
 from jishaku.models import copy_context_with
 from jishaku.paginators import WrappedPaginator
 
-from DuckBot import errors
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator
 from DuckBot.helpers.helper import count_others, count_lines
@@ -60,8 +59,6 @@ def is_reply():
 
 
 class UnicodeEmoji:
-    def __init__(self, emoji):
-        self.emoji = emoji
 
     @classmethod
     async def convert(cls, ctx, argument):

@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 import traceback
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import tekore as tk
 from typing import (
@@ -138,6 +138,7 @@ class DuckBot(commands.Bot):
         self.suggestion_channels = {}
         self.counting_channels = {}
         self.counting_rewards = {}
+        self.saved_messages = {}
         self.common_discrims = []
 
         for ext in initial_extensions:
@@ -209,7 +210,22 @@ class DuckBot(commands.Bot):
             self.afk_users = dict([(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if r['start_time']])
             self.auto_un_afk = dict([(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk')) if r['auto_un_afk'] is not None])
             self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
-            self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'], 'number': x['current_number'], 'last_counter': x['last_counter'], 'delete_messages': x['delete_messages'], 'reset': x['reset_on_fail'], 'last_message_id': None}) for x in await self.db.fetch('SELECT * FROM count_settings'))
+            self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'],
+                                                           'number': x['current_number'],
+                                                           'last_counter': x['last_counter'],
+                                                           'delete_messages': x['delete_messages'],
+                                                           'reset': x['reset_on_fail'],
+                                                           'last_message_id': None,
+                                                           'messages': deque(maxlen=100)})
+                                          for x in await self.db.fetch('SELECT * FROM count_settings'))
+
+            for x in await bot.db.fetch('SELECT * FROM counting'):
+                try:
+                    self.counting_rewards[x['guild_id']].add(x['reward_number'])
+                except KeyError:
+                    self.counting_rewards[x['guild_id']] = {x['reward_number']}
+
+            print('All cache populated successfully')
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if self.user:
