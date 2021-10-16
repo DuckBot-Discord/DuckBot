@@ -209,7 +209,7 @@ class DuckBot(commands.Bot):
             self.afk_users = dict([(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if r['start_time']])
             self.auto_un_afk = dict([(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk')) if r['auto_un_afk'] is not None])
             self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
-            self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'], 'number': x['current_number']}) for x in await self.db.fetch('SELECT guild_id, channel_id, current_number FROM count_settings'))
+            self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'], 'number': x['current_number'], 'last_counter': x['last_counter'], 'delete_messages': x['delete_messages'], 'reset': x['reset_on_fail'], 'last_message_id': None}) for x in await self.db.fetch('SELECT * FROM count_settings'))
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if self.user:

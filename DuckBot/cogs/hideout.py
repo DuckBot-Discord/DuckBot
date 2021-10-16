@@ -211,7 +211,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         e.description = '\n'.join(f'[`{key}`]({url})' for key, url in matches)
         await ctx.send(embed=e)
 
-    @commands.group(aliases=['rtfd'], invoke_without_command=True)
+    @commands.group(aliases=['rtfd', 'rtdm'], invoke_without_command=True)
     async def rtfm(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a discord.py entity.
         Events, objects, and functions are all supported through
