@@ -920,16 +920,22 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             await ctx.send('2️⃣ **|** What **message** would you want to be sent to the channel when this number is reached?'
                            '\nℹ **|** Type `skip` to skip, and `cancel` to cancel')
             message = (await self.bot.wait_for('message', check=check, timeout=120)).content
+            if message.lower() == 'cancel':
+                return
             message = message if message.lower() != 'skip' else None
 
             await ctx.send('3️⃣ **|** What **role** would you want to be assigned to the person who reached this number?'
                            '\nℹ **|** Type `skip` to skip, and `cancel` to cancel')
             role = (await self.bot.wait_for('message', check=role_check, timeout=120)).content
+            if role.lower() == 'cancel':
+                return
             role = await commands.RoleConverter().convert(ctx, role) if role.lower() != 'skip' else None
 
             await ctx.send('4️⃣ **|** What **reaction** would you like to be added to the message?'
                            '\nℹ **|** Type `skip` to skip, and `cancel` to cancel')
             emoji = (await self.bot.wait_for('message', check=emoji_check, timeout=120)).content
+            if emoji.lower() == 'cancel':
+                return
             emoji = str((await UnicodeEmoji().convert(ctx, emoji)) or (await commands.RoleConverter().convert(ctx, emoji))) if emoji.lower() != 'skip' else None
 
             try:
