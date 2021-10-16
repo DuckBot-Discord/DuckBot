@@ -817,6 +817,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                               f'\n`{p}ct override-number <number>`')
             return await ctx.send(embed=embed)
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(manage_messages=True)
     @counting.command(name='set-channel')
     async def ct_set_channel(self, ctx: CustomContext, channel: discord.TextChannel):
         """ Sets this server's count channel """
@@ -863,6 +865,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             else:
                 await ctx.send(f'⚠ **|** {channel.mention} is already the **counting channel**!')
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(manage_messages=True)
     @counting.command(name='unset-channel')
     async def ct_unset_channel(self, ctx: CustomContext):
         """ Unsets this server's counting channel """
@@ -877,6 +881,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         else:
             await ctx.send('⚠ **|** This server doesn\'t have a **counting channel**!')
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(manage_messages=True)
     @counting.command(name='add-reward')
     async def ct_add_reward(self, ctx: CustomContext):
         """ An interactive way to add a reward to the counting game. """
@@ -942,6 +948,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         except asyncio.TimeoutError:
             return await ctx.send('⚠ **|** Timed out! Please try again.')
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(manage_messages=True)
     @counting.command(name='remove-reward')
     async def ct_remove_reward(self, ctx: CustomContext, number: int):
         """ Removes one of the counting rewards """
@@ -963,16 +971,22 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         else:
             await ctx.send('⚠ **|** That is not one of the **counting rewards**!')
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(manage_messages=True)
     @counting.command(name='all-rewards')
     async def ct_all_rewards(self, ctx: CustomContext):
         """ [unavailable] Shows all the counting rewards """
         await ctx.send('Not implemented yet!')
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(manage_messages=True)
     @counting.command(name='check-reward')
     async def ct_check_reward(self, ctx: CustomContext, number: int):
         """ [unavailable] Checks a number to see if it is assigned to a reward """
         await ctx.send('Not implemented yet!')
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(manage_messages=True)
     @counting.command(name='override-number')
     async def ct_override_number(self, ctx: CustomContext, number: int):
         """ Sets this server's current count number in case it breaks somehow """
