@@ -91,7 +91,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             await self.bot.db.execute("DELETE FROM counting WHERE (guild_id, reward_number) = ($1, $2)", guild.id,
                                       reward_number)
             try:
-                self.bot.counting_rewards[guild.id]['rewards'].remove(reward_number)
+                self.bot.counting_rewards[guild.id].remove(reward_number)
             except KeyError:
                 pass
             return reward_number
@@ -101,7 +101,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                   'reward_message = $3, role_to_grant = $4, reaction_to_add = $5',
                                   guild.id, reward_number, message, getattr(role, 'id', None), reaction)
         try:
-            self.bot.counting_rewards[guild.id]['rewards'].add(reward_number)
+            self.bot.counting_rewards[guild.id].add(reward_number)
         except KeyError:
             self.bot.counting_rewards[guild.id] = {reward_number}
         return reward_number
