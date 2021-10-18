@@ -68,26 +68,20 @@ class MyHelp(commands.HelpCommand):
             embed_like.description = command.help or '```yaml\nNo help found...\n```'
 
     # !help <command>
-    async def send_command_help(self, command):
-        alias = command.aliases
-        if command.help:
-            command_help = command.help.replace("%PRE%", self.context.clean_prefix)
+    async def send_command_help(self, command: commands.Command):
+        embed = discord.Embed(title=f"information about: `{self.context.clean_prefix}{command}`",
+                              description='**Description:**\n' + (command.help or 'No help given...').replace('%PRE%', self.context.clean_prefix))
+        embed.add_field(name='Command usage:', value=f"```css\n{self.get_minimal_command_signature(command)}\n```")
+        if command.aliases:
+            embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(command.aliases)}`'
+        try:
+            await command.can_run(self.context)
+        except commands.MissingPermissions as error:
+            embed.add_field(name='Permissions you\'re missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+        except commands.BotMissingPermissions as error:
+            embed.add_field(name='Permissions i\'m missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
         else:
-            command_help = 'No help given...'
-        if alias:
-            embed = discord.Embed(title=f"information about: {self.context.clean_prefix}{command}",
-                                  description=f"""
-```yaml
-      usage: {self.get_minimal_command_signature(command)}
-    aliases: {', '.join(alias)}
-description: {command_help}
-```""")
-        else:
-            embed = discord.Embed(title=f"information about {self.context.clean_prefix}{command}",
-                                  description=f"""```yaml
-      usage: {self.get_minimal_command_signature(command)}
-description: {command_help}
-```""")
+            pass
         await self.context.send(embed=embed)
 
     async def send_cog_help(self, cog):

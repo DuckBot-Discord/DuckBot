@@ -923,8 +923,10 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                 if emoji.lower() == 'cancel':
                     return
                 try:
-                    emoji = str((await UnicodeEmoji().convert(ctx, emoji)) or (await commands.RoleConverter().convert(ctx, emoji))) if emoji.lower() != 'skip' else None
-                except commands.RoleNotFound:
+                    emoji = str((await UnicodeEmoji().convert(ctx, emoji)) or (await commands.EmojiConverter().convert(ctx, emoji))) if emoji.lower() != 'skip' else None
+                    if isinstance(emoji, discord.Emoji) and not emoji.is_usable():
+                        emoji = None
+                except commands.EmojiNotFound:
                     emoji = False
 
             try:
