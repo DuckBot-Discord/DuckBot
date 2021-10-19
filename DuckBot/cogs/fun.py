@@ -7,11 +7,12 @@ import urllib.parse
 
 import aiowiki
 import discord
+from openrobot import api_wrapper as openrobot
 from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.cogs.management import get_webhook
-from DuckBot.helpers import constants
+from DuckBot.helpers import constants, helper
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
 from DuckBot.helpers.rock_paper_scissors import RockPaperScissors
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
@@ -327,9 +328,18 @@ class Fun(commands.Cog, name='Fun'):
 
     @commands.command(aliases=['cag'])
     async def catch(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
-        """Catches someone. (for comedic purposes only)"""
+        """Catches someone. 😂 """
         upper_hand = await ctx.send(constants.CAG_UP, reply=False)
         message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
+
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def lyrics(self, ctx, *, song: helper.LyricsConverter):
+        """ Shows the lyrics of a given song.
+         _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
+        song: openrobot.LyricResult
+        embed = discord.Embed(title=f"Lyrics for `{song.title}`", description=song.lyrics)
+        await ctx.send(embed=embed)
