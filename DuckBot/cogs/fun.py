@@ -355,8 +355,10 @@ class Fun(commands.Cog, name='Fun'):
             embed.title = discord.Embed.Empty
             reply = False
 
-    @commands.command()
-    async def tr(self, ctx: CustomContext, amount: typing.Optional[int] = 2):
+    @commands.command(name='type-race', aliases=['tr'])
+    async def type_race(self, ctx: CustomContext, amount: typing.Optional[int] = 2):
+        """ Sends 2 or more random words. First in the channel to send the words wins!
+        You have **1 minute** to type the word(s) before the game ends. """
         if 0 > amount > 20:
             raise commands.BadArgument('Amount must be between 1 and 20 words.')
         try:
@@ -374,8 +376,14 @@ class Fun(commands.Cog, name='Fun'):
                                                             f"```\n{inv_ch.join(words)}\n```")
 
         main = await ctx.send(embed=embed)
-        message = await self.bot.wait_for('message', check=lambda msg: msg.channel == ctx.channel and msg.content == words)
-        await message.add_reaction("🎉")
-        embed = main.embeds[0]
-        embed.add_field(name='🎉 Winner:', value=f'{message.author.mention}')
-        await main.edit(embed=embed)
+        try:
+            message = await self.bot.wait_for('message', check=lambda msg: msg.channel == ctx.channel and msg.content == words, timeout=60)
+        except asyncio.TimeoutError:
+            embed = main.embeds[0]
+            embed.add_field(name='🎉 Winner:', value=f'NONE 😦 - Timed out!')
+            await main.edit(embed=embed)
+        else:
+            await message.add_reaction("🎉")
+            embed = main.embeds[0]
+            embed.add_field(name='🎉 Winner:', value=f'{message.author.mention}')
+            await main.edit(embed=embed)
