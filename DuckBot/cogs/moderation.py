@@ -238,8 +238,11 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def unban(self, ctx: CustomContext, user: discord.User):
-        await ctx.guild.unban(user)
-        return await ctx.send(f"Unbanned **{user}**")
+        try:
+            await ctx.guild.unban(user)
+        except discord.NotFound:
+            raise commands.BadArgument(f'**{discord.utils.escape_markdown(str(user))}** is not banned on this server!')
+        return await ctx.send(f"Unbanned **{discord.utils.escape_markdown(str(user))}**")
 
     @commands.command(aliases=['sn', 'nick'])
     @commands.has_permissions(manage_nicknames=True)
