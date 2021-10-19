@@ -95,7 +95,8 @@ class Fun(commands.Cog, name='Fun'):
                 embed.title = post.title if title is True else None
                 return embed, emojis
         except Exception as error:
-            for line in "".join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__)).split('\n'):
+            for line in "".join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__)).split(
+                    '\n'):
                 logging.info(line)
             await self.bot.get_channel(880181130408636456).send('A reddit error occurred! Please check the console.')
             return discord.Embed(description='Whoops! An unexpected error occurred')
@@ -331,7 +332,8 @@ class Fun(commands.Cog, name='Fun'):
     async def catch(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
         """Catches someone. 😂 """
         upper_hand = await ctx.send(constants.CAG_UP, reply=False)
-        message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
+        message: discord.Message = await self.bot.wait_for('message', check=lambda
+            m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
@@ -352,3 +354,29 @@ class Fun(commands.Cog, name='Fun'):
             await ctx.send(embed=embed, reply=reply, footer=False)
             embed.title = discord.Embed.Empty
             reply = False
+
+    @commands.command()
+    async def tr(self, ctx: CustomContext, amount: typing.Optional[int] = 2):
+        if 0 > amount > 20:
+            raise commands.BadArgument('Amount must be between 1 and 20 words.')
+        try:
+            await ctx.trigger_typing()
+        except (discord.Forbidden, discord.HTTPException):
+            pass
+        async with self.bot.session.get(f'https://random-word-api.herokuapp.com/word?number={amount}') as r:
+            if r.status != 200:
+                return await ctx.send('Something went wrong...')
+            res = await r.json()
+            words = ' '.join(res)
+
+        inv_ch = '\u200b'
+        embed = discord.Embed(title='Typerace', description="**Type the following words:**\n"
+                                                            f"```\n{inv_ch.join(words)}\n```")
+
+        main = await ctx.send(embed=embed)
+        message = await self.bot.wait_for('message',
+                                          check=lambda msg: msg.channel == ctx.channel and msg.content == words)
+        await message.add_reaction("🎉")
+        embed = main.embeds[0]
+        embed.add_field(name='🎉 Winner:', value=f'{message.author.mention}')
+        await main.edit(embed=embed)
