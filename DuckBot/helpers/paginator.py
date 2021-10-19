@@ -282,16 +282,16 @@ class ViewPaginator(discord.ui.View):
         """go to the first page"""
         await self.show_page(interaction, 0)
 
-    @discord.ui.button(label='Back', style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label='◀', style=discord.ButtonStyle.blurple)
     async def go_to_previous_page(self, button: discord.ui.Button, interaction: discord.Interaction):
         """go to the previous page"""
         await self.show_checked_page(interaction, self.current_page - 1)
 
-    @discord.ui.button(label='Current', style=discord.ButtonStyle.grey, disabled=True)
+    @discord.ui.button(label='◽', style=discord.ButtonStyle.grey, disabled=True)
     async def go_to_current_page(self, button: discord.ui.Button, interaction: discord.Interaction):
         pass
 
-    @discord.ui.button(label='Next', style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label='▶', style=discord.ButtonStyle.blurple)
     async def go_to_next_page(self, button: discord.ui.Button, interaction: discord.Interaction):
         """go to the next page"""
         await self.show_checked_page(interaction, self.current_page + 1)
@@ -330,7 +330,7 @@ class ViewPaginator(discord.ui.View):
                 await msg.delete()
                 await self.show_checked_page(interaction, page - 1)
 
-    @discord.ui.button(label='Quit', style=discord.ButtonStyle.red)
+    @discord.ui.button(emoji='🗑', style=discord.ButtonStyle.red)
     async def stop_pages(self, button: discord.ui.Button, interaction: discord.Interaction):
         """stops the pagination session."""
         await interaction.response.defer()
@@ -669,7 +669,7 @@ class PaginatedStringListPageSource(menus.ListPageSource):
 
 class StopButton(discord.ui.Button):
     def __init__(self):
-        super().__init__(style=discord.ButtonStyle.danger, label='Quit')
+        super().__init__(style=discord.ButtonStyle.danger, emoji='🗑')
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()

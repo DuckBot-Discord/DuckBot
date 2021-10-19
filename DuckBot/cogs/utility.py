@@ -6,6 +6,8 @@ import discord
 
 from inspect import Parameter
 from typing import Optional
+
+import tabulate
 from discord.ext import commands, menus
 import jishaku.paginators
 
@@ -13,7 +15,7 @@ from DuckBot import errors
 from DuckBot.helpers import paginator, time_inputs, constants
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import helper
-from DuckBot.helpers.paginator import ViewPaginator, PaginatedStringListPageSource, TodoListPaginator
+from DuckBot.helpers.paginator import PaginatedStringListPageSource, TodoListPaginator
 
 
 def setup(bot):
@@ -144,7 +146,8 @@ class Utility(commands.Cog):
                               f"**Bot:** {ctx.tick(member.bot)}", inline=True)
 
         embed.add_field(name=f"{constants.STORE_TAG} Badges",
-                        value=helper.get_user_badges(user=member, fetched_user=fetched_user, bot=self.bot) or "No Badges", inline=True)
+                        value=helper.get_user_badges(user=member, fetched_user=fetched_user,
+                                                     bot=self.bot) or "No Badges", inline=True)
 
         embed.add_field(name=f"{constants.INVITE} Created At",
                         value=f"╰ {discord.utils.format_dt(member.created_at, style='f')} "
@@ -192,35 +195,33 @@ class Utility(commands.Cog):
         if roles:
             embed.add_field(name=f"{constants.ROLES_ICON} Roles:",
                             value=", ".join(roles) +
-                            f"\n**Top Role:** {member.top_role} • "
-                            f"**Color:** {member.color if member.color is not discord.Color.default() else 'Default'}", inline=False)
+                                  f"\n**Top Role:** {member.top_role} • "
+                                  f"**Color:** {member.color if member.color is not discord.Color.default() else 'Default'}",
+                            inline=False)
 
         return await ctx.send(embed=embed)
 
-    @commands.command(aliases=['perms'])
+    @commands.command(aliases=['perms'], usage='[target] [channel]')
     @commands.guild_only()
-    async def permissions(self, ctx: CustomContext, target: discord.Member = None) -> discord.Message:
+    async def permissions(self, ctx: CustomContext,
+                          target: typing.Optional[discord.Member],
+                          channel: typing.Optional[discord.TextChannel],
+                          _target: typing.Optional[discord.Member]):
         """
-        Shows a user's guild permissions.
-        Note: This does not take into account channel overwrites.
+        Displays a user's server permissions, and their channel-specific overwrites.
+        By default, it will show the bots permissions, for the current channel.
         """
-        target = target or ctx.me
-        allowed = []
-        denied = []
+        perms = []
+        target = target or _target or ctx.me
+        channel = channel or ctx.channel
         for perm in target.guild_permissions:
-            if perm[1] is True:
-                allowed.append(ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
-            elif perm[1] is False:
-                denied.append(ctx.default_tick(perm[1], perm[0].replace('_', ' ').replace('guild', 'server')))
-
-        embed = discord.Embed()
-        embed.set_author(icon_url=target.display_avatar.url, name=target)
-        embed.set_footer(icon_url=target.display_avatar.url, text=f"{target.name}'s guild permissions")
-        if allowed:
-            embed.add_field(name="allowed", value="\n".join(allowed))
-        if denied:
-            embed.add_field(name="denied", value="\n".join(denied))
-        return await ctx.send(embed=embed)
+            perms.append([perm[0].replace('guild', 'server').replace('_', ' ').title(), str(perm[1]),
+                          str(perm in channel.permissions_for(target))])
+        table = tabulate.tabulate(perms, tablefmt="orgtbl", headers=['Permissions', 'Server', 'Channel'])
+        embed = discord.Embed(description=f"```py\n{table}\n```")
+        embed.set_footer(text='"Channel" permissions consider Server, Channel and Member overwrites.')
+        embed.set_author(name=f'{target}\'s permissions', icon_url=target.display_avatar)
+        await ctx.send(embed=embed)
 
     @commands.command(aliases=['si', 'serverinfo'], name='server-info')
     @commands.guild_only()
@@ -253,7 +254,8 @@ class Utility(commands.Cog):
     async def emoji(self, ctx: CustomContext,
                     custom_emojis: commands.Greedy[typing.Union[discord.Emoji, discord.PartialEmoji]]):
         """
-        Makes an emoji bigger and shows it's formatting
+        Shows information about one or more emoji.
+        _Note, this is a group, and has also more sub-commands_
         """
         if not custom_emojis:
             raise commands.MissingRequiredArgument(
@@ -296,12 +298,10 @@ class Utility(commands.Cog):
     async def emoji_unlock(self, ctx: CustomContext, server_emoji: discord.Emoji) -> discord.Message:
         """
         Unlocks a locked emoji.
-        # Note that you can also pass an emoji name, like so:
-        # db.emoji lock 💥
-        # GOOD: db.emoji unlock boom
-        # BAD: db.emoji unlock :boom:
-        # ^^^^ Only for example! emoji must be a custom one, not a default one.
-        Note: theres also "emoji unlock all"
+        **Note:** If you don't have access to the emoji you can also do:
+
+        **__GOOD:__** `%PRE%emoji unlock RooDuck`
+        **__BAD:__** `%PRE%emoji unlock :RooDuck:`
         """
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
@@ -385,7 +385,8 @@ class Utility(commands.Cog):
 
         valid_name = re.compile('^[a-zA-Z0-9_]+$')
 
-        server_emoji = await guild.create_custom_emoji(name=name if valid_name.match(name) else server_emoji.name, image=file,
+        server_emoji = await guild.create_custom_emoji(name=name if valid_name.match(name) else server_emoji.name,
+                                                       image=file,
                                                        reason=f"Cloned emoji, requested by {ctx.author}")
         await ctx.send(f"**Done!** cloned {server_emoji} **|** `{server_emoji}`")
 
@@ -440,9 +441,12 @@ class Utility(commands.Cog):
 
         valid_name = re.compile('^[a-zA-Z0-9_]+$')
         if not valid_name.match(new_name):
-            raise commands.BadArgument('⚠ | **new_name** can only contain **alphanumeric characters** and **underscores**')
-        new_emoji = await server_emoji.edit(name=new_name, reason='Deletion requested by {ctx.author} ({ctx.author.id})')
-        await ctx.send(f"{constants.EDIT_NICKNAME} | Successfully renamed {new_emoji} from `{server_emoji.name}` to `{new_emoji.name}`!")
+            raise commands.BadArgument(
+                '⚠ | **new_name** can only contain **alphanumeric characters** and **underscores**')
+        new_emoji = await server_emoji.edit(name=new_name,
+                                            reason='Deletion requested by {ctx.author} ({ctx.author.id})')
+        await ctx.send(
+            f"{constants.EDIT_NICKNAME} | Successfully renamed {new_emoji} from `{server_emoji.name}` to `{new_emoji.name}`!")
 
     @commands.command(aliases=['uuid'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -475,7 +479,8 @@ class Utility(commands.Cog):
 
     @commands.command()
     async def afk(self, ctx: CustomContext, *, reason: commands.clean_content = '...'):
-        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[ctx.author.id] is True:
+        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[
+            ctx.author.id] is True:
             return
         if ctx.author.id not in self.bot.afk_users:
             await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, $2, $3) '
@@ -489,10 +494,12 @@ class Utility(commands.Cog):
 
             info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', ctx.author.id)
             await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, null, null) '
-                                      'ON CONFLICT (user_id) DO UPDATE SET start_time = null, reason = null', ctx.author.id)
+                                      'ON CONFLICT (user_id) DO UPDATE SET start_time = null, reason = null',
+                                      ctx.author.id)
 
-            await ctx.channel.send(f'**Welcome back, {ctx.author.mention}, afk since: {discord.utils.format_dt(info["start_time"], "R")}**'
-                                   f'\n**With reason:** {info["reason"]}', delete_after=10)
+            await ctx.channel.send(
+                f'**Welcome back, {ctx.author.mention}, afk since: {discord.utils.format_dt(info["start_time"], "R")}**'
+                f'\n**With reason:** {info["reason"]}', delete_after=10)
 
             await ctx.message.add_reaction('👋')
 
@@ -502,7 +509,8 @@ class Utility(commands.Cog):
         Toggles weather to remove the AFK status automatically or not.
         mode: either enabled or disabled. If none, it will toggle it.
         """
-        mode = mode or (False if (ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[ctx.author.id] is True) or ctx.author.id not in self.bot.auto_un_afk else True)
+        mode = mode or (False if (ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[
+            ctx.author.id] is True) or ctx.author.id not in self.bot.auto_un_afk else True)
         self.bot.auto_un_afk[ctx.author.id] = mode
         await self.bot.db.execute('INSERT INTO afk (user_id, auto_un_afk) VALUES ($1, $2) '
                                   'ON CONFLICT (user_id) DO UPDATE SET auto_un_afk = $2', ctx.author.id, mode)
@@ -518,9 +526,10 @@ class Utility(commands.Cog):
     @todo.command(name='add')
     async def todo_add(self, ctx: CustomContext, *, text: commands.clean_content):
         """ Adds an item to your to​do list """
-        insertion = await self.bot.db.fetchrow("INSERT INTO todo (user_id, text, jump_url, added_time) VALUES ($1, $2, $3, $4) "
-                                               "ON CONFLICT (user_id, text) DO UPDATE SET user_id = $1 RETURNING jump_url, added_time",
-                                               ctx.author.id, text, ctx.message.jump_url, ctx.message.created_at)
+        insertion = await self.bot.db.fetchrow(
+            "INSERT INTO todo (user_id, text, jump_url, added_time) VALUES ($1, $2, $3, $4) "
+            "ON CONFLICT (user_id, text) DO UPDATE SET user_id = $1 RETURNING jump_url, added_time",
+            ctx.author.id, text, ctx.message.jump_url, ctx.message.created_at)
         if insertion['added_time'] != ctx.message.created_at:
             embed = discord.Embed(description=f'⚠ **That is already added to your todo list:**'
                                               f'\n\u200b  → [added here]({insertion["jump_url"]}) '
@@ -533,12 +542,15 @@ class Utility(commands.Cog):
     async def todo_list(self, ctx: CustomContext):
         """ Shows your to​do list """
         user = ctx.author
-        entries = await self.bot.db.fetch('SELECT text, added_time, jump_url FROM todo WHERE user_id = $1 ORDER BY added_time ASC', user.id)
+        entries = await self.bot.db.fetch(
+            'SELECT text, added_time, jump_url FROM todo WHERE user_id = $1 ORDER BY added_time ASC', user.id)
         if not entries:
             return await ctx.send(embed=discord.Embed(description='Your to-do list is empty'))
 
         pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4098)
-        for page in [f'**[{i + 1}]({entries[i]["jump_url"]} \"Jump to message\"). ({discord.utils.format_dt(entries[i]["added_time"], style="R")}):** {entries[i]["text"]}' for i in range(len(entries))]:
+        for page in [
+            f'**[{i + 1}]({entries[i]["jump_url"]} \"Jump to message\"). ({discord.utils.format_dt(entries[i]["added_time"], style="R")}):** {entries[i]["text"]}'
+            for i in range(len(entries))]:
             pages.add_line(page[0:4098])
 
         source = PaginatedStringListPageSource(pages.pages, ctx=ctx)
@@ -550,28 +562,33 @@ class Utility(commands.Cog):
         """ Clears all your to​do entries """
         response = await ctx.confirm('Are you sure you want to clear your todo list?', return_message=True)
         if response[0] is True:
-            count = await self.bot.db.fetchval('WITH deleted AS (DELETE FROM todo WHERE user_id = $1 RETURNING *) SELECT count(*) FROM deleted;', ctx.author.id)
+            count = await self.bot.db.fetchval(
+                'WITH deleted AS (DELETE FROM todo WHERE user_id = $1 RETURNING *) SELECT count(*) FROM deleted;',
+                ctx.author.id)
             return await response[1].edit(content=f'✅ **|** Done! Removed **{count}** entries.', view=None)
         await response[1].edit(content='❌ **|** cancelled! Removed **0** entries.', view=None)
 
     @todo.command(name='remove')
     async def todo_remove(self, ctx: CustomContext, index: int):
         """ Removes one of your to​do list entries """
-        entries = await self.bot.db.fetch('SELECT text, added_time FROM todo WHERE user_id = $1 ORDER BY added_time ASC', ctx.author.id)
+        entries = await self.bot.db.fetch(
+            'SELECT text, added_time FROM todo WHERE user_id = $1 ORDER BY added_time ASC', ctx.author.id)
         try:
-            to_delete = entries[index-1]
+            to_delete = entries[index - 1]
         except KeyError:
             raise commands.BadArgument(f'⚠ **|** You do not have a task with index **{index}**')
         await self.bot.db.execute("DELETE FROM todo WHERE (user_id, text) = ($1, $2)", ctx.author.id, to_delete['text'])
-        return await ctx.send(f'**Deleted** task number **{index}**! - created at {discord.utils.format_dt(to_delete["added_time"], style="R")}'
-                              f'\n\u200b  → {to_delete["text"][0:1900]}{"..." if len(to_delete["text"]) > 1900 else ""}')
+        return await ctx.send(
+            f'**Deleted** task number **{index}**! - created at {discord.utils.format_dt(to_delete["added_time"], style="R")}'
+            f'\n\u200b  → {to_delete["text"][0:1900]}{"..." if len(to_delete["text"]) > 1900 else ""}')
 
     @todo.command(name='edit')
     async def todo_edit(self, ctx: CustomContext, index: int, text: commands.clean_content):
         """ Edits one of your to​do list entries """
-        entries = await self.bot.db.fetch('SELECT text, added_time FROM todo WHERE user_id = $1 ORDER BY added_time ASC', ctx.author.id)
+        entries = await self.bot.db.fetch(
+            'SELECT text, added_time FROM todo WHERE user_id = $1 ORDER BY added_time ASC', ctx.author.id)
         try:
-            to_delete = entries[index-1]
+            to_delete = entries[index - 1]
         except KeyError:
             raise commands.BadArgument(f'⚠ **|** You do not have a task with index **{index}**')
 
@@ -579,5 +596,6 @@ class Utility(commands.Cog):
                                   "ON CONFLICT (user_id, text) DO UPDATE SET text = $4, jump_url = $3",
                                   ctx.author.id, to_delete['text'], ctx.message.jump_url, text)
 
-        return await ctx.send(f'✏ **|** **Modified** task number **{index}**! - created at {discord.utils.format_dt(to_delete["added_time"], style="R")}'
-                              f'\n\u200b  → {text[0:1900]}{"..." if len(to_delete["text"]) > 1900 else ""}')
+        return await ctx.send(
+            f'✏ **|** **Modified** task number **{index}**! - created at {discord.utils.format_dt(to_delete["added_time"], style="R")}'
+            f'\n\u200b  → {text[0:1900]}{"..." if len(to_delete["text"]) > 1900 else ""}')

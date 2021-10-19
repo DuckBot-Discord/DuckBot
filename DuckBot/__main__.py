@@ -4,6 +4,7 @@ import os
 import traceback
 from collections import defaultdict, deque
 
+from openrobot.api_wrapper import AsyncClient as ORBClient
 import tekore as tk
 from typing import (
     List,
@@ -126,6 +127,7 @@ class DuckBot(commands.Bot):
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
+        self.orb = ORBClient(token=os.getenv('OPENROBOT_KEY'))
 
         # Cache stuff
         self.lavalink = None

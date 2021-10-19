@@ -22,6 +22,9 @@ def setup(bot):
 
 
 class MyHelp(commands.HelpCommand):
+    def __init__(self, **options):
+        super().__init__(**options)
+        self.context: CustomContext
 
     def get_bot_mapping(self):
         """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
@@ -82,7 +85,7 @@ class MyHelp(commands.HelpCommand):
             embed.add_field(name='Permissions i\'m missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
         else:
             pass
-        await self.context.send(embed=embed)
+        await self.context.send(embed=embed, footer=False)
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
@@ -91,17 +94,26 @@ class MyHelp(commands.HelpCommand):
         await menu.start()
 
     async def send_group_help(self, group):
-        subcommands = group.commands
-        if len(subcommands) == 0:
-            return await self.send_command_help(group)
+        embed = discord.Embed(title=f"information about: `{self.context.clean_prefix}{group}`",
+                              description='**Description:**\n' + (group.help or 'No help given...').replace('%PRE%', self.context.clean_prefix))
+        embed.add_field(name='Command usage:', value=f"```css\n{self.get_minimal_command_signature(group)}\n```")
+        if group.aliases:
+            embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(group.aliases)}`'
+        # noinspection PyBroadException
+        try:
+            await group.can_run(self.context)
+        except commands.MissingPermissions as error:
+            embed.add_field(name='Permissions you\'re missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+        except commands.BotMissingPermissions as error:
+            embed.add_field(name='Permissions i\'m missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+        except:
+            pass
 
-        entries = await self.filter_commands(subcommands, sort=True)
-        if len(entries) == 0:
-            return await self.send_command_help(group)
+        if group.commands:
+            formatted = '\n'.join([self.get_minimal_command_signature(c) for c in group.commands])
+            embed.add_field(name='Sub-commands for this group:', value=f'```css\n{formatted}\n```**Do `{self.context.clean_prefix}help command subcommand` for more info on a sub-command**', inline=False)
 
-        source = paginator.GroupHelpPageSource(group, entries, prefix=self.context.clean_prefix)
-        menu = paginator.ViewPaginator(source, ctx=self.context, compact=True)
-        await menu.start()
+        await self.context.send(embed=embed)
 
     async def send_error_message(self, error):
         await self.context.send(f"{error}"

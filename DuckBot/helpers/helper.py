@@ -4,6 +4,8 @@ import aiofiles
 import discord
 import typing
 from discord import VoiceRegion
+from discord.ext import commands
+from openrobot import api_wrapper as openrobot
 
 from DuckBot.__main__ import DuckBot
 from DuckBot.helpers import constants
@@ -200,3 +202,11 @@ def generate_user_statuses(member: discord.Member):
         discord.Status.offline: constants.statuses.OFFLINE
     }[member.desktop_status]
     return f"\u200b{desktop}\u200b{web}\u200b{mobile}"
+
+
+class LyricsConverter(commands.Converter):
+    async def convert(self, ctx, argument) -> openrobot.LyricResult:
+        try:
+            return await ctx.bot.orb.lyrics(argument)
+        except openrobot.OpenRobotAPIError:
+            raise commands.BadArgument(f"Sorry, I couldn't find any song named `{argument[0:1000]}`")
