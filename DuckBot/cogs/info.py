@@ -373,7 +373,7 @@ DuckBot's top role position
         """
         Shows the latest changes of the bot. ""
         """
-        embed = discord.Embed(title="📰 Latest News - <t:1634379000:d> (<t:1634379000:R>)",
+        embed = discord.Embed(title="📰 Latest News - <t:1634654000:d> (<t:1634654000:R>)",
                               description=f"\u200b"
                                           f"\n> **#\️⃣ <t:1633210000:R> You're now able to play Tic-Tac-Toe**"
                                           f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "
@@ -397,7 +397,9 @@ DuckBot's top role position
                                           f"\n> Block troublesome people from messaging in your current channel"
                                           f"\n"
                                           f"\n> **\🔢 <t:1634379000:R> NEW COUNTING GAME!!!**"
-                                          f"\n> Run `{ctx.clean_prefix}counting` for more info!")
+                                          f"\n> Run `{ctx.clean_prefix}counting` for more info!"
+                                          f"\n"
+                                          f"\n> **\🎤 <t:1634654000:R> New `lyrics` command to search lyrics!**")
         await ctx.send(embed=embed, footer=None)
 
     @commands.command(hidden=True)
