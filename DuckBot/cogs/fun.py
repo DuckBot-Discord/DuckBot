@@ -374,8 +374,7 @@ class Fun(commands.Cog, name='Fun'):
                                                             f"```\n{inv_ch.join(words)}\n```")
 
         main = await ctx.send(embed=embed)
-        message = await self.bot.wait_for('message',
-                                          check=lambda msg: msg.channel == ctx.channel and msg.content == words)
+        message = await self.bot.wait_for('message', check=lambda msg: msg.channel == ctx.channel and msg.content == words)
         await message.add_reaction("🎉")
         embed = main.embeds[0]
         embed.add_field(name='🎉 Winner:', value=f'{message.author.mention}')

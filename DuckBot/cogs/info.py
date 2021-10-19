@@ -399,7 +399,10 @@ DuckBot's top role position
                                           f"\n> **\🔢 <t:1634379000:R> NEW COUNTING GAME!!!**"
                                           f"\n> Run `{ctx.clean_prefix}counting` for more info!"
                                           f"\n"
-                                          f"\n> **\🎤 <t:1634654000:R> New `lyrics` command to search lyrics!**")
+                                          f"\n> **\🎤 <t:1634654000:R> New `lyrics` command to search lyrics!**"
+                                          f"\n"
+                                          f"\n> **\⌨ <t:1634660000:R> New `type-race` command!**"
+                                          f"\n> _See who of your friends can type the word the fastest. **No copy paste!**_")
         await ctx.send(embed=embed, footer=None)
 
     @commands.command(hidden=True)
