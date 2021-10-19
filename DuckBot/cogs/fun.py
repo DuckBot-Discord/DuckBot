@@ -7,6 +7,7 @@ import urllib.parse
 
 import aiowiki
 import discord
+import jishaku.paginators
 from openrobot import api_wrapper as openrobot
 from discord.ext import commands
 
@@ -341,5 +342,13 @@ class Fun(commands.Cog, name='Fun'):
         """ Shows the lyrics of a given song.
          _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
         song: openrobot.LyricResult
-        embed = discord.Embed(title=f"Lyrics for `{song.title}`", description=song.lyrics)
-        await ctx.send(embed=embed)
+        pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4000)
+        for line in song.lyrics.split('\n'):
+            pages.add_line(line)
+        reply = True
+        embed = discord.Embed(title=f"Lyrics for `{song.title}`")
+        for page in pages.pages:
+            embed.description = page
+            await ctx.send(embed=embed, reply=reply, footer=False)
+            embed.title = discord.Embed.Empty
+            reply = False
