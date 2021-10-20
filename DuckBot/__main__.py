@@ -43,6 +43,9 @@ token_spotify = tk.request_client_token(
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
 
+os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
+os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'True'
+os.environ['JISHAKU_USE_BRAILLE_J'] = 'True'
 os.environ['JISHAKU_HIDE'] = 'True'
 
 

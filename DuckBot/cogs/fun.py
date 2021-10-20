@@ -355,6 +355,7 @@ class Fun(commands.Cog, name='Fun'):
             embed.title = discord.Embed.Empty
             reply = False
 
+    @commands.max_concurrency(1, per=commands.BucketType.channel)
     @commands.command(name='type-race', aliases=['tr'])
     async def type_race(self, ctx: CustomContext, amount: typing.Optional[int] = 2):
         """ Sends 2 or more random words. First in the channel to send the words wins!
