@@ -214,9 +214,10 @@ class Utility(commands.Cog):
         perms = []
         target = target or _target or ctx.me
         channel = channel or ctx.channel
+        channel_perms = {x for x in channel.permissions_for(target) if x[1] is True}
         for perm in target.guild_permissions:
             perms.append([perm[0].replace('guild', 'server').replace('_', ' ').title(), str(perm[1]),
-                          str(perm in channel.permissions_for(target))])
+                          str(perm in channel_perms)])
         table = tabulate.tabulate(perms, tablefmt="orgtbl", headers=['Permissions', 'Server', 'Channel'])
         embed = discord.Embed(description=f"```py\n{table}\n```")
         embed.set_footer(text='"Channel" permissions consider Server, Channel and Member overwrites.')
