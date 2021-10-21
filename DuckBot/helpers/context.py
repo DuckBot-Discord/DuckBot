@@ -116,6 +116,11 @@ class CustomContext(commands.Context):
 
         reference = (reference or self.message.reference or self.message) if reply is True else reference
 
+        if content or embed:
+            test_string = (content or '') + str((embed.to_dict() if embed else ''))
+            if self.bot.http.token in test_string.replace('\u200b', '').replace(' ', ''):
+                raise commands.BadArgument('Could not send message as it contained the bot\'s token!')
+
         if embed and footer is True:
             if not embed.footer:
                 embed.set_footer(text=f"Requested by {self.author}",
@@ -127,6 +132,7 @@ class CustomContext(commands.Context):
             embed.colour = next(iter(colors), self.color)
 
         if gist and content and len(content) > 2000:
+            await self.trigger_typing()
             content = await self.bot.create_gist(filename=f'output.{extension}',
                                                  description='DuckBot send',
                                                  content=content, public=True)
@@ -200,3 +206,9 @@ class CustomContext(commands.Context):
         """ Shortcut of bot.create_gist + ctx.send(gist) """
         gist = await self.bot.create_gist(filename=filename, description=description, content=content, public=public)
         await self.send(f'<{gist}>')
+
+    async def trigger_typing(self) -> None:
+        try:
+            await super().trigger_typing()
+        except (discord.Forbidden, discord.HTTPException):
+            pass
