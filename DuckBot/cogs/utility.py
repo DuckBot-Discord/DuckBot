@@ -169,7 +169,7 @@ class Utility(commands.Cog):
                             inline=False)
 
         custom_activity = discord.utils.find(lambda act: isinstance(act, discord.CustomActivity), member.activities)
-        activity_string = f"`{discord.utils.remove_markdown(custom_activity.name)}`" if custom_activity else 'User has no custom status.'
+        activity_string = f"`{discord.utils.remove_markdown(custom_activity.name)}`" if custom_activity and custom_activity.name else 'User has no custom status.'
         embed.add_field(name=f'Activity:',
                         value=f"\n{helper.generate_user_statuses(member)}"
                               f"\n**Custom status:**"
@@ -593,8 +593,7 @@ class Utility(commands.Cog):
         except KeyError:
             raise commands.BadArgument(f'⚠ **|** You do not have a task with index **{index}**')
 
-        await self.bot.db.execute("INSERT INTO todo (user_id, text, jump_url) VALUES ($1, $2, $3) "
-                                  "ON CONFLICT (user_id, text) DO UPDATE SET text = $4, jump_url = $3",
+        await self.bot.db.execute('UPDATE todo SET text = $4, jump_url = $3 WHERE user_id = $1 AND text = $2',
                                   ctx.author.id, to_delete['text'], ctx.message.jump_url, text)
 
         return await ctx.send(

@@ -146,10 +146,6 @@ class DuckBot(commands.Bot):
         self.saved_messages = {}
         self.common_discrims = []
 
-        for ext in initial_extensions:
-            self._load_extension(ext)
-        self._dynamic_cogs()
-
     def _load_extension(self, name: str) -> None:
         try:
             self.load_extension(name)
@@ -231,6 +227,12 @@ class DuckBot(commands.Bot):
                     self.counting_rewards[x['guild_id']] = {x['reward_number']}
 
             print('All cache populated successfully')
+
+            for ext in initial_extensions:
+                self._load_extension(ext)
+            self._dynamic_cogs()
+
+            print('Loading cogs done.')
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if self.user:

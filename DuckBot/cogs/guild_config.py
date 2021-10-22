@@ -30,7 +30,6 @@ import time
 from types import SimpleNamespace
 from typing import Dict, Optional
 from collections import deque
-import emoji as unicode_emoji
 
 import asyncpg.exceptions
 import discord
@@ -335,6 +334,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         if ctx.invoked_subcommand is None:
             await ctx.send_help(ctx.command)
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
     @welcome.command(name='channel')
     async def welcome_channel(self, ctx: CustomContext, *, new_channel: discord.TextChannel = None):
         """
@@ -360,28 +361,35 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             self.bot.welcome_channels[ctx.guild.id] = None
             await ctx.send("Done! cleared the welcome channel.")
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
     @welcome.command(name="message")
     async def welcome_message(self, ctx: CustomContext, *, message: commands.clean_content):
         """
         Sets the welcome message for this server.
-        ``````fix
-        Here are some placeholders you can use in the message.
-        To use them, just surround them in {} symbols, like so:
-        = {server}, {full-name} or {code}
-        ``````yaml
-        server : returns the server's name (Server Name)
-        user : returns the user's name (Name)
-        full-user : returns the user's full name (Name#1234)
-        user-mention : will mention the user (@Name)
-        count : returns the member count of the server(4385)
-        code : *the invite code the member used to join(JKf38mZ)
-        full-code : *the full invite (discord.gg/JKf38mZ)
-        full-url : *the full url (https://discord.gg/JKf38mZ)
-        inviter : *returns the inviter's name (Name)
-        full-inviter : *returns the inviter's full name (Name#1234)
-        inviter-mention : *returns the inviter's mention (@Name)
-        ``````yaml
-        NOTE: these placeholders are CASE SENSITIVE.
+
+        **__Here are all available placeholders__**
+        To use these placeholders, surround them in `{}`. For example: {user-mention}
+
+        > **`server`** : returns the server's name (Server Name)
+        > **`user`** : returns the user's name (Name)
+        > **`full-user`** : returns the user's full name (Name#1234)
+        > **`user-mention`** : will mention the user (@Name)
+        > **`count`** : returns the member count of the server(4385)
+        > **`code`** : the invite code the member used to join(TdRfGKg8Wh) **\***
+        > **`full-code`** : the full invite (discord.gg/TdRfGKg8Wh) **\***
+        > **`full-url`** : the full url (<https://discord.gg/TdRfGKg8Wh>) **\***
+        > **`inviter`** : returns the inviter's name (Name) *****
+        > **`full-inviter`** : returns the inviter's full name (Name#1234) **\***
+        > **`inviter-mention`** : returns the inviter's mention (@Name) **\***
+
+        ⚠ These placeholders are __CASE SENSITIVE.__
+        ⚠ Placeholders marked with ***** may not be populated when a member joins, like when a bot joins, or when a user is added by an integration.
+
+        **🧐 Example:**
+        `%PRE%welcome message Welcome to **{server}**, **{full-user}**!`
+        **📤 Output when a user joins:**
+        > Welcome to **Duck Hideout**, **LeoCx1000#9999**!
         """
         query = """
                 INSERT INTO prefixes(guild_id, welcome_message) VALUES ($1, $2)
@@ -415,14 +423,16 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
         return await ctx.send(f"**Welcome message updated to:**\n{message}")
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
     @welcome.command(name='fake-message', aliases=['fake', 'test-message'])
     async def welcome_message_test(self, ctx: CustomContext):
-        """ Sends a fake welcome message """
+        """ Sends a fake welcome message to test the one set using the `welcome message` command. """
         member = ctx.author
         message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
                                              member.guild.id)
         message = message or default_message
-        invite = SimpleNamespace(url='https://discord.gg/discord-api',
+        invite = SimpleNamespace(url='https://discord.gg/TdRfGKg8Wh',
                                  code='discord-api',
                                  inviter=random.choice(ctx.guild.members))
 
@@ -441,6 +451,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
         await ctx.send(message.format(**l), allowed_mentions=discord.AllowedMentions.none())
 
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
     @commands.Cog.listener()
     async def on_invite_update(self, member, invite):
         try:
@@ -475,8 +487,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                  image_only: bool):
         """
         Enables "Suggestion mode" - which is, the bot will react with an upvote and downvote reaction, for people to vote.
-        # It is recommended to use the "%PRE%slowmode [channel] <short_time>" command to accompany this one, as to not flood the channel with reactions.
-        Note: If set to image_only, the bot will delete all messages without attachments.
+        _It is recommended to use the `%PRE%slowmode <short_time>` command to accompany this one, as to not flood the channel with reactions.
+        **Note:** If image-only is set to `yes`, the bot will delete all messages without attachments, and warn the user.
         """
         self.bot.suggestion_channels[channel.id] = image_only
         await self.bot.db.execute('INSERT INTO suggestions (channel_id, image_only) VALUES ($1, $2) ON CONFLICT '
@@ -617,7 +629,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
     @commands.bot_has_permissions(manage_roles=True)
     async def muterole(self, ctx: CustomContext, new_role: discord.Role = None):
         """
-        Manages the current mute role. If no role is specified, shows the current mute role.
+        Sets the mute-role. If no role is specified, shows the current mute role.
         """
         if ctx.invoked_subcommand is None:
             if new_role:
@@ -764,6 +776,10 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             role = ctx.guild.get_role(int(mute_role))
             if not isinstance(role, discord.Role):
                 raise errors.MuteRoleNotFound
+
+            cnf = await ctx.confirm(f'Are you sure you want to change the permissions for **{role.name}** in all channels?')
+            if not cnf:
+                return
 
             modified = 0
             for channel in ctx.guild.channels:
