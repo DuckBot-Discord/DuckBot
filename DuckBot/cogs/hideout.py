@@ -20,10 +20,9 @@ from DuckBot.helpers.context import CustomContext
 
 def hideout_only():
     def predicate(ctx: CustomContext):
-        if ctx.guild.id == 774561547930304536:
+        if ctx.guild and ctx.guild.id == 774561547930304536:
             return True
-        else:
-            raise errors.NoHideout
+        raise errors.NoHideout
 
     return commands.check(predicate)
 

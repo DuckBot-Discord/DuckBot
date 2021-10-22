@@ -145,6 +145,8 @@ class DuckBot(commands.Bot):
         self.counting_rewards = {}
         self.saved_messages = {}
         self.common_discrims = []
+        for ext in initial_extensions:
+            self._load_extension(ext)
 
     def _load_extension(self, name: str) -> None:
         try:
@@ -228,8 +230,6 @@ class DuckBot(commands.Bot):
 
             print('All cache populated successfully')
 
-            for ext in initial_extensions:
-                self._load_extension(ext)
             self._dynamic_cogs()
 
             print('Loading cogs done.')
