@@ -21,35 +21,58 @@ db.emoji lock <server_emoji> <roles>...
 - You can restrict a server emoji to multiple roles, for example:
 - for example: db.emoji lock :DuckBotBan: @admin @moderator @helper
 ```
+- These are commands, used like: ``command <arguments>``
+  - These are sub-commands, used like: ``command sub-command <arguments>``
+    - These are more nested commands... you get the drill.
 
 ## Music
 - play \<query>
-- disconnect
-- pause
-- resume
-- stop
-- clear_queue
-- skip
-- shuffle
+- disconnect 
+- pause 
+- resume 
+- stop 
+- clear_queue 
+- skip 
+- shuffle 
 - loop \[mode]
-- queue
-- current
-- restart
+- queue 
+- current 
+- restart 
 - seek \<position>
 - volume \[volume]
 - remove_song \<start> \[end]
 - move \<position> \<track>
-- nodes
+- nodes 
 - change_node \<node>
 
-## Logging
+## Guild Settings
 - invitestats 
 - welcome 
-  + fake-message 
-  + channel \[new_channel]
-  + message \<message>
+  - channel \[new_channel]
+  - message \<message>
+  - fake-message 
 - enable-suggestions \<channel> \<image_only>
 - disable-suggestions \<channel>
+- dj-role \[new_role]
+  - clear 
+  - all 
+- prefix 
+  - remove \<prefix>
+  - clear 
+  - add \<new>
+- muterole \[new_role]
+  - create 
+  - delete 
+  - fix 
+  - remove 
+- counting 
+  - add-reward 
+  - unset-channel 
+  - remove-reward \<number>
+  - set-channel \<channel>
+  - override-number \<number>
+  - all-rewards 
+  - check-reward \<number>
 
 ## About
 - invite 
@@ -61,76 +84,69 @@ db.emoji lock <server_emoji> <roles>...
 - news 
 - oz_ad 
 - mutual-servers \[user]
+- commands 
 - help \[command]
 
 ## Moderation
-- prefix 
-  + add \<new>
-  + remove \<prefix>
-  + clear 
 - kick \<member> \[reason]
 - ban \<user> \[delete_days=1] \[reason]
 - unban \<user>
 - setnick \<member> \[new]
 - clean \[search=100]
-  + reactions \[search=100]
-  + images \[search=100]
-  + threads \[search=100]
-  + all \[search=100]
-  + custom \<args>
-  + bot \[prefix] \[search=100]
-  + embeds \[search=100]
-  + user \<member> \[search=100]
-  + emoji \[search=100]
-  + files \[search=100]
-  + help 
-  + contains \<text>
+  - emoji \[search=100]
+  - embeds \[search=100]
+  - help 
+  - contains \<text>
+  - reactions \[search=100]
+  - images \[search=100]
+  - custom \<args>
+  - threads \[search=100]
+  - all \[search=100]
+  - bot \[prefix] \[search=100]
+  - files \[search=100]
+  - user \<member> \[search=100]
 - cleanup \[amount=25]
 - mute \<member> \[reason]
 - multi-mute \[members]... \[reason]
 - hardmute \<member> \[reason]
 - unmute \<member> \[reason]
 - multi-unmute \[members]... \[reason]
-- muterole \[new_role]
-  + delete 
-  + remove 
-  + fix 
-  + create 
 - selfmute \<duration>
 - tempmute \<member> \<duration>
 - lockdown \[channel] \[role]
 - unlock \[channel] \[role]
 - slowmode \[channel] \<duration|reset>
 - archive \[channel] \[reason]
-- dj \[new_role]
-  + all 
-  + clear 
+- block \<member>
+- unblock \<member>
 
 ## Utility
 - charinfo \<characters>
 - say \<msg>
 - echo \<channel> \<message_or_reply>
 - edit_message \[new message] \[--d|--s]
-- userinfo \[member]
-- permissions \[target]
-- serverinfo \[guild]
+- user-info \[member]
+- permissions \[target] \[channel]
+- server-info \[guild]
 - avatar \[member]
 - emoji \[custom_emojis]...
-  + steal \[index=1]
-  + unlock \<server_emoji>
-  + delete \<server_emoji>
-  + list 
-  + rename \<server_emoji> \<new_name>
-  + lock \<server_emoji> \[roles]...
-  + clone \<server_emoji> \[name]
+  - unlock \<server_emoji>
+  - list 
+  - rename \<server_emoji> \<new_name>
+  - clone \<server_emoji> \[name]
+  - lock \<server_emoji> \[roles]...
+  - steal \[index=1]
+  - delete \<server_emoji>
 - minecraft_uuid \<username>
-- commands 
 - in \<relative_time>
 - afk \[reason=...]
 - auto-afk-remove \[mode]
-
-## Test
-- chart 
+- todo 
+  - list 
+  - edit \<index> \<text>
+  - clear 
+  - remove \<index>
+  - add \<text>
 
 ## Fun
 - cat 
@@ -152,6 +168,9 @@ db.emoji lock <server_emoji> <roles>...
 - tictactoe 
 - rock-paper-scissors 
 - catch \[member]
+- lyrics \<song>
+- type-race \[amount=2]
+
 
 
 # Created by `LeoCx1000#9999`

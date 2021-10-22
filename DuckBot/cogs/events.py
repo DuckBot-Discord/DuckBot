@@ -65,7 +65,8 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.InvalidVolume,
             music_cog.OutOfTrack,
             music_cog.NegativeSeek,
-            errors.NoHideout
+            errors.NoHideout,
+            commands.DisabledCommand
         )
 
         if isinstance(error, ignored):
@@ -348,7 +349,10 @@ class Handler(commands.Cog, name='Handler'):
 
     @tasks.loop(minutes=30)
     async def do_member_count_update(self):
-        await self.bot.top_gg.post_guild_count()
+        if self.bot.user.id == 788278464474120202:
+            await self.bot.top_gg.post_guild_count()
+        else:
+            print('User is not DuckBot! Did not post data to Top.gg')
 
     @tasks.loop(minutes=5)
     async def cache_common_discriminators(self):

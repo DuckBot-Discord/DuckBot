@@ -132,6 +132,10 @@ class About(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
         help_command = MyHelp()
+        help_command.command_attrs = {'help': 'Shows help about a command or category, it can also display other useful information, such as '
+                                              'examples on how to use the command, or special syntax that can be used for a command, for example, '
+                                              'in the `welcome message` command, it shows all available special tags.',
+                                      'name': 'help', 'slash_command': True}
         help_command.cog = self
         bot.help_command = help_command
         bot.session = aiohttp.ClientSession()
