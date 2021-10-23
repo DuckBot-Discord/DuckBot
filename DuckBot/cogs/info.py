@@ -13,6 +13,7 @@ from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants, helper
+from DuckBot.helpers.paginator import InvSrc
 
 suggestions_channel = 882634213516521473
 
@@ -444,3 +445,8 @@ DuckBot's top role position
 
         return await ctx.send(embed=discord.Embed(title=f"Here are ALL my commands ({len(shown_commands)})",
                                                   description=f"```fix\n{all_commands}\n```"))
+
+    @commands.command()
+    async def vote(self, ctx):
+        embed = discord.Embed(title='Here\'s some buttons:')
+        await ctx.send(embed=embed, view=InvSrc())
