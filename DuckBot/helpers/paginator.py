@@ -130,7 +130,7 @@ class InvSrc(discord.ui.View):
                               color=discord.Colour.blurple())
         await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
 
-    @discord.ui.button(label='Discord Server', style=discord.ButtonStyle.gray, emoji=constants.SERVERS_ICON,
+    @discord.ui.button(label='Support Server', style=discord.ButtonStyle.gray, emoji=constants.SERVERS_ICON,
                        custom_id='ServerInvite')
     async def invite(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = discord.Embed(

@@ -362,15 +362,8 @@ class Fun(commands.Cog, name='Fun'):
         You have **1 minute** to type the word(s) before the game ends. """
         if 0 > amount > 20:
             raise commands.BadArgument('Amount must be between 1 and 20 words.')
-        try:
-            await ctx.trigger_typing()
-        except (discord.Forbidden, discord.HTTPException):
-            pass
-        async with self.bot.session.get(f'https://random-word-api.herokuapp.com/word?number={amount}') as r:
-            if r.status != 200:
-                return await ctx.send('Something went wrong...')
-            res = await r.json()
-            words = ' '.join(res)
+        res = random.sample(constants.COMMON_WORDS, k=amount)
+        words = ' '.join(res)
 
         inv_ch = '\u200b'
         embed = discord.Embed(title='Typerace', description="**Type the following words:**\n"
