@@ -65,7 +65,7 @@ class ServerInvite(discord.ui.View):
     """ Buttons to the support server invite """
     def __init__(self):
         super().__init__()
-        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='discord.gg/TdRfGKg8Wh',
+        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='Join the Support Server!',
                                         url="https://discord.gg/TdRfGKg8Wh"))
 
 
