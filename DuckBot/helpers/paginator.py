@@ -65,7 +65,7 @@ class ServerInvite(discord.ui.View):
     """ Buttons to the support server invite """
     def __init__(self):
         super().__init__()
-        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='discord.gg/TdRfGKg8Wh',
+        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='Join the Support Server!',
                                         url="https://discord.gg/TdRfGKg8Wh"))
 
 
@@ -130,7 +130,7 @@ class InvSrc(discord.ui.View):
                               color=discord.Colour.blurple())
         await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
 
-    @discord.ui.button(label='Discord Server', style=discord.ButtonStyle.gray, emoji=constants.SERVERS_ICON,
+    @discord.ui.button(label='Support Server', style=discord.ButtonStyle.gray, emoji=constants.SERVERS_ICON,
                        custom_id='ServerInvite')
     async def invite(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = discord.Embed(
