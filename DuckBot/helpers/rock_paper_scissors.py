@@ -39,8 +39,8 @@ class ObjectSelector(discord.ui.Select):
                     item.placeholder = "Game has ended!"
                 item.disabled = True
 
-            await asyncio.sleep(1)
             await view.message.edit(embed=embed, view=view)
+            view.stop()
 
 
 class RockPaperScissors(discord.ui.View):
