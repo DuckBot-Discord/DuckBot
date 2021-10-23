@@ -378,7 +378,7 @@ class Fun(commands.Cog, name='Fun'):
 
         main = await ctx.send(embed=embed)
         try:
-            message = await self.bot.wait_for('message', check=lambda msg: msg.channel == ctx.channel and msg.content == words, timeout=60)
+            message = await self.bot.wait_for('message', check=lambda msg: msg.channel == ctx.channel and msg.content == words and not msg.author.bot, timeout=60)
         except asyncio.TimeoutError:
             embed = main.embeds[0]
             embed.add_field(name='🎉 Winner:', value=f'NONE 😦 - Timed out!')

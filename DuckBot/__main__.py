@@ -11,7 +11,6 @@ from typing import (
     Optional
 )
 
-import typing
 from dotenv import load_dotenv
 import asyncpg
 import asyncpraw
