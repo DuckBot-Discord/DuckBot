@@ -80,13 +80,27 @@ class MyHelp(commands.HelpCommand):
             embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(command.aliases)}`'
         try:
             await command.can_run(self.context)
-        except commands.MissingPermissions as error:
-            embed.add_field(name='Permissions you\'re missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
-        except commands.BotMissingPermissions as error:
-            embed.add_field(name='Permissions i\'m missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
-        else:
-            pass
-        await self.context.send(embed=embed, footer=False)
+        except Exception as e:
+            try:
+                if isinstance(e, discord.ext.commands.CheckAnyFailure):
+                    for e in e.errors:
+                        if not isinstance(e, commands.NotOwner):
+                            raise e
+                raise e
+            except commands.MissingPermissions as error:
+                embed.add_field(name='Permissions you\'re missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+            except commands.BotMissingPermissions as error:
+                embed.add_field(name='Permissions i\'m missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+            except commands.NotOwner:
+                embed.add_field(name='Rank you are missing:', value='Bot owner', inline=False)
+            except commands.PrivateMessageOnly:
+                embed.add_field(name='Cant execute this here:', value='Can only be executed in DMs.', inline=False)
+            except commands.NoPrivateMessage:
+                embed.add_field(name='Cant execute this here:', value='Can only be executed in a server.', inline=False)
+            except commands.DisabledCommand:
+                embed.add_field(name='Cant execute this command:', value='This command is restricted to slash commands.', inline=False)
+            finally:
+                await self.context.send(embed=embed, footer=False)
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
