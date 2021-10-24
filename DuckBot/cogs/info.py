@@ -402,7 +402,7 @@ DuckBot's top role position
         """
         Shows the latest changes of the bot. ""
         """
-        embed = discord.Embed(title="📰 Latest News - <t:1634654000:d> (<t:1634654000:R>)",
+        embed = discord.Embed(title="📰 Latest News - <t:1635068000:d> (<t:1635068000:R>)",
                               description=f"\u200b"
                                           f"\n> **#\️⃣ <t:1633210000:R> You're now able to play Tic-Tac-Toe**"
                                           f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "
