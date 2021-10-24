@@ -56,7 +56,7 @@ class MyHelp(commands.HelpCommand):
                 continue
             command_signatures = [self.get_minimal_command_signature(c) for c in cog_commands]
             if command_signatures:
-                if cog.qualified_name in ('Image Manipulation', ):
+                if cog.qualified_name in ('Image', ):
                     pages = WrappedPaginator(prefix=f'{cog.description}\n```css\n', suffix='\n```', max_size=450)
                     for s in command_signatures:
                         pages.add_line(s)
