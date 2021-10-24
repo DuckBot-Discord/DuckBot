@@ -341,11 +341,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     @commands.bot_has_permissions(manage_webhooks=True)
     async def send_as_others(self, ctx: CustomContext, member: discord.Member, *, message):
         """ Sends a message as another person. """
-        results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+", message)  # HTTP/HTTPS URL regex
-        results2 = re.findall(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?", message)  # Discord invite regex
-        if results or results2:
-            await ctx.send(f"hey, {ctx.author.mention}. Urls or invites aren't allowed!", delete_after=10)
-        wh: discord.Webhook = await get_webhook(ctx.channel)
+        wh = await get_webhook(ctx.channel)
         await wh.send(message, avatar_url=member.display_avatar.url, username=member.display_name)
         await ctx.message.delete(delay=0)
 
