@@ -2,10 +2,14 @@ import discord
 import typing
 import random
 
+from asyncdagpi import ImageFeatures
 from discord import Interaction
 from discord.ext import commands
 
 from DuckBot.helpers import constants
+from typing import Union
+
+target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite]
 
 
 class ConfirmButton(discord.ui.Button):
@@ -226,3 +230,14 @@ class CustomContext(commands.Context):
             await super().trigger_typing()
         except (discord.Forbidden, discord.HTTPException):
             pass
+
+    async def dagpi(self, target: target_type = None, *, feature: ImageFeatures, **kwargs) -> discord.File:
+        await self.trigger_typing()
+        target = target or self.maybe_quoted
+        return await self.bot.dagpi_request(self, target, feature=feature, **kwargs)
+
+    @property
+    def maybe_quoted(self):
+        if self.message.reference:
+            return self.message.reference.resolved.author
+        return self.author

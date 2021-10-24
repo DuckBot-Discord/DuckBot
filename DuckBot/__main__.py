@@ -8,7 +8,7 @@ from openrobot.api_wrapper import AsyncClient as ORBClient
 import tekore as tk
 from typing import (
     List,
-    Optional
+    Optional, Union
 )
 
 from dotenv import load_dotenv
@@ -25,6 +25,8 @@ from discord.ext.commands.errors import (
     ExtensionNotFound,
     NoEntryPointError
 )
+from asyncdagpi import Client as DagpiClient
+from asyncdagpi import ImageFeatures
 
 from DuckBot import errors
 from DuckBot.helpers.context import CustomContext
@@ -46,6 +48,7 @@ os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
 os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'True'
 os.environ['JISHAKU_USE_BRAILLE_J'] = 'True'
 os.environ['JISHAKU_HIDE'] = 'True'
+target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]
 
 
 async def create_db_pool() -> asyncpg.Pool:
@@ -130,6 +133,8 @@ class DuckBot(commands.Bot):
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
         self.orb = ORBClient(token=os.getenv('OPENROBOT_KEY'))
+        self.dagpi_cooldown = commands.CooldownMapping.from_cooldown(60, 60, commands.BucketType.default)
+        self.dagpi_client = DagpiClient(os.getenv('DAGPI_TOKEN'))
 
         # Cache stuff
         self.lavalink = None
@@ -169,7 +174,8 @@ class DuckBot(commands.Bot):
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
-            prefix = [x['prefix'] for x in await bot.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)] or self.PRE
+            prefix = [x['prefix'] for x in
+                      await bot.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)] or self.PRE
             self.prefixes[message.guild.id] = prefix
 
         if await bot.is_owner(message.author) and bot.noprefix is True:
@@ -177,7 +183,8 @@ class DuckBot(commands.Bot):
         return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
 
     async def fetch_prefixes(self, message):
-        return tuple([x['prefix'] for x in await self.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)]) or self.PRE
+        return tuple([x['prefix'] for x in
+                      await self.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)]) or self.PRE
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
@@ -209,9 +216,14 @@ class DuckBot(commands.Bot):
             for value in values:
                 self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
 
-            self.afk_users = dict([(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if r['start_time']])
-            self.auto_un_afk = dict([(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk')) if r['auto_un_afk'] is not None])
-            self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
+            self.afk_users = dict(
+                [(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if
+                 r['start_time']])
+            self.auto_un_afk = dict(
+                [(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk'))
+                 if r['auto_un_afk'] is not None])
+            self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in
+                                             (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
             self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'],
                                                            'number': x['current_number'],
                                                            'last_counter': x['last_counter'],
@@ -301,6 +313,17 @@ class DuckBot(commands.Bot):
             return None
 
         return f"https://cdn.discordapp.com/role-icons/{role_id}/{role_asset}.png?size={size}"
+
+    async def dagpi_request(self, ctx: CustomContext, target: target_type = None, *, feature: ImageFeatures, **kwargs) -> discord.File:
+        bucket = self.dagpi_cooldown.get_bucket(ctx.message)
+        retry_after = bucket.update_rate_limit()
+        if retry_after:
+            raise commands.CommandOnCooldown(commands.Cooldown(60, 60), retry_after, commands.BucketType.default)
+        target = target or ctx.author
+        url = getattr(target, 'display_avatar', None) or getattr(target, 'icon', None) or getattr(target, 'guild', None) or target
+        url = getattr(getattr(url, 'icon', url), 'url', url)
+        request = await self.dagpi_client.image_process(feature, url, **kwargs)
+        return discord.File(fp=request.image, filename=f"DuckBot-{str(feature)}.{request.format}")
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ import time
 
 import typing
 from discord.ext import commands
+from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants, helper
@@ -55,10 +56,18 @@ class MyHelp(commands.HelpCommand):
                 continue
             command_signatures = [self.get_minimal_command_signature(c) for c in cog_commands]
             if command_signatures:
-                val = cog.description + '```css\n' + "\n".join(command_signatures) + '\n```'
-                info = ('Category: ' + cog.qualified_name, f'{val}')
+                if cog.qualified_name in ('Image Manipulation', ):
+                    pages = WrappedPaginator(prefix=f'{cog.description}\n```css\n', suffix='\n```', max_size=450)
+                    for s in command_signatures:
+                        pages.add_line(s)
+                    for p in pages.pages:
+                        info = ('Category: ' + cog.qualified_name, p)
+                        data.append(info)
+                else:
+                    val = cog.description + '```css\n' + "\n".join(command_signatures) + '\n```'
+                    info = ('Category: ' + cog.qualified_name, f'{val}')
 
-                data.append(info)
+                    data.append(info)
 
         source = paginator.HelpMenuPageSource(data=data, ctx=self.context, help_class=self)
         menu = paginator.ViewPaginator(source=source, ctx=self.context, compact=True)
@@ -100,7 +109,8 @@ class MyHelp(commands.HelpCommand):
             except commands.DisabledCommand:
                 embed.add_field(name='Cant execute this command:', value='This command is restricted to slash commands.', inline=False)
             finally:
-                await self.context.send(embed=embed, footer=False)
+                return await self.context.send(embed=embed, footer=False)
+        await self.context.send(embed=embed, footer=False)
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
@@ -421,7 +431,10 @@ DuckBot's top role position
                                           f"\n> **\🎤 <t:1634654000:R> New `lyrics` command to search lyrics!**"
                                           f"\n"
                                           f"\n> **\⌨ <t:1634660000:R> New `type-race` command!**"
-                                          f"\n> _See who of your friends can type the word the fastest. **No copy paste!**_")
+                                          f"\n> _See who of your friends can type the word the fastest. **No copy paste!**_"
+                                          f"\n"
+                                          f"\n> **\📸 <t:1635068000:R> New image manipulation commands!**"
+                                          f"\n> do `{ctx.clean_prefix}help image` for more information")
         await ctx.send(embed=embed, footer=None)
 
     @commands.command(hidden=True)
