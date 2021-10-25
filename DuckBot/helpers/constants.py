@@ -11,7 +11,7 @@ CUSTOM_TICKS = {
 DEFAULT_TICKS = {
     True: '✅',
     False: '❌',
-    None: '➖',
+    None: '⬜',
 }
 
 GUILD_FEATURES = {
@@ -42,7 +42,7 @@ GUILD_FEATURES = {
 SQUARE_TICKS = {
     True: '🟩',
     False: '🟥',
-    None: '⬛',
+    None: '⬜',
 }
 
 TOGGLES = {

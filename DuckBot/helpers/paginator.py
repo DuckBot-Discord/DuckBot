@@ -376,6 +376,29 @@ class TextPageSource(menus.ListPageSource):
 
 
 class SimplePageSource(menus.ListPageSource):
+    def __init__(self, entries, *, per_page):
+        super().__init__(entries, per_page=per_page)
+        self.embed = discord.Embed(title='Here are all members with a nick, sorted by name.',
+                                   timestamp=discord.utils.utcnow())
+
+    async def format_page(self, menu, entries):
+        pages = entries
+
+        maximum = self.get_max_pages()
+        if maximum > 1:
+            footer = f'Page {menu.current_page + 1}/{maximum} ({len(self.entries)} entries)'
+            self.embed.set_footer(text=footer)
+
+        self.embed.description = '\n'.join(pages)
+        return self.embed
+
+
+class EnumeratedPageSource(menus.ListPageSource):
+    def __init__(self, entries, *, per_page, embed_title: str = discord.Embed.Empty):
+        super().__init__(entries, per_page=per_page)
+        self.embed = discord.Embed(title=embed_title,
+                                   timestamp=discord.utils.utcnow())
+
     async def format_page(self, menu, entries):
         pages = []
         for index, entry in enumerate(entries, start=menu.current_page * self.per_page):
@@ -384,10 +407,11 @@ class SimplePageSource(menus.ListPageSource):
         maximum = self.get_max_pages()
         if maximum > 1:
             footer = f'Page {menu.current_page + 1}/{maximum} ({len(self.entries)} entries)'
-            menu.embed.set_footer(text=footer)
+            self.embed.set_footer(text=footer)
 
-        menu.embed.description = '\n'.join(pages)
-        return menu.embed
+        self.embed.description = '\n'.join(pages)
+        return self.embed
+
 
 
 class SimplePages(ViewPaginator):
