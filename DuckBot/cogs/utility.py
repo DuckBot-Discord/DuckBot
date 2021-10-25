@@ -9,7 +9,7 @@ from typing import Optional
 
 import tabulate
 from discord.ext import commands, menus
-import jishaku.paginators
+from jishaku.paginators import WrappedPaginator
 
 from DuckBot import errors
 from DuckBot.helpers import paginator, time_inputs, constants
@@ -236,7 +236,7 @@ class Utility(commands.Cog):
         await menu.start()
 
     @commands.command(aliases=['av', 'pfp'])
-    async def avatar(self, ctx: CustomContext, member: typing.Union[discord.Member, discord.User] = None):
+    async def avatar(self, ctx: CustomContext, *, member: typing.Union[discord.Member, discord.User] = None):
         """
         Displays a user's avatar. If not specified, shows your own.
         """
@@ -599,3 +599,11 @@ class Utility(commands.Cog):
         return await ctx.send(
             f'✏ **|** **Modified** task number **{index}**! - created at {discord.utils.format_dt(to_delete["added_time"], style="R")}'
             f'\n\u200b  → {text[0:1900]}{"..." if len(to_delete["text"]) > 1900 else ""}')
+
+    @commands.command()
+    async def hoisters(self, ctx: CustomContext):
+        """ Shows a sorted list of members that have a nicknname """
+        members = sorted([m for m in ctx.guild.members if m.nick], key=lambda mem: mem.display_name)
+        source = paginator.SimplePageSource([f"`{m.id}` <:separator:902081402831523850> {discord.utils.escape_markdown(m.nick)}" for m in members], per_page=10)
+        pages = paginator.ViewPaginator(source=source, ctx=ctx, compact=True)
+        await pages.start()

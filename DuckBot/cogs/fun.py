@@ -161,7 +161,7 @@ class Fun(commands.Cog, name='Fun'):
         return await ctx.send(embed=embed)
 
     @commands.command(aliases=['pp', 'eggplant', 'cucumber'])
-    async def banana(self, ctx: CustomContext, member: discord.Member = None) -> discord.Message:
+    async def banana(self, ctx: CustomContext, *, member: discord.Member = None) -> discord.Message:
         """
         Measures your banana 😏
         """

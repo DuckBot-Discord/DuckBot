@@ -96,7 +96,8 @@ class DuckBot(commands.Bot):
             case_insensitive=True,
             activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             enable_debug_events=True,
-            strip_after_prefix=True
+            strip_after_prefix=True,
+
         )
 
         self.spotify = tk.Spotify(token_spotify, asynchronous=True)
@@ -149,6 +150,9 @@ class DuckBot(commands.Bot):
         self.counting_rewards = {}
         self.saved_messages = {}
         self.common_discrims = []
+        self.log_channels = {}
+        self.log_cache = defaultdict(list)
+
         for ext in initial_extensions:
             self._load_extension(ext)
 

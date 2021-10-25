@@ -9,7 +9,7 @@ from DuckBot.helpers import constants
 
 
 def setup(bot):
-    bot.add_cog(Events(bot))
+    bot.add_cog(ModMail(bot))
 
 
 async def get_webhook(channel) -> discord.Webhook:
@@ -24,9 +24,10 @@ async def get_webhook(channel) -> discord.Webhook:
     return hook
 
 
-class Events(commands.Cog):
+class ModMail(commands.Cog):
     """
-    🤨 Commands and functions to manage DuckBot's DMs with users.
+    🤨 Functions to send and receive DuckBot's DMs.
+    For internal purposes only, no commands found here.
     """
 
     def __init__(self, bot):
