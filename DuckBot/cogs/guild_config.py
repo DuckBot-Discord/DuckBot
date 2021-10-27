@@ -1470,10 +1470,11 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                               f'\n`{ctx.clean_prefix}log enable <channel>` Enables logging for this server.'
                                               f'\n`{ctx.clean_prefix}log disable` Disables logging for this server.'
                                               f'\n`{ctx.clean_prefix}log channels` Shows the current channel settings.'
-                                              f'\n`{ctx.clean_prefix}log edit-channels` Modifies the log channels.'
+                                              f'\n`{ctx.clean_prefix}log edit-channels` Modifies the log channels (interactive menu).'
                                               f'\n`{ctx.clean_prefix}log all-events` Shows all events, disabled and enabled.'
-                                              f'\n`{ctx.clean_prefix}log enable-event <event>` Enables a specific event.'
-                                              f'\n`{ctx.clean_prefix}log disable-event <event>` Disables a specific event.'
+                                              f'\n`{ctx.clean_prefix}log enable-event <event>` Enables a specific event from the list.'
+                                              f'\n`{ctx.clean_prefix}log disable-event <event>` Disables a specific event from the list.'
+                                              f'\n`{ctx.clean_prefix}log auto-setup` Creates a logging category with different channels.'
                                               f'\n'
                                               f'\nFor more info on a specific command, run the `help` command with it, E.G:'
                                               f'\n`db.help log enable-event`')
@@ -1662,7 +1663,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         voice_events = [ctx.default_tick(events.voice_join, 'Voice Join'),
                         ctx.default_tick(events.voice_leave, 'Voice Leave'),
                         ctx.default_tick(events.voice_move, 'Voice Move'),
-                        ctx.default_tick(events.voice_mod, 'Mod Mod'),
+                        ctx.default_tick(events.voice_mod, 'Voice Mod'),
                         ctx.default_tick(events.stage_open, 'Stage Open'),
                         ctx.default_tick(events.stage_close, 'Stage Close')]
         embed.add_field(name='Voice Events', value='\n'.join(voice_events))
@@ -1684,3 +1685,90 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         enabled = [x for x, y in set(events) if y is True]
         embed.set_footer(text=f'{len(enabled)}/{len(set(loggings))} events enabled.')
         await ctx.send(embed=embed)
+
+    @log.command(name='auto-setup')
+    @commands.has_permissions(administrator=True)
+    @commands.bot_has_guild_permissions(manage_channels=True, manage_webhooks=True)
+    async def log_auto_setup(self, ctx: CustomContext):
+        """Creates a Logging category, with channels for each event to be delivered.
+        The channels would be the following (inside a logging category):
+        `#join-leave-log`
+        `#message-log`
+        `#voice-log`
+        `#member-log`
+        `#server-log`
+        """
+        if ctx.guild in self.bot.log_channels:
+            raise commands.BadArgument('This server already has Logging Set up!')
+        c = await ctx.confirm('**Do you want to proceed?**'
+                              '\nThis command will set up logging for you,'
+                              '\nBy creating the followinc category:'
+                              '\n'
+                              f'\n`#logging` (category)'
+                              f'\n- `#join-leave-log`'
+                              f'\n- `#message-log`'
+                              f'\n- `#voice-log`'
+                              f'\n- `#member-log`',
+                              delete_after_timeout=False, delete_after_cancel=False, delete_after_confirm=True)
+        if not c:
+            return
+        async with ctx.typing():
+            try:
+                over = {ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                        ctx.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True, manage_webhooks=True)}
+                avatar = await ctx.me.avatar.read()
+                cat = await ctx.guild.create_category(name='logging', overwrites=over)
+                join_leave_channel = await cat.create_text_channel(name='join-leave-log')
+                join_leave_webhook = await join_leave_channel.create_webhook(name='DuckBot logging', avatar=avatar)
+                message_channel = await cat.create_text_channel(name='message-log')
+                message_webhook = await message_channel.create_webhook(name='DuckBot logging', avatar=avatar)
+                voice_channel = await cat.create_text_channel(name='voice-log')
+                voice_webhook = await voice_channel.create_webhook(name='DuckBot logging', avatar=avatar)
+                member_channel = await cat.create_text_channel(name='member-log')
+                member_webhook = await member_channel.create_webhook(name='DuckBot logging', avatar=avatar)
+                server_channel = await cat.create_text_channel(name='server-log')
+                server_webhook = await server_channel.create_webhook(name='DuckBot logging', avatar=avatar)
+                self.bot.log_channels[ctx.guild.id] = self.bot.log_webhooks(join_leave=join_leave_webhook.url,
+                                                                            server=server_webhook.url,
+                                                                            default=server_webhook.url,
+                                                                            message=message_webhook.url,
+                                                                            member=member_webhook.url,
+                                                                            voice=voice_webhook.url)
+                await self.bot.db.execute("""
+                INSERT INTO log_channels(guild_id, default_channel, default_chid, message_channel, message_chid, 
+                                         join_leave_channel, join_leave_chid, member_channel, member_chid,
+                                         voice_channel, voice_chid, server_channel, server_chid) 
+                                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                                    ON CONFLICT (guild_id) DO UPDATE SET
+                                        default_channel = $2,
+                                        default_chid = $3,
+                                        message_channel = $4,
+                                        message_chid = $5,
+                                        join_leave_channel = $6,
+                                        join_leave_chid = $7,
+                                        member_channel = $8,
+                                        member_chid = $9,
+                                        voice_channel = $10,
+                                        voice_chid = $11,
+                                        server_channel = $12,
+                                        server_chid = $13; """,
+                                          ctx.guild.id, server_webhook.url, server_channel.id,
+                                          message_webhook.url, message_channel.id,
+                                          join_leave_webhook.url, join_leave_channel.id,
+                                          member_webhook.url, member_channel.id,
+                                          voice_webhook.url, voice_channel.id,
+                                          server_webhook.url, server_channel.id)
+                try:
+                    embed = discord.Embed(title='Successfully set up!', colour=discord.Colour.blurple(),
+                                          description=f"{join_leave_channel.mention}"
+                                                      f"\n{message_channel.mention}"
+                                                      f"\n{voice_channel.mention}"
+                                                      f"\n{server_channel.mention}")
+                    await ctx.send(embed=embed, mention_author=True)
+                except (discord.Forbidden, discord.HTTPException):
+                    pass
+            except discord.Forbidden:
+                await ctx.send('For some reason, I didn\'t have the necessary permissions to do that.'
+                               '\nTry assigning me a role with `Administrator` permissions')
+            except discord.HTTPException:
+                await ctx.send('Something went wrong, ups!')
