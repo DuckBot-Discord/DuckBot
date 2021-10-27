@@ -47,6 +47,9 @@ class LoggingBackend(commands.Cog):
                         except discord.NotFound:
                             self.bot.loop.create_task(self.create_and_deliver(embeds=embeds, deliver_type=deliver_type, guild_id=guild_id))
                             await asyncio.sleep(1)
+                        except Exception as e:
+                            print('Error during task!')
+                            print(e)
                     else:
                         deliver_type = self.send_to.default
                         webhook_url = webhooks.default
@@ -56,6 +59,9 @@ class LoggingBackend(commands.Cog):
                         except discord.NotFound:
                             self.bot.loop.create_task(self.create_and_deliver(embeds=embeds, deliver_type=deliver_type, guild_id=guild_id))
                             await asyncio.sleep(1)
+                        except Exception as e:
+                            print('Error during task!')
+                            print(e)
 
     @deliver_logs.before_loop
     async def wait(self):
