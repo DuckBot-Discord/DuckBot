@@ -413,7 +413,6 @@ class EnumeratedPageSource(menus.ListPageSource):
         return self.embed
 
 
-
 class SimplePages(ViewPaginator):
     """A simple pagination session reminiscent of the old Pages interface.
 

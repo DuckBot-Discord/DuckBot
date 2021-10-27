@@ -229,7 +229,7 @@ class Handler(commands.Cog, name='Handler'):
                 f"I've searched far and wide, but `{error.argument}` doesn't seem to be a discord user...")
 
         if isinstance(error, commands.BadArgument):
-            return await ctx.send(error or "Bad argument given!")
+            return await ctx.send(str(error or "Bad argument given!"))
 
         if isinstance(error, commands.NoPrivateMessage):
             return await ctx.send("This command does not work inside DMs")

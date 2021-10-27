@@ -308,26 +308,18 @@ class Management(commands.Cog, name='Bot Management'):
         await ctx.message.add_reaction('💌')
 
     @commands.command()
-    @commands.is_owner()
-    async def sudo(self, ctx: CustomContext, target: discord.User, *, command_string: str):
+    async def sudo(self, ctx: CustomContext, target: discord.User, channel: typing.Optional[discord.abc.Messageable], sub: str, *, arg: str):
         """
         Run a command as someone else.
-
-        This will try to resolve to a Member, but will use a User if it can't find one.
-
         """
 
         if ctx.guild:
-            # Try to upgrade to a Member instance
-            # This used to be done by a Union converter, but doing it like this makes
-            #  the command more compatible with chaining, e.g. `jsk in .. jsk su ..`
-
             with contextlib.suppress(discord.HTTPException):
                 target_member = ctx.guild.get_member(target.id) or await ctx.guild.fetch_member(target.id)
 
             target = target_member or target
 
-        alt_ctx = await copy_context_with(ctx, author=target, content=ctx.prefix + command_string)
+        alt_ctx = await copy_context_with(ctx, author=target, content=ctx.prefix + arg, channel=channel)
 
         if alt_ctx.command is None:
             if alt_ctx.invoked_with is None:
