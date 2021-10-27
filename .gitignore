@@ -12,5 +12,4 @@ copy-paste/*
 gafapasta/files/*
 DuckBot/cogs/music-config.json
 DuckBot/cogs/beta.py
-*.json
 .json
