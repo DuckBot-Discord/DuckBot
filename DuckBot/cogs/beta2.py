@@ -150,7 +150,7 @@ class LoggingBackend(commands.Cog):
 
     @commands.Cog.listener('on_message_edit')
     async def logger_on_message_edit(self, before: discord.Message, after: discord.Message):
-        if before.author.bot or not before.guild or not self.bot.guild_loggings[after.guild.id].message_edit:
+        if before.author.bot or not before.guild or before.guild.id not in self.bot.log_channels or not self.bot.guild_loggings[after.guild.id].message_edit:
             return
         if not self.bot.guild_loggings[before.guild.id].message_edit:
             return
