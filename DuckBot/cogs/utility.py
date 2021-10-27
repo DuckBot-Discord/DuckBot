@@ -577,7 +577,7 @@ class Utility(commands.Cog):
             'SELECT text, added_time FROM todo WHERE user_id = $1 ORDER BY added_time ASC', ctx.author.id)
         try:
             to_delete = entries[index - 1]
-        except KeyError:
+        except IndexError:
             raise commands.BadArgument(f'⚠ **|** You do not have a task with index **{index}**')
         await self.bot.db.execute("DELETE FROM todo WHERE (user_id, text) = ($1, $2)", ctx.author.id, to_delete['text'])
         return await ctx.send(
