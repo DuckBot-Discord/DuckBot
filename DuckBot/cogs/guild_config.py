@@ -1734,6 +1734,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                                                             message=message_webhook.url,
                                                                             member=member_webhook.url,
                                                                             voice=voice_webhook.url)
+                self.bot.guild_loggings[ctx.guild.id] = LoggingEventsFlags.all()
                 await self.bot.db.execute("""
                 INSERT INTO log_channels(guild_id, default_channel, default_chid, message_channel, message_chid, 
                                          join_leave_channel, join_leave_chid, member_channel, member_chid,
@@ -1758,6 +1759,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                           member_webhook.url, member_channel.id,
                                           voice_webhook.url, voice_channel.id,
                                           server_webhook.url, server_channel.id)
+                await self.bot.db.execute('INSERT INTO logging_events(guild_id) VALUES ($1)'
+                                          'ON CONFLICT (guild_id) DO NOTHING', ctx.guild.id)
                 try:
                     embed = discord.Embed(title='Successfully set up!', colour=discord.Colour.blurple(),
                                           description=f"{join_leave_channel.mention}"
