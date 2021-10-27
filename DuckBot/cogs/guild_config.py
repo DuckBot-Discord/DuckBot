@@ -1272,6 +1272,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         except (discord.Forbidden, discord.HTTPException):
             pass
         try:
+            await self.bot.db.execute('INSERT INTO prefixes (guild_id) VALUES ($1) '
+                                      'ON CONFLICT (guild_id) DO NOTHING')
             await self.bot.db.execute('INSERT INTO count_settings (guild_id, channel_id) VALUES ($1, $2)', ctx.guild.id,
                                       channel.id)
             self.bot.counting_channels[ctx.guild.id] = {'channel': channel.id,
@@ -1289,6 +1291,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                     '⚠ **|** There is already a **counting channel**! Would you like to **update it** and reset the count number to **0**?',
                     return_message=True)
                 if confirm[0] is True:
+                    await self.bot.db.execute('INSERT INTO prefixes (guild_id) VALUES ($1) '
+                                              'ON CONFLICT (guild_id) DO NOTHING')
                     await self.bot.db.execute(
                         'INSERT INTO count_settings (guild_id, channel_id, current_number) VALUES ($1, $2, 1)'
                         'ON CONFLICT (guild_id) DO UPDATE SET channel_id = $2, current_number = 0',
@@ -1507,7 +1511,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                 webhook_url = w.url
             except discord.Forbidden:
                 raise commands.BadArgument(f'I couldn\'t create a webhook in {channel.mention} (Missing Permissions)')
-
+        await self.bot.db.execute('INSERT INTO prefixes (guild_id) VALUES ($1) '
+                                  'ON CONFLICT (guild_id) DO NOTHING')
         await self.bot.db.execute(
             "INSERT INTO log_channels(guild_id, default_channel, default_chid) VALUES ($1, $2, $3) "
             "ON CONFLICT (guild_id) DO UPDATE SET default_channel = $2, default_chid = $3",
@@ -1735,6 +1740,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                                                             member=member_webhook.url,
                                                                             voice=voice_webhook.url)
                 self.bot.guild_loggings[ctx.guild.id] = LoggingEventsFlags.all()
+                await self.bot.db.execute('INSERT INTO prefixes (guild_id) VALUES ($1) '
+                                          'ON CONFLICT (guild_id) DO NOTHING')
                 await self.bot.db.execute("""
                 INSERT INTO log_channels(guild_id, default_channel, default_chid, message_channel, message_chid, 
                                          join_leave_channel, join_leave_chid, member_channel, member_chid,
