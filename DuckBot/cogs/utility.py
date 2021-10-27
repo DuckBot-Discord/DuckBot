@@ -7,6 +7,7 @@ import discord
 from inspect import Parameter
 from typing import Optional
 
+import jishaku
 import tabulate
 from discord.ext import commands, menus
 from jishaku.paginators import WrappedPaginator
