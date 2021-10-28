@@ -203,7 +203,7 @@ class Utility(commands.Cog):
                         value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
                                f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** "
-                               f"{sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}")
+                               f"{sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow()).index(member) + 1}")
                         if member else "Could not get data",
                         inline=False)
 
