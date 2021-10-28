@@ -28,6 +28,7 @@ from discord.ext.commands.errors import (
 )
 from asyncdagpi import Client as DagpiClient
 from asyncdagpi import ImageFeatures
+import asyncgur
 
 from DuckBot import errors
 from DuckBot.helpers.helper import LoggingEventsFlags
@@ -157,6 +158,7 @@ class DuckBot(commands.Bot):
         self.log_channels: typing.Dict[int, log_wh] = {}
         self.log_cache = defaultdict(lambda: defaultdict(list))
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
+        self.imgur = asyncgur.Imgur(client_id=os.getenv('IMGUR_CL_ID'))
 
         for ext in initial_extensions:
             self._load_extension(ext)
@@ -363,6 +365,14 @@ class DuckBot(commands.Bot):
             self.log_channels[guild_id]._replace(voice=webhook_url)
         elif deliver_type == 'server':
             self.log_channels[guild_id]._replace(server=webhook_url)
+
+    async def upload_imgur(self, *, title: str = 'By DuckBot', name: str = 'By DuckBot', description: str = 'Uploaded by DuckBot Discord', image: typing.Union[str, bytes] = None, video: typing.Union[str, bytes] = None):
+        if not image and not video:
+            raise AttributeError('You did not provide an image or video!')
+        url, response = await self.imgur.upload_image(title=title, name=name, description=description, image=image, video=video)
+        if response.success is True and response.status == 200:
+            return url.link
+        raise discord.HTTPException(response=response, message='Could not upload to Imgur')
 
 
 if __name__ == '__main__':

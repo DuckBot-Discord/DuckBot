@@ -14,6 +14,7 @@ from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants, helper
+from DuckBot.helpers.helper import count_lines, count_others
 from DuckBot.helpers.paginator import InvSrc
 
 suggestions_channel = 882634213516521473
@@ -259,7 +260,7 @@ class About(commands.Cog):
                     text += 1
                 elif isinstance(channel, discord.VoiceChannel):
                     voice += 1
-        avg = [(sum(m.bot for m in g.members) / g.member_count) * 100 for g in self.bot.guilds]
+        avg = [(len(g.bots) / g.member_count) * 100 for g in self.bot.guilds]
 
         embed.add_field(name='Members', value=f'{total_members} total\n{total_unique} unique')
         embed.add_field(name='Channels', value=f'{text + voice} total\n{text} text\n{voice} voice')
@@ -272,7 +273,13 @@ class About(commands.Cog):
                         value=f"**total servers:** {guilds}\n**avg bot/human:** {round(sum(avg) / len(avg), 2)}%")
         embed.add_field(name='Command info:',
                         value=f"**Last reboot:**\n{self.get_bot_uptime()}"
-                              f"\n**Last command reload:**\n{self.get_bot_last_rall()}")
+                              f"\n**Last reload:**\n{self.get_bot_last_rall()}")
+        try:
+            embed.add_field(name='Lines', value=f"Lines: {await count_lines('DuckBot/', '.py')}"
+                            f"\nFunctions: {await count_others('DuckBot/', '.py', 'def ')}"
+                            f"\nClasses: {await count_others('DuckBot/', '.py', 'class ')}")
+        except FileNotFoundError:
+            pass
 
         version = pkg_resources.get_distribution('discord.py').version
         embed.set_footer(text=f'Made with discord.py v{version} 💖', icon_url='http://i.imgur.com/5BFecvA.png')
