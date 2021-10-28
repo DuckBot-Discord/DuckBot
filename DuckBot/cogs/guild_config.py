@@ -1486,6 +1486,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
     @log.command(name='enable', aliases=['set-default'])
     @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def log_enable(self, ctx: CustomContext, channel: discord.TextChannel):
         """Enables the logging module to deliver to one channel.
 
@@ -1532,6 +1533,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
     @log.command(name='disable', aliases=['disable-logging'])
     @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def log_disable(self, ctx: CustomContext):
         """Disables logging for this server, and deletes all the bots logging webhooks."""
         if ctx.guild.id not in self.bot.log_channels:
@@ -1597,6 +1599,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
     @log.command(name='disable-event', aliases=['disable_event', 'de'])
     @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def log_disable_event(self, ctx, *, event: ValidEventConverter):
         """**Disables a logging event, which can be one of the following:**
         `message_delete`, `message_purge`, `message_edit`, `member_join`, `member_leave`, `member_update`, `user_ban`, `user_unban`, `user_update`, `invite_create`, `invite_delete`, `voice_join`, `voice_leave`, `voice_move`, `voice_mod`, `emoji_create`, `emoji_delete`, `emoji_update`, `sticker_create`, `sticker_delete`, `sticker_update`, `server_update`, `stage_open`, `stage_close`, `channel_create`, `channel_delete`, `channel_edit`, `role_create`, `role_delete`, `role_edit`
@@ -1616,6 +1619,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
     @log.command(name='enable-event', aliases=['enable_event', 'ee'])
     @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def log_enable_event(self, ctx: CustomContext, *, event: ValidEventConverter):
         """**Enables a logging event, which can be one of the following:**
         `message_delete`, `message_purge`, `message_edit`, `member_join`, `member_leave`, `member_update`, `user_ban`, `user_unban`, `user_update`, `invite_create`, `invite_delete`, `voice_join`, `voice_leave`, `voice_move`, `voice_mod`, `emoji_create`, `emoji_delete`, `emoji_update`, `sticker_create`, `sticker_delete`, `sticker_update`, `server_update`, `stage_open`, `stage_close`, `channel_create`, `channel_delete`, `channel_edit`, `role_create`, `role_delete`, `role_edit`
@@ -1635,6 +1639,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
     @log.command(name='edit-channels', aliases=['edit_channels', 'ec'])
     @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def log_edit_channels(self, ctx):
         """Shows an interactive menu to modify the server's logging channels."""
         if ctx.guild.id not in self.bot.log_channels:
@@ -1693,6 +1698,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
     @log.command(name='auto-setup')
     @commands.has_permissions(administrator=True)
+    @commands.max_concurrency(1, commands.BucketType.guild)
     @commands.bot_has_guild_permissions(manage_channels=True, manage_webhooks=True)
     async def log_auto_setup(self, ctx: CustomContext):
         """Creates a Logging category, with channels for each event to be delivered.
