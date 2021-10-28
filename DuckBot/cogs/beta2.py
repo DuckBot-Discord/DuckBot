@@ -325,6 +325,8 @@ class LoggingBackend(commands.Cog):
 
     @commands.Cog.listener('on_user_update')
     async def logger_on_user_update(self, before: discord.User, after: discord.User):
+        if after.id == self.bot.user.id:
+            return
         guilds = [g.id for g in before.mutual_guilds if g.id in self.bot.log_channels]
         if not guilds:
             return
@@ -340,6 +342,7 @@ class LoggingBackend(commands.Cog):
             else:
                 embed.add_field(name='Avatar updated:', inline=False,
                                 value='Member removed their avatar.')
+                embed.set_thumbnail(url=after.default_avatar.url)
             deliver = True
 
         if before.name != after.name:
