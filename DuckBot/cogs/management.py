@@ -518,10 +518,3 @@ class Management(commands.Cog, name='Bot Management'):
         """
         command = self.bot.get_command('jsk git')
         await ctx.invoke(command, argument=codeblock_converter(f'add .\ngit commit -m "{message}"\ngit push origin master'))
-
-    @commands.command()
-    @commands.is_owner()
-    async def lines(self, ctx):
-        await ctx.send(f"line count: {await count_lines('DuckBot/', '.py')}"
-                       f"\nfunction count: {await count_others('DuckBot/', '.py', 'def ')}"
-                       f"\nclass count: {await count_others('DuckBot/', '.py', 'class ')}")

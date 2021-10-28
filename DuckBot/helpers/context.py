@@ -233,11 +233,10 @@ class CustomContext(commands.Context):
 
     async def dagpi(self, target: target_type = None, *, feature: ImageFeatures, **kwargs) -> discord.File:
         await self.trigger_typing()
-        target = target or self.maybe_quoted
+        target = target or self.reference
         return await self.bot.dagpi_request(self, target, feature=feature, **kwargs)
 
     @property
-    def maybe_quoted(self):
-        if self.message.reference:
-            return self.message.reference.resolved.author
-        return self.author
+    def reference(self):
+        return getattr(self.message.reference, 'resolved', None)
+    
