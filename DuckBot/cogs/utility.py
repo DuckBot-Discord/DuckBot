@@ -2,6 +2,8 @@ import asyncio
 import re
 import typing
 import unicodedata
+from itertools import cycle
+
 import discord
 
 from inspect import Parameter
@@ -21,6 +23,48 @@ from DuckBot.helpers.paginator import PaginatedStringListPageSource, TodoListPag
 
 def setup(bot):
     bot.add_cog(Utility(bot))
+
+
+class UserInfoView(discord.ui.View):
+    def __init__(self, ctx: CustomContext, uinfo_embed: discord.Embed, banner: discord.Embed = None):
+        super().__init__()
+        self.embeds = cycle([banner, uinfo_embed])
+        self.labels = cycle(['Show User Info', 'Show Banner'])
+        self.banner = banner
+        self.ui = uinfo_embed
+        self.message: discord.Message = None
+        self.ctx = ctx
+
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            child.disabled = True
+        await self.message.edit(view=self)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user and interaction.user.id == self.ctx.author.id:
+            return True
+        await interaction.response.defer()
+        return False
+
+    async def start(self):
+        if self.banner:
+            self.message = await self.ctx.send(embed=self.ui, view=self)
+        else:
+            self.message = await self.ctx.send(embed=self.ui)
+            self.stop()
+
+    @discord.ui.button(style=discord.ButtonStyle.grey, emoji='🔁', label='Show Banner')
+    async def next_embed(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = next(self.embeds)
+        button.label = next(self.labels)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(style=discord.ButtonStyle.red, emoji='🗑')
+    async def stop_button(self, _, __):
+        for child in self.children:
+            child.disabled = True
+        self.stop()
+        await self.message.delete()
 
 
 class Utility(commands.Cog):
@@ -134,8 +178,8 @@ class Utility(commands.Cog):
         member = member or ctx.author
         fetched_user = await self.bot.fetch_user(member.id)
 
-        embed = discord.Embed(color=(member.color if member.color != discord.Colour.default() else discord.Embed.Empty))
-        embed.set_author(name=member, icon_url=member.display_avatar.url)
+        embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color)
+        embed.set_author(name=f"{member}'s User Info", icon_url=member.display_avatar.url)
         embed.set_thumbnail(url=member.display_avatar.url)
 
         embed.add_field(name=f"{constants.INFORMATION_SOURCE} General information",
@@ -200,7 +244,14 @@ class Utility(commands.Cog):
                                   f"**Color:** {member.color if member.color is not discord.Color.default() else 'Default'}",
                             inline=False)
 
-        return await ctx.send(embed=embed)
+        banner_embed = None
+        if fetched_user.banner:
+            banner_embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color, timestamp=ctx.message.created_at)
+            banner_embed.set_author(name=f"{member}'s Banner", icon_url=member.display_avatar.url)
+            banner_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+            banner_embed.set_image(url=fetched_user.banner.url)
+        view = UserInfoView(ctx, embed, banner_embed)
+        await view.start()
 
     @commands.command(aliases=['perms'], usage='[target] [channel]')
     @commands.guild_only()
@@ -289,7 +340,6 @@ class Utility(commands.Cog):
                                           f"\nTo unlock the emoji do `{ctx.clean_prefix} emoji unlock {server_emoji}`"
                                           f"_Note that to do this you will need one of the roles the emoji has been "
                                           f"restricted to. \nNo, admin permissions don't bypass this lock._")
-        embed.set_footer()
         await ctx.send(embed=embed)
         await server_emoji.edit(roles=roles)
 
@@ -481,8 +531,7 @@ class Utility(commands.Cog):
 
     @commands.command()
     async def afk(self, ctx: CustomContext, *, reason: commands.clean_content = '...'):
-        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[
-            ctx.author.id] is True:
+        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[ctx.author.id] is True:
             return
         if ctx.author.id not in self.bot.afk_users:
             await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, $2, $3) '
@@ -605,6 +654,8 @@ class Utility(commands.Cog):
     async def hoisters(self, ctx: CustomContext):
         """ Shows a sorted list of members that have a nicknname """
         members = sorted([m for m in ctx.guild.members if m.nick], key=lambda mem: mem.display_name)
-        source = paginator.SimplePageSource([f"`{m.id}` <:separator:902081402831523850> {discord.utils.escape_markdown(m.nick)}" for m in members], per_page=10)
+        source = paginator.SimplePageSource(
+            [f"`{m.id}` <:separator:902081402831523850> {discord.utils.escape_markdown(m.nick)}" for m in members],
+            per_page=10)
         pages = paginator.ViewPaginator(source=source, ctx=ctx, compact=True)
         await pages.start()
