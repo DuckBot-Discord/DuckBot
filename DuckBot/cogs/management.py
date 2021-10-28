@@ -328,20 +328,30 @@ class Management(commands.Cog, name='Bot Management'):
 
         return await alt_ctx.command.invoke(alt_ctx)
 
-    @commands.command(pass_context=True, hidden=True, name='eval')
+    @commands.command(pass_context=True, hidden=True, name='eval', aliases=['ev'])
     @commands.is_owner()
-    async def _eval(self, ctx, *, body: str):
+    async def _eval(self, ctx: CustomContext, *, body: str):
         """Evaluates a code"""
         env = {
             'bot': self.bot,
+            '_b': self.bot,
             'ctx': ctx,
             'channel': ctx.channel,
+            '_c': ctx.channel,
             'author': ctx.author,
+            '_a': ctx.author,
             'guild': ctx.guild,
+            '_g': ctx.guild,
             'message': ctx.message,
-            '_': self._last_result
+            '_m': ctx.message,
+            '_': self._last_result,
+            'reference': getattr(ctx.message.reference, 'resolved', None),
+            '_r': getattr(ctx.message.reference, 'resolved', None),
+            '_get': discord.utils.get,
+            '_find': discord.utils.find,
+            '_gist': ctx.gist,
+            '_now': discord.utils.utcnow,
         }
-
         env.update(globals())
 
         body = cleanup_code(body)

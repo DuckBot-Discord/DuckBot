@@ -531,14 +531,14 @@ class Utility(commands.Cog):
         insertion = await self.bot.db.fetchrow(
             "INSERT INTO todo (user_id, text, jump_url, added_time) VALUES ($1, $2, $3, $4) "
             "ON CONFLICT (user_id, text) DO UPDATE SET user_id = $1 RETURNING jump_url, added_time",
-            ctx.author.id, text, ctx.message.jump_url, ctx.message.created_at)
+            ctx.author.id, text[0:4000], ctx.message.jump_url, ctx.message.created_at)
         if insertion['added_time'] != ctx.message.created_at:
             embed = discord.Embed(description=f'⚠ **That is already added to your todo list:**'
                                               f'\n\u200b  → [added here]({insertion["jump_url"]}) '
                                               f'{discord.utils.format_dt(insertion["added_time"], style="R")}')
             return await ctx.send(embed=embed, footer=False)
         await ctx.send('**Added to todo list:**'
-                       f'\n\u200b  → {text[0:1900]}{"..." if len(text) > 1900 else ""}')
+                       f'\n\u200b  → {text[0:200]}{"..." if len(text) > 200 else ""}')
 
     @todo.command(name='list', invoke_without_command=True)
     async def todo_list(self, ctx: CustomContext):
