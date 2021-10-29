@@ -249,10 +249,8 @@ class Utility(commands.Cog):
         order_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
         sort_mems = sorted(ctx.guild.members, key=lambda m: m.joined_at)
         index = sort_mems.index(member)
-        sep = 13
-        before = (index - sep) + (sep - index)
-        members = [f'{m} ({m.joined_at.strftime("%d %b %Y. %S:%H")})' for m in sort_mems[before:before+(sep*2)]]
-        join_order = '\n'.join([f"{n}{' '*(10-len(str(n)))}{s}" for n, s in enumerate(members, start=index + 1)]).replace(f"  {member}", f"> {member}")
+        members = [f'{m} ({m.joined_at.strftime("%d %b %Y. %S:%H")})' for m in sort_mems[(index-10 if index > 10 else 0):index+10]]
+        join_order = '\n'.join([f"{n}{' '*(10-len(str(n)))}{s}" for n, s in enumerate(members, start=(index-10 if index > 10 else 0)+1)]).replace(f"  {member}", f"> {member}")
         order_embed.description = '```py\n' + join_order + '\n```'
 
         banner_embed = None
