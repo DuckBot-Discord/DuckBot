@@ -1,3 +1,5 @@
+import re
+
 import discord
 import typing
 import random
@@ -121,7 +123,7 @@ class CustomContext(commands.Context):
         reference = (reference or self.message.reference or self.message) if reply is True else reference
 
         if content or embed:
-            test_string = (content or '') + str((embed.to_dict() if embed else ''))
+            test_string = re.sub("[^A-Za-z0-9._-]+", '', (str(content) or '') + str((embed.to_dict() if embed else '')))
             if self.bot.http.token in test_string.replace('\u200b', '').replace(' ', ''):
                 raise commands.BadArgument('Could not send message as it contained the bot\'s token!')
 
@@ -239,4 +241,3 @@ class CustomContext(commands.Context):
     @property
     def reference(self):
         return getattr(self.message.reference, 'resolved', None)
-    
