@@ -1,3 +1,6 @@
+import difflib
+import itertools
+
 import aiohttp
 import asyncio
 import discord
@@ -27,7 +30,7 @@ def setup(bot):
 class MyHelp(commands.HelpCommand):
     def __init__(self, **options):
         super().__init__(**options)
-        self.context: CustomContext
+        self.context: CustomContext = None
 
     def get_bot_mapping(self):
         """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
@@ -57,7 +60,7 @@ class MyHelp(commands.HelpCommand):
                 continue
             command_signatures = [self.get_minimal_command_signature(c) for c in cog_commands]
             if command_signatures:
-                if cog.qualified_name in ('Image', ):
+                if cog.qualified_name in ('Image',):
                     pages = WrappedPaginator(prefix=f'{cog.description}\n```css\n', suffix='\n```', max_size=450)
                     for s in command_signatures:
                         pages.add_line(s)
@@ -84,7 +87,8 @@ class MyHelp(commands.HelpCommand):
     # !help <command>
     async def send_command_help(self, command: commands.Command):
         embed = discord.Embed(title=f"information about: `{self.context.clean_prefix}{command}`",
-                              description='**Description:**\n' + (command.help or 'No help given...').replace('%PRE%', self.context.clean_prefix))
+                              description='**Description:**\n' + (command.help or 'No help given...').replace('%PRE%',
+                                                                                                              self.context.clean_prefix))
         embed.add_field(name='Command usage:', value=f"```css\n{self.get_minimal_command_signature(command)}\n```")
         if command.aliases:
             embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(command.aliases)}`'
@@ -98,9 +102,15 @@ class MyHelp(commands.HelpCommand):
                             raise e
                 raise e
             except commands.MissingPermissions as error:
-                embed.add_field(name='Permissions you\'re missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+                embed.add_field(name='Permissions you\'re missing:',
+                                value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild',
+                                                                                                     'server').title(),
+                                inline=False)
             except commands.BotMissingPermissions as error:
-                embed.add_field(name='Permissions i\'m missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+                embed.add_field(name='Permissions i\'m missing:',
+                                value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild',
+                                                                                                     'server').title(),
+                                inline=False)
             except commands.NotOwner:
                 embed.add_field(name='Rank you are missing:', value='Bot owner', inline=False)
             except commands.PrivateMessageOnly:
@@ -108,7 +118,8 @@ class MyHelp(commands.HelpCommand):
             except commands.NoPrivateMessage:
                 embed.add_field(name='Cant execute this here:', value='Can only be executed in a server.', inline=False)
             except commands.DisabledCommand:
-                embed.add_field(name='Cant execute this command:', value='This command is restricted to slash commands.', inline=False)
+                embed.add_field(name='Cant execute this command:',
+                                value='This command is restricted to slash commands.', inline=False)
             finally:
                 return await self.context.send(embed=embed, footer=False)
         await self.context.send(embed=embed, footer=False)
@@ -121,7 +132,8 @@ class MyHelp(commands.HelpCommand):
 
     async def send_group_help(self, group):
         embed = discord.Embed(title=f"information about: `{self.context.clean_prefix}{group}`",
-                              description='**Description:**\n' + (group.help or 'No help given...').replace('%PRE%', self.context.clean_prefix))
+                              description='**Description:**\n' + (group.help or 'No help given...').replace('%PRE%',
+                                                                                                            self.context.clean_prefix))
         embed.add_field(name='Command usage:', value=f"```css\n{self.get_minimal_command_signature(group)}\n```")
         if group.aliases:
             embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(group.aliases)}`'
@@ -129,20 +141,68 @@ class MyHelp(commands.HelpCommand):
         try:
             await group.can_run(self.context)
         except commands.MissingPermissions as error:
-            embed.add_field(name='Permissions you\'re missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+            embed.add_field(name='Permissions you\'re missing:',
+                            value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild',
+                                                                                                 'server').title(),
+                            inline=False)
         except commands.BotMissingPermissions as error:
-            embed.add_field(name='Permissions i\'m missing:', value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild', 'server').title(), inline=False)
+            embed.add_field(name='Permissions i\'m missing:',
+                            value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild',
+                                                                                                 'server').title(),
+                            inline=False)
         except:
             pass
 
         if group.commands:
             formatted = '\n'.join([self.get_minimal_command_signature(c) for c in group.commands])
-            embed.add_field(name='Sub-commands for this group:', value=f'```css\n{formatted}\n```**Do `{self.context.clean_prefix}help command subcommand` for more info on a sub-command**', inline=False)
+            embed.add_field(name='Sub-commands for this group:',
+                            value=f'```css\n{formatted}\n```**Do `{self.context.clean_prefix}help command subcommand` for more info on a sub-command**',
+                            inline=False)
 
         await self.context.send(embed=embed)
 
+    def command_not_found(self, string):
+        return string
+
+    def subcommand_not_found(self, command, string):
+        if isinstance(command, commands.Group) and len(command.all_commands) > 0:
+            return command.qualified_name + string
+        return command.qualified_name
+
     async def send_error_message(self, error):
-        await self.context.send(f"{error}"
+        matches = difflib.get_close_matches(error, self.context.bot.cogs.keys())
+        if matches:
+            confirm = await self.context.confirm(message=f"Sorry but i couldn't recognise {error} as one of my categories!"
+                                                         f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
+                                                 delete_after_confirm=True, delete_after_timeout=True,
+                                                 delete_after_cancel=True, buttons=(('✅', f'See {matches[0]}'[0:80], discord.ButtonStyle.blurple),
+                                                                                    ('🗑', None, discord.ButtonStyle.red)), timeout=15)
+            if confirm is True:
+                return await self.send_cog_help(self.context.bot.cogs[matches[0]])
+            return
+        else:
+            command_names = []
+            for command in [c for c in self.context.bot.commands]:
+                # noinspection PyBroadException
+                try:
+                    if await command.can_run(self.context):
+                        command_names.append([command.name] + command.aliases)
+                except:
+                    continue
+            command_names = list(itertools.chain.from_iterable(command_names))
+            matches = difflib.get_close_matches(error, command_names)
+            if matches:
+                confirm = await self.context.confirm(
+                    message=f"Sorry but i couldn't recognise {error} as one of my commands!"
+                            f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
+                    delete_after_confirm=True, delete_after_timeout=True,
+                    delete_after_cancel=True, buttons=(('✅', f'See {matches[0]}'[0:80], discord.ButtonStyle.blurple),
+                                                       ('🗑', None, discord.ButtonStyle.red)), timeout=15)
+                if confirm is True:
+                    return await self.send_command_help(self.context.bot.get_command(matches[0]))
+                return
+
+        await self.context.send(f"Sorry but i couldn't recognise \"{discord.utils.remove_markdown(error)}\" as one of my commands or categories!"
                                 f"\nDo `{self.context.clean_prefix}help` for a list of available commands! 💞")
 
     async def on_help_command_error(self, ctx, error):
@@ -158,10 +218,11 @@ class About(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
         help_command = MyHelp()
-        help_command.command_attrs = {'help': 'Shows help about a command or category, it can also display other useful information, such as '
-                                              'examples on how to use the command, or special syntax that can be used for a command, for example, '
-                                              'in the `welcome message` command, it shows all available special tags.',
-                                      'name': 'help', 'slash_command': True}
+        help_command.command_attrs = {
+            'help': 'Shows help about a command or category, it can also display other useful information, such as '
+                    'examples on how to use the command, or special syntax that can be used for a command, for example, '
+                    'in the `welcome message` command, it shows all available special tags.',
+            'name': 'help', 'slash_command': True}
         help_command.cog = self
         bot.help_command = help_command
         bot.session = aiohttp.ClientSession()
@@ -276,8 +337,8 @@ class About(commands.Cog):
                               f"\n**Last reload:**\n{self.get_bot_last_rall()}")
         try:
             embed.add_field(name='Lines', value=f"Lines: {await count_lines('DuckBot/', '.py')}"
-                            f"\nFunctions: {await count_others('DuckBot/', '.py', 'def ')}"
-                            f"\nClasses: {await count_others('DuckBot/', '.py', 'class ')}")
+                                                f"\nFunctions: {await count_others('DuckBot/', '.py', 'def ')}"
+                                                f"\nClasses: {await count_others('DuckBot/', '.py', 'class ')}")
         except FileNotFoundError:
             pass
 
