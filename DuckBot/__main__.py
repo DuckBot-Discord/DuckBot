@@ -252,6 +252,7 @@ class DuckBot(commands.Bot):
 
             for entry in await self.db.fetch('SELECT * FROM log_channels'):
                 guild_id = entry['guild_id']
+                await bot.db.execute('INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING', entry['guild_id'])
 
                 self.log_channels[guild_id] = self.log_webhooks(default=entry['default_channel'],
                                                                 message=entry['message_channel'],
