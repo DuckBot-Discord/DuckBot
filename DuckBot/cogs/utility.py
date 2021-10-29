@@ -250,7 +250,7 @@ class Utility(commands.Cog):
         sort_mems = sorted(ctx.guild.members, key=lambda m: m.joined_at)
         index = sort_mems.index(member)
         members = [f'{m} ({m.joined_at.strftime("%d %b %Y. %S:%H")})' for m in sort_mems[(index-10 if index > 10 else 0):index+10]]
-        join_order = '\n'.join([f"{n}{' '*(10-len(str(n)))}{s}" for n, s in enumerate(members, start=(index-10 if index > 10 else 0)+1)]).replace(f"  {member}", f"> {member}")
+        join_order = '\n'.join([f"{n}.{' '*(10-len(str(n))+1)}{s}" for n, s in enumerate(members, start=(index-10 if index > 10 else 0)+1)]).replace(f"  {member}", f"> {member}")
         order_embed.description = '```py\n' + join_order + '\n```'
 
         banner_embed = None
