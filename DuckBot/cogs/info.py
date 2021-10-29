@@ -315,6 +315,7 @@ class About(commands.Cog):
             src = type(self.bot.help_command)
             module = src.__module__
             filename = inspect.getsourcefile(src)
+            obj = 'help'
         else:
             obj = self.bot.get_command(command.replace('.', ' '))
             if obj is None:

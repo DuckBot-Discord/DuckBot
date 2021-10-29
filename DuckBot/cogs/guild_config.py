@@ -1285,8 +1285,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                                         'messages': deque(maxlen=100)}
             await ctx.send(f'✅ **|** Set the **counting channel** to {channel.mention}')
         except asyncpg.UniqueViolationError:
-            if (ctx.guild.id in self.bot.counting_channels and self.bot.counting_channels[ctx.guild.id][
-                'channel'] != channel.id) or (ctx.guild.id not in self.bot.counting_channels):
+            if (ctx.guild.id in self.bot.counting_channels and self.bot.counting_channels[ctx.guild.id]['channel'] != channel.id) or (ctx.guild.id not in self.bot.counting_channels):
                 confirm = await ctx.confirm(
                     '⚠ **|** There is already a **counting channel**! Would you like to **update it** and reset the count number to **0**?',
                     return_message=True)
@@ -1518,11 +1517,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             "INSERT INTO log_channels(guild_id, default_channel, default_chid) VALUES ($1, $2, $3) "
             "ON CONFLICT (guild_id) DO UPDATE SET default_channel = $2, default_chid = $3",
             ctx.guild.id, webhook_url, channel.id)
-        try:
-            await self.bot.db.execute("INSERT INTO logging_events(guild_id) VALUES ($1)", ctx.guild.id)
-            self.bot.guild_loggings[ctx.guild.id] = LoggingEventsFlags.all()
-        except asyncpg.UniqueViolationError:
-            pass
+        await self.bot.db.execute("INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING", ctx.guild.id)
+        self.bot.guild_loggings[ctx.guild.id] = LoggingEventsFlags.all()
         try:
             self.bot.log_channels[ctx.guild.id]._replace(default=webhook_url)
         except KeyError:
@@ -1550,6 +1546,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                 pass
             channels = await self.bot.db.fetchrow('DELETE FROM log_channels WHERE guild_id = $1 RETURNING *',
                                                   ctx.guild.id)
+
             channel_ids = channels['default_chid'], channels['message_chid'], channels['join_leave_chid'], channels[
                 'member_chid'], channels['voice_chid'], channels['server_chid']
             failed = 0
