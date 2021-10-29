@@ -26,10 +26,14 @@ def setup(bot):
 
 
 class UserInfoView(discord.ui.View):
-    def __init__(self, ctx: CustomContext, uinfo_embed: discord.Embed, banner: discord.Embed = None):
+    def __init__(self, ctx: CustomContext, uinfo_embed: discord.Embed, banner: discord.Embed = None, order_embed: discord.Embed = None):
         super().__init__()
-        self.embeds = cycle([banner, uinfo_embed])
-        self.labels = cycle(['Show User Info', 'Show Banner'])
+        if banner:
+            self.embeds = cycle([uinfo_embed, order_embed, banner])
+            self.labels = cycle(['Show Banner', 'Show User Info', 'Show Join Odrer'])
+        else:
+            self.embeds = cycle([uinfo_embed, order_embed])
+            self.labels = cycle(['Show User Info', 'Show Join Odrer'])
         self.banner = banner
         self.ui = uinfo_embed
         self.message: discord.Message = None
@@ -47,13 +51,9 @@ class UserInfoView(discord.ui.View):
         return False
 
     async def start(self):
-        if self.banner:
-            self.message = await self.ctx.send(embed=self.ui, view=self)
-        else:
-            self.message = await self.ctx.send(embed=self.ui)
-            self.stop()
+        self.message = await self.ctx.send(embed=next(self.embeds), view=self)
 
-    @discord.ui.button(style=discord.ButtonStyle.grey, emoji='🔁', label='Show Banner')
+    @discord.ui.button(style=discord.ButtonStyle.grey, emoji='🔁', label='Show Join Order')
     async def next_embed(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = next(self.embeds)
         button.label = next(self.labels)
@@ -244,13 +244,24 @@ class Utility(commands.Cog):
                                   f"**Color:** {member.color if member.color is not discord.Color.default() else 'Default'}",
                             inline=False)
 
+        order_embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color, timestamp=ctx.message.created_at)
+        order_embed.set_author(name=f"{member}'s Joined order", icon_url=member.display_avatar.url)
+        order_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+        sort_mems = sorted(ctx.guild.members, key=lambda m: m.joined_at)
+        index = sort_mems.index(member)
+        sep = 13
+        before = (index - sep) + (sep - index)
+        members = [f'{m} ({m.joined_at.strftime("%d %b %Y. %S:%H")})' for m in sort_mems[before:before+(sep*2)]]
+        join_order = '\n'.join([f"{n}{' '*(10-len(str(n)))}{s}" for n, s in enumerate(members, start=index + 1)]).replace(f"  {member}", f"> {member}")
+        order_embed.description = '```py\n' + join_order + '\n```'
+
         banner_embed = None
         if fetched_user.banner:
             banner_embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color, timestamp=ctx.message.created_at)
             banner_embed.set_author(name=f"{member}'s Banner", icon_url=member.display_avatar.url)
             banner_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
             banner_embed.set_image(url=fetched_user.banner.url)
-        view = UserInfoView(ctx, embed, banner_embed)
+        view = UserInfoView(ctx, embed, banner_embed, order_embed)
         await view.start()
 
     @commands.command(aliases=['perms'], usage='[target] [channel]')
