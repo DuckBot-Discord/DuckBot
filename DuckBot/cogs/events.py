@@ -539,9 +539,9 @@ class Handler(commands.Cog, name='Handler'):
         if not await self.bot.is_owner(message.author) or self.bot.user.id != 788278464474120202:
             return
         e = []
-        emojis = re.search(r';(?P<name>[a-zA-Z0-9]{1,32}?);+', message.content)
+        emojis = re.findall(r';(?P<name>[a-zA-Z0-9]{1,32}?);', message.content)
         if emojis:
-            for emoji in emojis.groups():
+            for emoji in emojis:
                 emoji = discord.utils.find(lambda em: em.name.lower() == emoji.lower(), self.bot.emojis)
                 if emoji and emoji.is_usable():
                     e.append(str(emoji))
