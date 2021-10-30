@@ -62,10 +62,8 @@ class UserInfoView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.red, emoji='🗑')
     async def stop_button(self, _, __):
-        for child in self.children:
-            child.disabled = True
-        self.stop()
         await self.message.delete()
+        self.stop()
 
 
 class Utility(commands.Cog):
