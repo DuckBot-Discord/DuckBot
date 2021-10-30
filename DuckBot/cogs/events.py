@@ -534,3 +534,16 @@ class Handler(commands.Cog, name='Handler'):
             m = self.bot.saved_messages.pop(payload.message_id)
             await m.delete(delay=0)
 
+    @commands.Cog.listener('on_message')
+    async def emoji_sender(self, message: discord.Message):
+        if not await self.bot.is_owner(message.author) or self.bot.user.id != 788278464474120202:
+            return
+        e = []
+        emojis = re.search(r';(?P<name>[a-zA-Z0-9]{1,32}?);+', message.content)
+        if emojis:
+            for emoji in emojis.groups():
+                emoji = discord.utils.find(lambda em: em.name.lower() == emoji.lower(), self.bot.emojis)
+                if emoji and emoji.is_usable():
+                    e.append(str(emoji))
+            if e:
+                await message.channel.send(' '.join(e))
