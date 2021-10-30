@@ -26,7 +26,8 @@ def setup(bot):
 
 
 class UserInfoView(discord.ui.View):
-    def __init__(self, ctx: CustomContext, uinfo_embed: discord.Embed, banner: discord.Embed = None, order_embed: discord.Embed = None):
+    def __init__(self, ctx: CustomContext, uinfo_embed: discord.Embed, banner: discord.Embed = None,
+                 order_embed: discord.Embed = None):
         super().__init__()
         if banner:
             self.embeds = cycle([uinfo_embed, order_embed, banner])
@@ -204,7 +205,7 @@ class Utility(commands.Cog):
                                f"({discord.utils.format_dt(member.joined_at, style='R')})"
                                f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** "
                                f"{sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow()).index(member) + 1}")
-                        if member else "Could not get data",
+                        if member.joined_at else "Could not get data",
                         inline=False)
 
         if member.premium_since:
@@ -244,18 +245,31 @@ class Utility(commands.Cog):
                                   f"**Color:** {member.color if member.color is not discord.Color.default() else 'Default'}",
                             inline=False)
 
-        order_embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color, timestamp=ctx.message.created_at)
+        order_embed = discord.Embed(
+            color=member.color if member.color not in (None, discord.Color.default()) else ctx.color,
+            timestamp=ctx.message.created_at)
         order_embed.set_author(name=f"{member}'s Joined order", icon_url=member.display_avatar.url)
         order_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
         sort_mems = sorted(ctx.guild.members, key=lambda m: m.joined_at)
         index = sort_mems.index(member)
-        members = [f'{m} ({m.joined_at.strftime("%d %b %Y. %S:%H")})' for m in sort_mems[(index-10 if index > 10 else 0):index+10]]
-        join_order = '\n'.join([f"{n}.{' '*(10-len(str(n))+1)}{s}" for n, s in enumerate(members, start=(index-10 if index > 10 else 0)+1)]).replace(f"  {member}", f"> {member}")
+        members = [f'{m} ({m.joined_at.strftime("%d %b %Y. %S:%H")})' for m in
+                   sort_mems[(index - 10 if index > 10 else 0):index + 10]]
+        join_order = '\n'.join([f"{n}.{' ' * (10 - len(str(n)) + 1)}{s}" for n, s in
+                                enumerate(members, start=(index - 10 if index > 10 else 0) + 1)]).replace(f"  {member}",
+                                                                                                          f"> {member}")
         order_embed.description = '```py\n' + join_order + '\n```'
+        order_embed.add_field(name=f"{constants.JOINED_SERVER} Joined At",
+                              value=(f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
+                                     f"({discord.utils.format_dt(member.joined_at, style='R')})"
+                                     f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** "
+                                     f"{sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow()).index(member) + 1}")
+                              if member.joined_at else "This user's joined data seems to be None, so ive put them near the end,", inline=False)
 
         banner_embed = None
         if fetched_user.banner:
-            banner_embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color, timestamp=ctx.message.created_at)
+            banner_embed = discord.Embed(
+                color=member.color if member.color not in (None, discord.Color.default()) else ctx.color,
+                timestamp=ctx.message.created_at)
             banner_embed.set_author(name=f"{member}'s Banner", icon_url=member.display_avatar.url)
             banner_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
             banner_embed.set_image(url=fetched_user.banner.url)
@@ -282,7 +296,7 @@ class Utility(commands.Cog):
         table = tabulate.tabulate(perms, tablefmt="orgtbl", headers=['Permissions', 'Server', 'Channel'])
         embed = discord.Embed(description=f"```py\n{table}\n```")
         embed.set_footer(text='"Channel" permissions consider Server, Channel and Member overwrites.')
-        embed.set_author(name=f'{target}\'s permissions', icon_url=target.display_avatar)
+        embed.set_author(name=f'{target}\'s permissions for {channel}'[0], icon_url=target.display_avatar)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=['si', 'serverinfo'], name='server-info')
@@ -540,7 +554,8 @@ class Utility(commands.Cog):
 
     @commands.command()
     async def afk(self, ctx: CustomContext, *, reason: commands.clean_content = '...'):
-        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[ctx.author.id] is True:
+        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[
+            ctx.author.id] is True:
             return
         if ctx.author.id not in self.bot.afk_users:
             await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, $2, $3) '
