@@ -239,5 +239,5 @@ class CustomContext(commands.Context):
         return await self.bot.dagpi_request(self, target, feature=feature, **kwargs)
 
     @property
-    def reference(self):
+    def reference(self) -> typing.Optional[discord.Message]:
         return getattr(self.message.reference, 'resolved', None)

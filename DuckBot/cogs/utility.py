@@ -62,10 +62,8 @@ class UserInfoView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.red, emoji='🗑')
     async def stop_button(self, _, __):
-        for child in self.children:
-            child.disabled = True
-        self.stop()
         await self.message.delete()
+        self.stop()
 
 
 class Utility(commands.Cog):
@@ -145,22 +143,23 @@ class Utility(commands.Cog):
             everyone=False, roles=False, users=True))
 
     @commands.command(
-        aliases=['e', 'edit'],
+        aliases=['e', 'edit'], name='edit-message',
         usage="[new message] [--d|--s]")
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def edit_message(self, ctx, *, new: typing.Optional[str] = '--d'):
+    async def edit_message(self, ctx: CustomContext, *, new: typing.Optional[str] = '--d'):
         """Quote a bot message to edit it.
         # Append --s at the end to suppress embeds and --d to delete the message
         """
-        if ctx.message.reference:
-            msg = ctx.message.reference.resolved
+        if ctx.reference:
+            if ctx.reference.author != self.bot.user:
+                return
             if new.endswith("--s"):
-                await msg.edit(content=f"{new[:-3]}", suppress=True)
+                await ctx.reference.edit(content=f"{new[:-3]}", suppress=True)
             elif new.endswith('--d'):
-                await msg.delete()
+                await ctx.reference.delete()
             else:
-                await msg.edit(content=new, suppress=False)
+                await ctx.reference.edit(content=new, suppress=False)
             await ctx.message.delete(delay=0.1)
         else:
             raise errors.NoQuotedMessage
