@@ -1652,22 +1652,25 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             raise commands.BadArgument('This server doesn\'t have logging enabled.')
         await ctx.trigger_typing()
         events = self.bot.guild_loggings[ctx.guild.id]
-        embed = discord.Embed(title='Logging events for this server', colour=discord.Colour.blurple())
+        embed = discord.Embed(title='Logging events for this server', colour=discord.Colour.blurple(), timestamp=ctx.message.created_at)
         message_events = [ctx.default_tick(events.message_delete, 'Message Delete'),
                           ctx.default_tick(events.message_edit, 'Message Edit'),
                           ctx.default_tick(events.message_purge, 'Message Purge')]
         embed.add_field(name='Message Events', value='\n'.join(message_events))
         join_leave_events = [ctx.default_tick(events.member_join, 'Member Join'),
                              ctx.default_tick(events.member_leave, 'Member Leave')]
+        subtract = 0
         if not ctx.me.guild_permissions.manage_channels:
             if events.invite_create:
                 join_leave_events.append('⚠ Invite Create'
                                          '\n╰ Manage Channels')
+                subtract += 1
             else:
                 join_leave_events.append(ctx.default_tick(events.invite_create, 'Invite Create'))
             if events.invite_delete:
                 join_leave_events.append('⚠ Invite Delete'
                                          '\n╰ Manage Channels')
+                subtract += 1
             else:
                 join_leave_events.append(ctx.default_tick(events.invite_delete, 'Invite Create'))
         else:
@@ -1702,7 +1705,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         embed.add_field(name='Server Events', value='\n'.join(server_events))
         embed.description = '✅ Enabled • ❌ Disabled • ⚠ Missing Perms'
         enabled = [x for x, y in set(events) if y is True]
-        embed.set_footer(text=f'{len(enabled)}/{len(set(events))} events enabled.')
+        amount_enabled = len(enabled) - subtract
+        embed.set_footer(text=f'{amount_enabled}/{len(set(events))} events enabled.')
         await ctx.send(embed=embed)
 
     @log.command(name='auto-setup')
