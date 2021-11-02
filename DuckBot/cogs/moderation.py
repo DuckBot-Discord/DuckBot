@@ -25,9 +25,13 @@ class Arguments(argparse.ArgumentParser):
 
 
 def can_execute_action(ctx, user, target):
-    return user == ctx.guild.owner or \
-           (user.top_role > target.top_role and
-            target != ctx.guild.owner)
+    if isinstance(target, discord.Member):
+        return user == ctx.guild.owner or \
+               (user.top_role > target.top_role and
+                target != ctx.guild.owner)
+    elif isinstance(target, discord.User):
+        return True
+    raise TypeError(f'argument \'target\' expected discord.User, received {type(target)} instead')
 
 
 class ActionReason(commands.Converter):
@@ -192,46 +196,14 @@ class Moderation(commands.Cog):
     @commands.command(help="Bans a member from the server")
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
-    async def ban(self, ctx: CustomContext, user: typing.Union[discord.Member, discord.User],
-                  delete_days: typing.Optional[int] = 1,
-                  *, reason: typing.Optional[str] = None):
+    async def ban(self, ctx: CustomContext, user: typing.Union[discord.Member, discord.User], delete_days: typing.Optional[int] = 1, *, reason: str = None):
         if delete_days and not 8 < delete_days < -1:
             raise commands.BadArgument("**delete_days** must be between 0 and 7 days")
-        member = user
-        if member == ctx.author:
-            return await self.error_message(ctx, 'You can\'t ban yourself')
-        if isinstance(user, discord.Member):
-            if member.top_role >= ctx.me.top_role:
-                return await self.error_message(ctx, 'I\'m not high enough in role hierarchy to ban that member!')
-            if member.top_role < ctx.author.top_role or ctx.author.id == ctx.guild.owner_id:
-                mem_embed = discord.Embed(
-                    description=f"**{ctx.message.author}** has banned you from **{ctx.guild.name}**",
-                    color=ctx.me.color)
-                if isinstance(reason, str):
-                    mem_embed.set_footer(text=f'reason: {reason}')
-                try:
-                    await member.send(embed=mem_embed)
-                    dm_success = '✅'
-                except discord.HTTPException:
-                    dm_success = '❌'
-            else:
-                await self.error_message(ctx, 'Member is higher than you in role hierarchy')
-                return
 
-        else:
-            dm_success = '❌'
-
-        if isinstance(reason, str):
-            action_reason = f"\n```\nreason: {reason}```"
-        else:
-            action_reason = ''
-
-        embed = discord.Embed(description=f"{ctx.author.mention} banned **{member}**({member.mention}){action_reason}")
-        embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
-        await ctx.send(embed=embed)
-
-        await ctx.guild.ban(member, reason=f"{ctx.author} (ID: {ctx.author.id}): {reason or ''}",
-                            delete_message_days=delete_days)
+        if can_execute_action(ctx, ctx.author, user):
+            await ctx.guild.ban(user, reason=f"Banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''), delete_message_days=delete_days)
+            return await ctx.send(f'🔨 **|** banned {discord.utils.escape_markdown(str(user))}' + (f'for {reason}' if reason else ''))
+        await ctx.send('Sorry, but you can\'t ban that member')
 
     @commands.command(help="unbans a member # run without arguments to get a list of entries")
     @commands.has_permissions(ban_members=True)
