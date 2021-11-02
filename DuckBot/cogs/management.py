@@ -459,7 +459,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
-        if channel.category.id in self.research_channels:
+        if channel.category and channel.category.id in self.research_channels:
             send_to = self.bot.get_channel(804035776722894890)
             invite = await channel.create_invite(max_age=3600 * 24)
             message = await send_to.send(invite.url)
@@ -468,7 +468,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
-        if channel.category.id in self.research_channels:
+        if channel.category and channel.category.id in self.research_channels:
             delete_from = self.bot.get_channel(804035776722894890)
             msg_id = await self.bot.db.fetchval('SELECT message_id FROM voice_channels WHERE '
                                                 'channel_id = $1', channel.id)
