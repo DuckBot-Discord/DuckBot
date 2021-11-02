@@ -202,7 +202,7 @@ class Moderation(commands.Cog):
 
         if can_execute_action(ctx, ctx.author, user):
             await ctx.guild.ban(user, reason=f"Banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''), delete_message_days=delete_days)
-            return await ctx.send(f'🔨 **|** banned {discord.utils.escape_markdown(str(user))}' + (f'for {reason}' if reason else ''))
+            return await ctx.send(f'🔨 **|** banned **{discord.utils.escape_markdown(str(user))}**' + (f' for {reason}' if reason else ''))
         await ctx.send('Sorry, but you can\'t ban that member')
 
     @commands.command(help="unbans a member # run without arguments to get a list of entries")
