@@ -314,6 +314,7 @@ class About(commands.Cog):
 
         text = 0
         voice = 0
+        all = 0
         guilds = 0
         for guild in self.bot.guilds:
             guilds += 1
@@ -322,14 +323,15 @@ class About(commands.Cog):
 
             total_members += guild.member_count
             for channel in guild.channels:
+                all += 1
                 if isinstance(channel, discord.TextChannel):
                     text += 1
                 elif isinstance(channel, discord.VoiceChannel):
                     voice += 1
         avg = [(len(g.bots) / g.member_count) * 100 for g in self.bot.guilds]
 
-        embed.add_field(name='Members', value=f'{total_members} total\n{total_unique} unique')
-        embed.add_field(name='Channels', value=f'{text + voice} total\n{text} text\n{voice} voice')
+        embed.add_field(name='Members', value=f'{total_members:,} total\n{total_unique:,} unique')
+        embed.add_field(name='Channels', value=f'{all:,} total\n{text:,} text\n{voice:,} voice')
 
         memory_usage = psutil.Process().memory_full_info().uss / 1024 ** 2
         cpu_usage = psutil.cpu_percent()
@@ -341,9 +343,9 @@ class About(commands.Cog):
                         value=f"**Last reboot:**\n{self.get_bot_uptime()}"
                               f"\n**Last reload:**\n{self.get_bot_last_rall()}")
         try:
-            embed.add_field(name='Lines', value=f"Lines: {await count_lines('DuckBot/', '.py')}"
-                                                f"\nFunctions: {await count_others('DuckBot/', '.py', 'def ')}"
-                                                f"\nClasses: {await count_others('DuckBot/', '.py', 'class ')}")
+            embed.add_field(name='Lines', value=f"Lines: {await count_lines('DuckBot/', '.py'):,}"
+                                                f"\nFunctions: {await count_others('DuckBot/', '.py', 'def '):,}"
+                                                f"\nClasses: {await count_others('DuckBot/', '.py', 'class '):,}")
         except FileNotFoundError:
             pass
 
