@@ -1658,9 +1658,21 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                           ctx.default_tick(events.message_purge, 'Message Purge')]
         embed.add_field(name='Message Events', value='\n'.join(message_events))
         join_leave_events = [ctx.default_tick(events.member_join, 'Member Join'),
-                             ctx.default_tick(events.member_leave, 'Member Leave'),
-                             ctx.default_tick(events.invite_create, 'Invite Create'),
-                             ctx.default_tick(events.invite_delete, 'Invite Delete')]
+                             ctx.default_tick(events.member_leave, 'Member Leave')]
+        if not ctx.me.guild_permissions.manage_channels:
+            if events.invite_create:
+                join_leave_events.append('⚠ Invite Create'
+                                         '\n╰ Manage Channels')
+            else:
+                join_leave_events.append(ctx.default_tick(events.invite_create, 'Invite Create'))
+            if events.invite_delete:
+                join_leave_events.append('⚠ Invite Delete'
+                                         '\n╰ Manage Channels')
+            else:
+                join_leave_events.append(ctx.default_tick(events.invite_delete, 'Invite Create'))
+        else:
+            join_leave_events.append(ctx.default_tick(events.invite_create, 'Invite Create'))
+            join_leave_events.append(ctx.default_tick(events.invite_delete, 'Invite Delete'))
         embed.add_field(name='Join Leave Events', value='\n'.join(join_leave_events))
         member_update_evetns = [ctx.default_tick(events.member_update, 'Member Update'),
                                 ctx.default_tick(events.user_update, 'User Update'),
@@ -1688,9 +1700,9 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                          ctx.default_tick(events.sticker_delete, 'Sticker Delete'),
                          ctx.default_tick(events.sticker_update, 'Sticker Update')]
         embed.add_field(name='Server Events', value='\n'.join(server_events))
-        loggings = events
+        embed.description = '✅ Enabled • ❌ Disabled • ⚠ Missing Perms'
         enabled = [x for x, y in set(events) if y is True]
-        embed.set_footer(text=f'{len(enabled)}/{len(set(loggings))} events enabled.')
+        embed.set_footer(text=f'{len(enabled)}/{len(set(events))} events enabled.')
         await ctx.send(embed=embed)
 
     @log.command(name='auto-setup')
