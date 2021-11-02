@@ -354,6 +354,7 @@ class DuckBot(commands.Bot):
         return discord.File(fp=request.image, filename=f"DuckBot-{str(feature)}.{request.format}")
 
     def update_log(self, deliver_type: str, webhook_url: str, guild_id: int):
+        guild_id = getattr(guild_id, 'id', guild_id)
         if deliver_type == 'default':
             self.log_channels[guild_id]._replace(default=webhook_url)
         elif deliver_type == 'message':
