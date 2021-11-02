@@ -65,6 +65,7 @@ class Handler(commands.Cog, name='Handler'):
             music_cog.InvalidVolume,
             music_cog.OutOfTrack,
             music_cog.NegativeSeek,
+            music_cog.IncorrectTextChannelError,
             errors.NoHideout,
             commands.DisabledCommand
         )

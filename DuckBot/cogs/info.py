@@ -90,6 +90,11 @@ class MyHelp(commands.HelpCommand):
                               description='**Description:**\n' + (command.help or 'No help given...').replace('%PRE%',
                                                                                                               self.context.clean_prefix))
         embed.add_field(name='Command usage:', value=f"```css\n{self.get_minimal_command_signature(command)}\n```")
+        try:
+            preview = command.__original_kwargs__['preview']
+            embed.set_image(url=preview)
+        except KeyError:
+            pass
         if command.aliases:
             embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(command.aliases)}`'
         try:

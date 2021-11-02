@@ -200,7 +200,7 @@ class Management(commands.Cog, name='Bot Management'):
             discord.ext.commands.ExtensionNotFound: 'Not found',
             discord.ext.commands.NoEntryPointError: 'No setup function',
             discord.ext.commands.ExtensionNotLoaded: 'Not loaded',
-            discord.ext.commands.ExtensionAlreadyLoaded: 'Already loaded'
+            discord.ext.commands.ExtensionAlreadyLoaded: 'Already loaded',
         }
 
         for extension in first_reload_failed_extensions:

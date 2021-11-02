@@ -115,7 +115,7 @@ class CustomContext(commands.Context):
             return f"{emoji} {text}"
         return emoji
 
-    async def send(self, content: str = None, embed: discord.Embed = None,
+    async def send(self, content: str = None, *, embed: discord.Embed = None,
                    reply: bool = True, footer: bool = True,
                    reference: typing.Union[discord.Message, discord.MessageReference] = None,
                    gist: bool = False, extension: str = 'py', **kwargs) -> discord.Message:
@@ -222,7 +222,7 @@ class CustomContext(commands.Context):
         """ Returns DuckBot's color, or the author's color. Falls back to blurple """
         return self.color
 
-    async def gist(self, content: str, filename: str = 'output.py', description: str = 'Uploaded by DuckBot', public: bool = True):
+    async def gist(self, content: str, *, filename: str = 'output.py', description: str = 'Uploaded by DuckBot', public: bool = True):
         """ Shortcut of bot.create_gist + ctx.send(gist) """
         gist = await self.bot.create_gist(filename=filename, description=description, content=content, public=public)
         await self.send(f'<{gist}>')

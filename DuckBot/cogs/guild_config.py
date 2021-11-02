@@ -1483,7 +1483,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                               f'\n`db.help log enable-event`')
             await ctx.send(embed=embed)
 
-    @log.command(name='enable', aliases=['set-default'])
+    @log.command(name='enable', aliases=['set-default'], preview='https://i.imgur.com/SYOrcfG.gif')
     @commands.has_permissions(manage_guild=True)
     @commands.max_concurrency(1, commands.BucketType.guild)
     async def log_enable(self, ctx: CustomContext, channel: discord.TextChannel):
@@ -1634,7 +1634,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         setattr(self.bot.guild_loggings[ctx.guild.id], event, True)
         await ctx.send(f'✅ **|** Successfully enabled **{str(event).replace("_", " ").title()} Events**')
 
-    @log.command(name='edit-channels', aliases=['edit_channels', 'ec'])
+    @log.command(name='edit-channels', aliases=['edit_channels', 'ec'], preview='https://i.imgur.com/FO9e9VC.gif')
     @commands.has_permissions(manage_guild=True)
     @commands.max_concurrency(1, commands.BucketType.guild)
     async def log_edit_channels(self, ctx):
