@@ -112,8 +112,8 @@ class ChannelsView(discord.ui.View):
             else:
                 try:
                     webhook_url = await get_wh(channel)
-                    await self.bot.db.execute('UPDATE log_channels SET message_channel = $2, message_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
-                    self.bot.update_log('message', webhook_url, message.guild.id)
+                    await self.bot.db.execute('UPDATE log_channels SET default_channel = $2, default_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
+                    self.bot.update_log('default', webhook_url, message.guild.id)
                     print(self.ctx.bot.log_channels[self.ctx.guild.id])
                 except commands.ChannelNotFound:
                     pass
