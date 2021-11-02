@@ -331,7 +331,7 @@ class LoggingBackend(commands.Cog):
         if not guilds:
             return
         deliver = False
-        embed = discord.Embed(title='User Updated', colour=discord.Colour.green(), timestamp=discord.utils.utcnow())
+        embed = discord.Embed(title='User Updated', colour=discord.Colour.blurple(), timestamp=discord.utils.utcnow())
         embed.set_author(name=str(after), icon_url=after.display_avatar.url)
         embed.set_footer(text=f'User ID: {after.id}')
         if before.avatar != after.avatar:
@@ -667,7 +667,7 @@ class LoggingBackend(commands.Cog):
     async def logger_on_member_unban(self, guild: discord.Guild, user: discord.User):
         if guild.id not in self.bot.log_channels or not self.bot.guild_loggings[guild.id].user_unban:
             return
-        embed = discord.Embed(title='User Unbanned', colour=discord.Colour.green(), timestamp=discord.utils.utcnow(),
+        embed = discord.Embed(title='User Unbanned', colour=discord.Colour.blurple(), timestamp=discord.utils.utcnow(),
                               description=f"**Account Created:** {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})")
         embed.set_author(name=str(user), icon_url=user.display_avatar.url)
         embed.set_footer(text=f"User ID: {user.id}")
