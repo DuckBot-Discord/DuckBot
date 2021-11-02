@@ -295,7 +295,7 @@ class Utility(commands.Cog):
         table = tabulate.tabulate(perms, tablefmt="orgtbl", headers=['Permissions', 'Server', 'Channel'])
         embed = discord.Embed(description=f"```py\n{table}\n```")
         embed.set_footer(text='"Channel" permissions consider Server, Channel and Member overwrites.')
-        embed.set_author(name=f'{target}\'s permissions for {channel}'[0], icon_url=target.display_avatar)
+        embed.set_author(name=f'{target}\'s permissions for {channel}'[0:256], icon_url=target.display_avatar)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=['si', 'serverinfo'], name='server-info')
