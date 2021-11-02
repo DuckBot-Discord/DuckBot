@@ -279,7 +279,7 @@ class Utility(commands.Cog):
     @commands.guild_only()
     async def permissions(self, ctx: CustomContext,
                           target: typing.Optional[discord.Member],
-                          channel: typing.Optional[discord.TextChannel],
+                          channel: typing.Optional[discord.abc.GuildChannel],
                           _target: typing.Optional[discord.Member]):
         """
         Displays a user's server permissions, and their channel-specific overwrites.
