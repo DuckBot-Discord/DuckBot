@@ -550,7 +550,7 @@ class Handler(commands.Cog, name='Handler'):
                 await message.channel.send(' '.join(e))
 
     @commands.Cog.listener('on_guild_join')
-    async def join_leave_message(self, guild: discord.Guild):
+    async def server_join_message(self, guild: discord.Guild):
         channel = self.bot.get_channel(904797860841812050)
         embed = discord.Embed(title='Joined Server', colour=discord.Colour.green(), timestamp=discord.utils.utcnow(),
                               description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
@@ -558,8 +558,8 @@ class Handler(commands.Cog, name='Handler'):
         embed.add_field(name='Members', value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
 
-    @commands.Cog.listener('on_guild_join')
-    async def join_leave_message(self, guild: discord.Guild):
+    @commands.Cog.listener('on_guild_remove')
+    async def server_leave_message(self, guild: discord.Guild):
         channel = self.bot.get_channel(904797860841812050)
         embed = discord.Embed(title='Left Server', colour=discord.Colour.red(), timestamp=discord.utils.utcnow(),
                               description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
