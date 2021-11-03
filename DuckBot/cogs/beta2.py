@@ -457,18 +457,18 @@ class LoggingBackend(commands.Cog):
 
         role_update = f'**Name:** {after.name}'
         if before.name != after.name:
-            role_update = f"**Name:**\n**Before:** {discord.utils.remove_markdown(before.name)}\n" \
-                          f"**After:** {discord.utils.remove_markdown(after.name)}"
+            role_update = f"**Name:**\n**Before:** {discord.utils.remove_markdown(before.name)}" \
+                          f"\n**After:** {discord.utils.remove_markdown(after.name)}"
             deliver = True
 
         color_update = ''
         if before.color != after.color:
-            color_update = f"**Updated Color:** `{before.color}` ➜ `{after.color}`"
+            color_update = f"\n**Updated Color:** `{before.color}` ➜ `{after.color}`"
             deliver = True
 
         position_update = ''
         if before.position != after.position:
-            position_update = f"**Updated Position:** `{before.position}` ➜ `{after.position}`"
+            position_update = f"\n**Updated Position:** `{before.position}` ➜ `{after.position}`"
             deliver = True
 
         embed.description = role_update + hoist_update + ping_update + color_update + position_update
