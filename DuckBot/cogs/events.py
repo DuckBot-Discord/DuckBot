@@ -553,7 +553,7 @@ class Handler(commands.Cog, name='Handler'):
     async def join_leave_message(self, guild: discord.Guild):
         channel = self.bot.get_channel(904797860841812050)
         embed = discord.Embed(title='Joined Server', colour=discord.Colour.green(), timestamp=discord.utils.utcnow(),
-                              description=f'**Name:** {discord.utils.escape_markdown(guild.name)}'
+                              description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
                                           f'\n**Owner:** {guild.owner} • {guild.owner_id}')
         embed.add_field(name='Members', value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
@@ -562,7 +562,7 @@ class Handler(commands.Cog, name='Handler'):
     async def join_leave_message(self, guild: discord.Guild):
         channel = self.bot.get_channel(904797860841812050)
         embed = discord.Embed(title='Left Server', colour=discord.Colour.red(), timestamp=discord.utils.utcnow(),
-                              description=f'**Name:** {discord.utils.escape_markdown(guild.name)}'
+                              description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
                                           f'\n**Owner:** {guild.owner} • {guild.owner_id}')
         embed.add_field(name='Members', value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
