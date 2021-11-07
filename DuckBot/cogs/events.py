@@ -44,28 +44,7 @@ class Handler(commands.Cog, name='Handler'):
     async def error_handler(self, ctx: CustomContext, error):
         error = getattr(error, "original", error)
         ignored = (
-            music_cog.NoPlayer,
-            music_cog.FullVoiceChannel,
-            music_cog.NotAuthorized,
-            music_cog.IncorrectChannelError,
-            music_cog.AlreadyConnectedToChannel,
-            music_cog.NoVoiceChannel,
-            music_cog.QueueIsEmpty,
-            music_cog.NoCurrentTrack,
-            music_cog.PlayerIsAlreadyPaused,
-            music_cog.PlayerIsNotPaused,
-            music_cog.NoMoreTracks,
-            music_cog.InvalidTimeString,
-            music_cog.NoPerms,
-            music_cog.NoConnection,
-            music_cog.AfkChannel,
-            music_cog.SkipInLoopMode,
-            music_cog.InvalidTrack,
-            music_cog.InvalidPosition,
-            music_cog.InvalidVolume,
-            music_cog.OutOfTrack,
-            music_cog.NegativeSeek,
-            music_cog.IncorrectTextChannelError,
+            music_cog.errors,
             errors.NoHideout,
             commands.DisabledCommand
         )

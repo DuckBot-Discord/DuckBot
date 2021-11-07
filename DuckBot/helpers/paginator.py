@@ -714,3 +714,40 @@ class TodoListPaginator(ViewPaginator):
         if self.message:
             await self.message.edit(view=None)
         self.stop()
+
+
+class NodesMenu(menus.ListPageSource):
+    """Nodes paginator class."""
+
+    def __init__(self, data, ctx):
+        self.data = data
+        self.ctx = ctx
+        super().__init__(data, per_page=1)
+
+    async def format_page(self, menu, entries):
+        offset = menu.current_page * self.per_page
+        embed = discord.Embed(title='<:rich_presence:658538493521166336> Node Stats', colour=self.ctx.color)
+
+        for i, v in enumerate(entries, start=offset):
+            embed.add_field(name=''.join(v.keys()), value=f'╰ {"".join(v.values())}', inline=True)
+            # embed.add_field(name='Identifier',value=f'╰ {v[1]}', inline=False)
+        return embed
+
+
+class QueueMenu(menus.ListPageSource):
+    def __init__(self, data, ctx) -> discord.Embed:
+        self.data = data
+        self.ctx: CustomContext = ctx
+        super().__init__(data, per_page=10)
+
+    async def format_page(self, menu, entries):
+        offset = menu.current_page * self.per_page
+
+        embed = discord.Embed(
+            title='{} songs in the queue'.format(len(self.data)) if len(self.data) > 1 else '1 song in the queue'
+            , colour=self.ctx.color)
+
+        for i, v in enumerate(entries, start=offset):
+            embed.add_field(name='\u200b', value=f'`{i + 1}.` {v}', inline=False)
+
+        return embed

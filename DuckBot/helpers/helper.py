@@ -212,6 +212,14 @@ class LyricsConverter(commands.Converter):
             raise commands.BadArgument(f"Sorry, I couldn't find any song named `{argument[0:1000]}`")
 
 
+def convert_bytes(size):
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024.0:
+            return "%3.1f %s" % (size, x)
+        size /= 1024.0
+    return size
+
+
 @fill_with_flags()
 class LoggingEventsFlags(BaseFlags):
 

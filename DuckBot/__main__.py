@@ -1,10 +1,13 @@
 import datetime
+import json
 import logging
 import os
 import traceback
 from collections import defaultdict, deque, namedtuple
 
 import typing
+
+import pomice
 from openrobot.api_wrapper import AsyncClient as ORBClient
 import tekore as tk
 from typing import (
@@ -43,6 +46,9 @@ load_dotenv()
 token_spotify = tk.request_client_token(
     client_id=os.getenv('SPOTIFY_CLIENT_ID'),
     client_secret=os.getenv('SPOTIFY_CLIENT_SECRET'))
+
+with open(f'{os.getenv("COGS_PATH")}/music-config.json', "r+") as file:
+    config = json.load(file)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
@@ -159,6 +165,7 @@ class DuckBot(commands.Bot):
         self.log_cache = defaultdict(lambda: defaultdict(list))
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
         self.imgur = asyncgur.Imgur(client_id=os.getenv('IMGUR_CL_ID'))
+        self.pomice = pomice.NodePool()
 
         for ext in initial_extensions:
             self._load_extension(ext)
@@ -267,11 +274,27 @@ class DuckBot(commands.Bot):
                                                    'channel_delete, channel_edit, role_create, role_delete, role_edit FROM logging_events WHERE guild_id = $1', guild_id))
                 self.guild_loggings[guild_id] = LoggingEventsFlags(**flags)
 
-            print('All cache populated successfully')
+            logging.info('All cache populated successfully')
+
+            for node in config['nodes']:
+                try:
+                    await self.pomice.create_node(
+                        bot=self,
+                        host=node['host'],
+                        port=node['port'],
+                        password=node['password'],
+                        identifier=node['name'],
+                        spotify_client_id=f"{os.getenv('SPOTIFY_CLIENT_ID')}",
+                        spotify_client_secret=f"{os.getenv('SPOTIFY_CLIENT_SECRET')}"
+                    )
+                except:
+                    traceback.print_exc()
+            
+            logging.info('All nodes populated')
 
             self._dynamic_cogs()
 
-            print('Loading cogs done.')
+            logging.info('Loading cogs done.')
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if self.user:
