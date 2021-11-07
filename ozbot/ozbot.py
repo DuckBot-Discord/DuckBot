@@ -2,9 +2,8 @@ import os, discord, asyncio, yaml, asyncpg
 from dotenv import load_dotenv
 from discord.ext import commands
 
-intents = discord.Intents.default()  # Enable all intents except for members and presences
-intents.members = True  # Subscribe to the privileged members intent.
-intents.presences = True  # Subscribe to the privileged members intent.
+intents = discord.Intents.all()  # Enable all intents except for members and presences
+intents.typing = False  # Subscribe to the privileged members intent.
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('!', 'oz!', '**********', '.'), case_insensitive=True,
                    intents=intents)
