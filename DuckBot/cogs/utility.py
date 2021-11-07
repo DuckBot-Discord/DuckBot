@@ -31,10 +31,10 @@ class UserInfoView(discord.ui.View):
         super().__init__()
         if banner:
             self.embeds = cycle([uinfo_embed, order_embed, banner])
-            self.labels = cycle(['Show Banner', 'Show User Info', 'Show Join Odrer'])
+            self.labels = cycle(['Show Banner', 'Show User Info', 'Show Join Order'])
         else:
             self.embeds = cycle([uinfo_embed, order_embed])
-            self.labels = cycle(['Show User Info', 'Show Join Odrer'])
+            self.labels = cycle(['Show User Info', 'Show Join Order'])
         self.banner = banner
         self.ui = uinfo_embed
         self.message: discord.Message = None
