@@ -217,7 +217,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         Events, objects, and functions are all supported through
         a cruddy fuzzy algorithm.
         """
-        await self.do_rtfm(ctx, 'latest', obj)
+        await self.do_rtfm(ctx, 'master', obj)
 
     @rtfm.command(name='jp')
     async def rtfm_jp(self, ctx, *, obj: str = None):
@@ -238,6 +238,11 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     async def rtfm_master(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a discord.py entity (master branch)"""
         await self.do_rtfm(ctx, 'master', obj)
+
+    @rtfm.command(name='latest', aliases=['1.7'])
+    async def rtfm_master(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a discord.py entity (master branch)"""
+        await self.do_rtfm(ctx, 'latest', obj)
 
     @rtfm.command(name='enhanced-dpy', aliases=['edpy'])
     async def rtfm_edpy(self, ctx, *, obj: str = None):
@@ -393,7 +398,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
                                           "\nYou **don't need to credit me** in a command, don't"
                                           "\nworry. Although if you wish to do so, you can"
                                           "\nadd credits in the source code. ([Mozilla Public"
-                                          "\nLicense](https://github.com/LeoCx1000/discord-bots/blob/master/LICENSE) btw one of the terms is to use the same for"
+                                          "\nLicense](https://github.com/LeoCx1000/discord-bots/blob"
+                                          "/master/LICENSE) btw one of the terms is to use the same for"
                                           "\nyour project). Just add a comment or something in"
                                           "\nthere saying where the code came from."
                                           "\nThe latter also being optional, of course."
