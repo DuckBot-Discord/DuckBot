@@ -1,4 +1,5 @@
 import datetime
+import io
 import json
 import logging
 import os
@@ -13,7 +14,9 @@ from openrobot.api_wrapper import AsyncClient as ORBClient
 import tekore as tk
 from typing import (
     List,
-    Optional, Union
+    Optional,
+    Union,
+    Any
 )
 
 from dotenv import load_dotenv
@@ -294,6 +297,28 @@ class DuckBot(commands.Bot):
                 elif isinstance(prefix, (tuple, list)):
                     return await message.reply(f"My prefixes here are `{'`, `'.join(prefix[0:10])}`\n For a list of commands do`{prefix[0]}help` 💞"[0:2000])
         await self.process_commands(message)
+
+    async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
+        traceback_string = traceback.format_exc()
+        for line in traceback_string.split('\n'):
+            logging.info(line)
+        await self.wait_until_ready()
+        error_channel = self.get_channel(880181130408636456)
+        to_send = f"```yaml\nAn error occurred in an {event_method} event``````py" \
+                  f"\n{traceback_string}\n```"
+        if len(to_send) < 2000:
+            try:
+                await error_channel.send(to_send)
+
+            except (discord.Forbidden, discord.HTTPException):
+
+                await error_channel.send(f"```yaml\nAn error occurred in an {event_method} event``````py",
+                                         file=discord.File(io.StringIO(traceback_string), filename='traceback.py'))
+        else:
+            await error_channel.send(f"```yaml\nAn error occurred in an {event_method} event``````py",
+                                     file=discord.File(io.StringIO(traceback_string), filename='traceback.py'))
+        for line in traceback_string.split('\n'):
+            logging.info(line)
 
     def get_mapping(self):
         mapping = {cog: cog.get_commands() for cog in self.cogs.values()}
