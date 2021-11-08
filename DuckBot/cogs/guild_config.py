@@ -1500,20 +1500,22 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         try:
             webhooks = await channel.webhooks()
         except (discord.Forbidden, discord.HTTPException):
-            raise commands.BadArgument(f'I was unable to create a webhook in {channel.mention}')
+            raise commands.BadArgument(f'I was unable to get the list of webhooks in {channel.mention}. (Missing Permissions - Manage Webhooks)')
         for w in webhooks:
             if w.user == self.bot.user:
                 webhook_url = w.url
                 break
         else:
             if len(webhooks) == 10:
-                raise commands.BadArgument(f'{channel.mention} has already the max number of webhooks!')
+                raise commands.BadArgument(f'{channel.mention} has already the max number of webhooks! (10 webhooks)')
             try:
                 w = await channel.create_webhook(name='DuckBot logging', avatar=await ctx.me.avatar.read(),
                                                  reason='DuckBot logging')
                 webhook_url = w.url
             except discord.Forbidden:
-                raise commands.BadArgument(f'I couldn\'t create a webhook in {channel.mention} (Missing Permissions)')
+                raise commands.BadArgument(f'I couldn\'t create a webhook in {channel.mention}(Missing Permissions - Manage Webhooks)')
+            except discord.HTTPException:
+                raise commands.BadArgument(f'There was an unexpected error while creating a webhook in {channel.mention} (HTTP exception) - Perhaps try again?')
         await self.bot.db.execute('INSERT INTO prefixes (guild_id) VALUES ($1) '
                                   'ON CONFLICT (guild_id) DO NOTHING', ctx.guild.id)
         await self.bot.db.execute(
