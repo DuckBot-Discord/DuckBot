@@ -284,7 +284,8 @@ class DuckBot(commands.Bot):
 
             logging.info('Loading cogs done.')
 
-    async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
+    async def on_message(self, message: discord.Message) -> None:
+        await self.wait_until_ready()
         if self.user:
             if re.fullmatch(rf"<@!?{bot.user.id}>", message.content):
                 prefix = await self.get_pre(self, message, raw_prefix=True)
