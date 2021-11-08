@@ -77,10 +77,11 @@ class ModMail(commands.Cog):
             return await message.add_reaction('⚠')
 
     @commands.Cog.listener('on_message')
-    async def on_mail_reply(self, message):
+    async def on_mail_reply(self, message: discord.Message):
+        if not message.guild:
+            return
         if any(
-                (not message.guild,
-                 message.author.bot,
+                (message.author.bot,
                  self.bot.dev_mode is True,
                  message.channel.category_id != 878123261525901342
                  )
