@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import os
+import re
 import traceback
 from collections import defaultdict, deque, namedtuple
 
@@ -76,17 +77,9 @@ class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)
 
     def user_blacklisted(self, ctx: CustomContext):
-        try:
-            is_blacklisted = self.blacklist[ctx.author.id]
-        except KeyError:
-            is_blacklisted = False
-        if ctx.author.id == self.owner_id:
-            is_blacklisted = False
-
-        if is_blacklisted is False:
+        if not self.blacklist.get(ctx.author.id, None) or ctx.author.id == self.owner_id:
             return True
-        else:
-            raise errors.UserBlacklisted
+        raise errors.UserBlacklisted
 
     def maintenance_mode(self, ctx: CustomContext):
         if not self.maintenance or ctx.author.id == bot.owner_id:
@@ -234,14 +227,9 @@ class DuckBot(commands.Bot):
             for value in values:
                 self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
 
-            self.afk_users = dict(
-                [(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if
-                 r['start_time']])
-            self.auto_un_afk = dict(
-                [(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk'))
-                 if r['auto_un_afk'] is not None])
-            self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in
-                                             (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
+            self.afk_users = dict([(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if r['start_time']])
+            self.auto_un_afk = dict([(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk')) if r['auto_un_afk'] is not None])
+            self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
             self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'],
                                                            'number': x['current_number'],
                                                            'last_counter': x['last_counter'],
@@ -298,13 +286,12 @@ class DuckBot(commands.Bot):
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         if self.user:
-            if message.content == f'<@!{self.user.id}>':  # Sets faster
+            if re.fullmatch(rf"<@!?{bot.user.id}>", message.content):
                 prefix = await self.get_pre(self, message, raw_prefix=True)
                 if isinstance(prefix, str):
                     return await message.reply(f"For a list of commands do `{prefix}help` 💞")
                 elif isinstance(prefix, (tuple, list)):
-                    return await message.reply(f"My prefixes here are `{'`, `'.join(prefix)}`"
-                                               f"\n For a list of commands do`{prefix[0]}help` 💞")
+                    return await message.reply(f"My prefixes here are `{'`, `'.join(prefix[0:10])}`\n For a list of commands do`{prefix[0]}help` 💞"[0:2000])
         await self.process_commands(message)
 
     def get_mapping(self):
