@@ -1497,7 +1497,10 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             raise commands.BadArgument(f"I'm missing the Manage Webhooks permission in {channel.mention}")
         await ctx.trigger_typing()
 
-        webhooks = await channel.webhooks()
+        try:
+            webhooks = await channel.webhooks()
+        except (discord.Forbidden, discord.HTTPException):
+            raise commands.BadArgument(f'I was unable to create a webhook in {channel.mention}')
         for w in webhooks:
             if w.user == self.bot.user:
                 webhook_url = w.url
