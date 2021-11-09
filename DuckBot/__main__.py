@@ -410,8 +410,8 @@ class DuckBot(commands.Bot):
             return url.link
         raise discord.HTTPException(response=response, message='Could not upload to Imgur')
 
-    def setup(self):
-        super(DuckBot, self).setup()
+    async def setup(self):
+        return
 
     async def on_interaction(self, interaction: discord.Interaction):
         try:
