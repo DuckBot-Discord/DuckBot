@@ -40,11 +40,11 @@ def get_user_badges(user: discord.Member, bot, fetched_user: discord.User = None
 
     elif user.discriminator in constants.COMMON_DISCRIMINATORS:
         print('this triggered')
-        user_flags.append(f'<:nitro:895392323519799306> Nitro [guess: Nitro #tag]')
+        user_flags.append(f'<:nitro:895392323519799306> Nitro [guess: Rare #tag]')
 
     elif user.discriminator in bot.common_discrims:
         print('this triggered')
-        user_flags.append(f'<:nitro:895392323519799306> Nitro [guess: Nitro #tag]')
+        user_flags.append(f'<:nitro:895392323519799306> Nitro [guess: Uncommon #tag]')
 
     else:
         pass

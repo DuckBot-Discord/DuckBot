@@ -3,6 +3,7 @@ import re
 import typing
 import unicodedata
 from itertools import cycle
+from pprint import pprint
 
 import discord
 
@@ -164,17 +165,16 @@ class Utility(commands.Cog):
         else:
             raise errors.NoQuotedMessage
 
-    @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info')
+    @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info', slash_command=True, slash_command_guilds=[774561547930304536])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
     async def userinfo(self, ctx: CustomContext, *, member: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
-        try:
-            await ctx.trigger_typing()
-        except (discord.Forbidden, discord.HTTPException):
-            pass
+        uid = getattr(ctx.interaction, 'data', {}).get("resolved", {}).get("members", {})
+        member = ctx.guild.get_member(int(next(iter(uid), member.id)))
+        await ctx.trigger_typing()
         member = member or ctx.author
         fetched_user = await self.bot.fetch_user(member.id)
 

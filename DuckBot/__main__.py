@@ -317,8 +317,6 @@ class DuckBot(commands.Bot):
         else:
             await error_channel.send(f"```yaml\nAn error occurred in an {event_method} event``````py",
                                      file=discord.File(io.StringIO(traceback_string), filename='traceback.py'))
-        for line in traceback_string.split('\n'):
-            logging.info(line)
 
     def get_mapping(self):
         mapping = {cog: cog.get_commands() for cog in self.cogs.values()}
@@ -412,8 +410,18 @@ class DuckBot(commands.Bot):
             return url.link
         raise discord.HTTPException(response=response, message='Could not upload to Imgur')
 
+    def setup(self):
+        super(DuckBot, self).setup()
+
+    async def on_interaction(self, interaction: discord.Interaction):
+        try:
+            await super().on_interaction(interaction)
+        except commands.CommandNotFound:
+            pass
+
 
 if __name__ == '__main__':
     TOKEN = os.getenv('DISCORD_TOKEN')
     bot = DuckBot()
+    bot.create_slash_commands()
     bot.run(TOKEN, reconnect=True)
