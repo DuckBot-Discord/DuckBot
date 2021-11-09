@@ -27,52 +27,109 @@ db.emoji lock <server_emoji> <roles>...
 
 ## Music
 - play \<query>
+- playnext \<query>
+- playnow \<query>
+- connect 
+- current 
 - disconnect 
+- skip 
+- stop 
+- qclear 
+- seek \<time>
 - pause 
 - resume 
-- stop 
-- clear_queue 
-- skip 
+- volume \<volume>
 - shuffle 
-- loop \[mode]
-- queue 
-- current 
-- restart 
-- seek \<position>
-- volume \[volume]
-- remove_song \<start> \[end]
-- move \<position> \<track>
+- loop \<mode>
+  - track 
+  - queue 
+  - disable 
+- dj-swap \[member]
 - nodes 
-- change_node \<node>
+
+## Image
+- pixelate \[member] \[pixel_size=8]
+- colors \[member]
+- america \[member]
+- communism \[member]
+- triggered \[member]
+- expand \[member]
+- wasted \[member]
+- sketch \[member]
+- spin \[member]
+- pet \[member]
+- bonk \[member]
+- bomb \[member]
+- dissolve \[member]
+- invert \[member]
+- sobel \[member]
+- hog \[member]
+- polygon \[member]
+- blur \[member]
+- rgb \[member]
+- delete? \[member]
+- fedora \[member]
+- hitler \[member]
+- lego \[member]
+- wanted \[member]
+- strings \[member]
+- thermal \[member]
+- freeze \[member]
+- earth \[member]
+- jail \[member]
+- shatter \[member]
+- gay \[member] \[flag-style]
+- trash \[member]
+- deepfry \[member]
+- ascii \[member]
+- charcoal \[member]
+- poster \[member]
+- sepia \[member]
+- swirl \[member]
+- paint \[member]
+- night \[member]
+- rainbow \[member]
+- magik \[member]
+- 5g1g \<guys> \<girl>
+- wayg \<interviewer> \<person>
 
 ## Guild Settings
 - invitestats 
 - welcome 
+  - fake-message 
   - channel \[new_channel]
   - message \<message>
-  - fake-message 
 - enable-suggestions \<channel> \<image_only>
 - disable-suggestions \<channel>
 - dj-role \[new_role]
-  - clear 
   - all 
-- prefix 
-  - remove \<prefix>
   - clear 
+- prefix 
   - add \<new>
+  - clear 
+  - remove \<prefix>
 - muterole \[new_role]
-  - create 
-  - delete 
   - fix 
+  - delete 
+  - create 
   - remove 
 - counting 
+  - remove-reward \<number>
+  - override-number \<number>
+  - set-channel \<channel>
+  - check-reward \<number>
+  - all-rewards 
   - add-reward 
   - unset-channel 
-  - remove-reward \<number>
-  - set-channel \<channel>
-  - override-number \<number>
-  - all-rewards 
-  - check-reward \<number>
+- log 
+  - auto-setup 
+  - edit-channels 
+  - all-events 
+  - disable-event \<event>
+  - channels 
+  - enable \<channel>
+  - enable-event \<event>
+  - disable 
 
 ## About
 - invite 
@@ -85,6 +142,7 @@ db.emoji lock <server_emoji> <roles>...
 - oz_ad 
 - mutual-servers \[user]
 - commands 
+- vote 
 - help \[command]
 
 ## Moderation
@@ -93,18 +151,18 @@ db.emoji lock <server_emoji> <roles>...
 - unban \<user>
 - setnick \<member> \[new]
 - clean \[search=100]
-  - emoji \[search=100]
-  - embeds \[search=100]
-  - help 
-  - contains \<text>
-  - reactions \[search=100]
-  - images \[search=100]
-  - custom \<args>
-  - threads \[search=100]
-  - all \[search=100]
-  - bot \[prefix] \[search=100]
   - files \[search=100]
+  - contains \<text>
+  - help 
+  - all \[search=100]
+  - images \[search=100]
+  - embeds \[search=100]
+  - threads \[search=100]
+  - emoji \[search=100]
+  - custom \<args>
+  - bot \[prefix] \[search=100]
   - user \<member> \[search=100]
+  - reactions \[search=100]
 - cleanup \[amount=25]
 - mute \<member> \[reason]
 - multi-mute \[members]... \[reason]
@@ -124,19 +182,19 @@ db.emoji lock <server_emoji> <roles>...
 - charinfo \<characters>
 - say \<msg>
 - echo \<channel> \<message_or_reply>
-- edit_message \[new message] \[--d|--s]
+- edit-message \[new message] \[--d|--s]
 - user-info \[member]
 - permissions \[target] \[channel]
 - server-info \[guild]
 - avatar \[member]
 - emoji \[custom_emojis]...
-  - unlock \<server_emoji>
+  - delete \<server_emoji>
   - list 
   - rename \<server_emoji> \<new_name>
-  - clone \<server_emoji> \[name]
   - lock \<server_emoji> \[roles]...
+  - clone \<server_emoji> \[name]
+  - unlock \<server_emoji>
   - steal \[index=1]
-  - delete \<server_emoji>
 - minecraft_uuid \<username>
 - in \<relative_time>
 - afk \[reason=...]
@@ -144,9 +202,13 @@ db.emoji lock <server_emoji> <roles>...
 - todo 
   - list 
   - edit \<index> \<text>
-  - clear 
-  - remove \<index>
   - add \<text>
+  - remove \<index>
+  - clear 
+- hoisters 
+
+## Test
+- chart 
 
 ## Fun
 - cat 
@@ -170,8 +232,6 @@ db.emoji lock <server_emoji> <roles>...
 - catch \[member]
 - lyrics \<song>
 - type-race \[amount=2]
-
-
 
 # Created by `LeoCx1000#9999`
 ----------------------------------------

@@ -1,7 +1,9 @@
+import asyncio
 import copy
 import io
 import itertools
 import logging
+import random
 import re
 import traceback
 import discord
@@ -23,6 +25,25 @@ warned = []
 
 def setup(bot):
     bot.add_cog(Handler(bot))
+
+
+class WelcomeView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji='🗑')
+    async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.message.delete()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if not interaction.guild:
+            return
+        member = interaction.guild.get_member(interaction.user.id)
+        channel: discord.abc.GuildChannel = interaction.channel
+        if member and channel.permissions_for(member).manage_messages:
+            return True
+        await interaction.response.defer()
+        return False
 
 
 class Handler(commands.Cog, name='Handler'):
@@ -138,7 +159,8 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
 
         if isinstance(error, commands.errors.CommandOnCooldown):
-            if error.type in (commands.BucketType.user, commands.BucketType.member) and await self.bot.is_owner(ctx.author):
+            if error.type in (commands.BucketType.user, commands.BucketType.member) and await self.bot.is_owner(
+                    ctx.author):
                 ctx.command.reset_cooldown(ctx)
                 return await self.bot.process_commands(ctx.message)
             embed = discord.Embed(color=0xD7342A,
@@ -336,7 +358,9 @@ class Handler(commands.Cog, name='Handler'):
 
     @tasks.loop(minutes=5)
     async def cache_common_discriminators(self):
-        discrims = [[m.discriminator for m in g.members if (m.premium_since or m.display_avatar.is_animated()) and (len(set(m.discriminator)) < 3)] for g in self.bot.guilds]
+        discrims = [[m.discriminator for m in g.members if
+                     (m.premium_since or m.display_avatar.is_animated()) and (len(set(m.discriminator)) < 3)] for g in
+                    self.bot.guilds]
         self.bot.common_discrims = sorted(list(set(itertools.chain(*discrims))))
 
     @cache_common_discriminators.before_loop
@@ -454,7 +478,8 @@ class Handler(commands.Cog, name='Handler'):
         self.bot.counting_channels[message.guild.id]['messages'].append(message)
         await self.bot.db.execute('UPDATE count_settings SET current_number = $2 WHERE guild_id = $1',
                                   message.guild.id, self.bot.counting_channels[message.guild.id]['number'])
-        if message.guild.id not in self.bot.counting_rewards or int(message.content) not in self.bot.counting_rewards[message.guild.id]:
+        if message.guild.id not in self.bot.counting_rewards or int(message.content) not in self.bot.counting_rewards[
+            message.guild.id]:
             print('not reward')
             return
         reward = await self.bot.db.fetchrow("SELECT * FROM counting WHERE (guild_id, reward_number) = ($1, $2)",
@@ -505,7 +530,8 @@ class Handler(commands.Cog, name='Handler'):
                                       payload.guild_id, self.bot.counting_channels[payload.guild_id]['number'])
         else:
             try:
-                message = [m for m in list(self.bot.counting_channels[payload.guild_id]['messages']) if m.id == payload.message_id][0]
+                message = [m for m in list(self.bot.counting_channels[payload.guild_id]['messages']) if
+                           m.id == payload.message_id][0]
                 self.bot.counting_channels[payload.guild_id]['messages'].remove(message)
             except (KeyError, IndexError):
                 pass
@@ -534,7 +560,8 @@ class Handler(commands.Cog, name='Handler'):
         embed = discord.Embed(title='Joined Server', colour=discord.Colour.green(), timestamp=discord.utils.utcnow(),
                               description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
                                           f'\n**Owner:** {guild.owner} • {guild.owner_id}')
-        embed.add_field(name='Members', value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
+        embed.add_field(name='Members',
+                        value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
 
     @commands.Cog.listener('on_guild_remove')
@@ -543,5 +570,44 @@ class Handler(commands.Cog, name='Handler'):
         embed = discord.Embed(title='Left Server', colour=discord.Colour.red(), timestamp=discord.utils.utcnow(),
                               description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
                                           f'\n**Owner:** {guild.owner} • {guild.owner_id}')
-        embed.add_field(name='Members', value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
+        embed.add_field(name='Members',
+                        value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
+
+    @staticmethod
+    def get_delivery_channel(guild: discord.Guild) -> discord.TextChannel:
+        channels = [c for c in guild.text_channels if c.permissions_for(guild.me).send_messages]
+        if not channels:
+            return None
+        channel = (
+                discord.utils.get(channels, name='general') or
+                discord.utils.find(lambda c: 'general' in c.name, channels) or
+                discord.utils.find(lambda c: c == guild.system_channel, channels)
+        )
+        if not channel:
+            public_channels = [c for c in channels if c.permissions_for(guild.default_role).send_messages]
+            return random.choice(public_channels) or random.choice(channels)
+        return channel
+
+    @commands.Cog.listener("on_guild_join")
+    async def on_bot_added(self, guild: discord.Guild):
+        channel = self.get_delivery_channel(guild)
+        if not channel:
+            return
+        embed = discord.Embed(timestamp=discord.utils.utcnow(), color=0xF8DA94,
+                                     description="Thanks for adding me to your server! My default prefix is `db.`, "
+                                                 "but you can change it by running the `db.prefix add <prefix>` command. "
+                                                 "\nI can have multiple prefixes, for convenience."
+                                                 "\n\nFor help, simply do `db.help`. A list of all my commmands is [here](https://github.com/leoCx1000/discord-bots/#readme)"
+                                                 "\nIf you have a suggestion, send me a DM")
+        embed.set_author(name='Thanks for adding me!', icon_url=self.bot.user.display_avatar.url)
+        embed.set_footer(icon_url='https://cdn.discordapp.com/emojis/907399757146767371.png?size=44',
+                         text='thank you!')
+        await channel.send(embed=embed, view=WelcomeView())
+
+    @commands.Cog.listener('on_ready')
+    async def register_view(self):
+        if not hasattr(self.bot, 'welcome_button_added'):
+            self.bot.add_view(WelcomeView())
+            self.bot.welcome_button_added = True
+
