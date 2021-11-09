@@ -220,7 +220,7 @@ class LoggingBackend(commands.Cog):
         if before.guild.id not in self.bot.log_channels or not self.bot.guild_loggings[after.guild.id].channel_delete:
             return
         deliver = False
-        embed = discord.Embed(title=f'{before.type} channel updated'.title(), description=f'**Name:** #{after.name}\n**Category:** {after.category.name}',
+        embed = discord.Embed(title=f'{before.type} channel updated'.title(), description=f'**Name:** #{after.name}\n**Category:** {getattr(after.category, "name", "no category")}',
                               colour=discord.Colour.blurple(), timestamp=discord.utils.utcnow())
         embed.set_footer(text=f'Channel ID: {after.id}')
         if before.name != after.name:
