@@ -595,11 +595,19 @@ class Handler(commands.Cog, name='Handler'):
         if not channel:
             return
         embed = discord.Embed(timestamp=discord.utils.utcnow(), color=0xF8DA94,
-                                     description="Thanks for adding me to your server! My default prefix is `db.`, "
-                                                 "but you can change it by running the `db.prefix add <prefix>` command. "
-                                                 "\nI can have multiple prefixes, for convenience."
-                                                 "\n\nFor help, simply do `db.help`. A list of all my commmands is [here](https://github.com/leoCx1000/discord-bots/#readme)"
-                                                 "\nIf you have a suggestion, send me a DM")
+                              description="Thanks for adding me to your server!"
+                                          "\n**My default prefix is `db.`**, but you can"
+                                          "\nchange it by running the command"
+                                          "\n`db.prefix add <prefix>`. I can have"
+                                          "\nmultiple prefixes, for convenience."
+                                          "\n\n**For help, simply do `db.help`.**"
+                                          "\nA list of all my commmands is [here](https://github.com/leoCx1000/discord-bots/#readme)"
+                                          "\n\n**For suggestions, run the `db.suggest`"
+                                          "\ncommand, and for other issues, DM"
+                                          "\nme or join my support server!**"
+                                          "\n\n⭐ **Tip:** Set up logging!"
+                                          "\ndo `db.log auto-setup`"
+                                          "\n⭐ **Tip:** Vote! `db.vote`")
         embed.set_author(name='Thanks for adding me!', icon_url=self.bot.user.display_avatar.url)
         embed.set_footer(icon_url='https://cdn.discordapp.com/emojis/907399757146767371.png?size=44',
                          text='thank you!')
@@ -610,4 +618,3 @@ class Handler(commands.Cog, name='Handler'):
         if not hasattr(self.bot, 'welcome_button_added'):
             self.bot.add_view(WelcomeView())
             self.bot.welcome_button_added = True
-
