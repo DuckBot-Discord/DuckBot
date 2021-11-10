@@ -181,6 +181,17 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             'bing': 'https://asyncbing.readthedocs.io/en/latest',
             'pycord': 'https://pycord.readthedocs.io/en/master'
         }
+        embed_titles = {
+            'latest': 'Documentation for `discord.py v1.7.3`',
+            'latest-jp': 'Documentation for `discord.py v1.7.3` in Japanese',
+            'python': 'Documentation for `python`',
+            'python-jp': 'Documentation for `python` in Japanese',
+            'master': 'Documentation for `discord.py v2.0.0a`',
+            'edpy': 'Documentation for `enhanced-dpy`',
+            'chai': 'Documentation for `chaidiscord.py`',
+            'bing': 'Documentation for `asyncbing`',
+            'pycord': 'Documentation for `pycord`'
+        }
 
         if obj is None:
             await ctx.send(page_types[key])
@@ -206,7 +217,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
 
         matches = finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
 
-        e = discord.Embed(colour=discord.Colour.blurple())
+        e = discord.Embed(colour=discord.Colour.blurple(), title=embed_titles.get(key, 'Documentation'))
         if len(matches) == 0:
             return await ctx.send('Could not find anything. Sorry.')
 
