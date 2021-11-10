@@ -288,14 +288,15 @@ class LoggingBackend(commands.Cog):
         embed.set_author(name=str(after), icon_url=after.display_avatar.url)
         embed.set_footer(text=f'User ID: {after.id}')
         deliver = False
-        if before.guild_avatar != after.guild_avatar:
-            if after.avatar is None:
-                embed.add_field(name='Display avatar updated:',
-                                value='User removed their server avatar.', inline=False)
+        if before.avatar != after.avatar:
+            if after.avatar is not None:
+                embed.add_field(name='Server Avatar updated:', inline=False,
+                                value=f'Member {"updated" if before.avatar else "set"} their avatar.')
+                embed.set_thumbnail(url=after.guild_avatar.url)
             else:
-                embed.add_field(name='Display avatar updated:', inline=False,
-                                value=f'Member {"updated" if before.guild_avatar else "set"} their Display Avatar')
-                embed.set_image(url=after.guild_avatar.url)
+                embed.add_field(name='Server Avatar updated:', inline=False,
+                                value='Member removed their avatar.')
+                embed.set_thumbnail(url=after.default_avatar.url)
             deliver = True
         if before.roles != after.roles:
             added = set(after.roles) - set(before.roles)

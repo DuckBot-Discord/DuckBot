@@ -165,17 +165,17 @@ class Utility(commands.Cog):
         else:
             raise errors.NoQuotedMessage
 
-    @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info', slash_command=True, slash_command_guilds=[774561547930304536])
+    @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info', slash_command=True, slash_command_guilds=[774561547930304536, 745059550998298756])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
     async def userinfo(self, ctx: CustomContext, *, member: typing.Optional[discord.Member]):
         """
         Shows a user's information. If not specified, shows your own.
         """
-        uid = getattr(ctx.interaction, 'data', {}).get("resolved", {}).get("members", {})
-        member = ctx.guild.get_member(int(next(iter(uid), member.id)))
-        await ctx.trigger_typing()
         member = member or ctx.author
+        uid = getattr(ctx.interaction, 'data', {}).get("resolved", {}).get("members", {})
+        member = ctx.guild.get_member(int(next(iter(uid), member.id))) or ctx.author
+        await ctx.trigger_typing()
         fetched_user = await self.bot.fetch_user(member.id)
 
         embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color)
