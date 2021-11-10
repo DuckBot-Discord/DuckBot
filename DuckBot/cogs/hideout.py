@@ -105,7 +105,9 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             sub = cache[key] = {}
             async with self.bot.session.get(page + '/objects.inv') as resp:
                 if resp.status != 200:
-                    raise RuntimeError('Cannot build rtfm lookup table, try again later.')
+                    channel = self.bot.get_channel(880181130408636456)
+                    await channel.send(f'```py\nCould not create RTFM lookup table for {page}\n```')
+                    continue
 
                 stream = SphinxObjectFileReader(await resp.read())
                 cache[key] = self.parse_object_inv(stream, page)
@@ -174,10 +176,10 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             'python': 'https://docs.python.org/3',
             'python-jp': 'https://docs.python.org/ja/3',
             'master': 'https://discordpy.readthedocs.io/en/master',
-            'edpy': 'https://enhanced-dpy.readthedocs.io/en/latest/',
-            'chai': 'https://chaidiscordpy.readthedocs.io/en/latest/',
+            'edpy': 'https://enhanced-dpy.readthedocs.io/en/latest',
+            'chai': 'https://chaidiscordpy.readthedocs.io/en/latest',
             'bing': 'https://asyncbing.readthedocs.io/en/latest',
-            'pycord': 'https://pycord.readthedocs.io/en/latest/'
+            'pycord': 'https://pycord.readthedocs.io/en/master'
         }
 
         if obj is None:
