@@ -423,5 +423,4 @@ class DuckBot(commands.Bot):
 if __name__ == '__main__':
     TOKEN = os.getenv('DISCORD_TOKEN')
     bot = DuckBot()
-    bot.create_slash_commands()
     bot.run(TOKEN, reconnect=True)
