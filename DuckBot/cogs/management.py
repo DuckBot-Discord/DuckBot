@@ -436,7 +436,7 @@ class Management(commands.Cog, name='Bot Management'):
         await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(f\"\"\"{body}\"\"\")")
 
     @commands.is_owner()
-    @postgre.command(name='execute', aliases=['fv'])
+    @postgre.command(name='execute', aliases=['e'])
     async def postgre_execute(self, ctx, *, query: str):
         """Executes an SQL query to the database (Fetchrow)"""
         body = cleanup_code(query)
