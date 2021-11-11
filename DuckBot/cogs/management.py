@@ -412,28 +412,28 @@ class Management(commands.Cog, name='Bot Management'):
     async def postgre(self, ctx: CustomContext, query: str):
         """Executes an SQL query to the database"""
         body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(\"\"\"{body}\"\"\")")
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
 
     @commands.is_owner()
     @postgre.command(name='fetch', aliases=['f'])
     async def postgre_fetch(self, ctx, *, query: str):
         """Executes an SQL query to the database (Fetch)"""
         body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(\"\"\"{body}\"\"\")")
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
 
     @commands.is_owner()
     @postgre.command(name='fetchval', aliases=['fr'])
     async def postgre_fetchval(self, ctx, *, query: str):
         """Executes an SQL query to the database (Fetchval)"""
         body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetchval(\"\"\"{body}\"\"\")")
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetchval(f\"\"\"{body}\"\"\")")
 
     @commands.is_owner()
     @postgre.command(name='fetchrow', aliases=['fv'])
     async def postgre_fetchrow(self, ctx, *, query: str):
         """Executes an SQL query to the database (Fetchrow)"""
         body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(\"\"\"{body}\"\"\")")
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(f\"\"\"{body}\"\"\")")
 
     @commands.group(invoke_without_command=True, aliases=['bl'])
     @commands.is_owner()
