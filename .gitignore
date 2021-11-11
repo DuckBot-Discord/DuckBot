@@ -13,6 +13,3 @@ gafapasta/files/*
 DuckBot/cogs/music-config.json
 DuckBot/cogs/beta.py
 .json
-/DuckBot/helpers/music/
-/DuckBot/cogs/music.py
-DuckBot/cogs/music.py
