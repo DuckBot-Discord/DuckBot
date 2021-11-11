@@ -435,6 +435,13 @@ class Management(commands.Cog, name='Bot Management'):
         body = cleanup_code(query)
         await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(f\"\"\"{body}\"\"\")")
 
+    @commands.is_owner()
+    @postgre.command(name='execute', aliases=['fv'])
+    async def postgre_execute(self, ctx, *, query: str):
+        """Executes an SQL query to the database (Fetchrow)"""
+        body = cleanup_code(query)
+        await ctx.invoke(self._eval, body=f"return await bot.db.execute(f\"\"\"{body}\"\"\")")
+
     @commands.group(invoke_without_command=True, aliases=['bl'])
     @commands.is_owner()
     async def blacklist(self, ctx: CustomContext) -> discord.Message:
