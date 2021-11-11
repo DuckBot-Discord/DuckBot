@@ -409,7 +409,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.group(name='sql', aliases=['db', 'database', 'psql', 'postgre'], invoke_without_command=True)
     @commands.is_owner()
-    async def postgre(self, ctx: CustomContext, query: str):
+    async def postgre(self, ctx: CustomContext, *, query: str):
         """Executes an SQL query to the database"""
         body = cleanup_code(query)
         await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
