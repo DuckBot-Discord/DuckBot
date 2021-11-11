@@ -93,10 +93,13 @@ class SphinxObjectFileReader:
 
 def whitelist():
     async def predicate(ctx: CustomContext):
+        if not ctx.command.qualified_name.startswith('inviter'):
+            return True
         if await ctx.bot.db.fetchval('SELECT uid FROM inv_whitelist WHERE uid = $1', ctx.author.id):
             return True
-        await ctx.send('You are not whitelisted to run inviter commands!')
-        raise errors.NoHideout
+        else:
+            await ctx.send('You are not whitelisted to run inviter commands!')
+            raise errors.NoHideout
 
     return commands.check(predicate)
 
