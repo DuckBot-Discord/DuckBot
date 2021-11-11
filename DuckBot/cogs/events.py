@@ -31,7 +31,7 @@ class WelcomeView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji='🗑')
+    @discord.ui.button(emoji='🗑', custom_id='delete_joining_message')
     async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.message.delete()
 
