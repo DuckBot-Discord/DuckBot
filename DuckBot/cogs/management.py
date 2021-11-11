@@ -407,6 +407,30 @@ class Management(commands.Cog, name='Bot Management'):
                 else:
                     await ctx.send(f"```py\n{to_send}\n```")
 
+    @commands.group(name='sql', aliases=['db', 'database', 'psql'], invoke_without_command=True)
+    @commands.is_owner()
+    async def postgre(self, ctx: CustomContext, query: str):
+        body = cleanup_code(query)
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(\"\"\"{body}\"\"\")")
+
+    @commands.is_owner()
+    @postgre.command(name='fetch', aliases=['f'])
+    async def postgre_fetch(self, ctx, *, query: str):
+        body = cleanup_code(query)
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(\"\"\"{body}\"\"\")")
+
+    @commands.is_owner()
+    @postgre.command(name='fetchval', aliases=['fr'])
+    async def postgre_fetchval(self, ctx, *, query: str):
+        body = cleanup_code(query)
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetchval(\"\"\"{body}\"\"\")")
+
+    @commands.is_owner()
+    @postgre.command(name='fetchrow', aliases=['fv'])
+    async def postgre_fetchrow(self, ctx, *, query: str):
+        body = cleanup_code(query)
+        await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(\"\"\"{body}\"\"\")")
+
     @commands.group(invoke_without_command=True, aliases=['bl'])
     @commands.is_owner()
     async def blacklist(self, ctx: CustomContext) -> discord.Message:
