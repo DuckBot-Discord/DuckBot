@@ -98,6 +98,7 @@ def whitelist():
         if await ctx.bot.db.fetchval('SELECT uid FROM inv_whitelist WHERE uid = $1', ctx.author.id):
             return True
         else:
+            print(f'this somehow printed while executing {ctx.command.qualified_name}')
             await ctx.send('You are not whitelisted to run inviter commands!')
             raise errors.NoHideout
 
