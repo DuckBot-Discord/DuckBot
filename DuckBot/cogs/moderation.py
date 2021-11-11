@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import datetime
+import difflib
 import time
 import discord
 import re
@@ -22,6 +23,40 @@ def setup(bot):
 class Arguments(argparse.ArgumentParser):
     def error(self, message):
         raise RuntimeError(message)
+
+
+class BannedMember(commands.Converter):
+    async def convert(self, ctx, argument):
+        await ctx.trigger_typing()
+        if argument.isdigit():
+            member_id = int(argument, base=10)
+            try:
+                return await ctx.guild.fetch_ban(discord.Object(id=member_id))
+            except discord.NotFound:
+                raise commands.BadArgument('This member has not been banned before.') from None
+
+        ban_list = await ctx.guild.bans()
+        if not (entity := discord.utils.find(lambda u: str(u.user).lower() == argument.lower(), ban_list)):
+            entity = discord.utils.find(lambda u: str(u.user.name).lower() == argument.lower(), ban_list)
+            if not entity:
+                matches = difflib.get_close_matches(argument, [str(u.user.name) for u in ban_list])
+                if matches:
+                    entity = discord.utils.find(lambda u: str(u.user.name) == matches[0], ban_list)
+                    if entity:
+                        val = await ctx.confirm(f'Found closest match: **{entity.user}**. Do you want me to unban them?',
+                                                delete_after_cancel=True, delete_after_confirm=True,
+                                                delete_after_timeout=False, timeout=60,
+                                                buttons=((None, 'Yes', discord.ButtonStyle.green), (None, 'No', discord.ButtonStyle.grey)))
+                        if val is None:
+                            raise errors.NoHideout
+                        elif val is False:
+                            print('kekw')
+                            await ctx.message.delete(delay=0)
+                            raise errors.NoHideout
+
+        if entity is None:
+            raise commands.BadArgument('This member has not been banned before.')
+        return entity
 
 
 def can_execute_action(ctx, user, target):
@@ -205,16 +240,22 @@ class Moderation(commands.Cog):
             return await ctx.send(f'🔨 **|** banned **{discord.utils.escape_markdown(str(user))}**' + (f' for {reason}' if reason else ''))
         await ctx.send('Sorry, but you can\'t ban that member')
 
-    @commands.command(help="unbans a member # run without arguments to get a list of entries")
+    @commands.command()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
-    async def unban(self, ctx: CustomContext, user: discord.User):
-        try:
-            await ctx.guild.unban(user)
-        except discord.NotFound:
-            raise commands.BadArgument(f'**{discord.utils.escape_markdown(str(user))}** is not banned on this server!')
-        return await ctx.send(f"Unbanned **{discord.utils.escape_markdown(str(user))}**")
+    async def unban(self, ctx: CustomContext, *, user: BannedMember):
+        """unbans a user from this server.
+        Can search by:
+        - `user ID` (literal - number)
+        - `name#0000` (literal - case insensitive)
+        - `name` (literal - case insensitive)
+        - `name` (close matches - will prompt to confirm)
+        """
+        user: discord.guild.BanEntry
+        await ctx.guild.unban(user.user, reason=f"Unban by {ctx.author} ({ctx.author.id})")
+        extra = f"Previously banned for: {user.reason}" if user.reason else ''
+        return await ctx.send(f"Unbanned **{discord.utils.escape_markdown(str(user.user))}**\n{extra}")
 
     @commands.command(aliases=['sn', 'nick'])
     @commands.has_permissions(manage_nicknames=True)

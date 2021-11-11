@@ -174,12 +174,15 @@ class CustomContext(commands.Context):
                 c.disabled = True
                 if view.value is False:
                     c.label = 'Cancelled!'
+                    c.emoji = None
                     c.style = discord.ButtonStyle.red
                 elif view.value is True:
                     c.label = 'Confirmed!'
+                    c.emoji = None
                     c.style = discord.ButtonStyle.green
                 else:
                     c.label = 'Timed out!'
+                    c.emoji = '⏰'
                     c.style = discord.ButtonStyle.gray
         view.stop()
         if view.value is None:
