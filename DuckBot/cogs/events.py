@@ -15,7 +15,7 @@ from jishaku.paginators import WrappedPaginator
 
 import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.cogs import music as music_cog
+from DuckBot.cogs import music as music_cog, hideout
 from DuckBot.cogs.info import suggestions_channel
 from DuckBot.helpers import constants
 from DuckBot.helpers.paginator import ServerInvite
@@ -231,6 +231,10 @@ class Handler(commands.Cog, name='Handler'):
                 f"I've searched far and wide, but `{error.argument}` doesn't seem to be a discord user...")
 
         if isinstance(error, commands.BadArgument):
+            if isinstance(error, commands.BadInviteArgument):
+                return await ctx.send(f'{error.argument[0:100]} is not a valid invite or it expired.')
+            if isinstance(error, commands.BadBoolArgument):
+                return await ctx.send(f'Expected a boolean [yes|no|on|off|y|n|1|0], got `{error.argument[0:100]}` instead')
             return await ctx.send(str(error or "Bad argument given!"))
 
         if isinstance(error, commands.NoPrivateMessage):

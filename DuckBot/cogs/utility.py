@@ -425,20 +425,25 @@ class Utility(commands.Cog):
         except discord.NotFound:
             pass
 
-    @emoji.command(name="clone", aliases=['create'], usage="<server_emoji> [name]")
+    @emoji.command(name="clone", aliases=['create'])
     @commands.guild_only()
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
     async def emoji_clone(self, ctx: CustomContext,
-                          server_emoji: typing.Optional[typing.Union[discord.Embed,
-                                                                     discord.PartialEmoji]],
-                          index: typing.Optional[int] = 1, name: typing.Optional[str] = '#'):
+                          server_emoji: typing.Optional[discord.PartialEmoji],
+                          index: typing.Optional[int] = 1, *, name: typing.Optional[str] = '#'):
         """
         Clones an emoji into the current server.
-        # To steal an emoji from someone else, quote their message to grab the emojis from there.
-        # If the quoted message has multiple emojis, input an index number to specify the emoji, for example, doing "%PRE%emoji 5" will steal the 5th emoji from the message.
-        None: Index is only for when stealing emojis from other people.
+        You can pass either an emoji or an index, not both.
+
+        What is index? Index is for stealing emotes from other people. To do so, reply to their message, and pass a number (index) to select which emoji to steal. For example, to steal the first emoji of the quoted message, pass a number `1`
+        If you don't pass an emoji nor a number, and you quoted a message, it will select the first emoji in the message, if applicable.
+
+        Note: You can only pass an emoji _or_ an index, not both.
         """
+        if server_emoji and index:
+            raise commands.BadArgument('You can only pass `server_emoji` or `index`, not both.'
+                                       f'\nsee `{ctx.clean_prefix}help {ctx.command.qualified_name}` for more info'[0:1000])
         if ctx.message.reference:
             custom_emoji = re.compile(r"<a?:[a-zA-Z0-9_]+:[0-9]+>")
             emojis = custom_emoji.findall(ctx.message.reference.resolved.content)

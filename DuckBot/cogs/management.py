@@ -457,27 +457,6 @@ class Management(commands.Cog, name='Bot Management'):
             status = False
         return await ctx.send(f"**{user}** {'is' if status is True else 'is not'} blacklisted")
 
-    @commands.Cog.listener()
-    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
-        if channel.category and channel.category.id in self.research_channels:
-            send_to = self.bot.get_channel(804035776722894890)
-            invite = await channel.create_invite(max_age=3600 * 24)
-            message = await send_to.send(invite.url)
-            await self.bot.db.execute('INSERT INTO voice_channels(channel_id, message_id) '
-                                      'VALUES ($1, $2)', channel.id, message.id)
-
-    @commands.Cog.listener()
-    async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
-        if channel.category and channel.category.id in self.research_channels:
-            delete_from = self.bot.get_channel(804035776722894890)
-            msg_id = await self.bot.db.fetchval('SELECT message_id FROM voice_channels WHERE '
-                                                'channel_id = $1', channel.id)
-            message = delete_from.get_partial_message(msg_id)
-            try:
-                await message.delete()
-            except (discord.Forbidden, discord.HTTPException):
-                pass
-
     @is_reply()
     @commands.is_owner()
     @commands.command()

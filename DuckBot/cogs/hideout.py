@@ -12,6 +12,7 @@ import typing
 import yarl
 from discord.ext import commands
 
+import DuckBot.__main__
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot
 from DuckBot.cogs.management import get_webhook
@@ -88,6 +89,16 @@ class SphinxObjectFileReader:
                 yield buf[:pos].decode('utf-8')
                 buf = buf[pos + 1:]
                 pos = buf.find(b'\n')
+
+
+def whitelist():
+    async def predicate(ctx: CustomContext):
+        if await ctx.bot.db.fetchval('SELECT uid FROM inv_whitelist WHERE uid = $1', ctx.author.id):
+            return True
+        await ctx.send('You are not whitelisted to run inviter commands!')
+        raise errors.NoHideout
+
+    return commands.check(predicate)
 
 
 class Hideout(commands.Cog, name='DuckBot Hideout'):
@@ -378,7 +389,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
                 raise commands.BadArgument('There was an error retrieving that message.')
             pretty_data = json.dumps(data, indent=4)
             if len(pretty_data) > 1990:
-                gist = await self.bot.create_gist(filename='raw_message.json', description='Raw Message created by DuckBot', content=pretty_data)
+                gist = await self.bot.create_gist(filename='raw_message.json',
+                                                  description='Raw Message created by DuckBot', content=pretty_data)
                 to_send = f"**Output too long:**\n<{gist}>"
             else:
                 to_send = f"```json\n{pretty_data}\n```"
@@ -395,8 +407,11 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
                                           f'\n{constants.YOUTUBE_LOGO} **[Minecraft Live 2021](https://www.youtube.com/watch?v=w6zLprHHZOk)**'
                                           f'\n{constants.YOUTUBE_LOGO} **[[AUDIO DESCRIPTION] Minecraft Live 2021](https://www.youtube.com/watch?v=vQnfKoikihE)**'
                                           f'\n{constants.YOUTUBE_LOGO} **[[AMERICAN SIGN LANGUAGE] Minecraft Live 2021](https://www.youtube.com/watch?v=nGKwHKSBtWA)**')
-        embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/879251951714467840/898050057947992104/minecraft_live1.png')
-        await wh.send(username='Minecraft', avatar_url='https://yt3.ggpht.com/VjFl0g2OJs6f08q0hVoiij3-CibesgwfV8RNZ-dbu7s3I-LvVTXrAu4J32MI_NlvE8v9EdYoWao=s88-c-k-c0x00ffffff-no-rj', embed=embed)
+        embed.set_thumbnail(
+            url='https://cdn.discordapp.com/attachments/879251951714467840/898050057947992104/minecraft_live1.png')
+        await wh.send(username='Minecraft',
+                      avatar_url='https://yt3.ggpht.com/VjFl0g2OJs6f08q0hVoiij3-CibesgwfV8RNZ-dbu7s3I-LvVTXrAu4J32MI_NlvE8v9EdYoWao=s88-c-k-c0x00ffffff-no-rj',
+                      embed=embed)
         await ctx.message.add_reaction("💌")
 
     @commands.command(name='check-user')
@@ -435,3 +450,74 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
                               title='Why no credits?')
         await ctx.send(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
+        if not isinstance(channel, discord.VoiceChannel):
+            return
+        query = 'SELECT * FROM inviter WHERE guild_id = $1'
+        if query := await self.bot.db.fetchrow(query, channel.guild.id):
+            if channel.category_id == query['category']:
+                if send_to := self.bot.get_channel(query['text_channel']):
+                    invite = await channel.create_invite(max_age=3600 * 24)
+                    message = await send_to.send(invite.url)
+                    await self.bot.db.execute('INSERT INTO voice_channels(channel_id, message_id) '
+                                              'VALUES ($1, $2)', channel.id, message.id)
+
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
+        if not isinstance(channel, discord.VoiceChannel):
+            return
+        query = 'SELECT * FROM inviter WHERE guild_id = $1'
+        if query := await self.bot.db.fetchrow(query, channel.guild.id):
+            if channel.category_id == query['category']:
+                if delete_from := self.bot.get_channel(query['text_channel']):
+                    query = 'SELECT message_id FROM voice_channels WHERE channel_id = $1'
+                    if msg_id := await self.bot.db.fetchval(query, channel.id):
+                        message = delete_from.get_partial_message(msg_id)
+                        try:
+                            await message.delete()
+                        except discord.HTTPException:
+                            pass
+
+    @commands.group(invoke_without_command=True)
+    @whitelist()
+    async def inviter(self, ctx):
+        """You probably are not whitelisted to see this! """
+        pass
+
+    @commands.guild_only()
+    @whitelist()
+    @inviter.command(name='set')
+    async def set_inviter(self, ctx: CustomContext, category: discord.CategoryChannel,
+                          text_channel: discord.TextChannel):
+        await self.bot.db.execute("INSERT INTO inviter(guild_id, category, text_channel) VALUES ($1, $2, $3) "
+                                  "ON CONFLICT (guild_id) DO UPDATE SET "
+                                  "category = $2, "
+                                  "text_channel = $3;", ctx.guild.id, category.id, text_channel.id)
+        await ctx.message.add_reaction('✅')
+
+    @commands.guild_only()
+    @whitelist()
+    @inviter.command(name='unset')
+    async def unset_inviter(self, ctx: CustomContext):
+        await self.bot.db.execute("DELETE FROM inviter WHERE guild_id = $1;", ctx.guild.id)
+        await ctx.message.add_reaction('✅')
+
+    @commands.is_owner()
+    @inviter.group(name='w')
+    async def inviter_whitelist(self, ctx):
+        """To allow only some people to run the command."""
+        pass
+
+    @commands.is_owner()
+    @inviter_whitelist.command(name='a')
+    async def whitelist_add(self, ctx: CustomContext, user: discord.User):
+        await self.bot.db.execute('INSERT INTO inv_whitelist(uid) VALUES ($1) '
+                                  'ON CONFLICT (uid) DO NOTHING', user.id)
+        await ctx.message.add_reaction('✅')
+
+    @commands.is_owner()
+    @inviter_whitelist.command(name='r')
+    async def whitelist_rem(self, ctx: CustomContext, user: discord.User):
+        await self.bot.db.execute('DELETE FROM inv_whitelist WHERE uid = $1', user.id)
+        await ctx.message.add_reaction('✅')
