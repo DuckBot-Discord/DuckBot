@@ -7,10 +7,14 @@ import datetime
 import asyncio
 import logging
 import math
+import typing
 
+import discord
 import pomice
 import re
 import time as t
+
+from discord import Interaction
 
 from DuckBot.__main__ import DuckBot
 from DuckBot.errors import *
@@ -38,6 +42,63 @@ def format_time(milliseconds: Union[float, int]) -> str:
     minutes, seconds = divmod(rem, 60)
 
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
+class SearchDropdown(discord.ui.Select['SearchMenu']):
+    def __init__(self, options):
+        super().__init__(placeholder='Select a track', options=options)
+
+    async def callback(self, interaction: Interaction):
+        resp: discord.InteractionResponse = interaction.response
+        if self.values[0] == 'cancel':
+            await self.view.on_timeout('Cancelled!')
+            return self.view.stop()
+        track = discord.utils.get(self.view.tracks, identifier=self.values[0])
+        if not track:
+            return await resp.send_message('Something went wrong, please try to select again.', ephemeral=True)
+        self.view.track = track
+        await interaction.message.delete()
+        return self.view.stop()
+
+
+class SearchMenu(discord.ui.View):
+    def __init__(self, ctx: CustomContext, *, tracks: typing.List[pomice.Track]):
+        super().__init__()
+        self.ctx = ctx
+        self.tracks = tracks[0:24]
+        self.message: discord.Message = None
+        self.track: typing.Optional[pomice.Track] = None
+        self.embed: discord.Embed = None
+        self.options: typing.List[discord.SelectOption] = []
+        self.build_embed()
+        self.add_item(SearchDropdown(self.options))
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user and interaction.user == self.ctx.author:
+            return True
+        await interaction.response.send_message('This is not your Play Menu!', ephemeral = True)
+
+    async def on_timeout(self, label: str = None) -> None:
+        for child in self.children:
+            child.disabled = True
+            if isinstance(child, discord.ui.Select):
+                child.placeholder = label or "Timed out! Please try again."
+
+        if self.message:
+            await self.message.edit(view=self)
+
+    def build_embed(self) -> typing.Tuple[discord.Embed, discord.SelectOption]:
+        data = []
+        for track in self.tracks:
+            self.options.append(discord.SelectOption(label=track.title[0:100], value=track.identifier, description=track.author[0:100]))
+            data.append(f"[{track.title}]({track.uri})")
+        self.options.append(discord.SelectOption(label='Cancel', emoji='❌', value='cancel'))
+        data = [f"`{i}:` {desc}" for i, desc in enumerate(data, start=1)]
+        embed = discord.Embed(title='Select a track to enqueue', description='\n'.join(data))
+        self.embed = embed
+
+    async def start(self):
+        self.message = await self.ctx.send(embed=self.embed, view=self)
 
 
 class Music(commands.Cog):
@@ -81,22 +142,27 @@ class Music(commands.Cog):
         if member.bot:
             return
 
-        if member.id == player.dj.id and not after.channel:
+        if member.id == player.dj.id and (not after.channel or after.channel != player.channel):
             members = self.get_members(player.channel.id)
 
-            if len(members) != 0:
+            if members:
                 for m in members:
                     if m == player.dj:
-                        continue
+                        break
                     else:
                         player.dj = m
+                        break
+                else:
+                    await player.destroy()
+                    return
             else:
+                await player.destroy()
                 return
 
             await player.text_channel.send(f"🎧 **|** {player.dj.mention} is now the DJ!", allowed_mentions=discord.AllowedMentions.none())
             return
 
-        if after.channel and after.channel.id == player.channel.id and player.dj not in player.channel.members and player.dj != member:
+        if after.channel and player.channel and after.channel.id == player.channel.id and player.dj not in player.channel.members and player.dj != member:
 
             if member.bot:
                 return
@@ -143,7 +209,7 @@ class Music(commands.Cog):
                 try:
                     await player.play(track, ignore_if_playing=True)
                 except Exception as e:
-                    self.bot.dispatch("pomice_track_end", player, track, "Failed playin the next track in a queue")
+                    self.bot.dispatch("pomice_track_end", player, track, "Failed playing the next track in a queue")
                     logging.error(e)
                     raise TrackFailed(track)
 
@@ -151,7 +217,7 @@ class Music(commands.Cog):
             try:
                 await player.destroy()
             except:
-                pass
+                return
             else:
                 await text.send(f'👋 **|** I\'ve left {channel.mention}, due to inactivity.')
         else:
@@ -271,9 +337,11 @@ class Music(commands.Cog):
         members = len(self.get_members((ctx.voice_client).channel.id))
         return math.ceil(members / 2.5)
 
-    @commands.command(aliases=["p", ])
+    @commands.command(aliases=["p", "search"])
     async def play(self, ctx: Context, *, query: str):
-        """Loads your input and adds it to the queue"""
+        """Loads your input and adds it to the queue
+        Use the `search` alias to search.
+        """
         player = ctx.voice_client
 
         try:
@@ -298,19 +366,31 @@ class Music(commands.Cog):
             await ctx.send(embed=embed, footer=False)
 
         else:
-            track = results[0]
-            player.queue.put(track)
+            results: typing.List[pomice.Track]
+            if ctx.invoked_with == 'search':
+                view = SearchMenu(ctx, tracks=results)
+                await view.start()
+                await view.wait()
+                track = view.track
+            else:
+                track = results[0]
 
+            if not track:
+                return
+
+            player.queue.put(track)
             embed = discord.Embed(description=f"Enqueued [{track.title}]({track.uri})")
             embed.set_thumbnail(url=self.get_thumbnail(track))
+            embed.set_footer(text='Use the `search` command to search before playing')
             await ctx.send(embed=embed, footer=False)
 
         if not player.is_playing:
             await player.play(player.queue.get())
 
-    @commands.command(aliases=["pn", ])
+    @commands.command(aliases=["pn", "search-next"])
     async def playnext(self, ctx: Context, *, query: str):
-        """Loads your input and adds to the top of the queue"""
+        """Loads your input and adds to the top of the queue
+        Use the `search-next` alias to search."""
         player = ctx.voice_client
 
         try:
@@ -336,7 +416,18 @@ class Music(commands.Cog):
             await ctx.send(embed=embed, footer=False)
 
         else:
-            track = results[0]
+            results: typing.List[pomice.Track]
+            if ctx.invoked_with == 'search-next':
+                view = SearchMenu(ctx, tracks=results)
+                await view.start()
+                await view.wait()
+                track = view.track
+            else:
+                track = results[0]
+
+            if not track:
+                return
+
             player.queue.put_at_front(track)
 
             embed = discord.Embed(description=f"Enqueued [{track.title}]({track.uri})")
@@ -347,9 +438,10 @@ class Music(commands.Cog):
             track = player.queue.get()
             await player.play(track)
 
-    @commands.command(aliases=["pnow", ])
+    @commands.command(aliases=["pnow", "search-now"])
     async def playnow(self, ctx: Context, *, query: str):
-        """Loads your input and plays it instantly"""
+        """Loads your input and plays it instantly
+        Use the `search-now` alias to search!"""
         player = ctx.voice_client
 
         try:
@@ -375,7 +467,18 @@ class Music(commands.Cog):
             await ctx.send(embed=embed, footer=False)
 
         else:
-            track = results[0]
+            results: typing.List[pomice.Track]
+            if ctx.invoked_with == 'search':
+                view = SearchMenu(ctx, tracks=results)
+                await view.start()
+                await view.wait()
+                track = view.track
+            else:
+                track = results[0]
+
+            if not track:
+                return
+
             player.queue.put_at_front(track)
 
             embed = discord.Embed(description=f"Enqueued [{track.title}]({track.uri}) as the next song.")

@@ -478,7 +478,7 @@ DuckBot's top role position
         """
         Shows the latest changes of the bot. ""
         """
-        embed = discord.Embed(title="📰 Latest News - <t:1635359000:d> (<t:1635359000:R>)",
+        embed = discord.Embed(title="📰 Latest News - <t:1636731000:d> (<t:1636731000:R>)",
                               description=f"\u200b"
                                           f"\n> **#\️⃣ <t:1633210000:R> You're now able to play Tic-Tac-Toe**"
                                           f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "
@@ -516,7 +516,14 @@ DuckBot's top role position
                                           f"\n> Log all your server's events! Do `{ctx.clean_prefix} log` for more info."
                                           f"\n"
                                           f"\n> **\📜 <t:1635359000:R> auto logging setup command**"
-                                          f"\n> Creates all the logging channels for you: do `{ctx.clean_prefix} log auto-setup`")
+                                          f"\n> Creates all the logging channels for you: do `{ctx.clean_prefix} log auto-setup`"
+                                          f"\n"
+                                          f"\n> **\🎶 <t:1636421000:R> music commands overhauled**"
+                                          f"\n> Music commands should be better and music quality should be superior."
+                                          f"\n"
+                                          f"\n> **\🔎 <t:1636731000:R> New search options when enqueueing tracks**"
+                                          f"\n> Commands for music added: `search`, `search-now`, `search-next`"
+                              )
         await ctx.send(embed=embed, footer=None)
 
     @commands.command(hidden=True)

@@ -191,7 +191,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             'chai': 'https://chaidiscordpy.readthedocs.io/en/latest',
             'bing': 'https://asyncbing.readthedocs.io/en/latest',
             'twitchio': 'https://twitchio.readthedocs.io/en/latest/',
-            'pycord': 'https://pycord.readthedocs.io/en/master'
+            'pycord': 'https://pycord.readthedocs.io/en/master',
+            'pomice': 'https://pomice.readthedocs.io/en/latest/'
         }
         embed_titles = {
             'latest': 'Documentation for `discord.py v1.7.3`',
@@ -203,7 +204,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             'chai': 'Documentation for `chaidiscord.py`',
             'bing': 'Documentation for `asyncbing`',
             'pycord': 'Documentation for `pycord`',
-            'twitchio': 'Documentation for `twitchio`'
+            'twitchio': 'Documentation for `twitchio`',
+            'pomice': 'Documentation for `pomice`'
         }
 
         if obj is None:
@@ -292,8 +294,13 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
 
     @rtfm.command(name='twitchio')
     async def rtfm_pycord(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a pycord entity"""
+        """Gives you a documentation link for a TwitchIO entry"""
         await self.do_rtfm(ctx, 'twitchio', obj)
+
+    @rtfm.command(name='pomice')
+    async def rtfm_pycord(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a Pomice entry"""
+        await self.do_rtfm(ctx, 'pomice', obj)
 
     @commands.command()
     @hideout_only()
