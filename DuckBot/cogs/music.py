@@ -1,5 +1,6 @@
 """
-Music cog by DaPandaOfficial🐼
+A spin-off of DaPanda's Music Cog with some extra stuff added
+like `search`, `search-next`, `search-now`, etc.
 https://github.com/MiroslavRosenov/DaPanda
 """
 
@@ -9,7 +10,6 @@ import logging
 import math
 import typing
 
-import discord
 import pomice
 import re
 import time as t
@@ -18,10 +18,12 @@ from discord import Interaction
 
 from DuckBot.__main__ import DuckBot
 from DuckBot.errors import *
+import jishaku.paginators
+from openrobot import api_wrapper as openrobot
 from DuckBot.helpers.music.player import QueuePlayer as Player
 from async_timeout import timeout
 from discord.ext import commands
-from DuckBot.helpers import paginator
+from DuckBot.helpers import paginator, helper
 from DuckBot.helpers.context import CustomContext as Context, CustomContext
 from DuckBot.helpers.helper import convert_bytes
 from typing import Union
@@ -220,8 +222,6 @@ class Music(commands.Cog):
                 return
             else:
                 await text.send(f'👋 **|** I\'ve left {channel.mention}, due to inactivity.')
-        else:
-            pass
 
     async def cog_command_error(self, ctx: Context, error):
         message = getattr(error, 'message', None) if hasattr(error, 'custom') else None
@@ -860,3 +860,42 @@ class Music(commands.Cog):
 
         menu = paginator.ViewPaginator(paginator.NodesMenu(raw, ctx), ctx=ctx)
         await menu.start()
+
+    @commands.command(usage='[song/member]')
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def lyrics(self, ctx: CustomContext, *, song_member: typing.Optional[typing.Union[discord.Member, helper.LyricsConverter]]):
+        """ Shows the lyrics of a given song.
+        Searches by:
+        - Song name
+        - @member mention (spotify)
+        - Currently playing in VC
+
+         _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
+        await ctx.trigger_typing()
+        if not song_member:
+            if not (player := ctx.voice_client):
+                player = self.bot.pomice.get_node().get_player(ctx.guild.id)
+            if not player:
+                raise commands.BadArgument('You need to input a song or a member who is listening to spotify, or I must be playing music in this server.')
+            player: Player = ctx.voice_client
+            if not (current := player.current):
+                raise commands.BadArgument('I\'m not playing anything right now.')
+            song_member = await helper.LyricsConverter().convert(ctx, f"{current.title} - {current.author}")
+        elif isinstance(song_member, discord.Member):
+            spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), song_member.activities)
+            if not spotify:
+                raise commands.BadArgument('user is not listening to Spotify')
+            song_member = await helper.LyricsConverter().convert(ctx, f"{spotify.title} - {spotify.artist}")
+        song_member: openrobot.LyricResult
+        pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4000)
+        for line in song_member.lyrics.split('\n'):
+            pages.add_line(line)
+        reply = True
+        embed = discord.Embed(title=f"Lyrics for `{song_member.title}`")
+        for page in pages.pages:
+            embed.description = page
+            await ctx.send(embed=embed, reply=reply, footer=False)
+            embed.title = discord.Embed.Empty
+            reply = False
+
+

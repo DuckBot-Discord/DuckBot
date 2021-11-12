@@ -7,8 +7,6 @@ import urllib.parse
 
 import aiowiki
 import discord
-import jishaku.paginators
-from openrobot import api_wrapper as openrobot
 from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
@@ -337,23 +335,6 @@ class Fun(commands.Cog, name='Fun'):
         if (member and message.author != member) or message.author == ctx.author:
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
-
-    @commands.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    async def lyrics(self, ctx, *, song: helper.LyricsConverter):
-        """ Shows the lyrics of a given song.
-         _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
-        song: openrobot.LyricResult
-        pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4000)
-        for line in song.lyrics.split('\n'):
-            pages.add_line(line)
-        reply = True
-        embed = discord.Embed(title=f"Lyrics for `{song.title}`")
-        for page in pages.pages:
-            embed.description = page
-            await ctx.send(embed=embed, reply=reply, footer=False)
-            embed.title = discord.Embed.Empty
-            reply = False
 
     @commands.max_concurrency(1, per=commands.BucketType.channel)
     @commands.command(name='type-race', aliases=['tr'])
