@@ -62,7 +62,7 @@ class Music(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, _, after: discord.VoiceState):
-        if (player := member.guild.voice_client) is None:
+        if not (player := member.guild.voice_client):
             player = self.bot.pomice.get_node().get_player(member.guild.id)
 
         if not player:
@@ -76,7 +76,7 @@ class Music(commands.Cog):
                 await player.set_pause(False)
 
         if member.id == self.bot.user.id and not after.channel:
-            await player.destroy()
+            return await player.destroy()
 
         if member.bot:
             return
@@ -86,7 +86,7 @@ class Music(commands.Cog):
 
             if len(members) != 0:
                 for m in members:
-                    if m == player.dj or m.bot:
+                    if m == player.dj:
                         continue
                     else:
                         player.dj = m
@@ -96,8 +96,7 @@ class Music(commands.Cog):
             await player.text_channel.send(f"🎧 **|** {player.dj.mention} is now the DJ!", allowed_mentions=discord.AllowedMentions.none())
             return
 
-        if after.channel and after.channel.id == player.channel.id \
-                and player.dj not in player.channel.members and player.dj != member:
+        if after.channel and after.channel.id == player.channel.id and player.dj not in player.channel.members and player.dj != member:
 
             if member.bot:
                 return

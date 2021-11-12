@@ -190,6 +190,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             'edpy': 'https://enhanced-dpy.readthedocs.io/en/latest',
             'chai': 'https://chaidiscordpy.readthedocs.io/en/latest',
             'bing': 'https://asyncbing.readthedocs.io/en/latest',
+            'twitchio': 'https://twitchio.readthedocs.io/en/latest/',
             'pycord': 'https://pycord.readthedocs.io/en/master'
         }
         embed_titles = {
@@ -201,7 +202,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             'edpy': 'Documentation for `enhanced-dpy`',
             'chai': 'Documentation for `chaidiscord.py`',
             'bing': 'Documentation for `asyncbing`',
-            'pycord': 'Documentation for `pycord`'
+            'pycord': 'Documentation for `pycord`',
+            'twitchio': 'Documentation for `twitchio`'
         }
 
         if obj is None:
@@ -287,6 +289,11 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     async def rtfm_pycord(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a pycord entity"""
         await self.do_rtfm(ctx, 'pycord', obj)
+
+    @rtfm.command(name='twitchio')
+    async def rtfm_pycord(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a pycord entity"""
+        await self.do_rtfm(ctx, 'twitchio', obj)
 
     @commands.command()
     @hideout_only()
