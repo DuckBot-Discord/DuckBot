@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import io
 import json
@@ -64,18 +65,6 @@ os.environ['JISHAKU_HIDE'] = 'True'
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]
 
 
-async def create_db_pool() -> asyncpg.Pool:
-    credentials = {
-        "user": f"{os.getenv('PSQL_USER')}",
-        "password": f"{os.getenv('PSQL_PASSWORD')}",
-        "database": f"{os.getenv('PSQL_DB')}",
-        "host": f"{os.getenv('PSQL_HOST')}",
-        "port": f"{os.getenv('PSQL_PORT')}"
-    }
-
-    return await asyncpg.create_pool(**credentials)
-
-
 class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)
 
@@ -106,9 +95,6 @@ class DuckBot(commands.Bot):
         )
 
         self.spotify = tk.Spotify(token_spotify, asynchronous=True)
-
-        self.db: asyncpg.Pool = self.loop.run_until_complete(create_db_pool())
-
         self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
                                        client_secret=os.getenv('ASYNC_PRAW_CS'),
                                        user_agent=os.getenv('ASYNC_PRAW_UA'),
@@ -137,7 +123,7 @@ class DuckBot(commands.Bot):
         self.uptime = datetime.datetime.utcnow()
         self.last_rall = datetime.datetime.utcnow()
         self.allowed_mentions = discord.AllowedMentions(replied_user=False)
-        self.session = aiohttp.ClientSession(loop=self.loop)
+        self.session: aiohttp.ClientSession = None
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
         self.orb = ORBClient(token=os.getenv('OPENROBOT_KEY'))
@@ -166,6 +152,12 @@ class DuckBot(commands.Bot):
         for ext in initial_extensions:
             self._load_extension(ext)
 
+        self.loop.run_until_complete(self.create_session())
+        self.loop.create_task(self.populate_cache())
+        self.loop.create_task(self.populate_pomice_nodes())
+        self.loop.create_task(self.dynamic_load_cogs())
+        self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
+
     def _load_extension(self, name: str) -> None:
         try:
             self.load_extension(name)
@@ -173,12 +165,14 @@ class DuckBot(commands.Bot):
             traceback.print_exc()
             print()  # Empty line
 
-    def _dynamic_cogs(self) -> None:
+    async def dynamic_load_cogs(self) -> None:
+        await self.wait_until_ready()
         for filename in os.listdir(f"{os.getenv('COGS_PATH')}"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
                 logging.info(f"Trying to load cog: {cog}")
                 self._load_extension(f'DuckBot.cogs.{cog}')
+        logging.info('Loading cogs done.')
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
@@ -208,84 +202,6 @@ class DuckBot(commands.Bot):
         logging.info("\033[42m======[ BOT ONLINE! ]=======\033[0m")
         logging.info("\033[42mLogged in as " + self.user.name + "\033[0m")
         logging.info('\033[0m')
-        if not self.started:
-            self.started = True
-
-            _temp_prefixes = defaultdict(list)
-            for x in await bot.db.fetch('SELECT * FROM pre'):
-                _temp_prefixes[x['guild_id']].append(x['prefix'] or self.PRE)
-            self.prefixes = dict(_temp_prefixes)
-
-            for guild in self.guilds:
-                try:
-                    self.prefixes[guild.id]
-                except KeyError:
-                    self.prefixes[guild.id] = self.PRE
-
-            values = await self.db.fetch("SELECT user_id, is_blacklisted FROM blacklist")
-            for value in values:
-                self.blacklist[value['user_id']] = (value['is_blacklisted'] or False)
-
-            values = await self.db.fetch("SELECT guild_id, welcome_channel FROM prefixes")
-            for value in values:
-                self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
-
-            self.afk_users = dict([(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if r['start_time']])
-            self.auto_un_afk = dict([(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk')) if r['auto_un_afk'] is not None])
-            self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
-            self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'],
-                                                           'number': x['current_number'],
-                                                           'last_counter': x['last_counter'],
-                                                           'delete_messages': x['delete_messages'],
-                                                           'reset': x['reset_on_fail'],
-                                                           'last_message_id': None,
-                                                           'messages': deque(maxlen=100)})
-                                          for x in await self.db.fetch('SELECT * FROM count_settings'))
-
-            for x in await bot.db.fetch('SELECT * FROM counting'):
-                try:
-                    self.counting_rewards[x['guild_id']].add(x['reward_number'])
-                except KeyError:
-                    self.counting_rewards[x['guild_id']] = {x['reward_number']}
-
-            for entry in await self.db.fetch('SELECT * FROM log_channels'):
-                guild_id = entry['guild_id']
-                await bot.db.execute('INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING', entry['guild_id'])
-
-                self.log_channels[guild_id] = self.log_webhooks(default=entry['default_channel'],
-                                                                message=entry['message_channel'],
-                                                                join_leave=entry['join_leave_channel'],
-                                                                member=entry['member_channel'],
-                                                                voice=entry['voice_channel'],
-                                                                server=entry['server_channel'])
-
-                flags = dict(await bot.db.fetchrow('SELECT message_delete, message_purge, message_edit, member_join, member_leave, member_update, user_ban, user_unban, '
-                                                   'user_update, invite_create, invite_delete, voice_join, voice_leave, voice_move, voice_mod, emoji_create, emoji_delete, '
-                                                   'emoji_update, sticker_create, sticker_delete, sticker_update, server_update, stage_open, stage_close, channel_create, '
-                                                   'channel_delete, channel_edit, role_create, role_delete, role_edit FROM logging_events WHERE guild_id = $1', guild_id))
-                self.guild_loggings[guild_id] = LoggingEventsFlags(**flags)
-
-            logging.info('All cache populated successfully')
-
-            for node in config['nodes']:
-                try:
-                    await self.pomice.create_node(
-                        bot=self,
-                        host=node['host'],
-                        port=node['port'],
-                        password=node['password'],
-                        identifier=node['name'],
-                        spotify_client_id=f"{os.getenv('SPOTIFY_CLIENT_ID')}",
-                        spotify_client_secret=f"{os.getenv('SPOTIFY_CLIENT_SECRET')}"
-                    )
-                except:
-                    traceback.print_exc()
-            
-            logging.info('All nodes populated')
-
-            self._dynamic_cogs()
-
-            logging.info('Loading cogs done.')
 
     async def on_message(self, message: discord.Message) -> None:
         await self.wait_until_ready()
@@ -418,6 +334,116 @@ class DuckBot(commands.Bot):
             await super().on_interaction(interaction)
         except commands.CommandNotFound:
             pass
+
+    async def populate_cache(self):
+        try:
+            await self.wait_for('pool_create', timeout=10)
+        except asyncio.TimeoutError:
+            pass
+        _temp_prefixes = defaultdict(list)
+        for x in await self.db.fetch('SELECT * FROM pre'):
+            _temp_prefixes[x['guild_id']].append(x['prefix'] or self.PRE)
+        self.prefixes = dict(_temp_prefixes)
+
+        for guild in self.guilds:
+            try:
+                self.prefixes[guild.id]
+            except KeyError:
+                self.prefixes[guild.id] = self.PRE
+
+        values = await self.db.fetch("SELECT user_id, is_blacklisted FROM blacklist")
+        for value in values:
+            self.blacklist[value['user_id']] = (value['is_blacklisted'] or False)
+
+        values = await self.db.fetch("SELECT guild_id, welcome_channel FROM prefixes")
+        for value in values:
+            self.welcome_channels[value['guild_id']] = (value['welcome_channel'] or None)
+
+        self.afk_users = dict(
+            [(r['user_id'], True) for r in (await self.db.fetch('SELECT user_id, start_time FROM afk')) if
+             r['start_time']])
+        self.auto_un_afk = dict(
+            [(r['user_id'], r['auto_un_afk']) for r in (await self.db.fetch('SELECT user_id, auto_un_afk FROM afk')) if
+             r['auto_un_afk'] is not None])
+        self.suggestion_channels = dict([(r['channel_id'], r['image_only']) for r in
+                                         (await self.db.fetch('SELECT channel_id, image_only FROM suggestions'))])
+        self.counting_channels = dict((x['guild_id'], {'channel': x['channel_id'],
+                                                       'number': x['current_number'],
+                                                       'last_counter': x['last_counter'],
+                                                       'delete_messages': x['delete_messages'],
+                                                       'reset': x['reset_on_fail'],
+                                                       'last_message_id': None,
+                                                       'messages': deque(maxlen=100)})
+                                      for x in await self.db.fetch('SELECT * FROM count_settings'))
+
+        for x in await bot.db.fetch('SELECT * FROM counting'):
+            try:
+                self.counting_rewards[x['guild_id']].add(x['reward_number'])
+            except KeyError:
+                self.counting_rewards[x['guild_id']] = {x['reward_number']}
+
+        for entry in await self.db.fetch('SELECT * FROM log_channels'):
+            guild_id = entry['guild_id']
+            await bot.db.execute('INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING',
+                                 entry['guild_id'])
+
+            self.log_channels[guild_id] = self.log_webhooks(default=entry['default_channel'],
+                                                            message=entry['message_channel'],
+                                                            join_leave=entry['join_leave_channel'],
+                                                            member=entry['member_channel'],
+                                                            voice=entry['voice_channel'],
+                                                            server=entry['server_channel'])
+
+            flags = dict(await bot.db.fetchrow(
+                'SELECT message_delete, message_purge, message_edit, member_join, member_leave, member_update, user_ban, user_unban, '
+                'user_update, invite_create, invite_delete, voice_join, voice_leave, voice_move, voice_mod, emoji_create, emoji_delete, '
+                'emoji_update, sticker_create, sticker_delete, sticker_update, server_update, stage_open, stage_close, channel_create, '
+                'channel_delete, channel_edit, role_create, role_delete, role_edit FROM logging_events WHERE guild_id = $1',
+                guild_id))
+            self.guild_loggings[guild_id] = LoggingEventsFlags(**flags)
+
+        logging.info('All cache populated successfully')
+
+    async def populate_pomice_nodes(self):
+        await self.wait_until_ready()
+        successful = 0
+        failed = 0
+        for node in config['nodes']:
+            try:
+                await self.pomice.create_node(
+                    bot=self,
+                    host=node['host'],
+                    port=node['port'],
+                    password=node['password'],
+                    identifier=node['name'],
+                    spotify_client_id=f"{os.getenv('SPOTIFY_CLIENT_ID')}",
+                    spotify_client_secret=f"{os.getenv('SPOTIFY_CLIENT_SECRET')}"
+                )
+                successful += 1
+            except Exception as e:
+                failed += 1
+                logging.error(f'Failed to load node {node["identifier"]}', exc_info=True)
+
+        logging.info(f'Populated Pomice nodes [SUCC: {successful} | FAIL: {failed}]')
+
+    async def create_session(self):
+        self.session = aiohttp.ClientSession(loop=self.loop)
+
+    async def create_db_pool(self) -> asyncpg.Pool:
+        credentials = {
+            "user": f"{os.getenv('PSQL_USER')}",
+            "password": f"{os.getenv('PSQL_PASSWORD')}",
+            "database": f"{os.getenv('PSQL_DB')}",
+            "host": f"{os.getenv('PSQL_HOST')}",
+            "port": f"{os.getenv('PSQL_PORT')}"
+        }
+        try:
+            return await asyncpg.create_pool(**credentials)
+        except Exception as e:
+            logging.error("Could not create database pool", exc_info=True)
+        finally:
+            self.dispatch('pool_create')
+            logging.info('Database successful.')
 
 
 if __name__ == '__main__':
