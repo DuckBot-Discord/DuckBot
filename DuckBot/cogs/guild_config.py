@@ -65,6 +65,22 @@ async def get_wh(channel: discord.TextChannel):
         raise commands.BadArgument('Cannot create webhook!')
 
 
+def make_ordinal(n):
+    """
+    Convert an integer into its ordinal representation::
+
+        make_ordinal(0)   => '0th'
+        make_ordinal(3)   => '3rd'
+        make_ordinal(122) => '122nd'
+        make_ordinal(213) => '213th'
+    """
+    n = int(n)
+    suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
+    if 11 <= (n % 100) <= 13:
+        suffix = 'th'
+    return str(n) + suffix
+
+
 class ChannelsView(discord.ui.View):
     def __init__(self, ctx: CustomContext):
         super().__init__()
@@ -114,7 +130,6 @@ class ChannelsView(discord.ui.View):
                     webhook_url = await get_wh(channel)
                     await self.bot.db.execute('UPDATE log_channels SET default_channel = $2, default_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('default', webhook_url, message.guild.id)
-                    print(self.ctx.bot.log_channels[self.ctx.guild.id])
                 except commands.ChannelNotFound:
                     pass
                 except (commands.BadArgument, discord.Forbidden):
@@ -168,7 +183,6 @@ class ChannelsView(discord.ui.View):
                     webhook_url = await get_wh(channel)
                     await self.bot.db.execute('UPDATE log_channels SET message_channel = $2, message_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('message', webhook_url, message.guild.id)
-                    print(self.ctx.bot.log_channels[self.ctx.guild.id])
                 except commands.ChannelNotFound:
                     pass
                 except (commands.BadArgument, discord.Forbidden):
@@ -222,7 +236,6 @@ class ChannelsView(discord.ui.View):
                     webhook_url = await get_wh(channel)
                     await self.bot.db.execute('UPDATE log_channels SET join_leave_channel = $2, join_leave_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('join_leave', webhook_url, message.guild.id)
-                    print(self.ctx.bot.log_channels[self.ctx.guild.id])
                 except commands.ChannelNotFound:
                     pass
                 except (commands.BadArgument, discord.Forbidden):
@@ -276,7 +289,6 @@ class ChannelsView(discord.ui.View):
                     webhook_url = await get_wh(channel)
                     await self.bot.db.execute('UPDATE log_channels SET member_channel = $2, member_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('member', webhook_url, message.guild.id)
-                    print(self.ctx.bot.log_channels[self.ctx.guild.id])
                 except commands.ChannelNotFound:
                     pass
                 except (commands.BadArgument, discord.Forbidden):
@@ -330,7 +342,6 @@ class ChannelsView(discord.ui.View):
                     webhook_url = await get_wh(channel)
                     await self.bot.db.execute('UPDATE log_channels SET server_channel = $2, server_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('server', webhook_url, message.guild.id)
-                    print(self.ctx.bot.log_channels[self.ctx.guild.id])
                 except commands.ChannelNotFound:
                     pass
                 except (commands.BadArgument, discord.Forbidden):
@@ -385,7 +396,6 @@ class ChannelsView(discord.ui.View):
                     webhook_url = await get_wh(channel)
                     await self.bot.db.execute('UPDATE log_channels SET voice_channel = $2, voice_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('voice', webhook_url, message.guild.id)
-                    print(self.ctx.bot.log_channels[self.ctx.guild.id])
                 except commands.ChannelNotFound:
                     pass
                 except (commands.BadArgument, discord.Forbidden):
@@ -642,9 +652,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite) -> None:
-        print(f"created invite {invite} in {invite.guild}")
         cached = self.bot.invites.get(invite.guild.id, None)
-
         if cached:
             cached[invite.code] = invite
 
@@ -804,6 +812,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         > **`full-user`** : returns the user's full name (Name#1234)
         > **`user-mention`** : will mention the user (@Name)
         > **`count`** : returns the member count of the server(4385)
+        > **`ordinal`** : returns the ordinal member count of the server(4385th)
         > **`code`** : the invite code the member used to join(TdRfGKg8Wh) **\***
         > **`full-code`** : the full invite (discord.gg/TdRfGKg8Wh) **\***
         > **`full-url`** : the full url (<https://discord.gg/TdRfGKg8Wh>) **\***
@@ -832,6 +841,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
              'full-user': str(member),
              'user-mention': str(member.mention),
              'count': str(member.guild.member_count),
+             'ordinal': str(make_ordinal(member.guild.member_count)),
              'code': "discord-api",
              'full-code': "discord.gg/discord-api",
              'full-url': "https://discord.gg/discord-api",
@@ -869,6 +879,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
              'full-user': str(member),
              'user-mention': str(member.mention),
              'count': str(member.guild.member_count),
+             'ordinal': str(make_ordinal(member.guild.member_count)),
              'code': str(invite.code),
              'full-code': f"discord.gg/{invite.code}",
              'full-url': str(invite.url),
@@ -894,6 +905,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
              'full-user': str(member),
              'user-mention': str(member.mention),
              'count': str(member.guild.member_count),
+             'ordinal': str(make_ordinal(member.guild.member_count)),
              'code': (str(invite.code) if invite else 'N/A'),
              'full-code': (f"discord.gg/{invite.code}" if invite else 'N/A'),
              'full-url': (str(invite) if invite else 'N/A'),
