@@ -69,14 +69,6 @@ class ServerInvite(discord.ui.View):
                                         url="https://discord.gg/TdRfGKg8Wh"))
 
 
-class InvMe(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(emoji=constants.INVITE, label='Invite me',
-                                        url="https://discord.com/api/oauth2/authorize?client_id="
-                                            "788278464474120202&permissions=8&scope=bot%20applications.commands"))
-
-
 class OzAd(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)

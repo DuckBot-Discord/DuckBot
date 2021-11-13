@@ -245,11 +245,29 @@ class About(commands.Cog):
     def get_bot_last_rall(self):
         return f"<t:{round(self.bot.last_rall.timestamp())}:R>"
 
+    def oauth(self, perms: discord.Permissions = 0):
+        """ Generates a discord oauth url """
+        return discord.utils.oauth_url(self.bot.user.id,
+                                       permissions=discord.Permissions(perms),
+                                       scopes=('applications.commands',))
+
     @commands.command(help="Sends a link to invite the bot to your server")
-    async def invite(self, ctx):
-        await ctx.send(
-            embed=discord.Embed(description=f"{constants.INVITE} **[invite me]({self.bot.invite_url})**"),
-            view=paginator.InvMe())
+    async def invite(self, ctx: CustomContext):
+        if not self.bot.is_ready():
+            await ctx.trigger_typing()
+            await self.bot.wait_until_ready()
+        embed = discord.Embed(
+            title="Invite me to your server!",
+            description=f"\n• [No Permissions]({self.oauth(0)})"
+                        f"\n• [Minimal Permissions]({self.oauth(274948541504)})"
+                        f"\n• **[Mod Permissions]({self.oauth(294171045078)})** ⭐"
+                        f"\n• [Admin Permissions]({self.oauth(8)})"
+                        f"\n• [All Permissions]({self.oauth(549755813887)}) <:certified_moderator:895393984308981930>")
+        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(emoji='⭐', label='Recommended', url=self.oauth(294171045078)))
+        view.add_item(discord.ui.Button(emoji='<:certified_moderator:895393984308981930>', label='All', url=self.oauth(549755813887)))
+        await ctx.send(embed=embed, view=view)
 
     @commands.command(help="Checks the bot's ping to Discord")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
