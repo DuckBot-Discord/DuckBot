@@ -99,6 +99,7 @@ class Fun(commands.Cog, name='Fun'):
             await self.bot.get_channel(880181130408636456).send('A reddit error occurred! Please check the console.')
             return discord.Embed(description='Whoops! An unexpected error occurred')
 
+    @commands.max_concurrency(1, commands.BucketType.user, wait=True)
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def cat(self, ctx: CustomContext) -> discord.Message:
@@ -106,6 +107,7 @@ class Fun(commands.Cog, name='Fun'):
         async with ctx.typing():
             await ctx.send(embed=await self.reddit('cats'))
 
+    @commands.max_concurrency(1, commands.BucketType.user, wait=True)
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def dog(self, ctx: CustomContext) -> discord.Message:
@@ -113,6 +115,7 @@ class Fun(commands.Cog, name='Fun'):
         async with ctx.typing():
             await ctx.send(embed=await self.reddit('dog'))
 
+    @commands.max_concurrency(1, commands.BucketType.user, wait=True)
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def duck(self, ctx: CustomContext) -> discord.Message:
@@ -171,6 +174,7 @@ class Fun(commands.Cog, name='Fun'):
         embed.set_author(icon_url=member.display_avatar.url, name=member)
         return await ctx.send(embed=embed)
 
+    @commands.max_concurrency(1, commands.BucketType.user, wait=True)
     @commands.command()
     async def meme(self, ctx: CustomContext) -> discord.Message:
         """
@@ -179,6 +183,7 @@ class Fun(commands.Cog, name='Fun'):
         async with ctx.typing():
             return await ctx.send(embed=await self.reddit(random.choice(['memes', 'dankmemes'])))
 
+    @commands.max_concurrency(1, commands.BucketType.user, wait=True)
     @commands.command(aliases=['wyr'])
     async def would_you_rather(self, ctx: CustomContext) -> discord.Message:
         """
@@ -190,6 +195,7 @@ class Fun(commands.Cog, name='Fun'):
             for reaction in poll[1]:
                 await message.add_reaction(reaction)
 
+    @commands.max_concurrency(1, commands.BucketType.user, wait=True)
     @commands.command()
     async def aww(self, ctx: CustomContext) -> discord.Message:
         """
