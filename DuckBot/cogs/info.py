@@ -249,7 +249,7 @@ class About(commands.Cog):
         """ Generates a discord oauth url """
         return discord.utils.oauth_url(self.bot.user.id,
                                        permissions=discord.Permissions(perms),
-                                       scopes=('applications.commands',))
+                                       scopes=('applications.commands', 'bot'))
 
     @commands.command(help="Sends a link to invite the bot to your server")
     async def invite(self, ctx: CustomContext):
