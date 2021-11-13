@@ -744,10 +744,9 @@ class QueueMenu(menus.ListPageSource):
         offset = menu.current_page * self.per_page
 
         embed = discord.Embed(
-            title='{} songs in the queue'.format(len(self.data)) if len(self.data) > 1 else '1 song in the queue'
-            , colour=self.ctx.color)
+            title=f'{len(self.data)} songs in the queue' if len(self.data) > 1 else '1 song in the queue', colour=self.ctx.color)
 
-        for i, v in enumerate(entries, start=offset):
-            embed.add_field(name='\u200b', value=f'`{i + 1}.` {v}', inline=False)
+        queue = [f'`{i + 1}.` {v}' for i, v in enumerate(entries, start=offset)]
+        embed.description = '\n'.join(queue)
 
         return embed

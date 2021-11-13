@@ -10,6 +10,7 @@ import logging
 import math
 import typing
 
+import discord
 import pomice
 import re
 import time as t
@@ -174,7 +175,11 @@ class Music(commands.Cog):
             return
 
     @commands.Cog.listener()
-    async def on_pomice_track_start(self, player: Player, _):
+    async def on_pomice_track_start(self, player: Player, track: pomice.Track):
+        player = player or self.bot.pomice.get_node().get_player(track.ctx.guild.id)
+        if not player:
+            return
+
         track: pomice.Track = player.current.original
         ctx: Context = track.ctx
 
@@ -188,6 +193,10 @@ class Music(commands.Cog):
 
     @commands.Cog.listener()
     async def on_pomice_track_end(self, player: Player, track: pomice.Track, _):
+        player = player or self.bot.pomice.get_node().get_player(track.ctx.guild.id)
+        if not player:
+            return
+
         text: discord.TextChannel = player.text_channel
         channel: discord.TextChannel = player.channel
         player.clear_votes()
@@ -201,7 +210,7 @@ class Music(commands.Cog):
 
         try:
             await player.message.delete()
-        except discord.HTTPException:
+        except (discord.HTTPException, AttributeError):
             pass
 
         try:
@@ -327,7 +336,8 @@ class Music(commands.Cog):
         """Check whether the user is an Admin or DJ or alone in a VC."""
         player = ctx.voice_client
         role = (await self.bot.db.fetchval("SELECT dj_id FROM prefixes WHERE guild_id = $1", ctx.guild.id)) or 1
-        if any([player.dj == ctx.author.id, ctx.author.guild_permissions.manage_messages, ctx.author._roles.has(role), role == 1234, ctx.author.id in self.bot.owner_ids]):
+        if any([player.dj.id == ctx.author.id, ctx.author.guild_permissions.manage_messages,
+                ctx.author._roles.has(role), role == 1234, ctx.author.id in self.bot.owner_ids]):
             return True
         else:
             return False
@@ -511,7 +521,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=self.build_embed(player))
 
-    @commands.command(aliases=["dc", "begone", "fuckoff", "gtfo"])
+    @commands.command(aliases=["dc"])
     async def disconnect(self, ctx: Context):
         """Disconnects the player from its voice channel."""
         player = ctx.voice_client
@@ -598,8 +608,8 @@ class Music(commands.Cog):
         player.queue.clear()
         await ctx.send("🛑 **|** The playback was stopped and queue cleared")
 
-    @commands.command(aliases=["q", "upcoming"])
-    async def queue(self, ctx: Context):
+    @commands.command(aliases=["q", "upcoming"], name='queue')
+    async def _queue(self, ctx: Context):
         """Displays the current song queue"""
         player = ctx.voice_client
 
@@ -608,7 +618,7 @@ class Music(commands.Cog):
 
         info = []
         for track in player.queue:
-            info.append(f'**[{track.title}]({track.uri})** ({format_time(track.length)})\n')
+            info.append(f'**[{track.title}]({track.uri})** ({format_time(track.length)})')
 
         menu = paginator.ViewPaginator(paginator.QueueMenu(info, ctx), ctx=ctx)
         await menu.start()
@@ -750,8 +760,13 @@ class Music(commands.Cog):
         await ctx.send('🔀 **|** The queue was shuffled')
 
     @commands.group(invoke_without_command=True)
-    async def loop(self, ctx: Context, mode: str):
-        await ctx.send(f'❌ **|** {mode[0:50]} did not match `track`, `queue` or `disable`')
+    async def loop(self, ctx: Context, mode: str = None):
+        if mode:
+            await ctx.send(f'❌ **|** {mode[0:50]} did not match `track`, `queue` or `disable`')
+        else:
+            player: Player = ctx.voice_client
+            if player:
+                await ctx.send(f'🔁 **|** The current loop mode is `{["Disabled", "Track", "Queue"][player.loop]}`')
 
     @loop.command()
     async def track(self, ctx: Context):
@@ -867,35 +882,41 @@ class Music(commands.Cog):
         """ Shows the lyrics of a given song.
         Searches by:
         - Song name
-        - @member mention (spotify)
         - Currently playing in VC
+        - @member mention (spotify)
+        - Your currently playing song
 
          _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
         await ctx.trigger_typing()
+        spotify: discord.Spotify = None
         if not song_member:
             if not (player := ctx.voice_client):
                 player = self.bot.pomice.get_node().get_player(ctx.guild.id)
-            if not player:
-                raise commands.BadArgument('You need to input a song or a member who is listening to spotify, or I must be playing music in this server.')
-            player: Player = ctx.voice_client
-            if not (current := player.current):
-                raise commands.BadArgument('I\'m not playing anything right now.')
-            song_member = await helper.LyricsConverter().convert(ctx, f"{current.title} - {current.author}")
-        elif isinstance(song_member, discord.Member):
+            if player:
+                player: Player = ctx.voice_client
+                if current := player.current:
+                    song_member = await helper.LyricsConverter().convert(ctx, f"{current.title}")
+                else:
+                    song_member = ctx.author
+            else:
+                song_member = ctx.author
+
+        if isinstance(song_member, discord.Member):
             spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), song_member.activities)
             if not spotify:
-                raise commands.BadArgument('user is not listening to Spotify')
-            song_member = await helper.LyricsConverter().convert(ctx, f"{spotify.title} - {spotify.artist}")
+                raise commands.BadArgument('You need to input a song or a member who is listening to spotify, or I must be playing music in this server.')
+            song_member = await helper.LyricsConverter().convert(ctx, f"{spotify.title}")
         song_member: openrobot.LyricResult
         pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4000)
         for line in song_member.lyrics.split('\n'):
             pages.add_line(line)
         reply = True
         embed = discord.Embed(title=f"Lyrics for `{song_member.title}`")
+        embed.set_author(name=f"song by: {song_member.artist}", icon_url=spotify.album_cover_url if spotify else discord.Embed.Empty)
         for page in pages.pages:
             embed.description = page
             await ctx.send(embed=embed, reply=reply, footer=False)
             embed.title = discord.Embed.Empty
+            embed.author.name = discord.Embed.Empty
+            embed.author.icon_url = discord.Embed.Empty
             reply = False
-
-

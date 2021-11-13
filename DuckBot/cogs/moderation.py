@@ -61,12 +61,21 @@ class BannedMember(commands.Converter):
 
 def can_execute_action(ctx, user, target):
     if isinstance(target, discord.Member):
-        return user == ctx.guild.owner or \
-               (user.top_role > target.top_role and
-                target != ctx.guild.owner)
+        return user == ctx.guild.owner or (user.top_role > target.top_role and target != ctx.guild.owner)
     elif isinstance(target, discord.User):
         return True
     raise TypeError(f'argument \'target\' expected discord.User, received {type(target)} instead')
+
+
+def bot_can_execute_action(ctx: CustomContext, target: discord.Member):
+    if isinstance(target, discord.Member):
+        if target.top_role > ctx.guild.me.top_role:
+            raise commands.BadArgument('This member has a higher role than me.')
+        elif target == ctx.guild.owner:
+            raise commands.BadArgument('I cannot perform that action, as the target is the owner.')
+        elif target == ctx.guild.me:
+            raise commands.BadArgument('I cannot perform that action on myself.')
+        return True
 
 
 class ActionReason(commands.Converter):
@@ -197,36 +206,13 @@ class Moderation(commands.Cog):
     @commands.command(help="Kicks a member from the server")
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True, kick_members=True)
-    async def kick(self, ctx, member: discord.Member, *, reason: typing.Optional[str] = None):
-        if member == ctx.author:
-            await self.error_message(ctx, 'You can\'t kick yourself')
-            return
-        elif member.top_role >= ctx.me.top_role:
-            return await self.error_message(ctx, 'I\'m not high enough in role hierarchy to kick that member!')
-        if member.top_role < ctx.author.top_role or ctx.author.id == ctx.guild.owner_id:
-            mem_embed = discord.Embed(description=f"**{ctx.message.author}** has kicked you from **{ctx.guild.name}**",
-                                      color=ctx.me.color)
-            if reason:
-                mem_embed.set_footer(text=f'reason: {reason}')
-            try:
-                await member.send(embed=mem_embed)
-                dm_success = '✅'
-            except discord.HTTPException:
-                dm_success = '❌'
-            await member.kick(reason=f"{ctx.author} (ID: {ctx.author.id}): {reason}")
-            if reason:
-                action_reason = f"\n```\nreason: {reason}```"
-            else:
-                action_reason = ''
-
-            embed = discord.Embed(
-                description=f"{ctx.author.mention} kicked **{member}**({member.mention}){action_reason}")
-            embed.set_footer(text=f'ID: {member.id} | DM sent: {dm_success}')
-            await ctx.send(embed=embed)
-
-        else:
-            await self.error_message(ctx, 'Member is higher than you in role hierarchy')
-            return
+    async def kick(self, ctx: CustomContext, member: discord.Member, *, reason: typing.Optional[str] = None):
+        bot_can_execute_action(ctx, member)
+        if not can_execute_action(ctx, ctx.author, member):
+            raise commands.BadArgument('You cannot kick this member.')
+        reason = f"Kicked by {ctx.author} ({ctx.author.id}) " + (f" for {reason}" if reason else "")
+        await ctx.author.kick(reason=reason)
+        await ctx.send(f'👢 **|** **{ctx.author}** kicked **{member}**' + (f"\nFor {reason}" if reason else ""))
 
     @commands.command(help="Bans a member from the server")
     @commands.has_permissions(ban_members=True)
@@ -234,6 +220,8 @@ class Moderation(commands.Cog):
     async def ban(self, ctx: CustomContext, user: typing.Union[discord.Member, discord.User], delete_days: typing.Optional[int] = 1, *, reason: str = None):
         if delete_days and not 8 > delete_days > -1:
             raise commands.BadArgument("**delete_days** must be between 0 and 7 days")
+
+        bot_can_execute_action(ctx, user)
 
         if can_execute_action(ctx, ctx.author, user):
             await ctx.guild.ban(user, reason=f"Banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''), delete_message_days=delete_days)
