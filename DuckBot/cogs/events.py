@@ -81,7 +81,8 @@ class Handler(commands.Cog, name='Handler'):
         if isinstance(error, errors.UserBlacklisted):
             if ctx.author.id not in warned:
                 warned.append(ctx.author.id)
-                return await ctx.send("You can't do that! You're blacklisted.")
+                reason = await self.bot.db.fetchval('SELECT reason FROM blacklist WHERE user_id = $1', ctx.author.id)
+                return await ctx.send("Sorry, you are blacklisted from using DuckBot" + (f" for {reason}" if reason else "") + ".")
             else:
                 return
 
@@ -634,6 +635,7 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_command')
     async def on_command(self, ctx: CustomContext):
+        print(f'{ctx.author} ran {ctx.command.qualified_name}')
         await self.bot.db.execute("INSERT INTO commands (guild_id, user_id, command, timestamp) VALUES ($1, $2, $3, $4)",
                                   getattr(ctx.guild, 'id', None), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
 
@@ -667,10 +669,11 @@ class Handler(commands.Cog, name='Handler'):
         embed.add_field(name='Guild Info', value=f'{guild_name} (ID: {guild_id})', inline=False)
         embed.add_field(name='Channel Info', value=f'{message.channel} (ID: {message.channel.id}', inline=False)
         embed.timestamp = discord.utils.utcnow()
-        channel = self.bot.get_channel(880181130408636456)
+        channel = self.bot.get_channel(904797860841812050)
         await channel.send(embed=embed)
 
-    async def add_to_blacklist(self, user_id, reason: str = 'Auto-blocked for spamming, Join the support server if at my bio you want to get un-banned.'):
+    async def add_to_blacklist(self, user_id, reason: str = 'spamming commands (automatic action).'
+                                                            '\nJoin the support server if at my bio to appeal'):
         self.bot.blacklist[user_id] = True
         await self.bot.db.execute(
             "INSERT INTO blacklist(user_id, is_blacklisted, reason) VALUES ($1, $2, $3) "

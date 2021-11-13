@@ -320,7 +320,7 @@ class Management(commands.Cog, name='Bot Management'):
 
             await self.bot.db.execute("DELETE FROM blacklist where user_id = $1", user.id)
 
-            self.bot.blacklist.remove(user.id)
+            self.bot.blacklist.pop(user.id, None)
 
             await ctx.send(f"Removed **{user}** from the blacklist")
 
@@ -339,11 +339,12 @@ class Management(commands.Cog, name='Bot Management'):
             blacklist = await self.bot.db.fetch("SELECT user_id, reason FROM blacklist")
             if not blacklist:
                 return await ctx.send("No users are blacklisted")
-            table = [(f"{str(self.bot.get_user(user_id) or user_id)}", reason or "No reason given") for user_id, reason in blacklist]
-            table = tabulate.tabulate(table, headers=["User", "Reason"], tablefmt="presto")
+            table = [(self.bot.get_user(user_id), user_id, reason or "No reason given") for user_id, reason in blacklist]
+            table = tabulate.tabulate(table, headers=["User", "User ID", "Reason"], tablefmt="presto")
             lines = table.split("\n")
-            lines, headers = '\n'.join(lines[0:2]), lines[2:]
-            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{headers}', max_size=1000)
+            lines, headers = lines[2:], '\n'.join(lines[0:2])
+            header = f"DuckBot blacklist".center(len(lines[0]))
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1950)
             [pages.add_line(line) for line in lines]
             interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
@@ -360,7 +361,7 @@ class Management(commands.Cog, name='Bot Management'):
             lines = table.split("\n")
             lines, headers = lines[2:], '\n'.join(lines[0:2])
             header = f"Commands by {user}".center(len(lines[0]))
-            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1000)
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1950)
             [pages.add_line(line) for line in lines]
             interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
@@ -378,13 +379,13 @@ class Management(commands.Cog, name='Bot Management'):
             lines = table.split("\n")
             lines, headers = lines[2:], '\n'.join(lines[0:2])
             header = f"Latest commands in {guild}".center(len(lines[0]))
-            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1000)
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1950)
             [pages.add_line(line) for line in lines]
             interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
 
-        @dev.command(name='command-history', aliases=['ch'])
-        async def dev_server_history(self, ctx: CustomContext):
+        @dev.group(name='command-history', aliases=['ch', 'cmds'], invoke_without_command=True)
+        async def dev_all_history(self, ctx: CustomContext):
             """ Lists all users on the blacklist """
             executed_commands = await self.bot.db.fetch("SELECT command, user_id, guild_id, timestamp FROM commands ORDER BY timestamp DESC")
             if not executed_commands:
@@ -395,10 +396,16 @@ class Management(commands.Cog, name='Bot Management'):
             lines = table.split("\n")
             lines, headers = lines[2:], '\n'.join(lines[0:2])
             header = f"Latest executed commands".center(len(lines[0]))
-            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1000)
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1950)
             [pages.add_line(line) for line in lines]
             interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
+
+        @dev_all_history.command(name='clear')
+        async def dev_all_history_clear(self, ctx: CustomContext):
+            """ Clears all command history """
+            await self.bot.db.execute("DELETE FROM commands")
+            await ctx.message.add_reaction('✅')
 
         @dev.group(name='sql', aliases=['db', 'database', 'psql', 'postgre'], invoke_without_command=True)
         @commands.is_owner()
