@@ -488,9 +488,7 @@ class Handler(commands.Cog, name='Handler'):
         self.bot.counting_channels[message.guild.id]['messages'].append(message)
         await self.bot.db.execute('UPDATE count_settings SET current_number = $2 WHERE guild_id = $1',
                                   message.guild.id, self.bot.counting_channels[message.guild.id]['number'])
-        if message.guild.id not in self.bot.counting_rewards or int(message.content) not in self.bot.counting_rewards[
-            message.guild.id]:
-            print('not reward')
+        if message.guild.id not in self.bot.counting_rewards or int(message.content) not in self.bot.counting_rewards[message.guild.id]:
             return
         reward = await self.bot.db.fetchrow("SELECT * FROM counting WHERE (guild_id, reward_number) = ($1, $2)",
                                             message.guild.id, self.bot.counting_channels[message.guild.id]['number'])
@@ -635,7 +633,6 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_command')
     async def on_command(self, ctx: CustomContext):
-        print(f'{ctx.author} ran {ctx.command.qualified_name}')
         await self.bot.db.execute("INSERT INTO commands (guild_id, user_id, command, timestamp) VALUES ($1, $2, $3, $4)",
                                   getattr(ctx.guild, 'id', None), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
 

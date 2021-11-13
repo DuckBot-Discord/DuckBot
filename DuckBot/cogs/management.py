@@ -349,7 +349,7 @@ class Management(commands.Cog, name='Bot Management'):
             interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
 
-        @dev.command(name='user-history', aliases=['uh', 'mh', 'member-history'])
+        @dev.command(name='user-history', aliases=['uh', 'mh', 'member-history', 'ucmds'])
         async def dev_user_history(self, ctx: CustomContext, user: discord.User):
             """ Lists all users on the blacklist """
             executed_commands = await self.bot.db.fetch("SELECT command, guild_id, timestamp FROM commands WHERE user_id = $1 "
@@ -366,7 +366,7 @@ class Management(commands.Cog, name='Bot Management'):
             interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
 
-        @dev.command(name='guild-history', aliases=['gh', 'sh', 'server-history'])
+        @dev.command(name='guild-history', aliases=['gh', 'sh', 'server-history', 'scmds', 'gcmds'])
         async def dev_server_history(self, ctx: CustomContext, guild: discord.Guild):
             """ Lists all users on the blacklist """
             executed_commands = await self.bot.db.fetch("SELECT command, user_id, timestamp FROM commands WHERE guild_id = $1 "
@@ -385,8 +385,13 @@ class Management(commands.Cog, name='Bot Management'):
             await interface.send_to(ctx)
 
         @dev.group(name='command-history', aliases=['ch', 'cmds'], invoke_without_command=True)
-        async def dev_all_history(self, ctx: CustomContext):
+        async def dev_all_history(self, ctx: CustomContext, arg: typing.Optional[typing.Union[discord.User, discord.Guild]] = None):
             """ Lists all users on the blacklist """
+            if arg:
+                if isinstance(arg, discord.User):
+                    return await self.dev_user_history(ctx, arg)
+                elif isinstance(arg, discord.Guild):
+                    return await self.dev_server_history(ctx, arg)
             executed_commands = await self.bot.db.fetch("SELECT command, user_id, guild_id, timestamp FROM commands ORDER BY timestamp DESC")
             if not executed_commands:
                 return await ctx.send("No results found...")
