@@ -148,6 +148,7 @@ class DuckBot(commands.Bot):
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
         self.imgur = asyncgur.Imgur(client_id=os.getenv('IMGUR_CL_ID'))
         self.pomice = pomice.NodePool()
+        self.global_mapping = commands.CooldownMapping.from_cooldown(15, 2, commands.BucketType.user)
 
         for ext in initial_extensions:
             self._load_extension(ext)

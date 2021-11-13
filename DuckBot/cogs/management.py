@@ -13,6 +13,7 @@ import emoji as unicode_emoji
 
 import discord
 import jishaku.modules
+import tabulate
 from discord.ext import commands
 
 from jishaku.codeblocks import Codeblock, codeblock_converter
@@ -73,7 +74,6 @@ class Management(commands.Cog, name='Bot Management'):
     """
 
     def __init__(self, bot):
-        self.research_channels = (881215900315951184, 881246869873917962, 881246946776449045, 881247025688084521)
         self.bot: DuckBot = bot
         self._last_result = None
 
@@ -85,69 +85,6 @@ class Management(commands.Cog, name='Bot Management'):
         """
         return await ctx.invoke("jsk shell",
                                 argument=Codeblock(argument.language, "cd ~/.git/DiscordBots\ngit " + argument.content))
-
-    @commands.group(aliases=['setstatus', 'ss', 'activity'], invoke_without_subcommand=True)
-    @commands.is_owner()
-    async def status(self, ctx: CustomContext):
-        if not ctx.invoked_subcommand:
-            await ctx.send_help(ctx.command)
-
-    @status.command(name='playing')
-    async def status_playing(self, ctx: CustomContext, text):
-        await self.bot.change_presence(activity=discord.Game(name=f'{text}'))
-        await ctx.message.add_reaction('✅')
-        await ctx.send(f"Activity changed to `Playing {text}` ")
-
-    @status.command(name='listening')
-    async def status_listening(self, ctx: CustomContext, text):
-        await self.bot.change_presence(
-            activity=discord.Activity(type=discord.ActivityType.listening, name=f'{text}'))
-        await ctx.message.add_reaction('✅')
-        await ctx.send(f"Activity changed to `Listening to {text}` ")
-
-    @status.command(name='watching')
-    async def status_watching(self, ctx: CustomContext, text):
-        await self.bot.change_presence(
-            activity=discord.Activity(type=discord.ActivityType.watching, name=f'{text}'))
-        await ctx.message.add_reaction('✅')
-        await ctx.send(f"Activity changed to `Watching {text}` ")
-
-    @status.command(name='competing')
-    async def status_competing(self, ctx: CustomContext, text):
-        await self.bot.change_presence(
-            activity=discord.Activity(type=discord.ActivityType.competing, name=f'{text}'))
-        await ctx.message.add_reaction('✅')
-        await ctx.send(f"Activity changed to `Competing in {text}`")
-
-    @commands.command(aliases=['mm'], help="puts the bot under maintenance", usage="[on|off]")
-    @commands.is_owner()
-    @commands.bot_has_permissions(add_reactions=True)
-    async def maintenance(self, ctx, *, reason: str = None):
-        if reason:
-            await ctx.message.add_reaction(ctx.toggle(True))
-            self.bot.maintenance = reason
-        else:
-            await ctx.message.add_reaction(ctx.toggle(False))
-            self.bot.maintenance = None
-
-    @commands.command(aliases=['sp'], help="toggles no-prefix mode on or off",
-                      usage="[on|off]")
-    @commands.is_owner()
-    @commands.bot_has_permissions(add_reactions=True)
-    async def silentprefix(self, ctx, state: typing.Optional[str] = None):
-        if state == 'on':
-            await ctx.message.add_reaction(ctx.toggle(True))
-            self.bot.noprefix = True
-        elif state == 'off':
-            await ctx.message.add_reaction(ctx.toggle(False))
-            self.bot.noprefix = False
-        else:
-            if not self.bot.noprefix:
-                await ctx.message.add_reaction(ctx.toggle(True))
-                self.bot.noprefix = True
-            elif self.bot.noprefix:
-                await ctx.message.add_reaction(ctx.toggle(False))
-                self.bot.noprefix = False
 
     @commands.command(help="Unloads an extension", aliases=['unl', 'ue', 'uc'])
     @commands.is_owner()
@@ -268,70 +205,10 @@ class Management(commands.Cog, name='Bot Management'):
     ###############################################################################
     ###############################################################################
 
-    @commands.command(aliases=['pm', 'message', 'direct'])
-    @commands.is_owner()
-    @commands.guild_only()
-    async def dm(self, ctx: CustomContext, member: discord.User, *, message=None):
-        if ctx.channel.category_id == 878123261525901342:
-            return
-        category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
-        channel = discord.utils.get(category.channels, topic=str(member.id))
-        if not channel:
-            channel = await category.create_text_channel(
-                name=f"{member}",
-                topic=str(member.id),
-                position=0,
-                reason="DuckBot ModMail"
-            )
-
-        wh = await get_webhook(channel)
-
-        files = []
-        if ctx.message.attachments:
-            for attachment in ctx.message.attachments:
-                if attachment.size > 8388600:
-                    await ctx.send('Sent message without attachment! File size greater than 8 MB.')
-                    continue
-                files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
-
-        try:
-            await member.send(content=message, files=files)
-        except:
-            return await ctx.message.add_reaction('⚠')
-
-        try:
-            await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.display_avatar.url,
-                          files=files)
-        except:
-            await ctx.message.add_reaction('🤖')
-            await ctx.message.add_reaction('‼')
-        await ctx.message.add_reaction('💌')
-
-    @commands.command()
-    async def sudo(self, ctx: CustomContext, target: discord.User, channel: typing.Optional[discord.abc.Messageable], sub: str, *, arg: str):
-        """
-        Run a command as someone else.
-        """
-
-        if ctx.guild:
-            with contextlib.suppress(discord.HTTPException):
-                target_member = ctx.guild.get_member(target.id) or await ctx.guild.fetch_member(target.id)
-
-            target = target_member or target
-
-        alt_ctx = await copy_context_with(ctx, author=target, content=ctx.prefix + arg, channel=channel)
-
-        if alt_ctx.command is None:
-            if alt_ctx.invoked_with is None:
-                return await ctx.send('This bot has been hard-configured to ignore this user.')
-            return await ctx.send(f'Command "{alt_ctx.invoked_with}" is not found')
-
-        return await alt_ctx.command.invoke(alt_ctx)
-
     @commands.command(pass_context=True, hidden=True, name='eval', aliases=['ev'])
     @commands.is_owner()
     async def _eval(self, ctx: CustomContext, *, body: str):
-        """Evaluates a code"""
+        """ Evaluates arbitrary python code """
         env = {
             'bot': self.bot,
             '_b': self.bot,
@@ -373,6 +250,7 @@ class Management(commands.Cog, name='Bot Management'):
             return await ctx.send(f'```py\n{to_send}\n```')
 
         func = env['func']
+        # noinspection PyBroadException
         try:
             with contextlib.redirect_stdout(stdout):
                 ret = await func()
@@ -407,128 +285,279 @@ class Management(commands.Cog, name='Bot Management'):
                 else:
                     await ctx.send(f"```py\n{to_send}\n```")
 
-    @commands.group(name='sql', aliases=['db', 'database', 'psql', 'postgre'], invoke_without_command=True)
-    @commands.is_owner()
-    async def postgre(self, ctx: CustomContext, *, query: str):
-        """Executes an SQL query to the database"""
-        body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
-
-    @commands.is_owner()
-    @postgre.command(name='fetch', aliases=['f'])
-    async def postgre_fetch(self, ctx, *, query: str):
-        """Executes an SQL query to the database (Fetch)"""
-        body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
-
-    @commands.is_owner()
-    @postgre.command(name='fetchval', aliases=['fr'])
-    async def postgre_fetchval(self, ctx, *, query: str):
-        """Executes an SQL query to the database (Fetchval)"""
-        body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetchval(f\"\"\"{body}\"\"\")")
-
-    @commands.is_owner()
-    @postgre.command(name='fetchrow', aliases=['fv'])
-    async def postgre_fetchrow(self, ctx, *, query: str):
-        """Executes an SQL query to the database (Fetchrow)"""
-        body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(f\"\"\"{body}\"\"\")")
-
-    @commands.is_owner()
-    @postgre.command(name='execute', aliases=['e'])
-    async def postgre_execute(self, ctx, *, query: str):
-        """Executes an SQL query to the database (Fetchrow)"""
-        body = cleanup_code(query)
-        await ctx.invoke(self._eval, body=f"return await bot.db.execute(f\"\"\"{body}\"\"\")")
-
-    @commands.group(invoke_without_command=True, aliases=['bl'])
-    @commands.is_owner()
-    async def blacklist(self, ctx: CustomContext) -> discord.Message:
-        """ Blacklist management commands """
-        if ctx.invoked_subcommand is None:
-            return
-
-    @blacklist.command(name="add", aliases=['a'])
-    @commands.is_owner()
-    async def blacklist_add(self, ctx: CustomContext,
-                            user: discord.User) -> discord.Message:
-        """ adds a user to the bot blacklist """
-
-        await self.bot.db.execute(
-            "INSERT INTO blacklist(user_id, is_blacklisted) VALUES ($1, $2) "
-            "ON CONFLICT (user_id) DO UPDATE SET is_blacklisted = $2",
-            user.id, True)
-
-        self.bot.blacklist[user.id] = True
-
-        return await ctx.send(f"Added **{user}** to the blacklist")
-
-    @blacklist.command(name="remove", aliases=['r', 'rm'])
-    @commands.is_owner()
-    async def blacklist_remove(self, ctx: CustomContext,
-                               user: discord.User) -> discord.Message:
-        """
-        removes a user from the bot blacklist
-        """
-
-        await self.bot.db.execute(
-            "DELETE FROM blacklist where user_id = $1",
-            user.id)
-
-        self.bot.blacklist[user.id] = False
-
-        return await ctx.send(f"Removed **{user}** from the blacklist")
-
-    @blacklist.command(name='check', aliases=['c'])
-    @commands.is_owner()
-    async def blacklist_check(self, ctx: CustomContext, user: discord.User):
-        """
-        Checks a user's blacklist status
-        """
-        try:
-            status = self.bot.blacklist[user.id]
-        except KeyError:
-            status = False
-        return await ctx.send(f"**{user}** {'is' if status is True else 'is not'} blacklisted")
-
-    @is_reply()
-    @commands.is_owner()
-    @commands.command()
-    async def react(self, ctx, emoji: typing.Optional[typing.Union[UnicodeEmoji, discord.Emoji]]):
-        if emoji:
-            await ctx.message.reference.resolved.add_reaction(emoji)
-        await ctx.message.delete(delay=0)
-
-    @commands.command(name='server-list', aliases=['guilds-list', 'bot-servers'])
-    @commands.is_owner()
-    async def g_list(self, ctx: CustomContext):
-        """
-        Shows the bots servers info.
-        """
-        source = paginator.ServerInfoPageSource(guilds=self.bot.guilds, ctx=ctx)
-        menu = paginator.ViewPaginator(source=source, ctx=ctx)
-        await menu.start()
-
-    @commands.command(aliases=['pull'])
-    @commands.is_owner()
-    async def git_pull(self, ctx: CustomContext, reload_everything: bool = False):
-        """
-        Attempts to pull from git
-        """
-        command = self.bot.get_command('jsk git')
-        await ctx.invoke(command, argument=codeblock_converter('pull'))
-        if reload_everything is True:
-            mrl = self.bot.get_command('mrl')
-            await ctx.invoke(mrl)
-            rall = self.bot.get_command('rall')
-            await ctx.invoke(rall)
-
-    @commands.command(aliases=['push'])
+    @commands.command(aliases=['push'], name='git-push')
     @commands.is_owner()
     async def git_push(self, ctx, *, message: str):
-        """
-        Attempts to push to git
-        """
+        """ Attempts to push to git """
         command = self.bot.get_command('jsk git')
         await ctx.invoke(command, argument=codeblock_converter(f'add .\ngit commit -m "{message}"\ngit push origin master'))
+
+    # Dev commands. `if True` is only to be able to close the whole category at once
+    if True:
+
+        @commands.group()
+        @commands.is_owner()
+        async def dev(self, ctx: commands.Context):
+            """ Base command for dev commands """
+            return
+
+        @dev.command(name="ban", aliases=['blacklist', 'ba', 'block'])
+        async def dev_ban(self, ctx: CustomContext, user: discord.User, *, reason: str = None):
+            """ Bot-bans a user """
+
+            await self.bot.db.execute(
+                "INSERT INTO blacklist(user_id, is_blacklisted, reason) VALUES ($1, $2, $3) "
+                "ON CONFLICT (user_id) DO UPDATE SET is_blacklisted = $2, reason = $3",
+                user.id, True, reason)
+
+            self.bot.blacklist[user.id] = True
+
+            await ctx.send(f"Added **{user}** to the blacklist")
+
+        @dev.command(name="unban", aliases=['un-blacklist', 'br', 'unblock'])
+        async def dev_unban(self, ctx: CustomContext, user: discord.User) -> discord.Message:
+            """ Bot-unbans a user """
+
+            await self.bot.db.execute("DELETE FROM blacklist where user_id = $1", user.id)
+
+            self.bot.blacklist.remove(user.id)
+
+            await ctx.send(f"Removed **{user}** from the blacklist")
+
+        @dev.command(name='ban-check', aliases=['bc', 'blacklist-check', 'blc'])
+        async def dev_ban_check(self, ctx: CustomContext, user: discord.User):
+            """ Checks a user's blacklist status """
+            if user.id in self.bot.blacklist:
+                if reason := await self.bot.db.fetchval("SELECT reason FROM blacklist WHERE user_id = $1", user.id):
+                    return await ctx.send(f"**{user}** is blacklisted for {reason}")
+                return await ctx.send(f"**{user}** is blacklisted without a reason")
+            await ctx.send(f"**{user}** is not blacklisted")
+
+        @dev.command(name='bans', aliases=['bl', 'bl-list', 'blocked', 'banlist', 'blacklist-list'])
+        async def dev_blacklist_list(self, ctx: CustomContext):
+            """ Lists all users on the blacklist """
+            blacklist = await self.bot.db.fetch("SELECT user_id, reason FROM blacklist")
+            if not blacklist:
+                return await ctx.send("No users are blacklisted")
+            table = [(f"{str(self.bot.get_user(user_id) or user_id)}", reason or "No reason given") for user_id, reason in blacklist]
+            table = tabulate.tabulate(table, headers=["User", "Reason"], tablefmt="presto")
+            lines = table.split("\n")
+            lines, headers = '\n'.join(lines[0:2]), lines[2:]
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{headers}', max_size=1000)
+            [pages.add_line(line) for line in lines]
+            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            await interface.send_to(ctx)
+
+        @dev.command(name='user-history', aliases=['uh', 'mh', 'member-history'])
+        async def dev_user_history(self, ctx: CustomContext, user: discord.User):
+            """ Lists all users on the blacklist """
+            executed_commands = await self.bot.db.fetch("SELECT command, guild_id, timestamp FROM commands WHERE user_id = $1 "
+                                                        "ORDER BY timestamp DESC", user.id)
+            if not executed_commands:
+                return await ctx.send("No results found...")
+            table = [(command, guild_id or "ran in DMs", str(timestamp).replace('+00:00', '')) for command, guild_id, timestamp in executed_commands]
+            table = tabulate.tabulate(table, headers=["Command", "Guild ID", "Timestamp"], tablefmt="presto")
+            lines = table.split("\n")
+            lines, headers = lines[2:], '\n'.join(lines[0:2])
+            header = f"Commands by {user}".center(len(lines[0]))
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1000)
+            [pages.add_line(line) for line in lines]
+            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            await interface.send_to(ctx)
+
+        @dev.command(name='guild-history', aliases=['gh', 'sh', 'server-history'])
+        async def dev_server_history(self, ctx: CustomContext, guild: discord.Guild):
+            """ Lists all users on the blacklist """
+            executed_commands = await self.bot.db.fetch("SELECT command, user_id, timestamp FROM commands WHERE guild_id = $1 "
+                                                        "ORDER BY timestamp DESC", guild.id)
+            if not executed_commands:
+                return await ctx.send("No results found...")
+            table = [(command, self.bot.get_user(user_id) or user_id, str(timestamp).replace('+00:00', ''))
+                     for command, user_id, timestamp in executed_commands]
+            table = tabulate.tabulate(table, headers=["Command", "User/UID", "Timestamp"], tablefmt="presto")
+            lines = table.split("\n")
+            lines, headers = lines[2:], '\n'.join(lines[0:2])
+            header = f"Latest commands in {guild}".center(len(lines[0]))
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1000)
+            [pages.add_line(line) for line in lines]
+            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            await interface.send_to(ctx)
+
+        @dev.command(name='command-history', aliases=['ch'])
+        async def dev_server_history(self, ctx: CustomContext):
+            """ Lists all users on the blacklist """
+            executed_commands = await self.bot.db.fetch("SELECT command, user_id, guild_id, timestamp FROM commands ORDER BY timestamp DESC")
+            if not executed_commands:
+                return await ctx.send("No results found...")
+            table = [(command, self.bot.get_user(user_id) or user_id, guild_id, str(timestamp).replace('+00:00', ''))
+                     for command, user_id, guild_id, timestamp in executed_commands]
+            table = tabulate.tabulate(table, headers=["Command", "User/UID", "Guild ID", "Timestamp"], tablefmt="presto")
+            lines = table.split("\n")
+            lines, headers = lines[2:], '\n'.join(lines[0:2])
+            header = f"Latest executed commands".center(len(lines[0]))
+            pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1000)
+            [pages.add_line(line) for line in lines]
+            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            await interface.send_to(ctx)
+
+        @dev.group(name='sql', aliases=['db', 'database', 'psql', 'postgre'], invoke_without_command=True)
+        @commands.is_owner()
+        async def dev_sql(self, ctx: CustomContext, *, query: str):
+            """Executes an SQL query to the database"""
+            body = cleanup_code(query)
+            await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
+
+        @dev_sql.command(name='fetch', aliases=['f'])
+        async def postgre_fetch(self, ctx, *, query: str):
+            """Executes an SQL query to the database (Fetch)"""
+            body = cleanup_code(query)
+            await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
+
+        @dev_sql.command(name='fetchval', aliases=['fr'])
+        async def postgre_fetchval(self, ctx, *, query: str):
+            """Executes an SQL query to the database (Fetchval)"""
+            body = cleanup_code(query)
+            await ctx.invoke(self._eval, body=f"return await bot.db.fetchval(f\"\"\"{body}\"\"\")")
+
+        @dev_sql.command(name='fetchrow', aliases=['fv'])
+        async def postgre_fetchrow(self, ctx, *, query: str):
+            """Executes an SQL query to the database (Fetchrow)"""
+            body = cleanup_code(query)
+            await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(f\"\"\"{body}\"\"\")")
+
+        @dev_sql.command(name='execute', aliases=['e'])
+        async def postgre_execute(self, ctx, *, query: str):
+            """Executes an SQL query to the database (Fetchrow)"""
+            body = cleanup_code(query)
+            await ctx.invoke(self._eval, body=f"return await bot.db.execute(f\"\"\"{body}\"\"\")")
+
+        @is_reply()
+        @dev.command()
+        async def react(self, ctx, emoji: typing.Optional[typing.Union[UnicodeEmoji, discord.Emoji]]):
+            if emoji:
+                await ctx.message.reference.resolved.add_reaction(emoji)
+            await ctx.message.delete(delay=0)
+
+        @dev.command(name='server-list', aliases=['guilds-list', 'bot-servers', 'guilds'])
+        async def g_list(self, ctx: CustomContext):
+            """
+            Shows the bots servers info.
+            """
+            source = paginator.ServerInfoPageSource(guilds=self.bot.guilds, ctx=ctx)
+            menu = paginator.ViewPaginator(source=source, ctx=ctx)
+            await menu.start()
+
+        @dev.command(aliases=['pull'], name='update')
+        async def git_pull(self, ctx: CustomContext, reload_everything: bool = True):
+            """
+            Attempts to pull from git
+            """
+            command = self.bot.get_command('jsk git')
+            await ctx.invoke(command, argument=codeblock_converter('pull'))
+            if reload_everything is True:
+                mrl = self.bot.get_command('mrl')
+                await ctx.invoke(mrl)
+                rall = self.bot.get_command('rall')
+                await ctx.invoke(rall)
+
+        @dev.command(name='eval', aliases=['e', 'ev'])
+        async def dev_eval(self, ctx: CustomContext, *, body: str):
+            """ Evaluates arbitrary python code """
+            await ctx.invoke(self._eval, body=body)
+
+        @dev.command(aliases=['mm'], name='maintenance-mode')
+        async def maintenance_mode(self, ctx, *, reason: str = None):
+            if reason:
+                await ctx.message.add_reaction(ctx.toggle(True))
+                self.bot.maintenance = reason
+            elif self.bot.maintenance:
+                await ctx.message.add_reaction(ctx.toggle(False))
+                self.bot.maintenance = None
+            else:
+                await ctx.send(f'Please provide a reason!')
+
+        @dev.command(aliases=['sp'], name='silent-prefix')
+        @commands.bot_has_permissions(add_reactions=True)
+        async def silent_prefix(self, ctx, state: bool = None):
+            """  """
+            if state is not None:
+                await ctx.message.add_reaction(ctx.toggle(state))
+                self.bot.noprefix = state
+            else:
+                await ctx.message.add_reaction(ctx.toggle(not self.bot.noprefix))
+                self.bot.noprefix = not self.bot.noprefix
+
+        @dev.group(aliases=['setstatus', 'ss', 'activity'], usage='<type> <status>')
+        async def status(self, ctx: CustomContext):
+            """ Base command for setting the bot's status """
+            if not ctx.invoked_subcommand:
+                await ctx.send_help(ctx.command)
+
+        @status.command(name='playing')
+        async def status_playing(self, ctx: CustomContext, text):
+            """ Sets the bot's status to playing """
+            await self.bot.change_presence(activity=discord.Game(name=f'{text}'))
+            await ctx.message.add_reaction('✅')
+            await ctx.send(f"Activity changed to `Playing {text}` ")
+
+        @status.command(name='listening')
+        async def status_listening(self, ctx: CustomContext, text):
+            """ Sets the bot's status to listening """
+            await self.bot.change_presence(
+                activity=discord.Activity(type=discord.ActivityType.listening, name=f'{text}'))
+            await ctx.message.add_reaction('✅')
+            await ctx.send(f"Activity changed to `Listening to {text}` ")
+
+        @status.command(name='watching')
+        async def status_watching(self, ctx: CustomContext, text):
+            """ Sets the bot's status to watching """
+            await self.bot.change_presence(
+                activity=discord.Activity(type=discord.ActivityType.watching, name=f'{text}'))
+            await ctx.message.add_reaction('✅')
+            await ctx.send(f"Activity changed to `Watching {text}` ")
+
+        @status.command(name='competing')
+        async def status_competing(self, ctx: CustomContext, text):
+            """ Sets the bot's status to competing """
+            await self.bot.change_presence(
+                activity=discord.Activity(type=discord.ActivityType.competing, name=f'{text}'))
+            await ctx.message.add_reaction('✅')
+            await ctx.send(f"Activity changed to `Competing in {text}`")
+
+        @dev.command(aliases=['pm', 'message', 'direct'])
+        @commands.guild_only()
+        async def dm(self, ctx: CustomContext, member: discord.User, *, message=None):
+            if ctx.channel.category_id == 878123261525901342:
+                return
+            category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
+            channel = discord.utils.get(category.channels, topic=str(member.id))
+            if not channel:
+                channel = await category.create_text_channel(
+                    name=f"{member}",
+                    topic=str(member.id),
+                    position=0,
+                    reason="DuckBot ModMail"
+                )
+
+            wh = await get_webhook(channel)
+
+            files = []
+            if ctx.message.attachments:
+                for attachment in ctx.message.attachments:
+                    if attachment.size > 8388600:
+                        await ctx.send('Sent message without attachment! File size greater than 8 MB.')
+                        continue
+                    files.append(await attachment.to_file(spoiler=attachment.is_spoiler()))
+
+            try:
+                await member.send(content=message, files=files)
+            except:
+                return await ctx.message.add_reaction('⚠')
+
+            try:
+                await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.display_avatar.url,
+                              files=files)
+            except:
+                await ctx.message.add_reaction('🤖')
+                await ctx.message.add_reaction('‼')
+            await ctx.message.add_reaction('💌')
