@@ -879,8 +879,6 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
         await ctx.send(message.format(**l), allowed_mentions=discord.AllowedMentions.none())
 
-    @commands.has_permissions(manage_guild=True)
-    @commands.guild_only()
     @commands.Cog.listener()
     async def on_invite_update(self, member, invite):
         try:
