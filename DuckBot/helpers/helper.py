@@ -29,7 +29,7 @@ def get_user_badges(user: discord.Member, bot, fetched_user: discord.User = None
         except KeyError:
             continue
 
-    if user.avatar.is_animated():
+    if user.display_avatar.is_animated():
         user_flags.append(f'<:nitro:895392323519799306> Nitro')
 
     elif fetched_user and (fetched_user.accent_color or fetched_user.banner):
