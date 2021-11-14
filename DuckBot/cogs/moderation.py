@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import contextlib
 import datetime
 import difflib
 import time
@@ -23,6 +24,34 @@ def setup(bot):
 class Arguments(argparse.ArgumentParser):
     def error(self, message):
         raise RuntimeError(message)
+
+
+def ensure_muterole(*, required: bool = True):
+    async def predicate(ctx: CustomContext):
+        if not ctx.guild:
+            raise commands.BadArgument('Only servers can have mute roles')
+        if not required:
+            return True
+        if not (role := await ctx.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)):
+            raise commands.BadArgument('This server has no mute role set')
+        if not (role := ctx.guild.get_role(role)):
+            raise commands.BadArgument("It seems like I could not find this server's mute role. Was it deleted?")
+        if role >= ctx.me.top_role:
+            raise commands.BadArgument("This server's mute role seems to be above my top role. I can't assign it!")
+        return True
+    return commands.check(predicate)
+
+
+async def muterole(ctx) -> discord.Role:
+    if not ctx.guild:
+        raise commands.BadArgument('Only servers can have mute roles')
+    if not (role := await ctx.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)):
+        raise commands.BadArgument('This server has no mute role set')
+    if not (role := ctx.guild.get_role(role)):
+        raise commands.BadArgument("It seems like I could not find this server's mute role. Was it deleted?")
+    if role >= ctx.me.top_role:
+        raise commands.BadArgument("This server's mute role seems to be above my top role. I can't assign it!")
+    return role
 
 
 class BannedMember(commands.Converter):
@@ -202,6 +231,12 @@ class Moderation(commands.Cog):
     @temporary_mutes.before_loop
     async def wait_for_bot_ready(self):
         await self.bot.wait_until_ready()
+
+    def mute_task(self):
+        if self.temporary_mutes.is_running():
+            self.temporary_mutes.restart()
+        else:
+            self.temporary_mutes.start()
 
     @commands.command(help="Kicks a member from the server")
     @commands.has_permissions(kick_members=True)
@@ -536,43 +571,28 @@ class Moderation(commands.Cog):
 
     # Indefinitely mute member
 
-    @commands.command(aliases=['stfu', 'shut', 'silence'])
+    @commands.command()
+    @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def mute(self, ctx: CustomContext, member: discord.Member, *, reason: str = None) -> discord.Message:
         """
         Mutes a member indefinitely.
         """
-        only_reason = reason
-        reason = reason or "No reason given"
-        reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
         if not can_execute_action(ctx, ctx.author, member):
-            return await ctx.send("You're not high enough in role hierarchy to mute that member.")
+            raise commands.BadArgument("You're not high enough in role hierarchy to mute that member.")
 
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-        if not mute_role:
-            raise errors.MuteRoleNotFound
-
-        role = ctx.guild.get_role(int(mute_role))
-        if not isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
-
-        if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+        role = await muterole(ctx)
 
         try:
-            await member.add_roles(role, reason=reason)
+            await member.add_roles(role, reason=f"Muted by {ctx.author} ({ctx.author.id}) {f'for: {reason}' if reason else ''}"[0:500])
         except discord.Forbidden:
-            return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
+            raise commands.BadArgument(f"I don't seem to have permissions to add the `{role.name}` role")
 
         await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
                                   ctx.guild.id, member.id)
 
-        # in a command that adds new task in db
-        if self.temporary_mutes.is_running():
-            self.temporary_mutes.restart()
-        else:
-            self.temporary_mutes.start()
+        self.mute_task()
 
         if ctx.channel.permissions_for(role).send_messages_in_threads:
             embed = discord.Embed(color=discord.Color.red(),
@@ -580,17 +600,16 @@ class Moderation(commands.Cog):
                                               '\nYou may want to fix that using the `muterole fix` command!'
                                               '\nIf you don\'t want to receive security warnings, you can do `warnings off` command',
                                   title='Warning')
-            await ctx.author.send(embed=embed)
+            with contextlib.suppress(discord.HTTPException):
+                await ctx.author.send(embed=embed)
 
-        if not only_reason:
-            return await ctx.send(f"**{ctx.author}** muted **{member}**",
-                                  allowed_mentions=discord.AllowedMentions().none())
-
-        return await ctx.send(f"**{ctx.author}** muted **{member}**"
-                              f"\nReason: {only_reason}",
+        if reason:
+            reason = f"\nReason: {reason}"
+        return await ctx.send(f"**{ctx.author}** muted **{member}**{reason or ''}",
                               allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute', 'multimute'], name='multi-mute')
+    @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def multi_mute(self, ctx: CustomContext, members: commands.Greedy[discord.Member],
@@ -598,19 +617,10 @@ class Moderation(commands.Cog):
         """
         Mutes a lot of members indefinitely indefinitely.
         """
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-        if not mute_role:
-            raise errors.MuteRoleNotFound
 
-        role = ctx.guild.get_role(int(mute_role))
-        if not isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
+        role = await muterole(ctx)
 
-        if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
-
-        only_reason = reason
-        reason = f"Mute by {ctx.author} ({ctx.author.id}){f': {reason}' if only_reason else ''}"
+        reason = f"Mute by {ctx.author} ({ctx.author.id}){f': {reason}' if reason else ''}"[0:500]
 
         successful: typing.List[discord.Member] = []
         failed_perms: typing.List[discord.Member] = []
@@ -631,122 +641,83 @@ class Moderation(commands.Cog):
             await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
                                       ctx.guild.id, member.id)
 
+        failed = ""
+
+        if failed_perms:
+            failed += f"\n**{len(failed_perms)} failed** because the author didn't have the required permissions to mute them."
+        if failed_internal:
+            failed += f"\n**{len(failed_internal)}** failed due to a discord error."
+
         await ctx.send(f"**Successfully muted {len(successful)}/{len(members)}**:"
-                       f"\n**Successful:** {', '.join([m.display_name for m in successful])}"
-                       f"\n**Failed:** {', '.join([m.display_name for m in failed_perms + failed_internal])}")
+                       f"\n**Successful:** {', '.join([m.display_name for m in successful])}{failed}")
 
-        if self.temporary_mutes.is_running():
-            self.temporary_mutes.restart()
-        else:
-            self.temporary_mutes.start()
+        self.mute_task()
 
-        if ctx.channel.permissions_for(role).send_messages_in_threads:
-            embed = discord.Embed(color=discord.Color.red(),
-                                  description='The mute role has permissions to create threads!'
-                                              '\nYou may want to fix that using the `muterole fix` command!'
-                                              '\nIf you don\'t want to receive security warnings, you can do `warnings off` command',
-                                  title='Warning')
-            await ctx.author.send(embed=embed)
-
-    @commands.command()
+    @commands.command(aliases=['hardmute'], name='hard-mute')
+    @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def hardmute(self, ctx: CustomContext, member: discord.Member, *, reason: str = None) -> discord.Message:
         """
         Mutes a member indefinitely, and removes all their roles.
         """
-        only_reason = reason
-        reason = reason or "No reason given"
-        reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
         if not can_execute_action(ctx, ctx.author, member):
             return await ctx.send("You're not high enough in role hierarchy to mute that member.")
 
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-        if not mute_role:
-            raise errors.MuteRoleNotFound
-
-        role = ctx.guild.get_role(int(mute_role))
-        if not isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
-
-        if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign the mute role.")
+        role = await muterole(ctx)
 
         roles = [r for r in member.roles if not r.is_assignable()] + [role]
 
         try:
-            await member.edit(roles=roles, reason=reason[0:500])
+            await member.edit(roles=roles, reason=f"Mute by {ctx.author} ({ctx.author.id}) {f'for {reason}' if reason else ''}"[0:500])
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to add the `{role.name}` role")
 
         await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
                                   ctx.guild.id, member.id)
 
-        if self.temporary_mutes.is_running():
-            self.temporary_mutes.restart()
-        else:
-            self.temporary_mutes.start()
+        self.mute_task()
 
         not_removed = [r for r in member.roles if not r.is_assignable() and not r.is_default()]
         nl = '\n'
-        if not only_reason:
+        if not reason:
             return await ctx.send(f"✅ **|** **{ctx.author}** hard-muted **{member}** "
                                   f"{f'{nl}⚠ **|** Could not remove **{len(not_removed)}** role(s).' if not_removed else ''}",
                                   allowed_mentions=discord.AllowedMentions().none())
         return await ctx.send(f"✅ **|** **{ctx.author}** hard-muted **{member}**"
-                              f"\nℹ **| With reason:** {only_reason[0:1600]}"
+                              f"\nℹ **| With reason:** {reason[0:1600]}"
                               f"{f'{nl}⚠ **|** Could not remove **{len(not_removed)}** role(s).' if not_removed else ''}",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    # Get mute role
-
     @commands.command()
+    @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def unmute(self, ctx: CustomContext, member: discord.Member, *, reason: str = None):
         """
         Unmutes a member
         """
-        only_reason = reason
-        reason = reason or "No reason given"
-        reason = f"Mute by {ctx.author} ({ctx.author.id}): {reason}"
         if not can_execute_action(ctx, ctx.author, member):
-            return await ctx.send("You're not high enough in role hierarchy to mute that member.")
+            raise commands.BadArgument("You're not high enough in role hierarchy to mute that member.")
 
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-        if not mute_role:
-            raise errors.MuteRoleNotFound
-
-        role = ctx.guild.get_role(int(mute_role))
-        if not isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
-
-        if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+        role = await muterole(ctx)
 
         try:
-            await member.remove_roles(role, reason=reason)
+            await member.remove_roles(role, reason=f"Unmute by {ctx.author} ({ctx.author.id}) {f'for {reason}' if reason else ''}"[0:500])
         except discord.Forbidden:
             return await ctx.send(f"I don't seem to have permissions to remove the `{role.name}` role")
 
         await self.bot.db.execute('DELETE FROM temporary_mutes WHERE (guild_id, member_id) = ($1, $2)',
                                   ctx.guild.id, member.id)
 
-        # in a command that adds new task in db
-        if self.temporary_mutes.is_running():
-            self.temporary_mutes.restart()
-        else:
-            self.temporary_mutes.start()
+        self.mute_task()
 
-        if not only_reason:
-            await ctx.send(f"**{ctx.author}** unmuted **{member}**",
-                           allowed_mentions=discord.AllowedMentions().none())
-        else:
-            await ctx.send(f"**{ctx.author}** unmuted **{member}**"
-                           f"\nReason: {only_reason}",
-                           allowed_mentions=discord.AllowedMentions().none())
+        reason = f"\nReason: {reason}" if reason else ""
+        await ctx.send(f"**{ctx.author}** unmuted **{member}**{reason}",
+                       allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['mass-unmute', 'multi_unmute', 'mass_unmute', 'massunmute'], name='multi-unmute')
+    @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def multi_unmute(self, ctx: CustomContext, members: commands.Greedy[discord.Member],
@@ -754,19 +725,10 @@ class Moderation(commands.Cog):
         """
         Mutes a lot of members indefinitely indefinitely.
         """
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-        if not mute_role:
-            raise errors.MuteRoleNotFound
+        if not can_execute_action(ctx, ctx.author, members):
+            raise commands.BadArgument("You're not high enough in role hierarchy to mute that member.")
 
-        role = ctx.guild.get_role(int(mute_role))
-        if not isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
-
-        if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
-
-        only_reason = reason
-        reason = f"Unmute by {ctx.author} ({ctx.author.id}){f': {reason}' if only_reason else ''}"
+        role = await muterole(ctx)
 
         successful: typing.List[discord.Member] = []
         failed_perms: typing.List[discord.Member] = []
@@ -791,22 +753,10 @@ class Moderation(commands.Cog):
                        f"\n**Successful:** {', '.join([m.display_name for m in successful])}"
                        f"\n**Failed:** {', '.join([m.display_name for m in failed_perms + failed_internal])}")
 
-        if self.temporary_mutes.is_running():
-            self.temporary_mutes.restart()
-        else:
-            self.temporary_mutes.start()
-
-        if ctx.channel.permissions_for(role).send_messages_in_threads:
-            embed = discord.Embed(color=discord.Color.red(),
-                                  description='The mute role has permissions to create threads!'
-                                              '\nYou may want to fix that using the `muterole fix` command!'
-                                              '\nIf you don\'t want to receive security warnings, you can do `warnings off` command',
-                                  title='Warning')
-            await ctx.author.send(embed=embed)
-
-    # self mutes
+        self.mute_task()
 
     @commands.command()
+    @ensure_muterole()
     @commands.bot_has_permissions(manage_roles=True)
     async def selfmute(self, ctx, *, duration: helpers.ShortTime):
         """
@@ -817,16 +767,8 @@ class Moderation(commands.Cog):
         # ❓❔ Do not ask a moderator to unmute you! ❓❔
         """
         reason = "self mute"
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-        if not mute_role:
-            raise errors.MuteRoleNotFound
 
-        role = ctx.guild.get_role(int(mute_role))
-        if not isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
-
-        if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign the muted role!")
+        role = await muterole(ctx)
 
         created_at = ctx.message.created_at
         if duration.dt > (created_at + datetime.timedelta(days=1)):
@@ -839,8 +781,7 @@ class Moderation(commands.Cog):
         warning = (f"_Are you sure you want to mute yourself for **{delta}**?_"
                    f"\n**__Don't ask the moderators to undo this!__**")
 
-        confirm = await ctx.confirm(warning, delete_after_confirm=True)
-        if not confirm:
+        if not await ctx.confirm(warning, delete_after_confirm=True):
             return
 
         try:
@@ -853,17 +794,14 @@ class Moderation(commands.Cog):
                                   "UPDATE SET reason = $3, end_time = $4",
                                   ctx.guild.id, ctx.author.id, reason, duration.dt)
 
-        # in a command that adds new task in db
-        if self.temporary_mutes.is_running():
-            self.temporary_mutes.restart()
-        else:
-            self.temporary_mutes.start()
+        self.mute_task()
 
         await ctx.send(f"{constants.SHUT_SEAGULL} 👍")
 
     # Temp-mute
 
     @commands.command()
+    @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def tempmute(self, ctx, member: discord.Member, *, duration: helpers.ShortTime):
@@ -874,22 +812,12 @@ class Moderation(commands.Cog):
 
         reason = f"Temporary mute by {ctx.author} ({ctx.author.id})"
 
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
-        if not mute_role:
-            raise errors.MuteRoleNotFound
-
-        role = ctx.guild.get_role(int(mute_role))
-        if not isinstance(role, discord.Role):
-            raise errors.MuteRoleNotFound
-
         if not can_execute_action(ctx, ctx.author, member):
-            return await ctx.send("You're not high enough in role hierarchy to do that!")
+            raise commands.BadArgument("You're not high enough in role hierarchy to do that!")
 
-        if role > ctx.me.top_role:
-            return await ctx.send("I'm not high enough in role hierarchy to assign that role.")
+        role = await muterole(ctx)
 
         created_at = ctx.message.created_at
-
         if duration.dt < (created_at + datetime.timedelta(minutes=1)):
             return await ctx.send('Duration is too short. Must be at least 1 minute.')
 
@@ -905,10 +833,7 @@ class Moderation(commands.Cog):
                                   "UPDATE SET reason = $3, end_time = $4",
                                   ctx.guild.id, member.id, reason, duration.dt)
 
-        if self.temporary_mutes.is_running():
-            self.temporary_mutes.restart()
-        else:
-            self.temporary_mutes.start()
+        self.mute_task()
 
         await ctx.send(f"**{ctx.author}** muted **{member}** for **{delta}**")
 
