@@ -682,6 +682,7 @@ class Handler(commands.Cog, name='Handler'):
     async def add_previously_muted(self, member: discord.Member):
         if not await self.bot.db.fetchval("SELECT user_id FROM muted WHERE user_id = $1 AND guild_id = $2", member.id, member.guild.id):
             return
+        await self.bot.db.execute("DELETE FROM muted WHERE user_id = $1 AND guild_id = $2", member.id, member.guild.id)
         if not (role := await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', member.guild.id)):
             return
         if not (role := member.guild.get_role(role)):
