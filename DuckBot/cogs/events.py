@@ -426,7 +426,8 @@ class Handler(commands.Cog, name='Handler'):
                 await message.reply(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
                                                                                    users=False,
                                                                                    roles=False,
-                                                                                   everyone=False))
+                                                                                   everyone=False),
+                                    delete_after=15)
 
     @commands.Cog.listener('on_message')
     async def on_suggestion_receive(self, message: discord.Message):
