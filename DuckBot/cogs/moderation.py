@@ -245,8 +245,7 @@ class Moderation(commands.Cog):
         bot_can_execute_action(ctx, member)
         if not can_execute_action(ctx, ctx.author, member):
             raise commands.BadArgument('You cannot kick this member.')
-        reason = f"Kicked by {ctx.author} ({ctx.author.id}) " + (f" for {reason}" if reason else "")
-        await ctx.author.kick(reason=reason)
+        await member.kick(reason=f"Kicked by {ctx.author} ({ctx.author.id}) " + (f" for {reason}" if reason else ""))
         await ctx.send(f'👢 **|** **{ctx.author}** kicked **{member}**' + (f"\nFor {reason}" if reason else ""))
 
     @commands.command(help="Bans a member from the server")
