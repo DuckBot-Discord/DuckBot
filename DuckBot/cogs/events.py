@@ -90,7 +90,7 @@ class Handler(commands.Cog, name='Handler'):
             return await ctx.send(self.bot.maintenance or 'I am under maintenance... sorry!')
 
         if isinstance(error, commands.CommandNotFound):
-            if self.bot.maintenance is not None or ctx.author.id in self.bot.blacklist:
+            if self.bot.maintenance is not None or ctx.author.id in self.bot.blacklist or ctx.prefix == '':
                 return
             command_names = []
             for command in [c for c in self.bot.commands]:
