@@ -248,7 +248,7 @@ class Utility(commands.Cog):
             color=member.color if member.color not in (None, discord.Color.default()) else ctx.color,
             timestamp=ctx.message.created_at)
         order_embed.set_author(name=f"{member}'s Joined order", icon_url=member.display_avatar.url)
-        order_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+        order_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         sort_mems = sorted(ctx.guild.members, key=lambda m: m.joined_at)
         index = sort_mems.index(member)
         members = [f'{m} ({m.joined_at.strftime("%d %b %Y. %S:%H")})' for m in
@@ -270,7 +270,7 @@ class Utility(commands.Cog):
                 color=member.color if member.color not in (None, discord.Color.default()) else ctx.color,
                 timestamp=ctx.message.created_at)
             banner_embed.set_author(name=f"{member}'s Banner", icon_url=member.display_avatar.url)
-            banner_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+            banner_embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             banner_embed.set_image(url=fetched_user.banner.url)
         view = UserInfoView(ctx, embed, banner_embed, order_embed)
         await view.start()
@@ -317,8 +317,8 @@ class Utility(commands.Cog):
         user: discord.User = member or ctx.author
         embed = discord.Embed(title=user, url=user.display_avatar.url)
         if isinstance(user, discord.Member) and user.guild_avatar:
-            embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
-            embed.description = f"[avatar]({user.avatar.url if user.avatar else user.default_avatar.url}) | " \
+            embed.set_thumbnail(url=user.display_avatar.url if user.avatar else user.default_avatar.url)
+            embed.description = f"[avatar]({user.display_avatar.url if user.avatar else user.default_avatar.url}) | " \
                                 f"[server avatar]({user.display_avatar.url})"
         embed.set_image(url=user.display_avatar.url)
 
