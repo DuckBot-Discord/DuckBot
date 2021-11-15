@@ -33,6 +33,13 @@ class ModMail(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
 
+    async def get_dm_hook(self, channel: discord.TextChannel) -> discord.Webhook:
+        if url := self.bot.dm_webhooks.get(channel.id, None):
+            return discord.Webhook.from_url(url, session=self.bot.session, bot_token=self.bot.http.token)
+        wh = await get_webhook(channel)
+        self.bot.dm_webhooks[channel.id] = wh.url
+        return wh
+
     @commands.Cog.listener('on_message')
     async def on_mail(self, message: discord.Message):
         if message.guild or message.author == self.bot.user or self.bot.dev_mode is True:
@@ -60,7 +67,8 @@ class ModMail(commands.Cog):
                 position=0,
                 reason="DuckBot ModMail"
             )
-        wh = await get_webhook(channel)
+
+        wh = await self.get_dm_hook(channel)
 
         files = [await attachment.to_file(spoiler=attachment.is_spoiler()) for attachment in message.attachments if
                  attachment.size < 8388600]
@@ -117,7 +125,7 @@ class ModMail(commands.Cog):
                 name=str(after),
                 reason=f"DuckBot ModMail Channel Update for {after.id}"
             )
-            wh = await get_webhook(channel)
+            wh = await self.get_dm_hook(channel)
             embed = discord.Embed(title="ModMail user update!",
                                   color=discord.Colour.blurple(),
                                   timestamp=discord.utils.utcnow())

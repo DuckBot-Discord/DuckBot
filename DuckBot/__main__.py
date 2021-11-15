@@ -139,6 +139,7 @@ class DuckBot(commands.Bot):
         self.auto_un_afk = {}
         self.welcome_channels = {}
         self.suggestion_channels = {}
+        self.dm_webhooks = defaultdict(str)
         self.counting_channels = {}
         self.counting_rewards = {}
         self.saved_messages = {}
