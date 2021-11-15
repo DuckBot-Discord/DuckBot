@@ -46,7 +46,7 @@ def setup(bot):
     bot.add_cog(Fun(bot))
 
 
-class Fun(commands.Cog, name='Fun'):
+class Fun(commands.Cog):
     """
     🤪 General entertainment commands, and all other commands that don't fit within other categories.
     """
@@ -55,6 +55,8 @@ class Fun(commands.Cog, name='Fun'):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
+        self.select_emoji = '🤪'
+        self.select_brief = 'General Entertainment Commands'
 
     async def reddit(self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE') -> discord.Embed:
         try:

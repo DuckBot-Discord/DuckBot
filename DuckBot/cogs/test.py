@@ -20,6 +20,8 @@ class Test(commands.Cog):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
+        self.select_emoji = '🧪'
+        self.select_brief = 'Beta Commands (WIP)'
 
     @commands.command()
     @commands.is_owner()

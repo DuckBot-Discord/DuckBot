@@ -132,6 +132,8 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
         self.temporary_mutes.start()
+        self.select_emoji = '🔨'
+        self.select_brief = 'Mod Commands, like Ban and Mute'
 
     async def cog_check(self, ctx):
         if not ctx.guild:
@@ -551,7 +553,11 @@ class Moderation(commands.Cog):
                 return
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
-            prefix = tuple(await self.bot.get_pre(self.bot, ctx.message))
+            prefix = await self.bot.get_pre(self.bot, ctx.message)
+            if self.bot.noprefix and await self.bot.is_owner(ctx.author):
+                with contextlib.suppress(ValueError):
+                    prefix.remove('')
+            prefix = tuple(prefix)
             bulk = True
 
             def check(msg):

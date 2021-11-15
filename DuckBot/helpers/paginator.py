@@ -17,40 +17,6 @@ from DuckBot.__main__ import CustomContext
 sep = '\u200b '
 
 
-class GroupHelpPageSource(menus.ListPageSource):
-    def __init__(self, group, cog_commands, *, prefix):
-        super().__init__(entries=cog_commands, per_page=6)
-        self.group = group
-        self.prefix = prefix
-        if isinstance(group, discord.ext.commands.Group):
-            self.title = self.get_minimal_command_signature(group)
-            self.description = f"```yaml\n{(self.group.help or 'No help given...').replace('%PRE%', self.prefix)}```"
-        else:
-            self.title = f'{self.group.qualified_name} Commands'
-            self.description = self.group.description
-
-    async def format_page(self, menu, cog_commands):
-        embed = discord.Embed(title=self.title, description=self.description, colour=discord.Colour.blurple())
-
-        for command in cog_commands:
-            signature = f'{command.qualified_name} {command.signature}'
-            if command.help:
-                command_help = command.help.replace("%PRE%", self.prefix)
-            else:
-                command_help = 'No help given...'
-            embed.add_field(name=signature, value=f"```yaml\n{command_help}```", inline=False)
-
-        maximum = self.get_max_pages()
-        if maximum > 1:
-            embed.set_author(name=f'Page {menu.current_page + 1}/{maximum} ({len(self.entries)} commands)')
-
-        embed.set_footer(text=f'Use "{self.prefix}help command" for more info on a command.')
-        return embed
-
-    def get_minimal_command_signature(self, group):
-        return '%s%s %s' % (self.prefix, group.qualified_name, group.signature)
-
-
 class InviteButtons(discord.ui.View):
     """ Buttons to the top.gg and bots.gg voting sites """
     def __init__(self):

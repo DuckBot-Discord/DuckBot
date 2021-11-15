@@ -111,6 +111,8 @@ class Music(commands.Cog):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
+        self.select_emoji = '🎵'
+        self.select_brief = 'Music Commands'
 
     async def cog_before_invoke(self, ctx: Context):
         if (is_guild := ctx.guild is not None) \

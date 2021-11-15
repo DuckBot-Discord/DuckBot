@@ -74,6 +74,8 @@ class Utility(commands.Cog):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
+        self.select_emoji = '💬'
+        self.select_brief = 'Utility And General Information Commands.'
 
     @commands.command(name='charinfo')
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)

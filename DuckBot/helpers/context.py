@@ -58,15 +58,15 @@ class Confirm(discord.ui.View):
             return True
         messages = [
             "Oh no you can't do that! This belongs to **{user}**",
-            'This is **{user}**\'s confirmation, sorry! 💖',
+            'This is **{user}**\'s confirmation, sorry! 💢',
             '😒 Does this look yours? **No**. This is **{user}**\'s confirmation button',
             f'{constants.GET_SOME_HELP}',
             'HEYYYY!!!!! this is **{user}**\'s menu.',
-            'Sorry but you can\'t mess with **{user}**\' menu QnQ',
+            'Sorry but you can\'t mess with **{user}**\' menu :(',
             'No. just no. This is **{user}**\'s menu.',
             constants.BLOB_STOP_SIGN * 3,
             'You don\'t look like {user} do you...',
-            '🤨 Thats not yours! Thats **{user}**\'s',
+            '🤨 That\'s not yours! That\'s **{user}**\'s menu',
             '🧐 Whomst! you\'re not **{user}**',
             '_out!_ 👋'
         ]

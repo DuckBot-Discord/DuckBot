@@ -35,13 +35,11 @@ from collections import deque
 import asyncpg.exceptions
 import discord
 import tabulate
-import typing
 from discord.ext import commands, tasks
 
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.cogs.management import UnicodeEmoji
-from DuckBot.helpers import constants
 from DuckBot.helpers.helper import LoggingEventsFlags
 
 default_message = "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
@@ -493,6 +491,9 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         self.bot: DuckBot = bot
         self._invites_ready = asyncio.Event()
         self._dict_filled = asyncio.Event()
+
+        self.select_emoji = '⚙'
+        self.select_brief = 'Manage Bot Settings, Like Prefix, Logs, etc.'
 
         self.bot.invites = {}
         self.bot.get_invite = self.get_invite

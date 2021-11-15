@@ -12,8 +12,10 @@ import re
 import time
 
 import typing
+
+from discord import Interaction
 from discord.ext import commands
-from jishaku.paginators import WrappedPaginator
+from discord.ui import Button
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants, helper
@@ -21,10 +23,169 @@ from DuckBot.helpers.helper import count_lines, count_others
 from DuckBot.helpers.paginator import InvSrc
 
 suggestions_channel = 882634213516521473
+newline = "\n"
 
 
 def setup(bot):
     bot.add_cog(About(bot))
+
+
+class HelpCentre(discord.ui.View):
+    def __init__(self, ctx: CustomContext, other_view: discord.ui.View):
+        super().__init__()
+        self.embed = None
+        self.ctx = ctx
+        self.other_view = other_view
+
+    @discord.ui.button(label="Go Back", style=discord.ButtonStyle.blurple)
+    async def go_back(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.embed, view=self.other_view)
+        self.stop()
+
+    async def start(self, interaction: discord.Interaction):
+        embed = discord.Embed(title='Here is a guide on how to understand this help command',
+                              description="\n__**Do not not include these brackets when running a command!**__"
+                                          "\n__**They are only there to indicate the argument type**__",
+                              color=self.ctx.color)
+        embed.add_field(name="`<argument>`", value="Means that this argument is __**required**__", inline=False)
+        embed.add_field(name="`[argument]`", value="Means that this argument is __**optional**__", inline=False)
+        embed.add_field(name="`[argument='default']`", value="Means that this argument is __**optional**__ and has a default value", inline=False)
+        embed.add_field(name="`[argument]...` or `[argument...]`", value="Means that this argument is __**optional**__ and can take __**multiple entries**__", inline=False)
+        embed.add_field(name="`<argument>...` or `<argument...>`", value="Means that this argument is __**required**__ and can take __**multiple entries**__"
+                                                                         "\nFor example: db.mass-mute @user1 @user2 @user3", inline=False)
+        embed.add_field(name="`[X|Y|Z]`", value="Means that this argument can be __**either X, Y or Z**__", inline=False)
+        embed.set_footer(text="To continue browsing the help menu, press Go Back")
+        embed.set_author(name='About this Help Command', icon_url=self.ctx.me.display_avatar.url)
+        self.embed = interaction.message.embeds[0]
+        self.add_item(discord.ui.Button(label='Support Server', url='https://discord.gg/TdRfGKg8Wh'))
+        self.add_item(discord.ui.Button(label='Invite Me', url=discord.utils.oauth_url(self.ctx.bot.user.id, permissions=discord.Permissions(123), scopes=('applications.commands', 'bot'))))
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user and interaction.user == self.ctx.author:
+            return True
+        await interaction.response.defer()
+        return False
+
+
+class HelpView(discord.ui.View):
+    def __init__(self, ctx: CustomContext, data: typing.Dict[commands.Cog, typing.List[commands.Command]]):
+        super().__init__()
+        self.ctx = ctx
+        self.data = data
+        self.bot: DuckBot = ctx.bot
+        self.main_embed = self.build_main_page()
+        self.current_page = 0
+        self.message: discord.Message = None
+        self.embeds: typing.List[discord.Embed] = [self.main_embed]
+
+    @discord.ui.select(placeholder="Select a category", row=0)
+    async def category_select(self, select: discord.ui.Select, interaction: discord.Interaction):
+        if select.values[0] == "index":
+            self.embeds = [self.main_embed]
+            return await interaction.response.edit_message(embed=self.main_embed)
+        cog = self.bot.get_cog(select.values[0])
+        if not cog:
+            return await interaction.response.send_message('Somehow, that category was not found? 🤔')
+        else:
+            self.embeds = self.build_embeds(cog)
+            self.current_page = 0
+            self._update_buttons()
+            return await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+
+    def build_embeds(self, cog: commands.Cog) -> typing.List[discord.Embed]:
+        embeds = []
+        comm = cog.get_commands()
+        embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color)
+        for cmd in comm:
+            embed.add_field(name=f"{cmd.name} {cmd.signature}",
+                            value=cmd.brief or cmd.help or 'No help given...'[0:1024], inline=False)
+            embed.set_footer(text="For more info on a command run \"help [command]\"")
+            if len(embed.fields) == 5:
+                embeds.append(embed)
+                embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color)
+        if len(embed.fields) > 0:
+            embeds.append(embed)
+        return embeds
+
+    def build_select(self) -> None:
+        self.category_select: discord.ui.Select
+        self.category_select.options = []
+        self.category_select.add_option(label='Main Page', value='index', emoji='🏠')
+        for cog, comm in self.data.items():
+            if not comm:
+                continue
+            emoji = getattr(cog, 'select_emoji', None)
+            label = cog.qualified_name
+            brief = getattr(cog, 'select_brief', None)
+            self.category_select.add_option(label=label, value=label, emoji=emoji, description=brief)
+
+    def build_main_page(self) -> discord.Embed:
+        embed = discord.Embed(color=self.ctx.color, title='DuckBot Help Menu',
+                              description="Hello, I'm DuckBot! A multi-purpose bot with a lot of features."
+                                          "\n\nUse `db.help <command>` for more info on a command."
+                                          "\nThere is also `db.help <command> [subcommand]`."
+                                          "\nUse `db.help <category>` for more info on a category."
+                                          "\nYou can also use the menu below to view a category.")
+        embed.add_field(name='Getting Support', inline=False,
+                        value='To get help, you can join my support server.'
+                        f'\n{constants.SERVERS_ICON} <https://discord.gg/TdRfGKg8Wh>'
+                        '\n📨 You can also send me a DM if you prefer to.')
+        embed.add_field(name='Who Am I?', inline=False,
+                        value='I am DuckBot, a multi-purpose bot with a lot of features.'
+                              f'\nI am created and maintained by {constants.GITHUB}[LeoCx1000](https://github.com/leoCx1000) and '
+                              '\nI have a lot of features, like games, moderation, image'
+                              '\nmanipulation, logging and more, which you can see by'
+                              '\nnavigating the dropdown menu below.'
+                              f'\n\nI\'ve been up since {discord.utils.format_dt(self.bot.uptime)}'
+                              f'\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots)')
+        return embed
+
+    @discord.ui.button(label='❓', row=1, style=discord.ButtonStyle.green)
+    async def help(self, button: Button, interaction: Interaction):
+        view = HelpCentre(self.ctx, self)
+        await view.start(interaction)
+
+    @discord.ui.button(label='≪', row=1)
+    async def previous(self, button: Button, interaction: Interaction):
+        self.current_page -= 1
+        self._update_buttons()
+        await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+
+    @discord.ui.button(label='≫', row=1)
+    async def next(self, button: Button, interaction: Interaction):
+        self.current_page += 1
+        self._update_buttons()
+        await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+        print(self.embeds[self.current_page].fields[0].name)
+        print(self.current_page)
+
+    @discord.ui.button(label='🛑', row=1, style=discord.ButtonStyle.red)
+    async def _end(self, button: Button, interaction: Interaction):
+        await interaction.message.delete()
+        if self.ctx.channel.permissions_for(self.ctx.me).manage_messages:
+            await self.ctx.message.delete(delay=0)
+
+    def _update_buttons(self):
+        page = self.current_page
+        total = len(self.embeds) - 1
+        self.next.disabled = page == total
+        self.previous.disabled = page == 0
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user and interaction.user == self.ctx.author:
+            return True
+        await interaction.response.defer()
+        return False
+
+    async def on_timeout(self) -> None:
+        self.clear_items()
+        await self.message.edit(view=self)
+
+    async def start(self):
+        self.build_select()
+        self._update_buttons()
+        self.message = await self.ctx.send(embed=self.main_embed, view=self, footer=False)
 
 
 class MyHelp(commands.HelpCommand):
@@ -35,54 +196,20 @@ class MyHelp(commands.HelpCommand):
     def get_bot_mapping(self):
         """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
         bot = self.context.bot
-        mapping = {cog: cog.get_commands() for cog in
-                   sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True)}
-        mapping[None] = [c for c in bot.commands if c.cog is None]
+        ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management', 'DuckBot Hideout']
+        mapping = {cog: cog.get_commands() for cog in sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True) if cog.qualified_name not in ignored_cogs}
         return mapping
 
-    # Formatting
     def get_minimal_command_signature(self, command):
         if isinstance(command, commands.Group):
             return '[G] %s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
         return '(c) %s%s %s' % (self.context.clean_prefix, command.qualified_name, command.signature)
 
-    @staticmethod
-    def get_command_name(command):
-        return '%s' % command.qualified_name
-
     # !help
     async def send_bot_help(self, mapping):
-        data = []
-        ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management', 'DuckBot Hideout']
-        for cog, cog_commands in mapping.items():
 
-            if cog is None or cog.qualified_name in ignored_cogs:
-                continue
-            command_signatures = [self.get_minimal_command_signature(c) for c in cog_commands]
-            if command_signatures:
-                if cog.qualified_name in ('Image',):
-                    pages = WrappedPaginator(prefix=f'{cog.description}\n```css\n', suffix='\n```', max_size=450)
-                    for s in command_signatures:
-                        pages.add_line(s)
-                    for p in pages.pages:
-                        info = ('Category: ' + cog.qualified_name, p)
-                        data.append(info)
-                else:
-                    val = cog.description + '```css\n' + "\n".join(command_signatures) + '\n```'
-                    info = ('Category: ' + cog.qualified_name, f'{val}')
-
-                    data.append(info)
-
-        source = paginator.HelpMenuPageSource(data=data, ctx=self.context, help_class=self)
-        menu = paginator.ViewPaginator(source=source, ctx=self.context, compact=True)
-        await menu.start()
-
-    def common_command_formatting(self, embed_like, command):
-        embed_like.title = self.get_command_signature(command)
-        if command.description:
-            embed_like.description = f'{command.description}\n\n```yaml\n{command.help}\n```'
-        else:
-            embed_like.description = command.help or '```yaml\nNo help found...\n```'
+        view = HelpView(self.context, data=mapping)
+        await view.start()
 
     # !help <command>
     async def send_command_help(self, command: commands.Command):
@@ -99,7 +226,7 @@ class MyHelp(commands.HelpCommand):
             embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(command.aliases)}`'
         try:
             await command.can_run(self.context)
-        except Exception as e:
+        except BaseException as e:
             try:
                 if isinstance(e, discord.ext.commands.CheckAnyFailure):
                     for e in e.errors:
@@ -125,15 +252,24 @@ class MyHelp(commands.HelpCommand):
             except commands.DisabledCommand:
                 embed.add_field(name='Cant execute this command:',
                                 value='This command is restricted to slash commands.', inline=False)
-            finally:
-                return await self.context.send(embed=embed, footer=False)
-        await self.context.send(embed=embed, footer=False)
+            except Exception as exc:
+                embed.add_field(name='Cant execute this command:', value='Unknown/unhandled reason.', inline=False)
+                print(f'{command} failed to execute: {exc}')
+        finally:
+            await self.context.send(embed=embed, footer=False)
 
     async def send_cog_help(self, cog):
         entries = cog.get_commands()
-        menu = paginator.ViewPaginator(paginator.GroupHelpPageSource(cog, entries, prefix=self.context.clean_prefix),
-                                       ctx=self.context, compact=True)
-        await menu.start()
+        if entries:
+            data = [self.get_minimal_command_signature(entry) for entry in entries]
+            embed = discord.Embed(title=f"`{cog.qualified_name}` category commands",
+                                  description='**Description:**\n' + cog.description.replace('%PRE%', self.context.clean_prefix))
+            embed.description = embed.description + f'\n\n**Commands:**\n```css\n{newline.join(data)}\n```' \
+                                                    f'\n`[G]` means group, these have sub-commands.' \
+                                                    f'\n`(C)` means command, these do not have sub-commands.'
+            await self.context.send(embed=embed, footer=False)
+        else:
+            await self.context.send(f'No commands found in {cog.qualified_name}')
 
     async def send_group_help(self, group):
         embed = discord.Embed(title=f"information about: `{self.context.clean_prefix}{group}`",
@@ -142,6 +278,11 @@ class MyHelp(commands.HelpCommand):
         embed.add_field(name='Command usage:', value=f"```css\n{self.get_minimal_command_signature(group)}\n```")
         if group.aliases:
             embed.description = embed.description + f'\n\n**Aliases:**\n`{"`, `".join(group.aliases)}`'
+        if group.commands:
+            formatted = '\n'.join([self.get_minimal_command_signature(c) for c in group.commands])
+            embed.add_field(name='Sub-commands for this command:',
+                            value=f'```css\n{formatted}\n```**Do `{self.context.clean_prefix}help command subcommand` for more info on a sub-command**',
+                            inline=False)
         # noinspection PyBroadException
         try:
             await group.can_run(self.context)
@@ -155,16 +296,21 @@ class MyHelp(commands.HelpCommand):
                             value=', '.join(error.missing_permissions).replace('_', ' ').replace('guild',
                                                                                                  'server').title(),
                             inline=False)
-        except:
-            pass
 
-        if group.commands:
-            formatted = '\n'.join([self.get_minimal_command_signature(c) for c in group.commands])
-            embed.add_field(name='Sub-commands for this group:',
-                            value=f'```css\n{formatted}\n```**Do `{self.context.clean_prefix}help command subcommand` for more info on a sub-command**',
-                            inline=False)
-
-        await self.context.send(embed=embed)
+        except commands.NotOwner:
+            embed.add_field(name='Rank you are missing:', value='Bot owner', inline=False)
+        except commands.PrivateMessageOnly:
+            embed.add_field(name='Cant execute this here:', value='Can only be executed in DMs.', inline=False)
+        except commands.NoPrivateMessage:
+            embed.add_field(name='Cant execute this here:', value='Can only be executed in a server.', inline=False)
+        except commands.DisabledCommand:
+            embed.add_field(name='Cant execute this command:',
+                            value='This command is restricted to slash commands.', inline=False)
+        except Exception as exc:
+            embed.add_field(name='Cant execute this command:', value='Unknown error.', inline=False)
+            print(f'{group} failed to execute: {exc}')
+        finally:
+            await self.context.send(embed=embed)
 
     def command_not_found(self, string):
         return string
@@ -230,7 +376,8 @@ class About(commands.Cog):
             'name': 'help', 'slash_command': True}
         help_command.cog = self
         bot.help_command = help_command
-        bot.session = aiohttp.ClientSession()
+        self.select_emoji = constants.INFORMATION_SOURCE
+        self.select_brief = 'Bot Information commands.'
 
     @commands.Cog.listener('on_ready')
     async def register_views(self):

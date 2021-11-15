@@ -18,6 +18,8 @@ class ImageMan(commands.Cog, name='Image'):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
+        self.select_emoji = '📸'
+        self.select_brief = 'Image Manipulation Commands'
 
     @commands.command()
     async def pixelate(self, ctx: CustomContext, member: typing.Optional[typing.Union[discord.Member, discord.User]], pixel_size: typing.Optional[int] = 8):
