@@ -49,16 +49,24 @@ class HelpCentre(discord.ui.View):
                               color=self.ctx.color)
         embed.add_field(name="`<argument>`", value="Means that this argument is __**required**__", inline=False)
         embed.add_field(name="`[argument]`", value="Means that this argument is __**optional**__", inline=False)
-        embed.add_field(name="`[argument='default']`", value="Means that this argument is __**optional**__ and has a default value", inline=False)
-        embed.add_field(name="`[argument]...` or `[argument...]`", value="Means that this argument is __**optional**__ and can take __**multiple entries**__", inline=False)
-        embed.add_field(name="`<argument>...` or `<argument...>`", value="Means that this argument is __**required**__ and can take __**multiple entries**__"
-                                                                         "\nFor example: db.mass-mute @user1 @user2 @user3", inline=False)
-        embed.add_field(name="`[X|Y|Z]`", value="Means that this argument can be __**either X, Y or Z**__", inline=False)
+        embed.add_field(name="`[argument='default']`",
+                        value="Means that this argument is __**optional**__ and has a default value", inline=False)
+        embed.add_field(name="`[argument]...` or `[argument...]`",
+                        value="Means that this argument is __**optional**__ and can take __**multiple entries**__",
+                        inline=False)
+        embed.add_field(name="`<argument>...` or `<argument...>`",
+                        value="Means that this argument is __**required**__ and can take __**multiple entries**__"
+                              "\nFor example: db.mass-mute @user1 @user2 @user3", inline=False)
+        embed.add_field(name="`[X|Y|Z]`", value="Means that this argument can be __**either X, Y or Z**__",
+                        inline=False)
         embed.set_footer(text="To continue browsing the help menu, press Go Back")
         embed.set_author(name='About this Help Command', icon_url=self.ctx.me.display_avatar.url)
         self.embed = interaction.message.embeds[0]
         self.add_item(discord.ui.Button(label='Support Server', url='https://discord.gg/TdRfGKg8Wh'))
-        self.add_item(discord.ui.Button(label='Invite Me', url=discord.utils.oauth_url(self.ctx.bot.user.id, permissions=discord.Permissions(123), scopes=('applications.commands', 'bot'))))
+        self.add_item(discord.ui.Button(label='Invite Me', url=discord.utils.oauth_url(self.ctx.bot.user.id,
+                                                                                       permissions=discord.Permissions(
+                                                                                           123), scopes=(
+            'applications.commands', 'bot'))))
         await interaction.response.edit_message(embed=embed, view=self)
 
     async def interaction_check(self, interaction: Interaction) -> bool:
@@ -98,7 +106,7 @@ class HelpView(discord.ui.View):
         comm = cog.get_commands()
         embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color)
         for cmd in comm:
-            embed.add_field(name=f"{cmd.name} {cmd.signature}",
+            embed.add_field(name=f"{constants.ARROW}{cmd.name} {cmd.signature}",
                             value=cmd.brief or cmd.help or 'No help given...'[0:1024], inline=False)
             embed.set_footer(text="For more info on a command run \"help [command]\"")
             if len(embed.fields) == 5:
@@ -122,15 +130,16 @@ class HelpView(discord.ui.View):
 
     def build_main_page(self) -> discord.Embed:
         embed = discord.Embed(color=self.ctx.color, title='DuckBot Help Menu',
-                              description="Hello, I'm DuckBot! A multi-purpose bot with a lot of features."
-                                          "\n\nUse `db.help <command>` for more info on a command."
-                                          "\nThere is also `db.help <command> [subcommand]`."
-                                          "\nUse `db.help <category>` for more info on a category."
-                                          "\nYou can also use the menu below to view a category.")
+                              description="Hello, I'm DuckBot! A multi-purpose bot with a lot of features.")
+        embed.add_field(name="Getting Help", inline=False,
+                        value="Use `db.help <command>` for more info on a command."
+                              "\nThere is also `db.help <command> [subcommand]`."
+                              "\nUse `db.help <category>` for more info on a category."
+                              "\nYou can also use the menu below to view a category.")
         embed.add_field(name='Getting Support', inline=False,
                         value='To get help, you can join my support server.'
-                        f'\n{constants.SERVERS_ICON} <https://discord.gg/TdRfGKg8Wh>'
-                        '\n📨 You can also send me a DM if you prefer to.')
+                              f'\n{constants.SERVERS_ICON} <https://discord.gg/TdRfGKg8Wh>'
+                              '\n📨 You can also send me a DM if you prefer to.')
         embed.add_field(name='Who Am I?', inline=False,
                         value='I am DuckBot, a multi-purpose bot with a lot of features.'
                               f'\nI am created and maintained by {constants.GITHUB}[LeoCx1000](https://github.com/leoCx1000) and '
@@ -139,6 +148,8 @@ class HelpView(discord.ui.View):
                               '\nnavigating the dropdown menu below.'
                               f'\n\nI\'ve been up since {discord.utils.format_dt(self.bot.uptime)}'
                               f'\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots)')
+        embed.set_footer(text='For more info on the help command press ❓',
+                         icon_url='https://cdn.discordapp.com/emojis/895407958035431434.png')
         return embed
 
     @discord.ui.button(label='❓', row=1, style=discord.ButtonStyle.green)
@@ -197,7 +208,9 @@ class MyHelp(commands.HelpCommand):
         """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
         bot = self.context.bot
         ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management', 'DuckBot Hideout']
-        mapping = {cog: cog.get_commands() for cog in sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True) if cog.qualified_name not in ignored_cogs}
+        mapping = {cog: cog.get_commands() for cog in
+                   sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True) if
+                   cog.qualified_name not in ignored_cogs}
         return mapping
 
     def get_minimal_command_signature(self, command):
@@ -263,7 +276,8 @@ class MyHelp(commands.HelpCommand):
         if entries:
             data = [self.get_minimal_command_signature(entry) for entry in entries]
             embed = discord.Embed(title=f"`{cog.qualified_name}` category commands",
-                                  description='**Description:**\n' + cog.description.replace('%PRE%', self.context.clean_prefix))
+                                  description='**Description:**\n' + cog.description.replace('%PRE%',
+                                                                                             self.context.clean_prefix))
             embed.description = embed.description + f'\n\n**Commands:**\n```css\n{newline.join(data)}\n```' \
                                                     f'\n`[G]` means group, these have sub-commands.' \
                                                     f'\n`(C)` means command, these do not have sub-commands.'
@@ -323,11 +337,12 @@ class MyHelp(commands.HelpCommand):
     async def send_error_message(self, error):
         matches = difflib.get_close_matches(error, self.context.bot.cogs.keys())
         if matches:
-            confirm = await self.context.confirm(message=f"Sorry but i couldn't recognise {error} as one of my categories!"
-                                                         f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
-                                                 delete_after_confirm=True, delete_after_timeout=True,
-                                                 delete_after_cancel=True, buttons=(('✅', f'See {matches[0]}'[0:80], discord.ButtonStyle.blurple),
-                                                                                    ('🗑', None, discord.ButtonStyle.red)), timeout=15)
+            confirm = await self.context.confirm(
+                message=f"Sorry but i couldn't recognise {error} as one of my categories!"
+                        f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
+                delete_after_confirm=True, delete_after_timeout=True,
+                delete_after_cancel=True, buttons=(('✅', f'See {matches[0]}'[0:80], discord.ButtonStyle.blurple),
+                                                   ('🗑', None, discord.ButtonStyle.red)), timeout=15)
             if confirm is True:
                 return await self.send_cog_help(self.context.bot.cogs[matches[0]])
             return
@@ -353,8 +368,9 @@ class MyHelp(commands.HelpCommand):
                     return await self.send_command_help(self.context.bot.get_command(matches[0]))
                 return
 
-        await self.context.send(f"Sorry but i couldn't recognise \"{discord.utils.remove_markdown(error)}\" as one of my commands or categories!"
-                                f"\nDo `{self.context.clean_prefix}help` for a list of available commands! 💞")
+        await self.context.send(
+            f"Sorry but i couldn't recognise \"{discord.utils.remove_markdown(error)}\" as one of my commands or categories!"
+            f"\nDo `{self.context.clean_prefix}help` for a list of available commands! 💞")
 
     async def on_help_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
@@ -413,7 +429,8 @@ class About(commands.Cog):
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         view = discord.ui.View()
         view.add_item(discord.ui.Button(emoji='⭐', label='Recommended', url=self.oauth(294171045078)))
-        view.add_item(discord.ui.Button(emoji='<:certified_moderator:895393984308981930>', label='All', url=self.oauth(549755813887)))
+        view.add_item(discord.ui.Button(emoji='<:certified_moderator:895393984308981930>', label='All',
+                                        url=self.oauth(549755813887)))
         await ctx.send(embed=embed, view=view)
 
     @commands.command(help="Checks the bot's ping to Discord")

@@ -146,6 +146,7 @@ TEXT_CHANNEL_WITH_THREAD = '<:threadnew:895414437916332062>'
 EMOJI_GHOST = '<:emoji_ghost:895414463354785853>'
 SPOTIFY = '<:spotify:897661396022607913>'
 YOUTUBE_LOGO = '<:youtube:898052487989309460>'
+ARROW = '<:arrow:909672287849041940>'
 
 st_nt = namedtuple('statuses', ['ONLINE', 'IDLE', 'DND', 'OFFLINE',
                                 'ONLINE_WEB', 'IDLE_WEB', 'DND_WEB', 'OFFLINE_WEB',

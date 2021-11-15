@@ -443,9 +443,6 @@ class Utility(commands.Cog):
 
         Note: You can only pass an emoji _or_ an index, not both.
         """
-        if server_emoji and index:
-            raise commands.BadArgument('You can only pass `server_emoji` or `index`, not both.'
-                                       f'\nsee `{ctx.clean_prefix}help {ctx.command.qualified_name}` for more info'[0:1000])
         if ctx.message.reference:
             custom_emoji = re.compile(r"<a?:[a-zA-Z0-9_]+:[0-9]+>")
             emojis = custom_emoji.findall(ctx.message.reference.resolved.content)
