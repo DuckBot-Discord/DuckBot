@@ -90,8 +90,10 @@ class HelpView(discord.ui.View):
     @discord.ui.select(placeholder="Select a category", row=0)
     async def category_select(self, select: discord.ui.Select, interaction: discord.Interaction):
         if select.values[0] == "index":
+            self.current_page = 0
             self.embeds = [self.main_embed]
-            return await interaction.response.edit_message(embed=self.main_embed)
+            self._update_buttons()
+            return await interaction.response.edit_message(embed=self.main_embed, view=self)
         cog = self.bot.get_cog(select.values[0])
         if not cog:
             return await interaction.response.send_message('Somehow, that category was not found? 🤔')
@@ -104,14 +106,16 @@ class HelpView(discord.ui.View):
     def build_embeds(self, cog: commands.Cog) -> typing.List[discord.Embed]:
         embeds = []
         comm = cog.get_commands()
-        embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color)
+        embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color,
+                              description=cog.description or "No description provided")
         for cmd in comm:
             embed.add_field(name=f"{constants.ARROW}{cmd.name} {cmd.signature}",
-                            value=cmd.brief or cmd.help or 'No help given...'[0:1024], inline=False)
+                            value=(cmd.brief or cmd.help or 'No help given...').replace('%PRE%', self.ctx.clean_prefix)[0:1024], inline=False)
             embed.set_footer(text="For more info on a command run \"help [command]\"")
             if len(embed.fields) == 5:
                 embeds.append(embed)
-                embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color)
+                embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color,
+                                      description=cog.description or "No description provided")
         if len(embed.fields) > 0:
             embeds.append(embed)
         return embeds
@@ -141,15 +145,18 @@ class HelpView(discord.ui.View):
                               f'\n{constants.SERVERS_ICON} <https://discord.gg/TdRfGKg8Wh>'
                               '\n📨 You can also send me a DM if you prefer to.')
         embed.add_field(name='Who Am I?', inline=False,
-                        value='I am DuckBot, a multi-purpose bot with a lot of features.'
-                              f'\nI am created and maintained by {constants.GITHUB}[LeoCx1000](https://github.com/leoCx1000) and '
-                              '\nI have a lot of features, like games, moderation, image'
-                              '\nmanipulation, logging and more, which you can see by'
-                              '\nnavigating the dropdown menu below.'
+                        value=f'I\'m DuckBot, a multipurpose bot created and maintained '
+                              f'\nby {constants.GITHUB}[LeoCx1000](https://github.com/'
+                              f'leoCx1000). You can use me to play games, moderate '
+                              f'\nyour server, mess with some images and more! Check out '
+                              f'\nall my features using the dropdown below.'
+                              
+                              
                               f'\n\nI\'ve been up since {discord.utils.format_dt(self.bot.uptime)}'
                               f'\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots)')
         embed.set_footer(text='For more info on the help command press ❓',
                          icon_url='https://cdn.discordapp.com/emojis/895407958035431434.png')
+        embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.display_avatar.url)
         return embed
 
     @discord.ui.button(label='❓', row=1, style=discord.ButtonStyle.green)
