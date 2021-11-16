@@ -488,6 +488,10 @@ class Management(commands.Cog, name='Bot Management'):
             else:
                 await ctx.send(f'Please provide a reason!')
 
+        @dev.command(name='restart', aliases=['reboot', 'r'])
+        async def restart(self, ctx, service: str = 'duckbot', daemon: bool = False):
+            self.bot.dispatch('restart_request', ctx, service, daemon)
+
         @dev.command(aliases=['sp'], name='silent-prefix')
         @commands.bot_has_permissions(add_reactions=True)
         async def silent_prefix(self, ctx, state: bool = None):
