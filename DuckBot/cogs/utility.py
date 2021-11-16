@@ -43,7 +43,11 @@ def get_channel_positions(ctx: CustomContext, guild: discord.Guild, member_count
             sorted_channels.append((str(category), '✅ --' if category.permissions_for(ctx.author).read_messages else '❌ --'))
         for channel in channels:
             if member_counts:
-                sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(channel.members)}"))
+                if not isinstance(channel, discord.VoiceChannel):
+                    sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(channel.members)}"))
+                else:
+                    mem_count = [m for m in channel.guild.members if channel.permissions_for(m).read_messages]
+                    sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(mem_count)}"))
             else:
                 sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"N/A"))
     return sorted_channels
@@ -256,8 +260,11 @@ class ServerInfoView(discord.ui.View):
             pag = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             pag2 = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             for role, amount in roles:
-                pag.add_line(role)
-                pag2.add_line(amount)
+                if len(pag.pages) > 2:
+                    pag.add_line(role)
+                    pag2.add_line(amount)
+                else:
+                    break
             embed.description = 'Role Name and Member Count:'
             embed.add_field(name='Role Name', value=pag.pages[0])
             embed.add_field(name='Count', value=pag2.pages[0])
@@ -327,8 +334,11 @@ class ServerInfoView(discord.ui.View):
             pag = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             pag2 = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             for ch, amount in channels:
-                pag.add_line(ch)
-                pag2.add_line(amount)
+                if len(pag.pages) > 2:
+                    pag.add_line(ch)
+                    pag2.add_line(amount)
+                else:
+                    break
             embed.description = 'Channel Name and Member Count:'
             embed.add_field(name='Channel Name', value=pag.pages[0])
             embed.add_field(name='Count', value=pag2.pages[0])
