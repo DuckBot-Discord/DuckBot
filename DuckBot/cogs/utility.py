@@ -3,7 +3,6 @@ import re
 import typing
 import unicodedata
 from itertools import cycle
-from pprint import pprint
 
 import discord
 
@@ -63,6 +62,8 @@ class GenerateChannels(discord.ui.Button['ServerInfoView']):
         self.disabled = True
         self.emoji = '<a:loading:747680523459231834>'
         self.label = 'Requesting... Please wait.'
+        previous = self.view.change_style.disabled
+        self.view.change_style.disabled = True
         self.view.callback.disabled = True
         self.view.callback.placeholder = 'Loading Channel Data...'
         self.view._end.disabled = True
@@ -71,18 +72,19 @@ class GenerateChannels(discord.ui.Button['ServerInfoView']):
         channels = await self.ctx.bot.loop.run_in_executor(None, get_channel_positions, self.ctx, self.guild, True)
 
         self.view.channels = channels
-
         self.view._end.disabled = False
         self.view._end.emoji = '🛑'
+        self.view.change_style.disabled = previous
         self.view.callback.disabled = False
         self.view.callback.placeholder = 'Select a category to view...'
         self.view.remove_item(self)
 
         embed = self.view.generate_channels_embed()
+        if self.view.current == self.view.channels_embed:
+            self.view.current = embed
         self.view.channels_embed = embed
 
         if self.view.callback.values and self.view.callback.values[0] == 'channels':
-            print('true')
             return await self.view.message.edit(embed=self.view.channels_embed, view=self.view)
         await self.view.message.edit(view=self.view)
 
@@ -94,12 +96,16 @@ class ServerInfoView(discord.ui.View):
         self.guild = guild
         self.ctx = ctx
         self.bot: DuckBot = ctx.bot
+        self.current: discord.Embed = None
         self.message: discord.Message = None
         self.main_embed: discord.Embed = None
         self.roles_embed: discord.Embed = None
         self.invite_embed: discord.Embed = None
         self.members_embed: discord.Embed = None
         self.channels_embed: discord.Embed = None
+        self.is_on_mobile = self.ctx.author.is_on_mobile()
+        self.emotes = {False: constants.statuses.IDLE_MOBILE, True: constants.statuses.IDLE}
+        self.item_added = False
 
     @discord.ui.select(placeholder="Loading data, please wait...",
                        options=[discord.SelectOption(label='Main Page', value='main_page', description='View the main page', emoji='📋'),
@@ -109,22 +115,54 @@ class ServerInfoView(discord.ui.View):
                                 discord.SelectOption(label='Invites', value='invite', description='View invite stats', emoji='🔗')],
                        disabled=True)
     async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
+        self.change_style.disabled = True
+        self.change_style.style = discord.ButtonStyle.grey
         if select.values[0] == "main_page":
-            await interaction.response.edit_message(embed=self.main_embed)
+            self.current = self.main_embed
+            await interaction.response.edit_message(embed=self.main_embed, view=self)
         elif select.values[0] == "roles":
-            await interaction.response.edit_message(embed=self.roles_embed)
+            self.current = self.roles_embed
+            self.change_style.disabled = False
+            self.change_style.style = discord.ButtonStyle.blurple
+            await interaction.response.edit_message(embed=self.roles_embed, view=self)
         elif select.values[0] == "members":
-            await interaction.response.edit_message(embed=self.members_embed)
+            self.current = self.members_embed
+            await interaction.response.edit_message(embed=self.members_embed, view=self)
         elif select.values[0] == "channels":
-            await interaction.response.edit_message(embed=self.channels_embed)
+            self.current = self.channels_embed
+            self.change_style.disabled = False
+            self.change_style.style = discord.ButtonStyle.blurple
+            await interaction.response.edit_message(embed=self.channels_embed, view=self)
         elif select.values[0] == "invite":
-            await interaction.response.edit_message(embed=self.invite_embed)
+            self.current = self.invite_embed
+            await interaction.response.edit_message(embed=self.invite_embed, view=self)
 
-    @discord.ui.button(emoji='<a:loading:747680523459231834>', style=discord.ButtonStyle.danger, disabled=True,
-                       label='Loading may take up to 10 seconds')
+    @discord.ui.button(emoji='<a:loading:747680523459231834>', style=discord.ButtonStyle.danger, disabled=True)
     async def _end(self, _, interaction: discord.Interaction):
         await interaction.message.delete()
         self.stop()
+
+    @discord.ui.button(emoji=constants.TYPING_INDICATOR, style=discord.ButtonStyle.grey, disabled=True)
+    async def change_style(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.is_on_mobile = not self.is_on_mobile
+        button.emoji = self.emotes[self.is_on_mobile]
+        if self.current in (self.main_embed, self.members_embed, self.invite_embed):
+            await self.fix_mobile_embeds()
+            await interaction.response.edit_message(embed=self.current, view=self)
+        elif self.current == self.members_embed:
+            await self.fix_mobile_embeds()
+            self.current = self.members_embed
+            await interaction.response.edit_message(embed=self.current, view=self)
+        elif self.current == self.channels_embed:
+            await self.fix_mobile_embeds()
+            self.current = self.channels_embed
+            await interaction.response.edit_message(embed=self.current, view=self)
+        else:
+            await self.fix_mobile_embeds()
+            self.current = None
+            error_embed = discord.Embed(title="Error", description="Something went wrong, please select a category"
+                                                                   "\nusing the dropdown menu below.")
+            await interaction.response.edit_message(embed=error_embed, view=self)
 
     async def on_timeout(self) -> None:
         if self.message:
@@ -134,13 +172,14 @@ class ServerInfoView(discord.ui.View):
     async def start(self):
         self.message = await self.ctx.send(embed=discord.Embed(title='<a:loading:747680523459231834> Loading...'), footer=False)
         self.main_embed = await self.bot.loop.run_in_executor(None, self.generate_main_embed)
+        self.current = self.main_embed
+        self.change_style.emoji = self.emotes[self.is_on_mobile]
         self.message = await self.message.edit(embed=self.main_embed, view=self)
         await self.build_embeds()
         self.callback.disabled = False
         self.callback.placeholder = 'Select a category to view...'
         self._end.disabled = False
         self._end.emoji = '🛑'
-        self._end.label = None
         self.message = await self.message.edit(embed=self.main_embed, view=self)
 
     async def build_embeds(self):
@@ -152,6 +191,10 @@ class ServerInfoView(discord.ui.View):
             self.channels_embed = await self.bot.loop.run_in_executor(None, self.generate_channels_embed)
         if not self.invite_embed:
             self.invite_embed = await self.generate_invite_embed()
+
+    async def fix_mobile_embeds(self):
+        self.roles_embed = await self.bot.loop.run_in_executor(None, self.generate_roles_embed)
+        self.channels_embed = await self.bot.loop.run_in_executor(None, self.generate_channels_embed)
 
     def generate_main_embed(self) -> discord.Embed:
         guild = self.guild
@@ -247,11 +290,11 @@ class ServerInfoView(discord.ui.View):
     def generate_roles_embed(self) -> discord.Embed:
         guild = self.guild
         ctx = self.ctx
-        embed = discord.Embed(title=guild.name, colour=ctx.colour, timestamp=ctx.message.created_at)
+        embed = discord.Embed(title=guild.name, colour=ctx.colour)
 
         roles = [(r.name, f'{str(len(r.members))} <' if r in ctx.author.roles else str(len(r.members))) for r in sorted(guild.roles, key=lambda r: r.position, reverse=True)]
 
-        if ctx.author.is_on_mobile():
+        if self.is_on_mobile:
             pag = WrappedPaginator(prefix='Role Name and Member Count:\n```\n', suffix='\n```', max_size=4096)
             for line in (tabulate.tabulate(roles, headers=["Role Name", "Count"], tablefmt="presto")).split('\n'):
                 pag.add_line(line)
@@ -260,7 +303,7 @@ class ServerInfoView(discord.ui.View):
             pag = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             pag2 = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             for role, amount in roles:
-                if len(pag.pages) < 2:
+                if len(pag._pages) < 1:
                     pag.add_line(role)
                     pag2.add_line(amount)
                 else:
@@ -273,7 +316,7 @@ class ServerInfoView(discord.ui.View):
                         value=f"You have {len(ctx.author.roles)} (signified by `<`)"
                               f"\nYour top role: {ctx.author.top_role.mention}")
 
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed.set_footer(text=f"⚠ If the columns are broken, press the blue button. ⚠")
         return embed
 
     def generate_members_embed(self) -> discord.Embed:
@@ -320,12 +363,14 @@ class ServerInfoView(discord.ui.View):
             if guild.member_count < 1000:
                 channels = get_channel_positions(self.ctx, self.guild, member_counts=True)
             else:
-                self.add_item(GenerateChannels(ctx, guild=guild))
+                if not self.item_added:
+                    self.item_added = True
+                    self.add_item(GenerateChannels(ctx, guild=guild))
                 channels = get_channel_positions(self.ctx, self.guild, member_counts=False)
         else:
             channels = self.channels
 
-        if ctx.author.is_on_mobile():
+        if self.is_on_mobile:
             pag = WrappedPaginator(prefix='Channel Name and Member Count:\n```\n', suffix='\n```', max_size=4096)
             for line in (tabulate.tabulate(channels, headers=["Channel Name", "Count"], tablefmt="presto")).split('\n'):
                 pag.add_line(line)
@@ -334,17 +379,15 @@ class ServerInfoView(discord.ui.View):
             pag = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             pag2 = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             for ch, amount in channels:
-                if len(pag.pages) < 2:
-                    pag.add_line(ch)
-                    pag2.add_line(amount)
-                else:
-                    break
+                pag.add_line(ch)
+                pag2.add_line(amount)
             embed.description = 'Channel Name and Member Count:'
             embed.add_field(name='Channel Name', value=pag.pages[0])
             embed.add_field(name='Count', value=pag2.pages[0])
 
-        embed.set_footer(text=f"✅ - Channels you have access to."
-                              f"\n❌ - Channels you don't have access to.", icon_url=ctx.author.display_avatar.url)
+        embed.set_footer(text=f"⚠ If the columns are broken, press the blue button. ⚠"
+                              f"\n✅ - Channels you have access to."
+                              f"\n❌ - Channels you don't have access to.")
         return embed
 
     async def generate_invite_embed(self) -> discord.Embed:
