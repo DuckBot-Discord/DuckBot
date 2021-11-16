@@ -588,19 +588,19 @@ class LoggingBackend(commands.Cog):
             embed = discord.Embed(title='Member moved voice channels:', colour=discord.Colour.blurple(), timestamp=discord.utils.utcnow(),
                                   description=f"**From:** {before.channel.mention} ({after.channel.id})"
                                               f"\n**To:** {after.channel.mention} ({after.channel.id})")
-            embed.set_author(name=str(member), icon_url=member.avatar.url)
+            embed.set_author(name=str(member), icon_url=member.display_avatar.url)
             embed.set_footer(text=f"Member ID: {member.id}")
             self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if not before.channel and after.channel and self.bot.guild_loggings[member.guild.id].voice_join:
             embed = discord.Embed(title='Member joined a voice channel:', colour=discord.Colour.green(), timestamp=discord.utils.utcnow(),
                                   description=f"**Joined:** {after.channel.mention} ({after.channel.id})")
-            embed.set_author(name=str(member), icon_url=member.avatar.url)
+            embed.set_author(name=str(member), icon_url=member.display_avatar.url)
             embed.set_footer(text=f"Member ID: {member.id}")
             self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if before.channel and not after.channel and self.bot.guild_loggings[member.guild.id].voice_leave:
             embed = discord.Embed(title='Member left a voice channel:', colour=discord.Colour.red(), timestamp=discord.utils.utcnow(),
                                   description=f"**Left:** {before.channel.mention} ({before.channel.id})")
-            embed.set_author(name=str(member), icon_url=member.avatar.url)
+            embed.set_author(name=str(member), icon_url=member.display_avatar.url)
             embed.set_footer(text=f"Member ID: {member.id}")
             self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if not self.bot.guild_loggings[member.guild.id].voice_mod:
@@ -608,23 +608,23 @@ class LoggingBackend(commands.Cog):
         if before.deaf != after.deaf:
             if after.deaf:
                 embed = discord.Embed(title='Member Deafened by a Moderator', colour=discord.Colour.dark_gold(), timestamp=discord.utils.utcnow())
-                embed.set_author(name=str(member), icon_url=member.avatar.url)
+                embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
                 self.log(embed, guild=member.guild, send_to=self.send_to.voice)
             if before.deaf:
                 embed = discord.Embed(title='Member Un-deafened by a Moderator', colour=discord.Colour.yellow(), timestamp=discord.utils.utcnow())
-                embed.set_author(name=str(member), icon_url=member.avatar.url)
+                embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
                 self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if before.mute != after.mute:
             if after.mute:
                 embed = discord.Embed(title='Member Muted by a Moderator', colour=discord.Colour.dark_gold(), timestamp=discord.utils.utcnow())
-                embed.set_author(name=str(member), icon_url=member.avatar.url)
+                embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
                 self.log(embed, guild=member.guild, send_to=self.send_to.voice)
             if before.mute:
                 embed = discord.Embed(title='Member Un-muted by a Moderator', colour=discord.Colour.yellow(), timestamp=discord.utils.utcnow())
-                embed.set_author(name=str(member), icon_url=member.avatar.url)
+                embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
                 self.log(embed, guild=member.guild, send_to=self.send_to.voice)
 

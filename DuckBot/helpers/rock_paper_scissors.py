@@ -34,11 +34,7 @@ class ObjectSelector(discord.ui.Select):
                                 f"\n" \
                                 f"\n{response}"
 
-            for item in view.children:
-                if isinstance(item, discord.ui.Select):
-                    item.placeholder = "Game has ended!"
-                item.disabled = True
-
+            view.clear_items()
             await view.message.edit(embed=embed, view=view)
             view.stop()
 

@@ -97,7 +97,7 @@ class TicTacToeButton(discord.ui.Button['TicTacToe']):
             elif winner == view.O:
                 content = f'🅾 | **{view.current_player.name}** won! 🎉'
             else:
-                content = f"\U0001f454 | It's a tie! both "
+                content = f"\U0001f454 | It's a tie! both players loose!"
 
             for child in view.children:
                 child.disabled = True
