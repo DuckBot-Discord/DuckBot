@@ -172,7 +172,7 @@ class HelpView(discord.ui.View):
             if not comm:
                 continue
             emoji = getattr(cog, 'select_emoji', None)
-            label = cog.qualified_name + f" {len(comm)}"
+            label = cog.qualified_name + f" ({len(comm)})"
             brief = getattr(cog, 'select_brief', None)
             self.category_select.add_option(label=label, value=cog.qualified_name, emoji=emoji, description=brief)
         self.category_select.add_option(label='Browse Old Help Command', value='old_help_command', emoji='💀',
