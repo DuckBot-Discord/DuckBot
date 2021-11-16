@@ -296,9 +296,6 @@ class ServerInfoView(discord.ui.View):
             boosters = [f"{m} ({m.premium_since.strftime('%d %b %Y. %H:%M')})" for m in sort_subs[:5]]
             boosters.reverse()
             boost_order = '\n'.join([f"{n}.{' ' * (7 - len(str(n)) + 1)}{s}" for n, s in enumerate(boosters, start=index)])
-            m: discord.Member = None
-            top_booster = sorted(guild.premium_subscribers, key=lambda m: m)
-
             embed.add_field(name=f"💎 Recent Boosters:", inline=False,
                             value='```py\n' + boost_order + '\n```' +
                                   f'**Boosts** {guild.premium_subscription_count} •'
