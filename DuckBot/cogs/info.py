@@ -99,8 +99,8 @@ class NewsMenu(discord.ui.View):
         info: About = self.bot.get_cog('About')
         embed = await info.news(self.ctx, return_embed=True)
         self.embed = interaction.message.embeds[0]
-        self.add_item(discord.ui.Button(emoji=constants.TOP_GG, label='Vote on top.gg!', url=f'https://top.gg/bot/{self.ctx.author.id}'))
-        self.add_item(discord.ui.Button(emoji=constants.BOTS_GG, label='Vote bots.gg!', url=f'https://discord.bots.gg/{self.ctx.me.id}'))
+        self.add_item(discord.ui.Button(emoji=constants.TOP_GG, label='Vote on top.gg!', url=f'https://top.gg/bot/{self.bot.user.id}'))
+        self.add_item(discord.ui.Button(emoji=constants.BOTS_GG, label='Vote bots.gg!', url=f'https://discord.bots.gg/{self.bot.user.id}'))
         embed.set_footer(text="To continue browsing the news, press 🏠Go Back")
         await interaction.response.edit_message(embed=embed, view=self)
 

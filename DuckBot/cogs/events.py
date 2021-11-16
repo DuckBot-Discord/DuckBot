@@ -355,10 +355,6 @@ class Handler(commands.Cog, name='Handler'):
             await message.edit(embed=embed)
             await message.clear_reactions()
 
-    @commands.Cog.listener()
-    async def on_dbl_vote(self, data):
-        print(data)
-
     @tasks.loop(minutes=30)
     async def do_member_count_update(self):
         if self.bot.user.id == 788278464474120202:
