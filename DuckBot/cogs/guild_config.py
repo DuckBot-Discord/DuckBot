@@ -700,6 +700,15 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         self.bot.invites[guild.id] = await self.fetch_invites(guild) or {}
 
     @commands.Cog.listener()
+    async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
+        if before.id != self.bot.user.id:
+            return
+        if not before.guild_permissions.manage_channels and after.guild_permissions.manage_channels:
+            self.bot.invites[before.guild.id] = await self.fetch_invites(before.guild) or {}
+        if before.guild_permissions.manage_guild and not after.guild_permissions.manage_guild:
+            self.bot.invites.pop(before.guild.id, None)
+
+    @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         self.bot.loop.create_task(self._schedule_deletion(guild))
 
@@ -769,7 +778,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         # list comp on the sorted invites and then
         # join it into one string with str.join
         description = f'**__Top server {amount} invites__**\n```py\n' + tabulate.tabulate(
-            [(f'{i + 1}. [{invites[i].code if return_embed is False else "INV CODE"}] {invites[i].inviter.name}',
+            [(f'{i + 1}. [{invites[i].code if return_embed is False else "*"*(len(invites[i].code)-4)}] {invites[i].inviter.name}',
               f'{invites[i].uses}') for i in range(amount)],
             headers=['Invite', 'Uses']) + (
                           f'\n``` ___There are {len(invites) - max_table_length} more invites in this server.___\n' if len(
@@ -786,6 +795,9 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         description = description + f'\n**__Top server {value} inviters__**\n```\n' + table + '```' + \
                       (f' ___There are {len(invites) - max_table_length} more inviters in this server.___' if len(
                           invites) > max_table_length else '')
+
+        if return_embed is True:
+            description += 'Invite codes hidden for privacy reasons. See\nthe `invite-stats` command for invite codes.'
 
         embed.description = description
 

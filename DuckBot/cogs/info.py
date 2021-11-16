@@ -106,7 +106,7 @@ class HelpView(discord.ui.View):
             return
         cog = self.bot.get_cog(select.values[0])
         if not cog:
-            return await interaction.response.send_message('Somehow, that category was not found? 🤔')
+            return await interaction.response.send_message('Somehow, that category was not found? 🤔', ephemeral=True)
         else:
             self.embeds = self.build_embeds(cog)
             self.current_page = 0
@@ -138,9 +138,9 @@ class HelpView(discord.ui.View):
             if not comm:
                 continue
             emoji = getattr(cog, 'select_emoji', None)
-            label = cog.qualified_name
+            label = cog.qualified_name + f" {len(comm)}"
             brief = getattr(cog, 'select_brief', None)
-            self.category_select.add_option(label=label, value=label, emoji=emoji, description=brief)
+            self.category_select.add_option(label=label, value=cog.qualified_name, emoji=emoji, description=brief)
         self.category_select.add_option(label='Browse Old Help Command', value='old_help_command', emoji='💀',
                                         description='Not recommended, but still available.')
 
@@ -195,10 +195,13 @@ class HelpView(discord.ui.View):
             await self.ctx.message.delete(delay=0)
 
     def _update_buttons(self):
+        styles = {True: discord.ButtonStyle.gray, False: discord.ButtonStyle.blurple}
         page = self.current_page
         total = len(self.embeds) - 1
         self.next.disabled = page == total
         self.previous.disabled = page == 0
+        self.next.style = styles[page == total]
+        self.previous.style = styles[page == 0]
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         if interaction.user and interaction.user == self.ctx.author:

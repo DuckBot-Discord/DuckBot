@@ -40,12 +40,12 @@ def get_channel_positions(ctx: CustomContext, guild: discord.Guild, member_count
     sorted_channels = []
     for category, channels in get_sorted_mapping(guild).items():
         if category:
-            sorted_channels.append((str(category), '👁 --' if category.permissions_for(ctx.author).read_messages else '➖ --'))
+            sorted_channels.append((str(category), '✅ --' if category.permissions_for(ctx.author).read_messages else '❌ --'))
         for channel in channels:
             if member_counts:
-                sorted_channels.append((str(channel), ('👁 ' if channel.permissions_for(ctx.author).view_channel else '➖ ') + f"{len(channel.members)}"))
+                sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(channel.members)}"))
             else:
-                sorted_channels.append((str(channel), ('👁 ' if channel.permissions_for(ctx.author).view_channel else '➖ ') + f"N/A"))
+                sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"N/A"))
     return sorted_channels
 
 
@@ -307,7 +307,7 @@ class ServerInfoView(discord.ui.View):
     def generate_channels_embed(self) -> discord.Embed:
         guild = self.guild
         ctx = self.ctx
-        embed = discord.Embed(title=guild.name, colour=ctx.colour, timestamp=ctx.message.created_at)
+        embed = discord.Embed(title=guild.name, colour=ctx.colour)
 
         if not self.channels:
             if guild.member_count < 1000:
@@ -333,7 +333,8 @@ class ServerInfoView(discord.ui.View):
             embed.add_field(name='Channel Name', value=pag.pages[0])
             embed.add_field(name='Count', value=pag2.pages[0])
 
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed.set_footer(text=f"✅ - Channels you have access to."
+                              f"\n❌ - Channels you don't have access to.", icon_url=ctx.author.display_avatar.url)
         return embed
 
     async def generate_invite_embed(self) -> discord.Embed:
