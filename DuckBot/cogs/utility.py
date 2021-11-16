@@ -260,7 +260,7 @@ class ServerInfoView(discord.ui.View):
             pag = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             pag2 = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             for role, amount in roles:
-                if len(pag.pages) > 2:
+                if len(pag.pages) < 2:
                     pag.add_line(role)
                     pag2.add_line(amount)
                 else:
@@ -334,7 +334,7 @@ class ServerInfoView(discord.ui.View):
             pag = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             pag2 = WrappedPaginator(prefix='```\n', suffix='\n```', max_size=1024)
             for ch, amount in channels:
-                if len(pag.pages) > 2:
+                if len(pag.pages) < 2:
                     pag.add_line(ch)
                     pag2.add_line(amount)
                 else:
