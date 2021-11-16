@@ -316,7 +316,10 @@ class ServerInfoView(discord.ui.View):
                         value=f"You have {len(ctx.author.roles)} (signified by `<`)"
                               f"\nYour top role: {ctx.author.top_role.mention}")
 
-        embed.set_footer(text=f"⚠ If the columns are broken, press the blue button. ⚠")
+        warntext = f"If on mobile, press the blue button to fix the columns"
+        if self.is_on_mobile:
+            warntext = "If on computer, press the blue button for better fomatting"
+        embed.set_footer(text=warntext)
         return embed
 
     def generate_members_embed(self) -> discord.Embed:
@@ -348,7 +351,7 @@ class ServerInfoView(discord.ui.View):
             boost_order = '\n'.join([f"{n}.{' ' * (7 - len(str(n)) + 1)}{s}" for n, s in enumerate(boosters, start=index)])
             embed.add_field(name=f"💎 Recent Boosters:", inline=False,
                             value='```py\n' + boost_order + '\n```' +
-                                  f'**Boosts** {guild.premium_subscription_count} •'
+                                  f'**Boosts** {guild.premium_subscription_count} • '
                                   f'**Boosters** {len(guild.premium_subscribers)}')
 
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
@@ -385,7 +388,10 @@ class ServerInfoView(discord.ui.View):
             embed.add_field(name='Channel Name', value=pag.pages[0])
             embed.add_field(name='Count', value=pag2.pages[0])
 
-        embed.set_footer(text=f"⚠ If the columns are broken, press the blue button. ⚠"
+        warntext = f"If on mobile, press the blue button to fix the columns"
+        if self.is_on_mobile:
+            warntext = "If on computer, press the blue button for better fomatting"
+        embed.set_footer(text=f"{warntext}"
                               f"\n✅ - Channels you have access to."
                               f"\n❌ - Channels you don't have access to.")
         return embed
