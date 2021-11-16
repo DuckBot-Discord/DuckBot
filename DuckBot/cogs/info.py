@@ -16,6 +16,7 @@ import typing
 from discord import Interaction
 from discord.ext import commands
 from discord.ui import Button
+from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants, helper
@@ -28,6 +29,12 @@ newline = "\n"
 
 def setup(bot):
     bot.add_cog(About(bot))
+
+
+def get_minimal_command_signature(ctx, command):
+    if isinstance(command, commands.Group):
+        return '[G] %s%s %s' % (ctx.clean_prefix, command.qualified_name, command.signature)
+    return '(c) %s%s %s' % (ctx.clean_prefix, command.qualified_name, command.signature)
 
 
 class HelpCentre(discord.ui.View):
@@ -64,9 +71,7 @@ class HelpCentre(discord.ui.View):
         self.embed = interaction.message.embeds[0]
         self.add_item(discord.ui.Button(label='Support Server', url='https://discord.gg/TdRfGKg8Wh'))
         self.add_item(discord.ui.Button(label='Invite Me', url=discord.utils.oauth_url(self.ctx.bot.user.id,
-                                                                                       permissions=discord.Permissions(
-                                                                                           123), scopes=(
-            'applications.commands', 'bot'))))
+                                        permissions=discord.Permissions(294171045078), scopes=('applications.commands', 'bot'))))
         await interaction.response.edit_message(embed=embed, view=self)
 
     async def interaction_check(self, interaction: Interaction) -> bool:
@@ -77,10 +82,11 @@ class HelpCentre(discord.ui.View):
 
 
 class HelpView(discord.ui.View):
-    def __init__(self, ctx: CustomContext, data: typing.Dict[commands.Cog, typing.List[commands.Command]]):
+    def __init__(self, ctx: CustomContext, data: typing.Dict[commands.Cog, typing.List[commands.Command]], help_command: commands.HelpCommand):
         super().__init__()
         self.ctx = ctx
         self.data = data
+        self.help_command = help_command
         self.bot: DuckBot = ctx.bot
         self.main_embed = self.build_main_page()
         self.current_page = 0
@@ -94,6 +100,10 @@ class HelpView(discord.ui.View):
             self.embeds = [self.main_embed]
             self._update_buttons()
             return await interaction.response.edit_message(embed=self.main_embed, view=self)
+        elif select.values[0] == "old_help_command":
+            await self.old_help(self.data)
+            self.stop()
+            return
         cog = self.bot.get_cog(select.values[0])
         if not cog:
             return await interaction.response.send_message('Somehow, that category was not found? 🤔')
@@ -106,15 +116,15 @@ class HelpView(discord.ui.View):
     def build_embeds(self, cog: commands.Cog) -> typing.List[discord.Embed]:
         embeds = []
         comm = cog.get_commands()
-        embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color,
+        embed = discord.Embed(title=f"{cog.qualified_name} commands [{len(comm)}]", color=self.ctx.color,
                               description=cog.description or "No description provided")
         for cmd in comm:
-            embed.add_field(name=f"{constants.ARROW}{cmd.name} {cmd.signature}",
+            embed.add_field(name=f"{constants.ARROW}`{cmd.name}{f' {cmd.signature}`' if cmd.signature else '`'}",
                             value=(cmd.brief or cmd.help or 'No help given...').replace('%PRE%', self.ctx.clean_prefix)[0:1024], inline=False)
             embed.set_footer(text="For more info on a command run \"help [command]\"")
             if len(embed.fields) == 5:
                 embeds.append(embed)
-                embed = discord.Embed(title=f"`{cog.qualified_name}` commands [{len(comm)}]", color=self.ctx.color,
+                embed = discord.Embed(title=f"{cog.qualified_name} commands [{len(comm)}]", color=self.ctx.color,
                                       description=cog.description or "No description provided")
         if len(embed.fields) > 0:
             embeds.append(embed)
@@ -131,6 +141,8 @@ class HelpView(discord.ui.View):
             label = cog.qualified_name
             brief = getattr(cog, 'select_brief', None)
             self.category_select.add_option(label=label, value=label, emoji=emoji, description=brief)
+        self.category_select.add_option(label='Browse Old Help Command', value='old_help_command', emoji='💀',
+                                        description='Not recommended, but still available.')
 
     def build_main_page(self) -> discord.Embed:
         embed = discord.Embed(color=self.ctx.color, title='DuckBot Help Menu',
@@ -154,31 +166,29 @@ class HelpView(discord.ui.View):
                               
                               f'\n\nI\'ve been up since {discord.utils.format_dt(self.bot.uptime)}'
                               f'\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots)')
-        embed.set_footer(text='For more info on the help command press ❓',
+        embed.set_footer(text='For more info on the help command press ?',
                          icon_url='https://cdn.discordapp.com/emojis/895407958035431434.png')
         embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.display_avatar.url)
         return embed
 
-    @discord.ui.button(label='❓', row=1, style=discord.ButtonStyle.green)
+    @discord.ui.button(emoji='❔', row=1, style=discord.ButtonStyle.blurple)
     async def help(self, button: Button, interaction: Interaction):
         view = HelpCentre(self.ctx, self)
         await view.start(interaction)
 
-    @discord.ui.button(label='≪', row=1)
+    @discord.ui.button(emoji=constants.ARROWBACKZ, row=1)
     async def previous(self, button: Button, interaction: Interaction):
         self.current_page -= 1
         self._update_buttons()
         await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
 
-    @discord.ui.button(label='≫', row=1)
+    @discord.ui.button(emoji=constants.ARROWFWDZ, row=1)
     async def next(self, button: Button, interaction: Interaction):
         self.current_page += 1
         self._update_buttons()
         await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
-        print(self.embeds[self.current_page].fields[0].name)
-        print(self.current_page)
 
-    @discord.ui.button(label='🛑', row=1, style=discord.ButtonStyle.red)
+    @discord.ui.button(emoji='🗑', row=1, style=discord.ButtonStyle.red)
     async def _end(self, button: Button, interaction: Interaction):
         await interaction.message.delete()
         if self.ctx.channel.permissions_for(self.ctx.me).manage_messages:
@@ -205,6 +215,32 @@ class HelpView(discord.ui.View):
         self._update_buttons()
         self.message = await self.ctx.send(embed=self.main_embed, view=self, footer=False)
 
+    async def old_help(self, mapping):
+        data = []
+        ignored_cogs = ['Jishaku', 'Events', 'Handler', 'Bot Management', 'DuckBot Hideout']
+        for cog, cog_commands in mapping.items():
+
+            if cog is None or cog.qualified_name in ignored_cogs:
+                continue
+            command_signatures = [get_minimal_command_signature(self.ctx, c) for c in cog_commands]
+            if command_signatures:
+                if cog.qualified_name in ('Image',):
+                    pages = WrappedPaginator(prefix=f'{cog.description}\n```css\n', suffix='\n```', max_size=450)
+                    for s in command_signatures:
+                        pages.add_line(s)
+                    for p in pages.pages:
+                        info = ('Category: ' + cog.qualified_name, p)
+                        data.append(info)
+                else:
+                    val = cog.description + '```css\n' + "\n".join(command_signatures) + '\n```'
+                    info = ('Category: ' + cog.qualified_name, f'{val}')
+
+                    data.append(info)
+
+        source = paginator.HelpMenuPageSource(data=data, ctx=self.ctx, help_class=self.help_command)
+        menu = paginator.ViewPaginator(source=source, ctx=self.ctx, compact=True)
+        await menu.start(start_message=self.message)
+
 
 class MyHelp(commands.HelpCommand):
     def __init__(self, **options):
@@ -228,7 +264,7 @@ class MyHelp(commands.HelpCommand):
     # !help
     async def send_bot_help(self, mapping):
 
-        view = HelpView(self.context, data=mapping)
+        view = HelpView(self.context, data=mapping, help_command=self)
         await view.start()
 
     # !help <command>
@@ -662,8 +698,8 @@ DuckBot's top role position
         await message.add_reaction('🔼')
         await message.add_reaction('🔽')
 
-    @commands.command()
-    async def news(self, ctx: CustomContext):
+    @commands.command(usage=None)
+    async def news(self, ctx: CustomContext, *, _=None, return_embed: typing.Optional[bool] = True) -> typing.Optional[discord.Embed]:
         """
         Shows the latest changes of the bot. ""
         """
@@ -713,6 +749,8 @@ DuckBot's top role position
                                           f"\n> **\🔎 <t:1636731000:R> New search options when enqueueing tracks**"
                                           f"\n> Commands for music added: `search`, `search-now`, `search-next`"
                               )
+        if return_embed is True:
+            return embed
         await ctx.send(embed=embed, footer=None)
 
     @commands.command(hidden=True)

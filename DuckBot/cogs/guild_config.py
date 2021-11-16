@@ -58,7 +58,8 @@ async def get_wh(channel: discord.TextChannel):
             if w.user == channel.guild.me:
                 return w.url
         else:
-            return (await channel.create_webhook(name='DuckBot Logging', avatar=await channel.guild.me.avatar.read())).url
+            return (
+                await channel.create_webhook(name='DuckBot Logging', avatar=await channel.guild.me.avatar.read())).url
     else:
         raise commands.BadArgument('Cannot create webhook!')
 
@@ -126,7 +127,9 @@ class ChannelsView(discord.ui.View):
             else:
                 try:
                     webhook_url = await get_wh(channel)
-                    await self.bot.db.execute('UPDATE log_channels SET default_channel = $2, default_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
+                    await self.bot.db.execute(
+                        'UPDATE log_channels SET default_channel = $2, default_chid = $3 WHERE guild_id = $1',
+                        self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('default', webhook_url, message.guild.id)
                 except commands.ChannelNotFound:
                     pass
@@ -179,7 +182,9 @@ class ChannelsView(discord.ui.View):
             else:
                 try:
                     webhook_url = await get_wh(channel)
-                    await self.bot.db.execute('UPDATE log_channels SET message_channel = $2, message_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
+                    await self.bot.db.execute(
+                        'UPDATE log_channels SET message_channel = $2, message_chid = $3 WHERE guild_id = $1',
+                        self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('message', webhook_url, message.guild.id)
                 except commands.ChannelNotFound:
                     pass
@@ -232,7 +237,9 @@ class ChannelsView(discord.ui.View):
             else:
                 try:
                     webhook_url = await get_wh(channel)
-                    await self.bot.db.execute('UPDATE log_channels SET join_leave_channel = $2, join_leave_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
+                    await self.bot.db.execute(
+                        'UPDATE log_channels SET join_leave_channel = $2, join_leave_chid = $3 WHERE guild_id = $1',
+                        self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('join_leave', webhook_url, message.guild.id)
                 except commands.ChannelNotFound:
                     pass
@@ -258,7 +265,8 @@ class ChannelsView(discord.ui.View):
                 child.disabled = True
             await interaction.response.edit_message(view=self)
             to_delete = []
-            m = await self.ctx.send('Please send a channel to change the **Member Events Channel**\nSend "cancel" to cancel')
+            m = await self.ctx.send(
+                'Please send a channel to change the **Member Events Channel**\nSend "cancel" to cancel')
             to_delete.append(m)
 
             def check(message: discord.Message):
@@ -285,7 +293,9 @@ class ChannelsView(discord.ui.View):
             else:
                 try:
                     webhook_url = await get_wh(channel)
-                    await self.bot.db.execute('UPDATE log_channels SET member_channel = $2, member_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
+                    await self.bot.db.execute(
+                        'UPDATE log_channels SET member_channel = $2, member_chid = $3 WHERE guild_id = $1',
+                        self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('member', webhook_url, message.guild.id)
                 except commands.ChannelNotFound:
                     pass
@@ -338,7 +348,9 @@ class ChannelsView(discord.ui.View):
             else:
                 try:
                     webhook_url = await get_wh(channel)
-                    await self.bot.db.execute('UPDATE log_channels SET server_channel = $2, server_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
+                    await self.bot.db.execute(
+                        'UPDATE log_channels SET server_channel = $2, server_chid = $3 WHERE guild_id = $1',
+                        self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('server', webhook_url, message.guild.id)
                 except commands.ChannelNotFound:
                     pass
@@ -392,7 +404,9 @@ class ChannelsView(discord.ui.View):
             else:
                 try:
                     webhook_url = await get_wh(channel)
-                    await self.bot.db.execute('UPDATE log_channels SET voice_channel = $2, voice_chid = $3 WHERE guild_id = $1', self.ctx.guild.id, webhook_url, channel.id)
+                    await self.bot.db.execute(
+                        'UPDATE log_channels SET voice_channel = $2, voice_chid = $3 WHERE guild_id = $1',
+                        self.ctx.guild.id, webhook_url, channel.id)
                     self.bot.update_log('voice', webhook_url, message.guild.id)
                 except commands.ChannelNotFound:
                     pass
@@ -410,7 +424,8 @@ class ChannelsView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.red, label='stop', row=2)
     async def stop_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         if self.lock.locked():
-            return await interaction.response.send_message('Can\'t do that while waiting for a message!', ephemeral=True)
+            return await interaction.response.send_message('Can\'t do that while waiting for a message!',
+                                                           ephemeral=True)
         await interaction.response.defer()
         await self.on_timeout()
 
@@ -473,8 +488,10 @@ class ValidEventConverter(commands.Converter):
             return new
         maybe_events = difflib.get_close_matches(argument, all_events)
         if maybe_events:
-            c = await ctx.confirm(f'Did you mean... **`{maybe_events[0]}`**?', delete_after_confirm=True, delete_after_timeout=False,
-                                  buttons=(('☑', None, discord.ButtonStyle.blurple), ('🗑', None, discord.ButtonStyle.gray)))
+            c = await ctx.confirm(f'Did you mean... **`{maybe_events[0]}`**?', delete_after_confirm=True,
+                                  delete_after_timeout=False,
+                                  buttons=(
+                                  ('☑', None, discord.ButtonStyle.blurple), ('🗑', None, discord.ButtonStyle.gray)))
             if c:
                 return maybe_events[0]
             elif c is None:
@@ -713,22 +730,34 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
     # might want to make a error handler
     # to handle commands.NoPrivateMessage
     @commands.guild_only()
-    @commands.command()
+    @commands.command(usage=None)
+    @commands.has_permissions(manage_guild=True)
     @commands.bot_has_guild_permissions(manage_guild=True)
-    async def invitestats(self, ctx: CustomContext):
+    async def invitestats(self, ctx: CustomContext, *, _=None, return_embed: bool = False, guild_id: int = None) -> \
+    Optional[discord.Embed]:
         """Displays the top 10 most used invites in the guild, and the top 10 inviters."""
         max_table_length = 10
         # PEP8 + same code, more readability
-        invites = self.bot.invites.get(ctx.guild.id, None)
+        invites = self.bot.invites.get(guild_id or ctx.guild.id, None)
 
         # falsey check for None or {}
         if not invites:
             # if there is no invites send this information
             # in an embed and return
+            if return_embed:
+                embed = discord.Embed(
+                    title="Something Went Wrong...",
+                    description="No invites found."
+                                "\nDo I have `Manage Server` permissions?",
+                    colour=discord.Colour.red())
+                return embed
             raise commands.BadArgument('I couldn\'t find any Invites. (try again?)')
 
         # if you got here there are invites in the cache
-        embed = discord.Embed(colour=discord.Colour.green(), title=f'{ctx.guild.name}\'s invite stats')
+        if return_embed is not True:
+            embed = discord.Embed(colour=discord.Colour.green(), title=f'{ctx.guild.name}\'s invite stats')
+        else:
+            embed = discord.Embed(colour=ctx.colour, title=f'{ctx.guild.name}', timestamp=ctx.message.created_at)
         # sort the invites by the amount of uses
         # by default this would make it in increasing
         # order so we pass True to the reverse kwarg
@@ -740,7 +769,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         # list comp on the sorted invites and then
         # join it into one string with str.join
         description = f'**__Top server {amount} invites__**\n```py\n' + tabulate.tabulate(
-            [(f'{i + 1}. [{invites[i].code}] {invites[i].inviter.name}', f'{invites[i].uses}') for i in range(amount)],
+            [(f'{i + 1}. [{invites[i].code if return_embed is False else "INV CODE"}] {invites[i].inviter.name}',
+              f'{invites[i].uses}') for i in range(amount)],
             headers=['Invite', 'Uses']) + (
                           f'\n``` ___There are {len(invites) - max_table_length} more invites in this server.___\n' if len(
                               invites) > max_table_length else '\n```')
@@ -759,6 +789,9 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
 
         embed.description = description
 
+        if return_embed is True:
+            embed.set_footer(text=f'Requested by {ctx.author}', icon_url=ctx.author.display_avatar.url)
+            return embed
         await ctx.send(embed=embed)
 
     @commands.group()
@@ -1296,7 +1329,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                                         'messages': deque(maxlen=100)}
             await ctx.send(f'✅ **|** Set the **counting channel** to {channel.mention}')
         except asyncpg.UniqueViolationError:
-            if (ctx.guild.id in self.bot.counting_channels and self.bot.counting_channels[ctx.guild.id]['channel'] != channel.id) or (ctx.guild.id not in self.bot.counting_channels):
+            if (ctx.guild.id in self.bot.counting_channels and self.bot.counting_channels[ctx.guild.id][
+                'channel'] != channel.id) or (ctx.guild.id not in self.bot.counting_channels):
                 confirm = await ctx.confirm(
                     '⚠ **|** There is already a **counting channel**! Would you like to **update it** and reset the count number to **0**?',
                     return_message=True)
@@ -1511,7 +1545,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         try:
             webhooks = await channel.webhooks()
         except (discord.Forbidden, discord.HTTPException):
-            raise commands.BadArgument(f'I was unable to get the list of webhooks in {channel.mention}. (Missing Permissions - Manage Webhooks)')
+            raise commands.BadArgument(
+                f'I was unable to get the list of webhooks in {channel.mention}. (Missing Permissions - Manage Webhooks)')
         for w in webhooks:
             if w.user == self.bot.user:
                 webhook_url = w.url
@@ -1524,16 +1559,19 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                                                  reason='DuckBot logging')
                 webhook_url = w.url
             except discord.Forbidden:
-                raise commands.BadArgument(f'I couldn\'t create a webhook in {channel.mention}(Missing Permissions - Manage Webhooks)')
+                raise commands.BadArgument(
+                    f'I couldn\'t create a webhook in {channel.mention}(Missing Permissions - Manage Webhooks)')
             except discord.HTTPException:
-                raise commands.BadArgument(f'There was an unexpected error while creating a webhook in {channel.mention} (HTTP exception) - Perhaps try again?')
+                raise commands.BadArgument(
+                    f'There was an unexpected error while creating a webhook in {channel.mention} (HTTP exception) - Perhaps try again?')
         await self.bot.db.execute('INSERT INTO prefixes (guild_id) VALUES ($1) '
                                   'ON CONFLICT (guild_id) DO NOTHING', ctx.guild.id)
         await self.bot.db.execute(
             "INSERT INTO log_channels(guild_id, default_channel, default_chid) VALUES ($1, $2, $3) "
             "ON CONFLICT (guild_id) DO UPDATE SET default_channel = $2, default_chid = $3",
             ctx.guild.id, webhook_url, channel.id)
-        await self.bot.db.execute("INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING", ctx.guild.id)
+        await self.bot.db.execute("INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING",
+                                  ctx.guild.id)
         self.bot.guild_loggings[ctx.guild.id] = LoggingEventsFlags.all()
         try:
             self.bot.log_channels[ctx.guild.id]._replace(default=webhook_url)
@@ -1624,7 +1662,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             raise commands.BadArgument('This server doesn\'t have logging enabled.')
         arg = getattr(self.bot.guild_loggings[ctx.guild.id], event, None)
         if arg is False:
-            raise commands.BadArgument(f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already disabled!')
+            raise commands.BadArgument(
+                f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already disabled!')
         await self.bot.db.execute(f'UPDATE logging_events SET {event} = $2 WHERE guild_id = $1',
                                   ctx.guild.id, False)
         setattr(self.bot.guild_loggings[ctx.guild.id], event, False)
@@ -1644,7 +1683,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             raise commands.BadArgument('This server doesn\'t have logging enabled.')
         arg = getattr(self.bot.guild_loggings[ctx.guild.id], event, None)
         if arg is True:
-            raise commands.BadArgument(f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already enabled!')
+            raise commands.BadArgument(
+                f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already enabled!')
         await self.bot.db.execute(f'UPDATE logging_events SET {event} = $2 WHERE guild_id = $1',
                                   ctx.guild.id, True)
         setattr(self.bot.guild_loggings[ctx.guild.id], event, True)
@@ -1668,7 +1708,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
             raise commands.BadArgument('This server doesn\'t have logging enabled.')
         await ctx.trigger_typing()
         events = self.bot.guild_loggings[ctx.guild.id]
-        embed = discord.Embed(title='Logging events for this server', colour=discord.Colour.blurple(), timestamp=ctx.message.created_at)
+        embed = discord.Embed(title='Logging events for this server', colour=discord.Colour.blurple(),
+                              timestamp=ctx.message.created_at)
         message_events = [ctx.default_tick(events.message_delete, 'Message Delete'),
                           ctx.default_tick(events.message_edit, 'Message Edit'),
                           ctx.default_tick(events.message_purge, 'Message Purge')]
@@ -1755,7 +1796,8 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
         async with ctx.typing():
             try:
                 over = {ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                        ctx.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True, manage_webhooks=True)}
+                        ctx.me: discord.PermissionOverwrite(read_messages=True, send_messages=True,
+                                                            manage_channels=True, manage_webhooks=True)}
                 avatar = await ctx.me.avatar.read()
                 cat = await ctx.guild.create_category(name='logging', overwrites=over)
                 join_leave_channel = await cat.create_text_channel(name='join-leave-log')
