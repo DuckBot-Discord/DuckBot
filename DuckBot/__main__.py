@@ -48,10 +48,6 @@ initial_extensions = (
 
 load_dotenv()
 
-token_spotify = tk.request_client_token(
-    client_id=os.getenv('SPOTIFY_CLIENT_ID'),
-    client_secret=os.getenv('SPOTIFY_CLIENT_SECRET'))
-
 with open(f'{os.getenv("COGS_PATH")}/music-config.json', "r+") as file:
     config = json.load(file)
 
@@ -94,7 +90,6 @@ class DuckBot(commands.Bot):
 
         )
 
-        self.spotify = tk.Spotify(token_spotify, asynchronous=True)
         self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
                                        client_secret=os.getenv('ASYNC_PRAW_CS'),
                                        user_agent=os.getenv('ASYNC_PRAW_UA'),
