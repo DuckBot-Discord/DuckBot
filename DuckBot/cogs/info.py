@@ -1,21 +1,17 @@
-import difflib
-import itertools
-
-import aiohttp
 import asyncio
-import discord
+import difflib
 import inspect
+import itertools
 import os
-import pkg_resources
-import psutil
 import re
 import time
-
 import typing
 
+import discord
+import pkg_resources
+import psutil
 from discord import Interaction
 from discord.ext import commands
-from discord.ui import Button
 from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
@@ -44,8 +40,8 @@ class HelpCentre(discord.ui.View):
         self.ctx = ctx
         self.other_view = other_view
 
-    @discord.ui.button(label="Go Back", style=discord.ButtonStyle.blurple)
-    async def go_back(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @discord.ui.button(emoji='🏠', label="Go Back", style=discord.ButtonStyle.blurple)
+    async def go_back(self, _, interaction: discord.Interaction):
         await interaction.response.edit_message(embed=self.embed, view=self.other_view)
         self.stop()
 
@@ -66,7 +62,7 @@ class HelpCentre(discord.ui.View):
                               "\nFor example: db.mass-mute @user1 @user2 @user3", inline=False)
         embed.add_field(name="`[X|Y|Z]`", value="Means that this argument can be __**either X, Y or Z**__",
                         inline=False)
-        embed.set_footer(text="To continue browsing the help menu, press Go Back")
+        embed.set_footer(text="To continue browsing the help menu, press 🏠Go Back")
         embed.set_author(name='About this Help Command', icon_url=self.ctx.me.display_avatar.url)
         self.embed = interaction.message.embeds[0]
         self.add_item(discord.ui.Button(label='Support Server', url='https://discord.gg/TdRfGKg8Wh'))
@@ -79,6 +75,44 @@ class HelpCentre(discord.ui.View):
             return True
         await interaction.response.defer()
         return False
+
+
+class NewsMenu(discord.ui.View):
+    def __init__(self, ctx: CustomContext, *, other_view: discord.ui.View):
+        super().__init__()
+        self.embed: discord.Embed = None
+        self.ctx = ctx
+        self.bot: DuckBot = ctx.bot
+        self.other_view = other_view
+
+    @discord.ui.button(emoji='🏠', label="Go Back", style=discord.ButtonStyle.blurple)
+    async def go_back(self, _, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.embed, view=self.other_view)
+        self.stop()
+
+    @discord.ui.button(emoji='🙏', label='Voting helps a lot to make DuckBot grow. Please vote!',
+                       style=discord.ButtonStyle.green, disabled=True, row=2)
+    async def vote(self, _, __):
+        return
+
+    async def start(self, interaction: discord.Interaction):
+        info: About = self.bot.get_cog('About')
+        embed = await info.news(self.ctx, return_embed=True)
+        self.embed = interaction.message.embeds[0]
+        self.add_item(discord.ui.Button(emoji=constants.TOP_GG, label='Vote on top.gg!', url=f'https://top.gg/bot/{self.ctx.author.id}'))
+        self.add_item(discord.ui.Button(emoji=constants.BOTS_GG, label='Vote bots.gg!', url=f'https://discord.bots.gg/{self.ctx.me.id}'))
+        embed.set_footer(text="To continue browsing the news, press 🏠Go Back")
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user and interaction.user == self.ctx.author:
+            return True
+        await interaction.response.defer()
+        return False
+
+    async def on_timeout(self) -> None:
+        await self.other_view.on_timeout()
+        self.other_view.stop()
 
 
 class HelpView(discord.ui.View):
@@ -166,33 +200,38 @@ class HelpView(discord.ui.View):
                               
                               f'\n\nI\'ve been up since {discord.utils.format_dt(self.bot.uptime)}'
                               f'\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots)')
-        embed.set_footer(text='For more info on the help command press ?',
+        embed.set_footer(text='For more info on the help command press ❓help',
                          icon_url='https://cdn.discordapp.com/emojis/895407958035431434.png')
         embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.display_avatar.url)
         return embed
 
-    @discord.ui.button(emoji='❔', row=1, style=discord.ButtonStyle.blurple)
-    async def help(self, button: Button, interaction: Interaction):
+    @discord.ui.button(emoji='❓', label='help', row=1, style=discord.ButtonStyle.green)
+    async def help(self, _, interaction: Interaction):
         view = HelpCentre(self.ctx, self)
         await view.start(interaction)
 
     @discord.ui.button(emoji=constants.ARROWBACKZ, row=1)
-    async def previous(self, button: Button, interaction: Interaction):
+    async def previous(self, _, interaction: Interaction):
         self.current_page -= 1
         self._update_buttons()
         await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
 
+    @discord.ui.button(emoji='🗑', row=1, style=discord.ButtonStyle.red)
+    async def _end(self, _, interaction: Interaction):
+        await interaction.message.delete()
+        if self.ctx.channel.permissions_for(self.ctx.me).manage_messages:
+            await self.ctx.message.delete(delay=0)
+
     @discord.ui.button(emoji=constants.ARROWFWDZ, row=1)
-    async def next(self, button: Button, interaction: Interaction):
+    async def next(self, _, interaction: Interaction):
         self.current_page += 1
         self._update_buttons()
         await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
 
-    @discord.ui.button(emoji='🗑', row=1, style=discord.ButtonStyle.red)
-    async def _end(self, button: Button, interaction: Interaction):
-        await interaction.message.delete()
-        if self.ctx.channel.permissions_for(self.ctx.me).manage_messages:
-            await self.ctx.message.delete(delay=0)
+    @discord.ui.button(emoji='📰', label='news', row=1, style=discord.ButtonStyle.green)
+    async def vote(self, _, interaction: Interaction):
+        view = NewsMenu(self.ctx, other_view=self)
+        await view.start(interaction)
 
     def _update_buttons(self):
         styles = {True: discord.ButtonStyle.gray, False: discord.ButtonStyle.blurple}
@@ -542,7 +581,7 @@ class About(commands.Cog):
 
         text = 0
         voice = 0
-        all = 0
+        total = 0
         guilds = 0
         for guild in self.bot.guilds:
             guilds += 1
@@ -551,7 +590,7 @@ class About(commands.Cog):
 
             total_members += guild.member_count
             for channel in guild.channels:
-                all += 1
+                total += 1
                 if isinstance(channel, discord.TextChannel):
                     text += 1
                 elif isinstance(channel, discord.VoiceChannel):
@@ -559,7 +598,7 @@ class About(commands.Cog):
         avg = [(len(g.bots) / g.member_count) * 100 for g in self.bot.guilds]
 
         embed.add_field(name='Members', value=f'{total_members:,} total\n{total_unique:,} unique')
-        embed.add_field(name='Channels', value=f'{all:,} total\n{text:,} text\n{voice:,} voice')
+        embed.add_field(name='Channels', value=f'{total:,} total\n{text:,} text\n{voice:,} voice')
 
         memory_usage = psutil.Process().memory_full_info().uss / 1024 ** 2
         cpu_usage = psutil.cpu_percent()
@@ -587,8 +626,9 @@ class About(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def source(self, ctx, *, command: str = None):
         """
-        Links to the bot's code, or a specific command's
+        Links to the bots code, or a specific command's
         """
+        # noinspection PyGlobalUndefined
         global obj
         source_url = 'https://github.com/LeoCx1000/discord-bots'
         branch = 'master'
@@ -706,7 +746,7 @@ DuckBot's top role position
         """
         Shows the latest changes of the bot. ""
         """
-        embed = discord.Embed(title="📰 Latest News - <t:1636731000:d> (<t:1636731000:R>)",
+        embed = discord.Embed(title="📰 Latest News - <t:1636731000:d> (<t:1636731000:R>)", colour=ctx.colour,
                               description=f"\u200b"
                                           f"\n> **#\️⃣ <t:1633210000:R> You're now able to play Tic-Tac-Toe**"
                                           f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "

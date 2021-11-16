@@ -244,62 +244,99 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         """Gives you a documentation link for a discord.py entity.
         Events, objects, and functions are all supported through
         a cruddy fuzzy algorithm.
+
+        https://discordpy.readthedocs.io/en/master
         """
         await self.do_rtfm(ctx, 'master', obj)
 
     @rtfm.command(name='jp')
     async def rtfm_jp(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a discord.py entity (Japanese)."""
+        """Gives you a documentation link for a discord.py entity (Japanese).
+
+        https://discordpy.readthedocs.io/ja/latest
+        """
         await self.do_rtfm(ctx, 'latest-jp', obj)
 
     @rtfm.command(name='python', aliases=['py'])
     async def rtfm_python(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a Python entity."""
+        """Gives you a documentation link for a Python entity.
+
+        https://docs.python.org/3
+        """
         await self.do_rtfm(ctx, 'python', obj)
 
     @rtfm.command(name='py-jp', aliases=['py-ja'])
     async def rtfm_python_jp(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a Python entity (Japanese)."""
+        """Gives you a documentation link for a Python entity (Japanese).
+
+        https://docs.python.org/ja/3
+        """
         await self.do_rtfm(ctx, 'python-jp', obj)
 
     @rtfm.command(name='master', aliases=['2.0'])
     async def rtfm_master(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a discord.py entity (master branch)"""
+        """Gives you a documentation link for a discord.py entity (master branch)
+
+        https://discordpy.readthedocs.io/en/master
+        """
         await self.do_rtfm(ctx, 'master', obj)
 
     @rtfm.command(name='latest', aliases=['1.7'])
     async def rtfm_master(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a discord.py entity (master branch)"""
+        """Gives you a documentation link for a discord.py entity (master branch)
+
+        https://discordpy.readthedocs.io/en/latest
+        """
         await self.do_rtfm(ctx, 'latest', obj)
 
     @rtfm.command(name='enhanced-dpy', aliases=['edpy'])
     async def rtfm_edpy(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a enhanced-discord.py entity"""
+        """Gives you a documentation link for a enhanced-discord.py entity
+
+        https://enhanced-dpy.readthedocs.io/en/latest
+        """
         await self.do_rtfm(ctx, 'edpy', obj)
 
     @rtfm.command(name='asyncbing', aliases=['bing'])
     async def rtfm_asyncbing(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for an asyncbing entity """
+        """Gives you a documentation link for an asyncbing entity
+
+        https://asyncbing.readthedocs.io/en/latest
+        """
         await self.do_rtfm(ctx, 'bing', obj)
 
     @rtfm.command(name='chaidiscordpy', aliases=['chaidpy', 'cdpy'])
     async def rtfm_chai(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a chaidiscord.py entity"""
+        """Gives you a documentation link for a chaidiscord.py entity
+
+        https://chaidiscordpy.readthedocs.io/en/latest
+        """
         await self.do_rtfm(ctx, 'chai', obj)
 
     @rtfm.command(name='pycord')
     async def rtfm_pycord(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a pycord entity"""
+        """Gives you a documentation link for a pycord entity
+
+        https://pycord.readthedocs.io/en/master
+
+        """
         await self.do_rtfm(ctx, 'pycord', obj)
 
     @rtfm.command(name='twitchio')
     async def rtfm_pycord(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a TwitchIO entry"""
+        """Gives you a documentation link for a TwitchIO entry
+
+        https://twitchio.readthedocs.io/en/latest/
+
+        """
         await self.do_rtfm(ctx, 'twitchio', obj)
 
     @rtfm.command(name='pomice')
     async def rtfm_pycord(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a Pomice entry"""
+        """Gives you a documentation link for a Pomice entry
+
+        https://pycord.readthedocs.io/en/master
+        """
         await self.do_rtfm(ctx, 'pomice', obj)
 
     @commands.command()
