@@ -199,6 +199,7 @@ class DuckBot(commands.Bot):
         logging.info("\033[42m======[ BOT ONLINE! ]=======\033[0m")
         logging.info("\033[42mLogged in as " + self.user.name + "\033[0m")
         logging.info('\033[0m')
+        self.dispatch('restart_complete')
 
     async def on_message(self, message: discord.Message) -> None:
         await self.wait_until_ready()
