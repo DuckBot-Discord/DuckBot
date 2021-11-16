@@ -631,7 +631,7 @@ class About(commands.Cog):
         # noinspection PyGlobalUndefined
         global obj
         source_url = 'https://github.com/LeoCx1000/discord-bots'
-        branch = 'master'
+        branch = 'master/DuckBot'
         license_url = f'{source_url}/blob/{branch}/LICENSE'
         mpl_advice = f'**This code is licensed under [MPL]({license_url})**' \
                      f'\nRemember that you must use the ' \
