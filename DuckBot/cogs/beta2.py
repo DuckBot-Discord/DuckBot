@@ -203,7 +203,7 @@ class LoggingBackend(commands.Cog):
         embed = discord.Embed(title=f'{channel.type} channel Created'.title(),
                               description=f"**Name:** #{channel.name}"
                                           f"\n**Category:** {channel.category}"
-                                          f"\n**Topic:** {discord.utils.remove_markdown(channel.topic) if hasattr(channel, 'topic') and channel.topic else 'None'}",
+                                          f"\n**Topic:** {discord.utils.remove_markdown(str(channel.topic)) if hasattr(channel, 'topic') and channel.topic else 'None'}",
                               colour=discord.Colour.green(), timestamp=discord.utils.utcnow())
         for target, over in channel.overwrites.items():
             perms = []
@@ -229,8 +229,8 @@ class LoggingBackend(commands.Cog):
                             inline=False)
             deliver = True
         if hasattr(before, 'topic') and hasattr(after, 'topic') and before.topic != after.topic:
-            embed.add_field(name='Topic updated', value=f'**Before:** {discord.utils.remove_markdown(before.topic)}'
-                                                        f'\n**After:** {discord.utils.remove_markdown(after.topic)}',
+            embed.add_field(name='Topic updated', value=f'**Before:** {discord.utils.remove_markdown(str(before.topic))}'
+                                                        f'\n**After:** {discord.utils.remove_markdown(str(after.topic))}',
                             inline=False)
             deliver = True
         if before.overwrites != after.overwrites:
