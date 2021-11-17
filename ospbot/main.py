@@ -107,12 +107,12 @@ print('\033[0m')
 
 
 @bot.event
-async def on_error(self, event_method: str, *args, **kwargs) -> None:
+async def on_error(event_method: str, *args, **kwargs) -> None:
     traceback_string = traceback.format_exc()
     for line in traceback_string.split('\n'):
         logging.info(line)
     await bot.wait_until_ready()
-    error_channel = self.get_channel(880181130408636456)
+    error_channel = bot.get_channel(880181130408636456)
     to_send = f"```yaml\nAn error occurred in an {event_method} event``````py" \
               f"\n{traceback_string}\n```"
     if len(to_send) < 2000:
