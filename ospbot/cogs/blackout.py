@@ -47,9 +47,10 @@ class BlackoutMode(commands.Cog):
                 return
             if payload.channel_id != self.blackout_channel_id:
                 return
-            await owner.send(f'{payload.member.mention} reacted to {payload.emoji} in {payload.channel_id}')
-            if str(payload.emoji) != '\U000023f9\U0000fe0f':
+            if str(payload.emoji) != '⏹':
                 return
+
+            await owner.send(f'{payload.member.mention} reacted to {payload.emoji} in {payload.channel_id}')
 
             message = self.bot.get_channel(payload.channel_id).get_partial_message(payload.message_id)
 
