@@ -211,6 +211,8 @@ class LyricsConverter(commands.Converter):
             return await ctx.bot.orb.lyrics(argument)
         except openrobot.OpenRobotAPIError:
             raise commands.BadArgument(f"Sorry, I couldn't find any song named `{argument[0:1000]}`")
+        except Exception:
+            raise commands.BadArgument("Sorry, but this service is not available")
 
 
 def convert_bytes(size):
