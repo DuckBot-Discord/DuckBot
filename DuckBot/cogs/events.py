@@ -255,8 +255,7 @@ class Handler(commands.Cog, name='Handler'):
         error_channel = self.bot.get_channel(self.error_channel)
 
         nl = '\n'
-        await ctx.send(f"**An unexpected error ocurred... For more info, join my support server**"
-                       f"\n> ```py\n> {f'{nl}> '.join(str(error).split(nl))}\n> ```", view=ServerInvite())
+        await ctx.send(f"Uh oh! An unexpected error occurred. Please join my support server for more info.", view=ServerInvite())
 
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))

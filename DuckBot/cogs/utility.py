@@ -1054,7 +1054,7 @@ class Utility(commands.Cog):
             f'\n\u200b  → {to_delete["text"][0:1900]}{"..." if len(to_delete["text"]) > 1900 else ""}')
 
     @todo.command(name='edit')
-    async def todo_edit(self, ctx: CustomContext, index: int, text: commands.clean_content):
+    async def todo_edit(self, ctx: CustomContext, index: int, *, text: commands.clean_content):
         """ Edits one of your to​do list entries """
         entries = await self.bot.db.fetch(
             'SELECT text, added_time FROM todo WHERE user_id = $1 ORDER BY added_time ASC', ctx.author.id)
