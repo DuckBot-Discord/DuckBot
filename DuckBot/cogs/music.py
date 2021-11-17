@@ -921,6 +921,9 @@ class Music(commands.Cog):
                                            f'to find out how to use this command!')
             song_member = await helper.LyricsConverter().convert(ctx, f"{spotify.title}")
         song_member: openrobot.LyricResult
+        if not song_member.lyrics:
+            raise commands.BadArgument(f'No songs found! See `{ctx.clean_prefix}help {ctx.command.qualified_name}`'
+                                       f'to find out how to use this command!')
         pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4000)
         for line in song_member.lyrics.split('\n'):
             pages.add_line(line)
