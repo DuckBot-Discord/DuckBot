@@ -1,6 +1,7 @@
 import os
 
 import aiofiles
+import aiohttp
 import discord
 import typing
 from discord import VoiceRegion
@@ -211,8 +212,8 @@ class LyricsConverter(commands.Converter):
             return await ctx.bot.orb.lyrics(argument)
         except openrobot.OpenRobotAPIError:
             raise commands.BadArgument(f"Sorry, I couldn't find any song named `{argument[0:1000]}`")
-        except Exception:
-            raise commands.BadArgument("Sorry, but this service is not available")
+        except aiohttp.ContentTypeError:
+            raise commands.BadArgument("Sorry, but this service is not available right now!")
 
 
 def convert_bytes(size):
