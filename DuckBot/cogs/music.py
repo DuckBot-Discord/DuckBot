@@ -89,7 +89,7 @@ class SearchMenu(discord.ui.View):
     async def interaction_check(self, interaction: Interaction) -> bool:
         if interaction.user and interaction.user == self.ctx.author:
             return True
-        await interaction.response.send_message('This is not your Play Menu!', ephemeral = True)
+        await interaction.response.send_message('This is not your Play Menu!', ephemeral=True)
 
     async def on_timeout(self, label: str = None) -> None:
         for child in self.children:
@@ -103,7 +103,8 @@ class SearchMenu(discord.ui.View):
     def build_embed(self) -> typing.Tuple[discord.Embed, discord.SelectOption]:
         data = []
         for track in self.tracks:
-            self.options.append(discord.SelectOption(label=track.title[0:100], value=track.identifier, description=track.author[0:100]))
+            self.options.append(
+                discord.SelectOption(label=track.title[0:100], value=track.identifier, description=track.author[0:100]))
             data.append(f"[{track.title}]({track.uri})")
         self.options.append(discord.SelectOption(label='Cancel', emoji='❌', value='cancel'))
         data = [f"`{i}:` {desc}" for i, desc in enumerate(data, start=1)]
@@ -125,8 +126,8 @@ class Music(commands.Cog):
         self.select_brief = 'Music Commands'
 
     async def cog_before_invoke(self, ctx: Context):
-        if (is_guild := ctx.guild is not None) \
-                and ctx.command.name not in ('lyrics', 'current', 'queue', 'nodes', 'toggle', 'role', 'settings', 'dj'):
+        unensured_commands = ('lyrics', 'lyrics user', 'lyrics search', 'current', 'queue', 'nodes', 'toggle', 'role', 'settings', 'dj')
+        if (is_guild := ctx.guild is not None) and ctx.command.qualified_name not in unensured_commands:
             await self.ensure_voice(ctx)
 
         if is_guild and ctx.command.name in ('current', 'queue'):
@@ -174,7 +175,8 @@ class Music(commands.Cog):
                 await player.destroy()
                 return
 
-            await player.text_channel.send(f"🎧 **|** {player.dj.mention} is now the DJ!", allowed_mentions=discord.AllowedMentions.none())
+            await player.text_channel.send(f"🎧 **|** {player.dj.mention} is now the DJ!",
+                                           allowed_mentions=discord.AllowedMentions.none())
             return
 
         if after.channel and player.channel and after.channel.id == player.channel.id and player.dj not in player.channel.members and player.dj != member:
@@ -183,7 +185,8 @@ class Music(commands.Cog):
                 return
             player.dj = member
 
-            await player.text_channel.send(f"🎧 **|** {player.dj.mention} is now the DJ!", allowed_mentions=discord.AllowedMentions.none())
+            await player.text_channel.send(f"🎧 **|** {player.dj.mention} is now the DJ!",
+                                           allowed_mentions=discord.AllowedMentions.none())
             return
 
     @commands.Cog.listener()
@@ -888,48 +891,14 @@ class Music(commands.Cog):
         menu = paginator.ViewPaginator(paginator.NodesMenu(raw, ctx), ctx=ctx)
         await menu.start()
 
-    @commands.command(usage='[song/member]')
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    async def lyrics(self, ctx: CustomContext, *, song_member: typing.Optional[typing.Union[MemberMention, helper.LyricsConverter]]):
-        """ Shows the lyrics of a given song.
-        Searches by:
-        - @member __mention__ (spotify)
-        - Song name (user input)
-        - Currently playing in VC
-        - Your currently playing song (spotify)
-        > Note: It will continue the search chain if not found, NOT raise an error.
-
-         _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
-        await ctx.trigger_typing()
-        spotify: discord.Spotify = None
-        if not song_member:
-            if not (player := ctx.voice_client):
-                player = self.bot.pomice.get_node().get_player(ctx.guild.id)
-            if player:
-                player: Player = ctx.voice_client
-                if current := player.current:
-                    song_member = await helper.LyricsConverter().convert(ctx, f"{current.title}")
-                else:
-                    song_member = ctx.author
-            else:
-                song_member = ctx.author
-
-        if isinstance(song_member, discord.Member):
-            spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), song_member.activities)
-            if not spotify:
-                raise commands.BadArgument(f'No songs found! See `{ctx.clean_prefix}help {ctx.command.qualified_name}`'
-                                           f'to find out how to use this command!')
-            song_member = await helper.LyricsConverter().convert(ctx, f"{spotify.title}")
-        song_member: openrobot.LyricResult
-        if not song_member.lyrics:
-            raise commands.BadArgument(f'No songs found! See `{ctx.clean_prefix}help {ctx.command.qualified_name}`'
-                                       f'to find out how to use this command!')
+    @staticmethod
+    async def deliver_lyrics(ctx: CustomContext, song: openrobot.LyricResult):
         pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4000)
-        for line in song_member.lyrics.split('\n'):
+        for line in song.lyrics.split('\n'):
             pages.add_line(line)
         reply = True
-        embed = discord.Embed(title=f"Lyrics for `{song_member.title}`")
-        embed.set_author(name=f"song by: {song_member.artist}", icon_url=spotify.album_cover_url if spotify else discord.Embed.Empty)
+        embed = discord.Embed(title=f"Lyrics for `{song.title}`")
+        embed.set_author(name=f"song by: {song.artist}")
         for page in pages.pages:
             embed.description = page
             await ctx.send(embed=embed, reply=reply, footer=False)
@@ -937,3 +906,42 @@ class Music(commands.Cog):
             embed.author.name = discord.Embed.Empty
             embed.author.icon_url = discord.Embed.Empty
             reply = False
+
+    @commands.group()
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def lyrics(self, ctx: CustomContext):
+        """ Shows the lyrics of the currently playing song.
+
+         _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
+        if ctx.invoked_subcommand is not None:
+            return
+        if not (player := ctx.voice_client):
+            player = self.bot.pomice.get_node().get_player(ctx.guild.id)
+        if not player:
+            raise commands.BadArgument('I am not connected to a voice channel.'
+                                       '\nUse `lyrics user [user]` or `lyrics search <query>` to search')
+        player: Player
+        if not (current := player.current):
+            raise commands.BadArgument('There is no song playing in the current voice channel.'
+                                       '\nUse `lyrics user [user]` or `lyrics search <query>` to search')
+
+        song = await helper.LyricsConverter().convert(ctx, f"{current.title}")
+
+        if not song.lyrics:
+            raise commands.BadArgument(f'No songs found! See `{ctx.clean_prefix}help {ctx.command.qualified_name}`'
+                                       f'to find out how to use this command!')
+        await self.deliver_lyrics(ctx, song)
+
+    @lyrics.command(name='search')
+    async def lyrics_search(self, ctx: Context, *, query: helper.LyricsConverter):
+        """ Searches for a song and shows the lyrics. """
+        await self.deliver_lyrics(ctx, query)
+
+    @lyrics.command(name='user')
+    async def lyrics_user(self, ctx: Context, *, user: discord.Member = None):
+        """ Shows the lyrics for a song the user is currently listening to on spotify. """
+        member = user or ctx.author
+        if not (spotify := discord.utils.get(member.activities, type=discord.Spotify)):
+            raise commands.BadArgument(f'{"This user is" if member != ctx.author else "You are"} not listening to Spotify.')
+        await self.deliver_lyrics(ctx, (await helper.LyricsConverter().convert(ctx, spotify.title)))
+

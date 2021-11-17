@@ -206,6 +206,7 @@ def generate_user_statuses(member: discord.Member):
 
 class LyricsConverter(commands.Converter):
     async def convert(self, ctx, argument) -> openrobot.LyricResult:
+        await ctx.trigger_typing()
         try:
             return await ctx.bot.orb.lyrics(argument)
         except openrobot.OpenRobotAPIError:
