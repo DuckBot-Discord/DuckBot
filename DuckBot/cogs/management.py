@@ -464,7 +464,7 @@ class Management(commands.Cog, name='Bot Management'):
                 rall = self.bot.get_command('rall')
                 await ctx.invoke(rall)
             elif isinstance(reload_everything, str):
-                self.bot.dispatch('restart_request', ctx, 'duckbot')
+                self.bot.dispatch('restart_request', ctx, 'duckbot', False)
 
         @dev.command(aliases=['push'], name='git-push')
         async def dev_git_push(self, ctx, *, message: str):
