@@ -149,7 +149,6 @@ class DuckBot(commands.Bot):
         for ext in initial_extensions:
             self._load_extension(ext)
 
-        self.loop.run_until_complete(self.create_session())
         self.loop.create_task(self.populate_cache())
         self.loop.create_task(self.populate_pomice_nodes())
         self.loop.create_task(self.dynamic_load_cogs())
@@ -425,8 +424,14 @@ class DuckBot(commands.Bot):
 
         logging.info(f'Populated Pomice nodes [SUCC: {successful} | FAIL: {failed}]')
 
-    async def create_session(self):
-        self.session = aiohttp.ClientSession(loop=self.loop)
+    async def start(self, *args, **kwargs):
+        self.session = aiohttp.ClientSession()
+        await super().start(*args, **kwargs)
+
+    async def close(self):
+        await self.db.close()
+        await self.session.close()
+        await super().close()
 
     async def create_db_pool(self) -> asyncpg.Pool:
         credentials = {
