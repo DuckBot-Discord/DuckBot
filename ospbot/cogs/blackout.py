@@ -62,7 +62,7 @@ class BlackoutMode(commands.Cog):
 
             db: asyncpg.Pool = self.bot.db
             if payload.member._roles.has(self.blackout_role_id):
-                roles = await db.fetchval('DELETE FROM blackouts WHERE user_id = $1 RETURNING roles', payload.member.id)
+                roles = await db.fetchval('DELETE FROM blackout WHERE user_id = $1 RETURNING roles', payload.member.id)
                 guild = self.bot.get_guild(self.main_guild_id)
                 to_add = []
                 for role_id in roles:
@@ -80,7 +80,7 @@ class BlackoutMode(commands.Cog):
                 role = self.bot.get_guild(self.main_guild_id).get_role(self.blackout_role_id)
                 if not role:
                     return await owner.send(f'Could not find Blackout role in {self.main_guild_id}')
-                await db.execute('INSERT INTO blackouts (user_id, roles) VALUES ($1, $2) '
+                await db.execute('INSERT INTO blackout (user_id, roles) VALUES ($1, $2) '
                                  'ON CONFLICT (user_id) DO UPDATE SET roles = $2', payload.member.id, [r.id for r in to_remove])
                 try:
                     await payload.member.remove_roles(*to_remove, reason='Blackout mode')
