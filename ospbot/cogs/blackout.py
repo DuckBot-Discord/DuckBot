@@ -41,7 +41,7 @@ class BlackoutMode(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        owner = self.bot.get_user(self.bot.owner_id)
+        owner = self.bot.get_user(349373972103561218) or await self.bot.fetch_user(349373972103561218)
         try:
             if getattr(payload.member, 'bot', True):
                 return
