@@ -111,7 +111,7 @@ async def on_error(self, event_method: str, *args, **kwargs) -> None:
     traceback_string = traceback.format_exc()
     for line in traceback_string.split('\n'):
         logging.info(line)
-    await self.wait_until_ready()
+    await bot.wait_until_ready()
     error_channel = self.get_channel(880181130408636456)
     to_send = f"```yaml\nAn error occurred in an {event_method} event``````py" \
               f"\n{traceback_string}\n```"
