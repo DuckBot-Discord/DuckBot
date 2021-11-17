@@ -47,6 +47,16 @@ def format_time(milliseconds: Union[float, int]) -> str:
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
+class MemberMention(commands.Converter):
+    async def convert(self, ctx: Context, argument: str):
+        m = re.search(r"^<@!?(?P<id>[0-9]+)>$", argument)
+        if m is None:
+            raise commands.BadArgument('You must mention a member!')
+        data = m.groupdict()
+        user_id = data.get('id')
+        return await commands.MemberConverter().convert(ctx, user_id)
+
+
 class SearchDropdown(discord.ui.Select['SearchMenu']):
     def __init__(self, options):
         super().__init__(placeholder='Select a track', options=options)
@@ -880,13 +890,14 @@ class Music(commands.Cog):
 
     @commands.command(usage='[song/member]')
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def lyrics(self, ctx: CustomContext, *, song_member: typing.Optional[typing.Union[discord.Member, helper.LyricsConverter]]):
+    async def lyrics(self, ctx: CustomContext, *, song_member: typing.Optional[typing.Union[MemberMention, helper.LyricsConverter]]):
         """ Shows the lyrics of a given song.
         Searches by:
-        - Song name
+        - @member __mention__ (spotify)
+        - Song name (user input)
         - Currently playing in VC
-        - @member mention (spotify)
-        - Your currently playing song
+        - Your currently playing song (spotify)
+        > Note: It will continue the search chain if not found, NOT raise an error.
 
          _Provided by [OpenRobot](https://api.openrobot.xyz/)_ """
         await ctx.trigger_typing()
@@ -906,7 +917,8 @@ class Music(commands.Cog):
         if isinstance(song_member, discord.Member):
             spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), song_member.activities)
             if not spotify:
-                raise commands.BadArgument('You need to input a song or a member who is listening to spotify, or I must be playing music in this server.')
+                raise commands.BadArgument(f'No songs found! See `{ctx.clean_prefix}help {ctx.command.qualified_name}`'
+                                           f'to find out how to use this command!')
             song_member = await helper.LyricsConverter().convert(ctx, f"{spotify.title}")
         song_member: openrobot.LyricResult
         pages = jishaku.paginators.WrappedPaginator(prefix='', suffix='', max_size=4000)

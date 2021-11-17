@@ -119,23 +119,19 @@ class ServerInfoView(discord.ui.View):
         self.change_style.style = discord.ButtonStyle.grey
         if select.values[0] == "main_page":
             self.current = self.main_embed
-            await interaction.response.edit_message(embed=self.main_embed, view=self)
         elif select.values[0] == "roles":
             self.current = self.roles_embed
             self.change_style.disabled = False
             self.change_style.style = discord.ButtonStyle.blurple
-            await interaction.response.edit_message(embed=self.roles_embed, view=self)
         elif select.values[0] == "members":
             self.current = self.members_embed
-            await interaction.response.edit_message(embed=self.members_embed, view=self)
         elif select.values[0] == "channels":
             self.current = self.channels_embed
             self.change_style.disabled = False
             self.change_style.style = discord.ButtonStyle.blurple
-            await interaction.response.edit_message(embed=self.channels_embed, view=self)
         elif select.values[0] == "invite":
             self.current = self.invite_embed
-            await interaction.response.edit_message(embed=self.invite_embed, view=self)
+        await interaction.response.edit_message(embed=self.current, view=self)
 
     @discord.ui.button(emoji='<a:loading:747680523459231834>', style=discord.ButtonStyle.danger, disabled=True)
     async def _end(self, _, interaction: discord.Interaction):
@@ -144,24 +140,31 @@ class ServerInfoView(discord.ui.View):
 
     @discord.ui.button(emoji=constants.TYPING_INDICATOR, style=discord.ButtonStyle.grey, disabled=True)
     async def change_style(self, button: discord.ui.Button, interaction: discord.Interaction):
+
         self.is_on_mobile = not self.is_on_mobile
+
         button.emoji = self.emotes[self.is_on_mobile]
+
         if self.current in (self.main_embed, self.members_embed, self.invite_embed):
             await self.fix_mobile_embeds()
             await interaction.response.edit_message(embed=self.current, view=self)
-        elif self.current == self.members_embed:
+
+        elif self.current == self.roles_embed:
             await self.fix_mobile_embeds()
-            self.current = self.members_embed
+            self.current = self.roles_embed
             await interaction.response.edit_message(embed=self.current, view=self)
+
         elif self.current == self.channels_embed:
             await self.fix_mobile_embeds()
             self.current = self.channels_embed
             await interaction.response.edit_message(embed=self.current, view=self)
+
         else:
             await self.fix_mobile_embeds()
             self.current = None
             error_embed = discord.Embed(title="Error", description="Something went wrong, please select a category"
-                                                                   "\nusing the dropdown menu below.")
+                                                                   "\nusing the dropdown menu below.",
+                                        colour=self.ctx.colour)
             await interaction.response.edit_message(embed=error_embed, view=self)
 
     async def on_timeout(self) -> None:

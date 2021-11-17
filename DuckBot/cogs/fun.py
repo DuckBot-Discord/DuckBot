@@ -7,6 +7,7 @@ import urllib.parse
 
 import aiowiki
 import discord
+from async_timeout import timeout
 from discord.ext import commands
 
 from DuckBot.__main__ import DuckBot, CustomContext
@@ -122,7 +123,7 @@ class Fun(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def duck(self, ctx: CustomContext) -> discord.Message:
         """
-        Sends a random duck image
+        Sends a random duck image from random-d.uk
         """
         async with self.bot.session.get('https://random-d.uk/api/random?format=json') as r:
             if r.status != 200:
@@ -180,7 +181,7 @@ class Fun(commands.Cog):
     @commands.command()
     async def meme(self, ctx: CustomContext) -> discord.Message:
         """
-        Sends a random meme from reddit.com/r/memes.
+        Sends a random meme from r/memes
         """
         async with ctx.typing():
             return await ctx.send(embed=await self.reddit(random.choice(['memes', 'dankmemes'])))
@@ -189,7 +190,7 @@ class Fun(commands.Cog):
     @commands.command(aliases=['wyr'])
     async def would_you_rather(self, ctx: CustomContext) -> discord.Message:
         """
-        Sends a random meme from reddit.com/r/WouldYouRather.
+        Sends a random meme from r/WouldYouRather
         """
         async with ctx.typing():
             poll: tuple = await self.reddit('WouldYouRather', embed_type='POLL', title=True)
@@ -311,6 +312,7 @@ class Fun(commands.Cog):
 
     @commands.command(name='rock-paper-scissors', aliases=['rps', 'rock_paper_scissors'])
     async def rock_paper_scissors(self, ctx: CustomContext):
+        """Starts a rock-paper-scissors game."""
         embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
                                           f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
         embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
@@ -344,29 +346,74 @@ class Fun(commands.Cog):
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
 
+    async def message_receiver(self, channel: discord.TextChannel, content: str, t_o: int) -> discord.Message:
+        def check(m):
+            return m.channel == channel and m.content.lower() == content.lower() and not m.author.bot
+
+        try:
+            async with timeout(t_o):
+                while True:
+                    message = await self.bot.wait_for('message', timeout=t_o, check=check)
+                    yield message
+        except asyncio.TimeoutError:
+            return
+
     @commands.max_concurrency(1, per=commands.BucketType.channel)
-    @commands.command(name='type-race', aliases=['tr'])
-    async def type_race(self, ctx: CustomContext, amount: typing.Optional[int] = 2):
-        """ Sends 2 or more random words. First in the channel to send the words wins!
-        You have **1 minute** to type the word(s) before the game ends. """
-        if 0 > amount > 20:
-            raise commands.BadArgument('Amount must be between 1 and 20 words.')
+    @commands.command(name='type-race', aliases=['tr'], brief='Starts a type-race game. No cheating!')
+    async def type_race(self, ctx: CustomContext, amount: typing.Optional[int] = 6):
+        """ Starts a Type-Race game.
+        Sends some random words as a sentence.
+        """
+        messages = []
+
+        if 0 > amount > 25:
+            raise commands.BadArgument('Amount must be between 1 and 25 words.')
         res = random.sample(constants.COMMON_WORDS, k=amount)
         words = ' '.join(res)
 
         inv_ch = '\u200b'
-        embed = discord.Embed(title='Typerace', description="**Type the following words:**\n"
-                                                            f"```\n{inv_ch.join(words)}\n```")
-
+        embed = discord.Embed(title=f'{constants.TYPING_INDICATOR} Type-race:',
+                              description="**Type the following words:**\n"
+                                          f"```\n{inv_ch.join(words)}\n```",
+                              timestamp=ctx.message.created_at)
+        embed.set_footer(text=f"Results will appear in {amount * 5} seconds!")
         main = await ctx.send(embed=embed)
-        try:
-            message = await self.bot.wait_for('message', check=lambda msg: msg.channel == ctx.channel and msg.content == words and not msg.author.bot, timeout=60)
-        except asyncio.TimeoutError:
-            embed = main.embeds[0]
-            embed.add_field(name='🎉 Winner:', value=f'NONE 😦 - Timed out!')
+
+        async def update_message(m: discord.Message):
+            if m.author.id in [msg.author.id for msg in messages]:
+                return
+            messages.append(m)
+            await m.add_reaction('🎉')
+            embed.clear_fields()
+            embed.add_field(name='Results:', value='\n'.join(
+                f'{m.author} ({(m.created_at - main.created_at).total_seconds()}s)' for m in messages))
+            await main.edit(embed=embed)
+
+        async for message in self.message_receiver(content=words, channel=ctx.channel, t_o=amount * 5):
+            self.bot.loop.create_task(update_message(message))
+
+        if not messages:
+            embed.add_field(name='Results:', value='No one typed anything!')
             await main.edit(embed=embed)
         else:
-            await message.add_reaction("🎉")
-            embed = main.embeds[0]
-            embed.add_field(name='🎉 Winner:', value=f'{message.author.mention}')
-            await main.edit(embed=embed)
+            await main.delete(delay=0)
+            text = embed.fields[0].value
+            lines = text.split('\n')
+
+            winner_lines = []
+
+            winner_emotes = ['🥇', '🥈', '🥉']
+
+            for line in lines:
+                try:
+                    emoji = winner_emotes[lines.index(line)]
+                except IndexError:
+                    emoji = '🏅'
+                winner_lines.append(f'{emoji} {line}')
+
+                embed = discord.Embed(title=f'💤 Type-race game ended!',
+                                      description=f"```\n{words}\n```",
+                                      timestamp=ctx.message.created_at)
+                embed.add_field(name='Game Winners:', value='\n'.join(winner_lines))
+                embed.set_footer(text=f'{len(messages)} players got the words right!')
+            await ctx.send(embed=embed, reply=False)

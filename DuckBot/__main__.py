@@ -117,7 +117,7 @@ class DuckBot(commands.Bot):
         self.persistent_views_added = False
         self.uptime = datetime.datetime.utcnow()
         self.last_rall = datetime.datetime.utcnow()
-        self.allowed_mentions = discord.AllowedMentions(replied_user=False)
+        self.allowed_mentions = discord.AllowedMentions.none()
         self.session: aiohttp.ClientSession = None
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
@@ -401,6 +401,7 @@ class DuckBot(commands.Bot):
             self.guild_loggings[guild_id] = LoggingEventsFlags(**flags)
 
         logging.info('All cache populated successfully')
+        self.dispatch('cache_ready')
 
     async def populate_pomice_nodes(self):
         await self.wait_until_ready()

@@ -9,21 +9,20 @@ import textwrap
 import traceback
 import typing
 
-import emoji as unicode_emoji
-
 import discord
+import emoji as unicode_emoji
 import jishaku.modules
 import tabulate
 from discord.ext import commands
-
 from jishaku.codeblocks import Codeblock, codeblock_converter
 from jishaku.features.baseclass import Feature
-from jishaku.models import copy_context_with
 from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator
-from DuckBot.helpers.helper import count_others, count_lines
+
+
+RebootArg = typing.Optional[typing.Union[bool, typing.Literal['reboot', 'restart', 'r']]]
 
 
 def setup(bot):
@@ -285,13 +284,6 @@ class Management(commands.Cog, name='Bot Management'):
                 else:
                     await ctx.send(f"```py\n{to_send}\n```")
 
-    @commands.command(aliases=['push'], name='git-push')
-    @commands.is_owner()
-    async def git_push(self, ctx, *, message: str):
-        """ Attempts to push to git """
-        command = self.bot.get_command('jsk git')
-        await ctx.invoke(command, argument=codeblock_converter(f'add .\ngit commit -m "{message}"\ngit push origin master'))
-
     # Dev commands. `if True` is only to be able to close the whole category at once
     if True:
 
@@ -460,7 +452,7 @@ class Management(commands.Cog, name='Bot Management'):
             await menu.start()
 
         @dev.command(aliases=['pull'], name='update')
-        async def git_pull(self, ctx: CustomContext, reload_everything: bool = True):
+        async def dev_git_pull(self, ctx: CustomContext, reload_everything: RebootArg = True):
             """
             Attempts to pull from git
             """
@@ -471,6 +463,15 @@ class Management(commands.Cog, name='Bot Management'):
                 await ctx.invoke(mrl)
                 rall = self.bot.get_command('rall')
                 await ctx.invoke(rall)
+            elif isinstance(reload_everything, str):
+                self.bot.dispatch('restart_request', ctx, 'duckbot')
+
+        @dev.command(aliases=['push'], name='git-push')
+        async def dev_git_push(self, ctx, *, message: str):
+            """ Attempts to push to git """
+            command = self.bot.get_command('jsk git')
+            await ctx.invoke(command,
+                             argument=codeblock_converter(f'add .\ngit commit -m "{message}"\ngit push origin master'))
 
         @dev.command(name='eval', aliases=['e', 'ev'])
         async def dev_eval(self, ctx: CustomContext, *, body: str):
