@@ -29,7 +29,6 @@ async def on_ready():
     print("\033[42m======[ BOT ONLINE! ]=======")
     print ("Logged in as " + bot.user.name)
     print('\033[0m')
-    await bot.wait_until_ready()
     await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.playing, name='DM me to contact staff'))
     print("\033[93m======[ DELAYED LOAD ]======")
     for cog in yaml_data['DelayedLoadCogs']:

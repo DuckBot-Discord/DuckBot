@@ -56,7 +56,7 @@ class BlackoutMode(commands.Cog):
             try:
                 await message.remove_reaction(payload.emoji, payload.member)
             except Exception as e:
-                logging.error('could not remove reaction: ' + e)
+                logging.error('could not remove reaction: ' + str(e))
                 await owner.send(f'could not remove reaction: {e}')
 
             db: asyncpg.Pool = self.bot.db
@@ -84,15 +84,15 @@ class BlackoutMode(commands.Cog):
                 try:
                     await payload.member.remove_roles(*to_remove, reason='Blackout mode')
                 except Exception as e:
-                    logging.error('could not remove roles: ' + e)
+                    logging.error('could not remove roles: ' + str(e))
                     await owner.send(f'could not remove roles: {e}')
                 try:
                     await payload.member.add_roles(role, reason='Blackout mode')
                 except Exception as e:
-                    logging.error('could not add role: ' + e)
+                    logging.error('could not add role: ' + str(e))
                     await owner.send(f'could not add role: {e}')
         except Exception as e:
-            logging.error('could not handle reaction: ' + e)
+            logging.error('could not handle reaction: ' + str(e))
             await owner.send(f'could not handle reaction: {e}')
 
 def setup(bot):
