@@ -1068,7 +1068,7 @@ class Utility(commands.Cog):
 
         return await ctx.send(
             f'✏ **|** **Modified** task number **{index}**! - created at {discord.utils.format_dt(to_delete["added_time"], style="R")}'
-            f'\n\u200b  → {text[0:1900]}{"..." if len(to_delete["text"]) > 1900 else ""}')
+            f'\n\u200b  → {text[0:200]}{"..." if len(to_delete["text"]) > 200 else ""}')
 
     @commands.command()
     async def hoisters(self, ctx: CustomContext):
