@@ -1,116 +1,89 @@
-import json, random, typing, discord, asyncio, yaml, datetime, random
-from discord.ext import commands
+import asyncpg
+import discord.abc
+import yaml
+from discord.ext import commands, tasks
 
-class blackout_mode(commands.Cog):
+
+async def get_webhook(channel):
+    hookslist = await channel.webhooks()
+    if hookslist:
+        for hook in hookslist:
+            if hook.token:
+                return hook
+            else:
+                continue
+    hook = await channel.create_webhook(name="OSP-Bot ticket logging")
+    return hook
+
+
+class BlackoutMode(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
-
-        #------------- YAML STUFF -------------#
+        self.bot: commands.Bot = bot
+        # ------------- YAML STUFF -------------#
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
-            mguild = self.bot.get_guild(full_yaml['guildID'])
-        self.mguild = mguild
-        self.yaml_data = full_yaml
-        self.verified = mguild.get_role(full_yaml['RulesVerRole'])
-        self.unverified = mguild.get_role(full_yaml['RulesUnvRole'])
-        self.STLbefore = None
-        self.ticket_staff = mguild.get_role(self.yaml_data['TicketStaffRole'])
-        self.blackout = mguild.get_role(self.yaml_data['BlackoutRole'])
-        self.ticket_log = self.bot.get_channel(full_yaml['TicketLogChannel'])
 
-        with open(r'files/triggers.yaml') as triggers:
-            trigger_words = yaml.full_load(triggers)
-        self.trigger_words = trigger_words
-
-    async def get_webhook(self, channel):
-        hookslist = await channel.webhooks()
-        if hookslist:
-            for hook in hookslist:
-                if hook.token:
-                    return hook
-                else: continue
-        hook = await channel.create_webhook(name="OSP-Bot ticket logging")
-        return hook
+        self.main_guild_id = full_yaml['guildID']
+        self.verified_role = full_yaml['RulesVerRole']
+        self.unverified_role = full_yaml['RulesUnvRole']
+        self.ticket_staff_role = full_yaml['TicketStaffRole']
+        self.blackout_role_id = full_yaml['BlackoutRole']
+        self.ticket_log_channel = full_yaml['TicketLogChannel']
+        self.blackout_channel_id = full_yaml['blackout_channel']
 
     @commands.Cog.listener()
-    async def on_guild_channel_create(self, channel):
-        if channel.guild.id != self.mguild.id: return
-        await channel.set_permissions(self.blackout, view_channel = False, reason=f'automatic Blackout mode')
+    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
+        if channel.guild.id != self.main_guild_id: return
+        await channel.set_permissions(channel.guild.get_role(self.blackout_role_id), view_channel=False,
+                                      reason=f'automatic Blackout mode')
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-        if payload.member.bot: return
-        if payload.channel_id == self.yaml_data['blackout_channel']:
-            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
-            try: await message.remove_reaction(payload.emoji, payload.member)
-            except: pass
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if getattr(payload.member, 'bot', True):
+            return
+        if payload.channel_id != self.blackout_channel_id:
+            return
+        if str(payload.emoji) != '\U000023f9\U0000fe0f':
+            return
 
-            underaged = self.mguild.get_role(863187863038459924)
-            overaged = self.mguild.get_role(863187815340703755)
-            nsfw = self.mguild.get_role(863241588184317952)
+        message = self.bot.get_channel(payload.channel_id).get_partial_message(payload.message_id)
 
-            if self.verified in payload.member.roles:
-                try: await payload.member.add_roles(self.blackout)
-                except: pass
-                try: await payload.member.remove_roles(self.verified, underaged, overaged, nsfw)
-                except: pass
-            elif self.blackout in payload.member.roles:
-                try: await payload.member.remove_roles(self.blackout)
-                except: pass
+        try:
+            await message.remove_reaction(payload.emoji, payload.member)
+        except Exception as e:
+            print('could not remove reaction: ' + e)
 
-                ages = await self.bot.get_channel(860610324020592689).fetch_message(863198786443935744)
+        db: asyncpg.Pool = self.bot.db
+        if payload.member._roles.has(self.blackout_role_id):
+            roles = await db.fetchval('DELETE FROM blackouts WHERE user_id = $1 RETURNING roles', payload.member.id)
+            guild = self.bot.get_guild(self.main_guild_id)
+            to_add = []
+            for role_id in roles:
+                role = guild.get_role(role_id)
+                if role:
+                    to_add.append(role)
+            await payload.member.add_roles(*to_add, reason='Blackout mode ended')
+            role = guild.get_role(self.blackout_role_id)
+            if not role:
+                return
+            await payload.member.remove_roles(role, reason='Blackout mode ended')
 
-                async for user in ages.reactions[0].users():
-                    if payload.member.id == user.id:
-                        if str(ages.reactions[0].emoji) == "➖":
-                            try: await payload.member.add_roles(underaged, self.verified)
-                            except: pass
-                            return
-                        elif str(ages.reactions[0].emoji) == "➕":
-                            try: await payload.member.add_roles(overaged, self.verified)
-                            except: pass
-                            nsfwmsg = await self.bot.get_channel(860610324020592689).fetch_message(863244033413742615)
+        else:
+            to_remove = [r for r in payload.member.roles if r.is_assignable()]
+            role = self.bot.get_guild(self.main_guild_id).get_role(self.blackout_role_id)
+            if not role:
+                return await self.bot.get_user(self.bot.owner_id).send(f'Could not find Blackout role in {self.main_guild_id}')
+            await db.execute('INSERT INTO blackouts (user_id, roles) VALUES ($1, $2) RETURNING roles '
+                             'ON CONFLICT (user_id) DO UPDATE SET roles = $2', payload.member.id, [r.id for r in to_remove])
+            try:
+                await payload.member.remove_roles(*to_remove, reason='Blackout mode')
+            except Exception as e:
+                print('could not remove roles: ' + e)
+            try:
+                await payload.member.add_roles(role, reason='Blackout mode')
+            except Exception as e:
+                print('could not add role: ' + e)
 
-                            async for user in nsfwmsg.reactions[0].users():
-                                if payload.member.id == user.id:
-                                    if str(nsfwmsg.reactions[0].emoji) == "👍":
-                                        try: await payload.member.add_roles(nsfw)
-                                        except: pass
-                                        return
-                            async for user in nsfwmsg.reactions[1].users():
-                                if payload.member.id == user.id:
-                                    if str(nsfwmsg.reactions[1].emoji) == "👍":
-                                        try: await payload.member.add_roles(nsfw)
-                                        except: pass
-                                        return
-
-                            return
-                async for user in ages.reactions[1].users():
-                    if payload.member.id == user.id:
-                        if str(ages.reactions[1].emoji) == "➖":
-                            try: await payload.member.add_roles(underaged, self.verified)
-                            except: pass
-                            return
-                        elif str(ages.reactions[1].emoji) == "➕":
-                            try: await payload.member.add_roles(overaged, self.verified)
-                            except: pass
-
-                            nsfwmsg = await self.bot.get_channel(860610324020592689).fetch_message(863244033413742615)
-
-                            async for user in nsfwmsg.reactions[0].users():
-                                if payload.member.id == user.id:
-                                    if str(nsfwmsg.reactions[0].emoji) == "👍":
-                                        try: await payload.member.add_roles(nsfw)
-                                        except: pass
-                                        return
-                            async for user in nsfwmsg.reactions[1].users():
-                                if payload.member.id == user.id:
-                                    if str(nsfwmsg.reactions[1].emoji) == "👍":
-                                        try:
-                                            await payload.member.add_roles(nsfw)
-                                        except: pass
-                                        return
-                            return
 
 def setup(bot):
-    bot.add_cog(blackout_mode(bot))
+    bot.add_cog(BlackoutMode(bot))

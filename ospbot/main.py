@@ -27,8 +27,7 @@ async def create_db_pool():
 
 intents = discord.Intents.all()
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('o.', '.', '**********'), case_insensitive=True,
-                   intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('o.', '.', '**********'), case_insensitive=True, intents=intents)
 
 bot.load_extension('jishaku')
 
