@@ -1,8 +1,10 @@
-import typing, discord, asyncio, random, datetime
+import asyncio
+import datetime
+import discord
+import typing
 import urllib
 
 from discord.ext import commands, tasks
-
 
 q = "'"
 t = ' now'

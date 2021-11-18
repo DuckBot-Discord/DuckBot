@@ -4,7 +4,7 @@ from discord.errors import HTTPException
 from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 
-import constants
+from ozbot import constants
 
 
 async def get_webhook(channel):

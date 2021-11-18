@@ -1,8 +1,7 @@
 import typing, discord, asyncio, random, datetime, argparse, shlex, re, asyncpg, yaml, aiohttp
 from discord.ext import commands, tasks, menus
 from collections import Counter, defaultdict
-import helpers
-import constants
+from ozbot import helpers, constants
 
 
 class Confirm(menus.Menu):
@@ -106,7 +105,6 @@ class moderation(commands.Cog):
                     user = res["name"]
                 return user
 
-
     def get_user_badges(self, user, bot: bool = False):
         flags = dict(user.public_flags)
 
@@ -124,7 +122,6 @@ class moderation(commands.Cog):
                 user_flags.append(emoji)
 
         return ' '.join(user_flags) if user_flags else None
-
 
     @commands.command(aliases=['uinfo', 'ui', 'whois', 'whoami'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -178,7 +175,8 @@ class moderation(commands.Cog):
                                   f"({discord.utils.format_dt(member.premium_since, style='R')})",
                             inline=False)
 
-        embed.set_author(name=member, icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{member.status}.png")
+        embed.set_author(name=member,
+                         icon_url=f"https://raw.githubusercontent.com/LeoCx1000/discord-bots/master/images/{member.status}.png")
         embed.set_thumbnail(url=member.display_avatar.url)
         await ctx.send(embed=embed)
 
@@ -491,119 +489,6 @@ class moderation(commands.Cog):
                 await message.clear_reactions()
 
         await ctx.send(f'Successfully removed {total_reactions} reactions.')
-
-    @remove.group()
-    async def custom(self, ctx, *, args: str):
-        """A more advanced purge command.
-        do "%PRE%help remove custom" for usage.
-        """
-        parser = Arguments(add_help=False, allow_abbrev=False)
-        parser.add_argument('--user', nargs='+')
-        parser.add_argument('--contains', nargs='+')
-        parser.add_argument('--starts', nargs='+')
-        parser.add_argument('--ends', nargs='+')
-        parser.add_argument('--or', action='store_true', dest='_or')
-        parser.add_argument('--not', action='store_true', dest='_not')
-        parser.add_argument('--emoji', action='store_true')
-        parser.add_argument('--bot', action='store_const', const=lambda m: m.author.bot)
-        parser.add_argument('--embeds', action='store_const', const=lambda m: len(m.embeds))
-        parser.add_argument('--files', action='store_const', const=lambda m: len(m.attachments))
-        parser.add_argument('--reactions', action='store_const', const=lambda m: len(m.reactions))
-        parser.add_argument('--search', type=int)
-        parser.add_argument('--after', type=int)
-        parser.add_argument('--before', type=int)
-
-        try:
-            args = parser.parse_args(shlex.split(args))
-        except Exception as e:
-            await ctx.send(str(e))
-            return
-
-        predicates = []
-        if args.bot:
-            predicates.append(args.bot)
-
-        if args.embeds:
-            predicates.append(args.embeds)
-
-        if args.files:
-            predicates.append(args.files)
-
-        if args.reactions:
-            predicates.append(args.reactions)
-
-        if args.emoji:
-            custom_emoji = re.compile(r'<:(\w+):(\d+)>')
-            predicates.append(lambda m: custom_emoji.search(m.content))
-
-        if args.user:
-            users = []
-            converter = commands.MemberConverter()
-            for u in args.user:
-                try:
-                    user = await converter.convert(ctx, u)
-                    users.append(user)
-                except Exception as e:
-                    await ctx.send(str(e))
-                    return
-
-            predicates.append(lambda m: m.author in users)
-
-        if args.contains:
-            predicates.append(lambda m: any(sub in m.content for sub in args.contains))
-
-        if args.starts:
-            predicates.append(lambda m: any(m.content.startswith(s) for s in args.starts))
-
-        if args.ends:
-            predicates.append(lambda m: any(m.content.endswith(s) for s in args.ends))
-
-        op = all if not args._or else any
-
-        def predicate(m):
-            r = op(p(m) for p in predicates)
-            if args._not:
-                return not r
-            return r
-
-        if args.after:
-            if args.search is None:
-                args.search = 2000
-
-        if args.search is None:
-            args.search = 100
-
-        args.search = max(0, min(2000, args.search))  # clamp from 0-2000
-        await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
-
-    @custom.command(name="readme")
-    async def remove_custom_readme(self, ctx):
-        """A more advanced purge command.
-        This command uses a powerful "command line" syntax.
-        Most options support multiple values to indicate 'any' match.
-        If the value has spaces it must be quoted.
-        The messages are only deleted if all options are met unless
-        the --or flag is passed, in which case only if any is met.
-
-        The following options are valid.
-         --user: A mention or name of the user to remove.
-         --contains: A substring to search for in the message.
-         --starts: A substring to search if the message starts with.
-         --ends: A substring to search if the message ends with.
-         --search: Messages to search. Default 100. Max 2000.
-         --after: Messages after this message ID.
-         --before: Messages before this message ID.
-
-        Flag options (no arguments):
-         --bot: Check if it's a bot user.
-         --embeds: Checks for embeds.
-         --files: Checks for attachments.
-         --emoji: Checks for custom emoji.
-         --reactions: Checks for rections.
-         --or: Use logical OR for ALL options.
-         --not: Use logical NOT for ALL options.
-        """
-        await ctx.send("hi")
 
     # ------------------------------------------------------------#
     # ------------------------ MUTE ------------------------------#

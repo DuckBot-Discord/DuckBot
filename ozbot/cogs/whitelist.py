@@ -1,5 +1,6 @@
-import json, random, discord, aiohttp, typing, asyncio
-from random import randint
+import aiohttp
+import asyncio
+import discord
 from discord.ext import commands
 
 

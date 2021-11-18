@@ -132,6 +132,8 @@ class handler(commands.Cog):
                 per = "per category"
             if error.per == BucketType.role:
                 per = "per role"
+            else:
+                per = ""
 
             embed.set_footer(text=f"limit is {error.number} command(s) running {per}")
             return await ctx.send(embed=embed)
