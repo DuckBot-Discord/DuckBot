@@ -941,7 +941,7 @@ class Music(commands.Cog):
     async def lyrics_user(self, ctx: Context, *, user: discord.Member = None):
         """ Shows the lyrics for a song the user is currently listening to on spotify. """
         member = user or ctx.author
-        if not (spotify := discord.utils.get(member.activities, type=discord.Spotify)):
+        if not (spotify := discord.utils.find(lambda a: isinstance(a, discord.Spotify), member.activities)):
             raise commands.BadArgument(f'{"This user is" if member != ctx.author else "You are"} not listening to Spotify.')
         await self.deliver_lyrics(ctx, (await helper.LyricsConverter().convert(ctx, spotify.title)))
 

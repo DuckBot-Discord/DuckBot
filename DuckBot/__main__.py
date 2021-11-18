@@ -196,9 +196,10 @@ class DuckBot(commands.Bot):
 
     # Event based
     async def on_ready(self) -> None:
-        logging.info("\033[42m======[ BOT ONLINE! ]=======\033[0m")
+        e = "\033[0m"
+        s = "\033[42m"
+        logging.info("======[ BOT ONLINE! ]=======")
         logging.info("\033[42mLogged in as " + self.user.name + "\033[0m")
-        logging.info('\033[0m')
 
     async def on_message(self, message: discord.Message) -> None:
         await self.wait_until_ready()
