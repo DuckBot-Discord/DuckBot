@@ -65,7 +65,7 @@ async def on_ready():
 
 print('')
 print("\033[93m======[ NORMAL LOAD ]=======")
-for filename in os.listdir("ozbot/cogs"):
+for filename in os.listdir("cogs"):
     if filename.endswith(".py"):
         try:
             if not str(filename[:-3]) in yaml_data['DelayedLoadCogs']:
