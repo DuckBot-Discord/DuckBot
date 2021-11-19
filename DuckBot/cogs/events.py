@@ -552,7 +552,7 @@ class Handler(commands.Cog, name='Handler'):
         content = message.content
         emojis = re.findall(r';(?P<name>[a-zA-Z0-9]{1,32}?);', message.content)
         for em_name in emojis:
-            emoji = discord.utils.find(lambda em: em.name.lower() == em_name.lower() or em_name.lower() in em.name.lower(), self.bot.emojis)
+            emoji = discord.utils.find(lambda em: em.name.lower() == em_name.lower(), self.bot.emojis)
             if not emoji or not emoji.is_usable():
                 emoji = None
             content = content.replace(f';{em_name};', f'{str(emoji or f";{ic}{em_name}{ic};")}', 1)
