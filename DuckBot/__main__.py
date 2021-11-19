@@ -343,11 +343,14 @@ class DuckBot(commands.Bot):
             _temp_prefixes[x['guild_id']].append(x['prefix'] or self.PRE)
         self.prefixes = dict(_temp_prefixes)
 
-        for guild in self.guilds:
-            try:
-                self.prefixes[guild.id]
-            except KeyError:
-                self.prefixes[guild.id] = self.PRE
+        async def _populate_guild_cache():
+            await self.wait_until_ready()
+            for guild in self.guilds:
+                try:
+                    self.prefixes[guild.id]
+                except KeyError:
+                    self.prefixes[guild.id] = self.PRE
+        self.loop.create_task(_populate_guild_cache())
 
         values = await self.db.fetch("SELECT user_id, is_blacklisted FROM blacklist")
         for value in values:
