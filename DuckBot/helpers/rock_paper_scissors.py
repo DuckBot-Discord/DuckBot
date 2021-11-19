@@ -6,6 +6,49 @@ from discord import Interaction
 from DuckBot.helpers.context import CustomContext
 
 
+class RequestToPlayView(discord.ui.View):
+    def __init__(self, ctx: CustomContext, member: discord.Member, game: str = 'Rock Paper Scissors'):
+        super().__init__(timeout=15)
+        self.member = member
+        self.ctx = ctx
+        self.message: discord.Message = None
+        self.value: bool = None
+        self.game = game
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user.id in (self.ctx.author.id, self.member.id):
+            return True
+        await interaction.response.defer()
+
+    @discord.ui.button(label='Confirm', emoji='✅')
+    async def confirm(self, _, interaction: Interaction):
+        if interaction.user.id == self.member.id:
+            await interaction.response.defer()
+            self.clear_items()
+            self.message.content = None
+            self.value = True
+            self.stop()
+        else:
+            await interaction.response.defer()
+
+    @discord.ui.button(label='Deny', emoji='❌')
+    async def deny(self, _, interaction: Interaction):
+        if interaction.user.id == self.ctx.author.id:
+            await interaction.response.edit_message(content=f"{self.ctx.author.mention}, you have cancelled the challenge.", view=None)
+        else:
+            await interaction.response.edit_message(content=f"{self.ctx.author.mention}, {self.member} has denied your challenge.", view=None)
+        self.value = False
+        self.stop()
+
+    async def start(self):
+        self.message = await self.ctx.send(f"{self.member.mention}, {self.ctx.author} is challenging you to at {self.game}, do you accept?", view=self)
+
+    async def on_timeout(self) -> None:
+        self.clear_items()
+        await self.message.edit(content=f"{self.ctx.author.mention}, did not respond in time to the challenge!")
+        self.stop()
+
+
 class ObjectSelector(discord.ui.Select):
     def __init__(self):
         # Set the options that will be presented inside the dropdown

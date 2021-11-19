@@ -14,7 +14,7 @@ from discord.ext import commands
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import constants
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
-from DuckBot.helpers.rock_paper_scissors import RockPaperScissors
+from DuckBot.helpers.rock_paper_scissors import RockPaperScissors, RequestToPlayView
 from DuckBot.helpers.tictactoe import LookingToPlay, TicTacToe
 
 _8ball_good = ['It is certain',
@@ -299,41 +299,60 @@ class Fun(commands.Cog):
 
     @commands.max_concurrency(1, commands.BucketType.user, wait=False)
     @commands.command(aliases=['ttt', 'tic'])
-    async def tictactoe(self, ctx: CustomContext):
+    async def tictactoe(self, ctx: CustomContext, to_invite: discord.Member = None):
         """Starts a tic-tac-toe game."""
-        embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
-                                          f'\n👀 | User is looking for someone to play **Tic-Tac-Toe**')
-        embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
-        embed.set_author(name='Tic-Tac-Toe', icon_url='https://i.imgur.com/SrRrarG.png')
         player1 = ctx.author
-        view = LookingToPlay(timeout=120)
-        view.ctx = ctx
-        view.message = await ctx.send(embed=embed,
-                                      view=view, footer=None)
-        await view.wait()
-        player2 = view.value
+        if not to_invite:
+            embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
+                                              f'\n👀 | User is looking for someone to play **Tic-Tac-Toe**')
+            embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
+            embed.set_author(name='Tic-Tac-Toe', icon_url='https://i.imgur.com/SrRrarG.png')
+            view = LookingToPlay(timeout=120)
+            view.ctx = ctx
+            view.message = await ctx.send(embed=embed,
+                                          view=view, footer=None)
+            await view.wait()
+            player2 = view.value
+        else:
+            view = RequestToPlayView(ctx, to_invite, game='Tic-Tac-Toe')
+            await view.start()
+            await view.wait()
+            if view.value:
+                player2 = to_invite
+            else:
+                player2 = None
+
         if player2:
             starter = random.choice([player1, player2])
             ttt = TicTacToe(ctx, player1, player2, starter=starter)
             ttt.message = await view.message.edit(content=f'#️⃣ | **{starter.name}** goes first', view=ttt, embed=None)
             await ttt.wait()
 
-    @commands.command(name='rock-paper-scissors', aliases=['rps', 'rock_paper_scissors'])
-    async def rock_paper_scissors(self, ctx: CustomContext):
+    @commands.command(name='rock-paper-scissors', aliases=['rps', 'rock_paper_scissors'], usage='[to-invite]')
+    async def rock_paper_scissors(self, ctx: CustomContext, to_invite: discord.Member = None):
         """Starts a rock-paper-scissors game."""
-        embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
-                                          f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
-        embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
-        embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
-
-        sep = '\u2001'
-        view = LookingToPlay(timeout=120, label=f'{sep * 13}Join this game!{sep * 13}')
-        view.ctx = ctx
-        view.message = await ctx.send(embed=embed,
-                                      view=view, footer=False)
-        await view.wait()
         player1 = ctx.author
-        player2 = view.value
+        if not to_invite:
+            embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
+                                              f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
+            embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
+            embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
+
+            sep = '\u2001'
+            view = LookingToPlay(timeout=120, label=f'{sep * 13}Join this game!{sep * 13}')
+            view.ctx = ctx
+            view.message = await ctx.send(embed=embed,
+                                          view=view, footer=False)
+            await view.wait()
+            player2 = view.value
+        else:
+            view = RequestToPlayView(ctx, to_invite)
+            await view.start()
+            await view.wait()
+            if view.value:
+                player2 = to_invite
+            else:
+                player2 = None
 
         if player2:
             embed = discord.Embed(description=f"> ❌ {player1.display_name}"
@@ -341,7 +360,7 @@ class Fun(commands.Cog):
                                   colour=discord.Colour.blurple())
             embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
             rps = RockPaperScissors(ctx, player1, player2)
-            rps.message = await view.message.edit(embed=embed, view=rps)
+            rps.message = await view.message.edit(embed=embed, content=None, view=rps)
             await rps.wait()
 
     @commands.command(aliases=['cag'])
