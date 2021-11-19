@@ -712,8 +712,8 @@ class Utility(commands.Cog):
         user: discord.User = member or ctx.author
         embed = discord.Embed(title=user, url=user.display_avatar.url)
         if isinstance(user, discord.Member) and user.guild_avatar:
-            embed.set_thumbnail(url=user.display_avatar.url if user.avatar else user.default_avatar.url)
-            embed.description = f"[avatar]({user.display_avatar.url if user.avatar else user.default_avatar.url}) | " \
+            embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
+            embed.description = f"[avatar]({user.avatar.url if user.avatar else user.default_avatar.url}) | " \
                                 f"[server avatar]({user.display_avatar.url})"
         embed.set_image(url=user.display_avatar.url)
 
