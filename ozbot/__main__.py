@@ -99,7 +99,7 @@ class Ozbot(commands.Bot):
         logging.info('Loading cogs done.')
         self.dispatch('restart_complete')
 
-    async def get_pre(self, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
+    async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
             return commands.when_mentioned_or(*self.PRE)(bot, message) if not raw_prefix else self.PRE
         if not message.guild:
