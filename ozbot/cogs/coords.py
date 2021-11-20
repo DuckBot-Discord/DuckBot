@@ -29,23 +29,23 @@ class Coords(commands.Cog):
     async def list_coords(self, ctx: commands.Context, sort: str = None):
         """ Lists all coordinates saved to the database """
         if sort == 'a_to_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
-        elif sort == 'z_to_a':
             query = "SELECT author, x, z, description FROM coords ORDER BY description ASC"
-        elif sort == 'desc_x':
-            query = "SELECT author, x, z, description FROM coords ORDER BY x DESC"
-        elif sort == 'asc_x':
-            query = "SELECT author, x, z, description FROM coords ORDER BY x ASC"
-        elif sort == 'desc_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY z DESC"
-        elif sort == 'asc_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY z ASC"
-        elif sort == 'author_a_to_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY author DESC"
-        elif sort == 'author_z_to_a':
-            query = "SELECT author, x, z, description FROM coords ORDER BY author ASC"
-        else:
+        elif sort == 'z_to_a':
             query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
+        elif sort == 'desc_x':
+            query = "SELECT author, x, z, description FROM coords ORDER BY x ASC"
+        elif sort == 'asc_x':
+            query = "SELECT author, x, z, description FROM coords ORDER BY x DESC"
+        elif sort == 'desc_z':
+            query = "SELECT author, x, z, description FROM coords ORDER BY z ASC"
+        elif sort == 'asc_z':
+            query = "SELECT author, x, z, description FROM coords ORDER BY z DESC"
+        elif sort == 'author_a_to_z':
+            query = "SELECT author, x, z, description FROM coords ORDER BY author ASC"
+        elif sort == 'author_z_to_a':
+            query = "SELECT author, x, z, description FROM coords ORDER BY author DESC"
+        else:
+            query = "SELECT author, x, z, description FROM coords ORDER BY description ASC"
         coords = await self.bot.db.fetch(query)
         if not coords:
             return await ctx.send("There are no coordinates saved! Do `/save` to save one.")
