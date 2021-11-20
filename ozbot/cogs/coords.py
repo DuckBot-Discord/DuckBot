@@ -49,7 +49,7 @@ class Coords(commands.Cog):
             query = f"{q} ORDER BY author DESC"
         else:
             if not search:
-                query = f"{q} ORDER BY author ASC"
+                query = f"{q} ORDER BY description ASC"
             else:
                 query = f"{q} ORDER BY SIMILARITY(description, $1) ASC"
         if not search:
@@ -68,7 +68,6 @@ class Coords(commands.Cog):
         header = f"All global coords. do /save to save one".center(len(lines[0]))
         pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1950)
         [pages.add_line(line) for line in lines]
-        pages.add_line(query)
         interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
         await interface.send_to(ctx)
 
