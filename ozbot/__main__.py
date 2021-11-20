@@ -44,7 +44,7 @@ target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.
 
 
 class Ozbot(commands.Bot):
-    PRE: tuple = ('db.',)
+    PRE: tuple = ('!', )
 
     def __init__(self) -> None:
         intents = discord.Intents.all()

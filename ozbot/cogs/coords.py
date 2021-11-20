@@ -16,7 +16,7 @@ class Coords(commands.Cog):
         self.bot: Ozbot = bot
 
     @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True)
-    async def save_coords(self, ctx: commands.Context, *, x: int, y: int, z: int, description: str):
+    async def save_coords(self, ctx: commands.Context, x: int, y: int, z: int, *, description: str):
         """ Saves a coordinate to the public database """
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, y, z, description) VALUES ($1, $2, $3, $4)",
