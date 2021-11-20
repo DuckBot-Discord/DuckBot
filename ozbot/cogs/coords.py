@@ -30,7 +30,7 @@ class Coords(commands.Cog):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"
         if search:
-            q += " WHERE SIMILARITY(description, $1) > 0.4"
+            q += " WHERE SIMILARITY(description, $1) > 0.2"
         if sort == 'a_to_z':
             query = f"{q} ORDER BY description ASC"
         elif sort == 'z_to_a':
