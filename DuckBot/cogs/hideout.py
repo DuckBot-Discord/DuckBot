@@ -425,7 +425,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         wh = await get_webhook(ctx.channel)
         thread = None
         if isinstance(ctx.channel, discord.Thread):
-            thread = ctx.channel.id
+            thread = ctx.channel
         await wh.send(message, avatar_url=member.display_avatar.url, username=member.display_name, thread=thread)
         await ctx.message.delete(delay=0)
 

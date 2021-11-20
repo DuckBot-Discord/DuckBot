@@ -30,6 +30,8 @@ def setup(bot):
 
 
 async def get_webhook(channel) -> discord.Webhook:
+    if isinstance(channel, discord.Thread):
+        channel = channel.parent
     webhook_list = await channel.webhooks()
     if webhook_list:
         for hook in webhook_list:
