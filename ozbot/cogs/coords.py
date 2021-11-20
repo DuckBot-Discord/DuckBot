@@ -26,8 +26,9 @@ class Coords(commands.Cog):
         await ctx.send(f"Coordinate `{x}X {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`")
 
     @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
-    async def list_coords(self, ctx: commands.Context, sort: str = 'Alphabetical A-Z'):
+    async def list_coords(self, ctx: commands.Context, sort: str = None):
         """ Lists all coordinates saved to the database """
+        await ctx.channel.send(str(sort))
         if sort == 'Alphabetical A-Z':
             query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
         elif sort == 'Alphabetical Z-A':
