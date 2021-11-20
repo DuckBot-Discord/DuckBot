@@ -16,11 +16,7 @@ class Coords(commands.Cog):
         self.bot: Ozbot = bot
 
     @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
-    async def save_coords(self, ctx: commands.Context,
-                          x: int = commands.Option(description='X coordinate'),
-                          y: int = commands.Option(description='X coordinate'),
-                          z: int = commands.Option(description='X coordinate'),
-                          *, description: str = commands.Option(description='Annotation to add to the saved coordinates.')):
+    async def save_coords(self, ctx: commands.Context, x: int, y: int, z: int, *, description):
         """ Saves a coordinate to the public database """
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, y, z, description) VALUES ($1, $2, $3, $4, $5)",
@@ -31,7 +27,7 @@ class Coords(commands.Cog):
 
     @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
     async def list_coords(self, ctx: commands.Context):
-        """ Lists all coordinates saved by you """
+        """ Lists all coordinates saved to the database """
         coords = await self.bot.db.fetch("SELECT author, x, y, z, description FROM coords")
         if not coords:
             return await ctx.send("You haven't saved any coordinates yet!", ephemeral=True)
@@ -44,4 +40,61 @@ class Coords(commands.Cog):
         [pages.add_line(line) for line in lines]
         interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
         await interface.send_to(ctx)
+
+
+# !jsk py ```py
+#         from discord.http import Route
+#         route = Route(
+#             "POST",
+#             f"/applications/{ctx.bot.application_id}/guilds/{ctx.guild.id}/commands")
+#
+#         json = {
+#             "name": "save",
+#             "type": 1,
+#              "description": "Saves a coordinate to the public database",
+#         "options": [
+#         {
+#             "name": "x",
+#             "description": "X Coordinate",
+#             "type": 4,
+#             "required": True
+#         },
+#         {
+#             "name": "y",
+#             "description": "Y coodrinate",
+#             "type": 4,
+#             "required": True
+#         },
+#         {
+#             "name": "z",
+#             "description": "Z coodrinate",
+#             "type": 4,
+#             "required": True
+#         },
+#         {
+#             "name": "description",
+#             "description": "Annotation to add to the saved coordinates.",
+#             "type": 3,
+#             "required": True
+#         }
+#         ]
+#
+#         }
+#         await ctx.bot.http.request(route=route, json=json, headers={"Authorization": f"Bot {ctx.bot.http.token}"})
+#
+# ```
+
+# !jsk py ```py
+#         from discord.http import Route
+#         route = Route(
+#             "POST",
+#             f"/applications/{ctx.bot.application_id}/guilds/{ctx.guild.id}/commands")
+#
+#         json = {
+#             "name": "list",
+#             "type": 1,
+#              "description": "Lists all the saved coordinates",
+#         }
+#         await ctx.bot.http.request(route=route, json=json, headers={"Authorization": f"Bot {ctx.bot.http.token}"})
+# ```
 
