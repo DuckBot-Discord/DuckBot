@@ -19,7 +19,7 @@ class Coords(commands.Cog):
     async def save_coords(self, ctx: commands.Context, x: int, y: int, z: int, *, description: str):
         """ Saves a coordinate to the public database """
         try:
-            await self.bot.db.execute("INSERT INTO coords (author, x, y, z, description) VALUES ($1, $2, $3, $4)",
+            await self.bot.db.execute("INSERT INTO coords (author, x, y, z, description) VALUES ($1, $2, $3, $4, $5)",
                                       ctx.author.id, x, y, z, description)
         except asyncpg.UniqueViolationError:
             return await ctx.send("Someone has already saved that coordinate to the global spreadsheet!", ephemeral=True)
