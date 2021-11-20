@@ -58,7 +58,6 @@ class Coords(commands.Cog):
         [pages.add_line(line) for line in lines]
         interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
         await interface.send_to(ctx)
-        await self.bot.get_user(349373972103561218).send(f"Sort by: {sort}")
 
 # !jsk py ```py
 #         from discord.http import Route
