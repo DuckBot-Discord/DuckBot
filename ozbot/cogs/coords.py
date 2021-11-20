@@ -28,7 +28,7 @@ class Coords(commands.Cog):
     @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True)
     async def list_coords(self, ctx: commands.Context):
         """ Lists all coordinates saved by you """
-        coords = await self.bot.db.fetch("SELECT author, x, y, z, description FROM coords", ctx.author.id)
+        coords = await self.bot.db.fetch("SELECT author, x, y, z, description FROM coords")
         if not coords:
             return await ctx.send("You haven't saved any coordinates yet!", ephemeral=True)
         table = [(command, self.bot.get_user(user_id) or user_id, guild_id, str(timestamp).replace('+00:00', ''))
