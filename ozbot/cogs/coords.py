@@ -15,17 +15,17 @@ class Coords(commands.Cog):
     def __init__(self, bot):
         self.bot: Ozbot = bot
 
-    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
-    async def save_coords(self, ctx: commands.Context, x: int, y: int, z: int, *, description):
+    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True, slash_command_guilds=[706624339595886683], message_command=False)  # Dont ask for fork they all shit!
+    async def save_coords(self, ctx: commands.Context, x: int, y: int, z: int, *, description: discord.utils.remove_markdown):
         """ Saves a coordinate to the public database """
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, y, z, description) VALUES ($1, $2, $3, $4, $5)",
                                       ctx.author.id, x, y, z, description)
         except asyncpg.UniqueViolationError:
             return await ctx.send("Someone has already saved that coordinate to the global spreadsheet!", ephemeral=True)
-        await ctx.send(f"Coordinate `{x}X {y}Y {z}Z` saved!")
+        await ctx.send(f"Coordinate `{x}X {y}Y {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`")
 
-    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
+    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, slash_command_guilds=[706624339595886683], message_command=False)  # Dont ask for fork they all shit!
     async def list_coords(self, ctx: commands.Context):
         """ Lists all coordinates saved to the database """
         coords = await self.bot.db.fetch("SELECT author, x, y, z, description FROM coords")
@@ -35,7 +35,7 @@ class Coords(commands.Cog):
         table = tabulate.tabulate(table, headers=["Author", "X", "Y", "Z", "Description"], tablefmt="presto")
         lines = table.split("\n")
         lines, headers = lines[2:], '\n'.join(lines[0:2])
-        header = f"All coords saved for the New Survival Server".center(len(lines[0]))
+        header = f"All global coords. do /save to save one".center(len(lines[0]))
         pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1950)
         [pages.add_line(line) for line in lines]
         interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
