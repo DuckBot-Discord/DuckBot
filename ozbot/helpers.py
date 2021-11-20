@@ -144,3 +144,7 @@ def get_perms(permissions):
     if len(perms) == 0:
         return None
     return perms
+
+
+class NotOz(commands.CheckFailure):
+    pass
