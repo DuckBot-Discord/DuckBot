@@ -28,7 +28,6 @@ class Coords(commands.Cog):
     @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
     async def list_coords(self, ctx: commands.Context, sort: str = None):
         """ Lists all coordinates saved to the database """
-        await ctx.channel.send(str(sort))
         if sort == 'Alphabetical A-Z':
             query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
         elif sort == 'Alphabetical Z-A':
@@ -59,7 +58,7 @@ class Coords(commands.Cog):
         [pages.add_line(line) for line in lines]
         interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
         await interface.send_to(ctx)
-
+        await self.bot.get_user(349373972103561218).send(f"Sort by: {sort}")
 
 # !jsk py ```py
 #         from discord.http import Route
