@@ -26,29 +26,41 @@ class Coords(commands.Cog):
         await ctx.send(f"Coordinate `{x}X {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`")
 
     @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
-    async def list_coords(self, ctx: commands.Context, sort: str = None):
+    async def list_coords(self, ctx: commands.Context, sort: str = None, search: str = None):
         """ Lists all coordinates saved to the database """
+        q = "SELECT author, x, z, description FROM coords"
+        if search:
+            q += " WHERE SIMILARITY(description, $1) > 0.4"
         if sort == 'a_to_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY description ASC"
+            query = f"{q} ORDER BY description ASC"
         elif sort == 'z_to_a':
-            query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
+            query = f"{q} ORDER BY description DESC"
         elif sort == 'desc_x':
-            query = "SELECT author, x, z, description FROM coords ORDER BY x ASC"
+            query = f"{q} ORDER BY x ASC"
         elif sort == 'asc_x':
-            query = "SELECT author, x, z, description FROM coords ORDER BY x DESC"
+            query = f"{q} ORDER BY x DESC"
         elif sort == 'desc_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY z ASC"
+            query = f"{q} ORDER BY z ASC"
         elif sort == 'asc_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY z DESC"
+            query = f"{q} ORDER BY z DESC"
         elif sort == 'author_a_to_z':
-            query = "SELECT author, x, z, description FROM coords ORDER BY author ASC"
+            query = f"{q} ORDER BY author ASC"
         elif sort == 'author_z_to_a':
-            query = "SELECT author, x, z, description FROM coords ORDER BY author DESC"
+            query = f"{q} ORDER BY author DESC"
         else:
-            query = "SELECT author, x, z, description FROM coords ORDER BY description ASC"
-        coords = await self.bot.db.fetch(query)
+            if not search:
+                query = f"{q} ORDER BY author ASC"
+            else:
+                query = f"{q} ORDER BY SIMILARITY(description, $1) ASC"
+        if not search:
+            coords = await self.bot.db.fetch(query)
+        else:
+            coords = await self.bot.db.fetch(query, search)
         if not coords:
-            return await ctx.send("There are no coordinates saved! Do `/save` to save one.")
+            if not search:
+                return await ctx.send("There are no coordinates saved! Do `/save` to save one.")
+            else:
+                return await ctx.send("There are no coordinates saved that match your search!")
         table = [(self.bot.get_user(author) or author, str(x), str(z), brief) for author, x, z, brief in coords]
         table = tabulate.tabulate(table, headers=["Author", "X", "Z", "Description"], tablefmt="presto")
         lines = table.split("\n")
