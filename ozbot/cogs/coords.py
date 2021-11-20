@@ -15,7 +15,7 @@ class Coords(commands.Cog):
     def __init__(self, bot):
         self.bot: Ozbot = bot
 
-    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
+    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
     async def save_coords(self, ctx: commands.Context, x: int, z: int, *, description: discord.utils.remove_markdown):
         """ Saves a coordinate to the public database """
         try:
@@ -25,10 +25,28 @@ class Coords(commands.Cog):
             return await ctx.send("Someone has already saved that coordinate to the global spreadsheet!", ephemeral=True)
         await ctx.send(f"Coordinate `{x}X {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`")
 
-    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
-    async def list_coords(self, ctx: commands.Context):
+    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
+    async def list_coords(self, ctx: commands.Context, sort: str = 'Alphabetical A-Z'):
         """ Lists all coordinates saved to the database """
-        coords = await self.bot.db.fetch("SELECT author, x, z, description FROM coords")
+        if sort == 'Alphabetical A-Z':
+            query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
+        elif sort == 'Alphabetical Z-A':
+            query = "SELECT author, x, z, description FROM coords ORDER BY description ASC"
+        elif sort == 'Descending X':
+            query = "SELECT author, x, z, description FROM coords ORDER BY x DESC"
+        elif sort == 'Ascending X':
+            query = "SELECT author, x, z, description FROM coords ORDER BY x ASC"
+        elif sort == 'Descending Z':
+            query = "SELECT author, x, z, description FROM coords ORDER BY z DESC"
+        elif sort == 'Ascending Z':
+            query = "SELECT author, x, z, description FROM coords ORDER BY z ASC"
+        elif sort == 'By Author A-Z':
+            query = "SELECT author, x, z, description FROM coords ORDER BY author DESC"
+        elif sort == 'By Author Z-A':
+            query = "SELECT author, x, z, description FROM coords ORDER BY author ASC"
+        else:
+            query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
+        coords = await self.bot.db.fetch(query)
         if not coords:
             return await ctx.send("There are no coordinates saved! Do `/save` to save one.")
         table = [(self.bot.get_user(author) or author, str(x), str(z), brief) for author, x, z, brief in coords]
@@ -91,4 +109,3 @@ class Coords(commands.Cog):
 #         }
 #         await ctx.bot.http.request(route=route, json=json, headers={"Authorization": f"Bot {ctx.bot.http.token}"})
 # ```
-
