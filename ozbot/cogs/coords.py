@@ -28,21 +28,21 @@ class Coords(commands.Cog):
     @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
     async def list_coords(self, ctx: commands.Context, sort: str = None):
         """ Lists all coordinates saved to the database """
-        if sort == 'Alphabetical A-Z':
+        if sort == 'a_to_z':
             query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
-        elif sort == 'Alphabetical Z-A':
+        elif sort == 'z_to_a':
             query = "SELECT author, x, z, description FROM coords ORDER BY description ASC"
-        elif sort == 'Descending X':
+        elif sort == 'desc_x':
             query = "SELECT author, x, z, description FROM coords ORDER BY x DESC"
-        elif sort == 'Ascending X':
+        elif sort == 'asc_x':
             query = "SELECT author, x, z, description FROM coords ORDER BY x ASC"
-        elif sort == 'Descending Z':
+        elif sort == 'desc_z':
             query = "SELECT author, x, z, description FROM coords ORDER BY z DESC"
-        elif sort == 'Ascending Z':
+        elif sort == 'asc_z':
             query = "SELECT author, x, z, description FROM coords ORDER BY z ASC"
-        elif sort == 'By Author A-Z':
+        elif sort == 'author_a_to_z':
             query = "SELECT author, x, z, description FROM coords ORDER BY author DESC"
-        elif sort == 'By Author Z-A':
+        elif sort == 'author_z_to_a':
             query = "SELECT author, x, z, description FROM coords ORDER BY author ASC"
         else:
             query = "SELECT author, x, z, description FROM coords ORDER BY description DESC"
