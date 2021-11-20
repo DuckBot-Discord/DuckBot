@@ -63,7 +63,7 @@ class modmail(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def modmail_reply(self, message):
-        if any((not message.guild, message.author.bot, message.channel.category_id != 879414245052284958)):
+        if any((not message.guild, message.author.bot, getattr(message.channel, 'category_id', 0) != 879414245052284958)):
             return
 
         channel = message.channel
