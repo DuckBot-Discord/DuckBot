@@ -15,8 +15,12 @@ class Coords(commands.Cog):
     def __init__(self, bot):
         self.bot: Ozbot = bot
 
-    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True)
-    async def save_coords(self, ctx: commands.Context, x: int, y: int, z: int, *, description: str):
+    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
+    async def save_coords(self, ctx: commands.Context,
+                          x: int = commands.Option(description='X coordinate'),
+                          y: int = commands.Option(description='X coordinate'),
+                          z: int = commands.Option(description='X coordinate'),
+                          *, description: str = commands.Option(description='Annotation to add to the saved coordinates.')):
         """ Saves a coordinate to the public database """
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, y, z, description) VALUES ($1, $2, $3, $4, $5)",
@@ -25,7 +29,7 @@ class Coords(commands.Cog):
             return await ctx.send("Someone has already saved that coordinate to the global spreadsheet!", ephemeral=True)
         await ctx.send(f"Coordinate `{x}X {y}Y {z}Z` saved!")
 
-    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True)
+    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
     async def list_coords(self, ctx: commands.Context):
         """ Lists all coordinates saved by you """
         coords = await self.bot.db.fetch("SELECT author, x, y, z, description FROM coords")
