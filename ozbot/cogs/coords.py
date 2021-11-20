@@ -31,12 +31,11 @@ class Coords(commands.Cog):
         coords = await self.bot.db.fetch("SELECT author, x, y, z, description FROM coords")
         if not coords:
             return await ctx.send("You haven't saved any coordinates yet!", ephemeral=True)
-        table = [(command, self.bot.get_user(user_id) or user_id, guild_id, str(timestamp).replace('+00:00', ''))
-                 for command, user_id, guild_id, timestamp in coords]
-        table = tabulate.tabulate(table, headers=["Command", "User/UID", "Guild ID", "Timestamp"], tablefmt="presto")
+        table = [(self.bot.get_user(author) or author, str(x), str(y), str(z), brief) for author, x, y, z, brief in coords]
+        table = tabulate.tabulate(table, headers=["Author", "X", "Y", "Z", "Description"], tablefmt="presto")
         lines = table.split("\n")
         lines, headers = lines[2:], '\n'.join(lines[0:2])
-        header = f"Latest executed commands".center(len(lines[0]))
+        header = f"All coords saved for the New Survival Server".center(len(lines[0]))
         pages = jishaku.paginators.WrappedPaginator(prefix=f'```\n{header}\n{headers}', max_size=1950)
         [pages.add_line(line) for line in lines]
         interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
