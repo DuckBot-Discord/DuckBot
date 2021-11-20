@@ -15,16 +15,12 @@ class handler(commands.Cog):
         self.bot = bot
         self.error_channel = 880181130408636456
 
-    async def perms_error(self, ctx):
-        await ctx.message.add_reaction('🚫')
-        try: await ctx.message.delete(delay=5)
-        except: pass
-
     @commands.Cog.listener('on_command_error')
     async def error_handler(self, ctx: commands.Context, error):
         error = getattr(error, "original", error)
         ignored = (
             commands.CommandNotFound,
+            commands.DisabledCommand
         )
         if isinstance(error, ignored):
             return
@@ -122,17 +118,17 @@ class handler(commands.Cog):
 
             if error.per == BucketType.default:
                 per = ""
-            if error.per == BucketType.user:
+            elif error.per == BucketType.user:
                 per = "per user"
-            if error.per == BucketType.guild:
+            elif error.per == BucketType.guild:
                 per = "per server"
-            if error.per == BucketType.channel:
+            elif error.per == BucketType.channel:
                 per = "per channel"
-            if error.per == BucketType.member:
+            elif error.per == BucketType.member:
                 per = "per member"
-            if error.per == BucketType.category:
+            elif error.per == BucketType.category:
                 per = "per category"
-            if error.per == BucketType.role:
+            elif error.per == BucketType.role:
                 per = "per role"
             else:
                 per = ""

@@ -30,7 +30,7 @@ class Coords(commands.Cog):
         """ Lists all coordinates saved to the database """
         coords = await self.bot.db.fetch("SELECT author, x, y, z, description FROM coords")
         if not coords:
-            return await ctx.send("You haven't saved any coordinates yet!", ephemeral=True)
+            return await ctx.send("There are no coordinates saved! Do `/save` to save one.")
         table = [(self.bot.get_user(author) or author, str(x), str(y), str(z), brief) for author, x, y, z, brief in coords]
         table = tabulate.tabulate(table, headers=["Author", "X", "Y", "Z", "Description"], tablefmt="presto")
         lines = table.split("\n")
