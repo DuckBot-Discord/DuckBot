@@ -33,9 +33,6 @@ initial_extensions = (
 
 load_dotenv()
 
-with open(f'{os.getenv("COGS_PATH")}/music-config.json', "r+") as file:
-    config = json.load(file)
-
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
 
