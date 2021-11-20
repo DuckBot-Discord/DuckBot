@@ -423,7 +423,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     async def send_as_others(self, ctx: CustomContext, member: discord.Member, *, message):
         """ Sends a message as another person. """
         wh = await get_webhook(ctx.channel)
-        thread = None
+        thread = discord.utils.MISSING
         if isinstance(ctx.channel, discord.Thread):
             thread = ctx.channel
         await wh.send(message, avatar_url=member.display_avatar.url, username=member.display_name, thread=thread)
