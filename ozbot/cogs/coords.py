@@ -1,3 +1,7 @@
+import json
+import pprint
+import re
+
 import asyncpg
 import discord
 import jishaku.paginators
@@ -15,17 +19,22 @@ class Coords(commands.Cog):
     def __init__(self, bot):
         self.bot: Ozbot = bot
 
-    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
+    @commands.command(name='save', aliases=['save-coords'], brief='Saves your coordinates to the database.',
+                      slash_command=True, message_command=False,
+                      slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
     async def save_coords(self, ctx: commands.Context, x: int, z: int, *, description: discord.utils.remove_markdown):
         """ Saves a coordinate to the public database """
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, z, description) VALUES ($1, $2, $3, $4)",
                                       ctx.author.id, x, z, description)
         except asyncpg.UniqueViolationError:
-            return await ctx.send("Someone has already saved that coordinate to the global spreadsheet!", ephemeral=True)
+            return await ctx.send("Someone has already saved that coordinate to the global spreadsheet!",
+                                  ephemeral=True)
         await ctx.send(f"Coordinate `{x}X {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`")
 
-    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.', slash_command=True, message_command = False, slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
+    @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.',
+                      slash_command=True, message_command=False,
+                      slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
     async def list_coords(self, ctx: commands.Context, sort: str = None, search: str = None):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"
@@ -70,6 +79,32 @@ class Coords(commands.Cog):
         [pages.add_line(line) for line in lines]
         interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
         await interface.send_to(ctx)
+
+    @commands.Cog.listener('on_message')
+    async def insert_into_database(self, message: discord.Message):
+        if message.author.id != 1 or message.channel.id != 706624339595886683:
+            return
+        if not (match := re.search(r"(?P<X>-?[0-9]*) \| (?P<Z>-?[0-9]*) \| (?P<Name>\w+) \| (?P<UUID>[0-9a-f]{8}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{12}) \| (?P<Description>.*)", message)):
+            return
+        x, z, name, uuid, description = match.group('X'), match.group('Z'), match.group('Name'), match.group('UUID'), match.group('Description')
+        author_id = await self.bot.db.fetchval("SELECT user_id FROM users WHERE minecraft_id = $1", uuid)
+        if not author_id:
+            await message.channel.send("""/tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with note ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
+            """.replace("insert_minecraft_username", name))
+            return
+        try:
+            await self.bot.db.execute("INSERT INTO coords (author, x, z, description) VALUES ($1, $2, $3, $4)")
+            await message.channel.send("""/tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with note ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
+            """.replace("insert_minecraft_username", name).replace("insert_discord_username", str(self.bot.get_user(author_id) or f'User not found (ID: {author_id})')).replace("insert_note_here", description))
+        except asyncpg.UniqueViolationError:
+            coords_author_id = await self.bot.db.fetchval("SELECT author FROM coords WHERE x = $1 AND z = $2", x, z)
+            if coords_author_id:
+                await message.channel.send("""/tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Sorry but ","color":"red"},{"text":"insert_discord_username ","color":"yellow"},{"text":"has already saved these coordinates. ","color":"red"},{"text":"Maybe move a bit?","color":"yellow"}]
+                """.replace("insert_discord_username", str(self.bot.get_user(coords_author_id) or f'User not found (ID: {coords_author_id})')))
+            else:
+                await message.channel.send("""/tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Sorry but ","color":"red"},{"text":"insert_discord_username ","color":"yellow"},{"text":"has already saved these coordinates. ","color":"red"},{"text":"Maybe move a bit?","color":"yellow"}]
+                """.replace("insert_discord_username", 'UNKNOWN USER'))
+
 
 # !jsk py ```py
 #         from discord.http import Route
