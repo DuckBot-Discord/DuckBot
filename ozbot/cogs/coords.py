@@ -93,11 +93,11 @@ class Coords(commands.Cog):
             """.replace("insert_minecraft_username", name))
             return
         try:
-            await self.bot.db.execute("INSERT INTO coords (author, x, z, description) VALUES ($1, $2, $3, $4)")
+            await self.bot.db.execute("INSERT INTO coords (author, x, z, description) VALUES ($1, $2, $3, $4)", author_id, int(x), int(z), description)
             await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with note ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
             """.replace("insert_minecraft_username", name).replace("insert_discord_username", str(self.bot.get_user(author_id) or f'User not found (ID: {author_id})')).replace("insert_note_here", description))
         except asyncpg.UniqueViolationError:
-            coords_author_id = await self.bot.db.fetchval("SELECT author FROM coords WHERE x = $1 AND z = $2", x, z)
+            coords_author_id = await self.bot.db.fetchval("SELECT author FROM coords WHERE x = $1 AND z = $2", int(x), int(z))
             if coords_author_id:
                 await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Sorry but ","color":"red"},{"text":"insert_discord_username ","color":"yellow"},{"text":"has already saved these coordinates. ","color":"red"},{"text":"Maybe move a bit?","color":"yellow"}]
                 """.replace("insert_discord_username", str(self.bot.get_user(coords_author_id) or f'User not found (ID: {coords_author_id})')))
