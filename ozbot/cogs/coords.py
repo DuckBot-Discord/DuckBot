@@ -82,7 +82,7 @@ class Coords(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def insert_into_database(self, message: discord.Message):
-        if message.author.id != 1 or message.channel.id != 706624339595886683:
+        if message.author.id != 864969115839758356 or message.channel.id != 706624339595886683:
             return
         if not (match := re.search(r"(?P<X>-?[0-9]*) \| (?P<Z>-?[0-9]*) \| (?P<Name>\w+) \| (?P<UUID>[0-9a-f]{8}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{12}) \| (?P<Description>.*)", message)):
             return
