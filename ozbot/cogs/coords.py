@@ -6,7 +6,9 @@ import asyncpg
 import discord
 import jishaku.paginators
 import tabulate
+from discord import Interaction
 from discord.ext import commands
+from discord.types.interactions import ApplicationCommandOptionChoice
 
 from ozbot.__main__ import Ozbot
 
@@ -105,6 +107,25 @@ class Coords(commands.Cog):
                 await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Sorry but ","color":"red"},{"text":"insert_discord_username ","color":"yellow"},{"text":"has already saved these coordinates. ","color":"red"},{"text":"Maybe move a bit?","color":"yellow"}]
                 """.replace("insert_discord_username", 'UNKNOWN USER').replace("insert_minecraft_username", name))
 
+    @commands.Cog.listener('on_interaction')
+    async def type_printer(self, interaction: Interaction):
+        if interaction.type != discord.InteractionType.application_command_autocomplete:
+            return
+        if interaction.data.get('name', '') != 'list':
+            return
+        options = interaction.data.get('options')
+        response: discord.InteractionResponse = interaction.response
+        option = discord.utils.find(lambda o: o.get('name', '') == 'search' and o.get('focused', False) is True, options)
+        if not option:
+            return await response.autocomplete_result([])
+        user_input = option.get('value', '')
+        results = await self.bot.db.fetch("SELECT author, description FROM coords WHERE SIMILARITY(description, $1) > 0.2", user_input)
+        if not results:
+            return await response.autocomplete_result([])
+        responses = []
+        for author, description in results:
+            responses.append(ApplicationCommandOptionChoice(name=str(description)[0:100], value=str(description)[0:100]))
+        return await response.autocomplete_result(responses)
 
 # !jsk py ```py
 #         from discord.http import Route
