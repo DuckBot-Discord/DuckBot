@@ -87,7 +87,7 @@ class Coords(commands.Cog):
         if not (match := re.search(r"^(?P<X>-?[0-9]*) \| (?P<Z>-?[0-9]*) \| (?P<Name>\w+) \| (?P<UUID>[0-9a-f]{8}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{12}) \| (?P<Description>.*)$", message.content)):
             return
         x, z, name, uuid, description = match.group('X'), match.group('Z'), match.group('Name'), match.group('UUID'), match.group('Description')
-        author_id = await self.bot.db.fetchval("SELECT user_id FROM users WHERE minecraft_id = $1", uuid)
+        author_id = await self.bot.db.fetchval("SELECT user_id FROM usernames WHERE minecraft_id = $1", uuid)
         if not author_id:
             await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with note ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
             """.replace("insert_minecraft_username", name))
