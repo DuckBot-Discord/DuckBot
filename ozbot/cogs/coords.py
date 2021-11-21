@@ -84,7 +84,7 @@ class Coords(commands.Cog):
     async def insert_into_database(self, message: discord.Message):
         if message.author.id != 864969115839758356 or message.channel.id != 851314198654484521:
             return
-        if not (match := re.search(r"(?P<X>-?[0-9]*) \| (?P<Z>-?[0-9]*) \| (?P<Name>\w+) \| (?P<UUID>[0-9a-f]{8}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{12}) \| (?P<Description>.*)", message)):
+        if not (match := re.search(r"^(?P<X>-?[0-9]*) \| (?P<Z>-?[0-9]*) \| (?P<Name>\w+) \| (?P<UUID>[0-9a-f]{8}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{4}[-]?[0-9a-f]{12}) \| (?P<Description>.*)$", message.content)):
             return
         x, z, name, uuid, description = match.group('X'), match.group('Z'), match.group('Name'), match.group('UUID'), match.group('Description')
         author_id = await self.bot.db.fetchval("SELECT user_id FROM users WHERE minecraft_id = $1", uuid)
