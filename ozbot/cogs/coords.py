@@ -119,7 +119,7 @@ class Coords(commands.Cog):
         if not option:
             return await response.autocomplete_result([])
         user_input = option.get('value', '')
-        results = await self.bot.db.fetch("SELECT author, description FROM coords WHERE SIMILARITY(description, $1) > 0.2", user_input)
+        results = await self.bot.db.fetch("SELECT author, description FROM coords WHERE SIMILARITY(description, $1) > 0.1 LIMIT 25", user_input)
         if not results:
             return await response.autocomplete_result([])
         responses = []
