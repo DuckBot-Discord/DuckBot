@@ -1,4 +1,6 @@
 import asyncio
+import contextlib
+import random
 import re
 import typing
 import unicodedata
@@ -135,7 +137,9 @@ class ServerInfoView(discord.ui.View):
 
     @discord.ui.button(emoji='<a:loading:747680523459231834>', style=discord.ButtonStyle.danger, disabled=True)
     async def _end(self, _, interaction: discord.Interaction):
-        await interaction.message.delete()
+        with contextlib.suppress(discord.HTTPException):
+            await interaction.message.delete()
+            await self.ctx.message.add_reaction(random.choice(constants.DONE))
         self.stop()
 
     @discord.ui.button(emoji=constants.TYPING_INDICATOR, style=discord.ButtonStyle.grey, disabled=True)
@@ -456,7 +460,9 @@ class UserInfoView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.red, emoji='🗑')
     async def stop_button(self, _, __):
-        await self.message.delete()
+        with contextlib.suppress(discord.HTTPException):
+            await self.message.delete()
+            await self.ctx.message.add_reaction(random.choice(constants.DONE))
         self.stop()
 
 

@@ -3,6 +3,7 @@ import difflib
 import inspect
 import itertools
 import os
+import random
 import re
 import time
 import typing
@@ -218,9 +219,10 @@ class HelpView(discord.ui.View):
 
     @discord.ui.button(emoji='🗑', row=1, style=discord.ButtonStyle.red)
     async def _end(self, _, interaction: Interaction):
-        await interaction.message.delete()
-        if self.ctx.channel.permissions_for(self.ctx.me).manage_messages:
-            await self.ctx.message.delete(delay=0)
+        await interaction.message.delete(delay=0)
+        if self.ctx.channel.permissions_for(self.ctx.me).add_reactions:
+            await self.ctx.message.add_reaction(random.choice(constants.DONE))
+
 
     @discord.ui.button(emoji=constants.ARROWFWDZ, row=1)
     async def next(self, _, interaction: Interaction):

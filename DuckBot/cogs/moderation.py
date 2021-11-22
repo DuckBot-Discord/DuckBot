@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 import datetime
 import difflib
+import random
 import time
 import discord
 import re
@@ -79,8 +80,10 @@ class BannedMember(commands.Converter):
                         if val is None:
                             raise errors.NoHideout
                         elif val is False:
-                            print('kekw')
-                            await ctx.message.delete(delay=0)
+                            try:
+                                await ctx.message.add_reaction(random.choice(constants.DONE))
+                            except discord.HTTPException:
+                                pass
                             raise errors.NoHideout
 
         if entity is None:

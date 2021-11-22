@@ -370,6 +370,7 @@ class Fun(commands.Cog):
         message: discord.Message = await self.bot.wait_for('message', check=lambda
             m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
+            await ctx.message.add_reaction(random.choice(constants.DONE))
             return await upper_hand.delete()
         await ctx.send(constants.CAG_DOWN, reply=False)
 
