@@ -37,7 +37,7 @@ async def get_webhook(channel) -> discord.Webhook:
         for hook in webhook_list:
             if hook.token:
                 return hook
-    hook = await channel.create_webhook(name="DuckBot ModMail")
+    hook = await channel.create_webhook(name="DuckBot Webhook", avatar=await channel.guild.me.display_avatar.read())
     return hook
 
 
@@ -513,7 +513,7 @@ class Management(commands.Cog, name='Bot Management'):
                 await ctx.send_help(ctx.command)
 
         @status.command(name='playing')
-        async def status_playing(self, ctx: CustomContext, text):
+        async def status_playing(self, ctx: CustomContext, *, text):
             """ Sets the bot's status to playing """
             await self.bot.change_presence(activity=discord.Game(name=f'{text}'))
             await ctx.message.add_reaction('✅')
@@ -528,7 +528,7 @@ class Management(commands.Cog, name='Bot Management'):
             await ctx.send(f"Activity changed to `Listening to {text}` ")
 
         @status.command(name='watching')
-        async def status_watching(self, ctx: CustomContext, text):
+        async def status_watching(self, ctx: CustomContext, *, text):
             """ Sets the bot's status to watching """
             await self.bot.change_presence(
                 activity=discord.Activity(type=discord.ActivityType.watching, name=f'{text}'))
@@ -536,7 +536,7 @@ class Management(commands.Cog, name='Bot Management'):
             await ctx.send(f"Activity changed to `Watching {text}` ")
 
         @status.command(name='competing')
-        async def status_competing(self, ctx: CustomContext, text):
+        async def status_competing(self, ctx: CustomContext, *, text):
             """ Sets the bot's status to competing """
             await self.bot.change_presence(
                 activity=discord.Activity(type=discord.ActivityType.competing, name=f'{text}'))
