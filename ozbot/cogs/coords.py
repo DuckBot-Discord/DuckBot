@@ -167,7 +167,7 @@ class Coords(commands.Cog):
         if not results:
             return await message.channel.send("""!xc tellraw insert_player_here ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"No results founds within a insert_radius_here block radius!","color":"red"}]
             """.replace('insert_radius_here', radius).replace('insert_player_here', name))
-        lines = ["""{"text":"\\nxcoord","color":"yellow"},{"text":"X","color":"gold"},{"text":" zcoord","color":"yellow"},{"text":"Z","color":"gold"},{"text":" - description","color":"gray"}""".replace('xcoord', x).replace('zcoord', z).replace('description', description) for x, z, description in results]
+        lines = ["""{"text":"\\nxcoord","color":"yellow"},{"text":"X","color":"gold"},{"text":" zcoord","color":"yellow"},{"text":"Z","color":"gold"},{"text":" - description","color":"gray"}""".replace('xcoord', str(x)).replace('zcoord', str(z)).replace('description', description) for x, z, description in results]
         header = f"------ Locations within {radius} blocks ------"
         pages = jishaku.paginators.WrappedPaginator(prefix="", suffix="", max_size=1700)
         [pages.add_line(line) for line in lines]
