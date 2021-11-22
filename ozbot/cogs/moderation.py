@@ -359,7 +359,7 @@ class moderation(commands.Cog):
     # command: https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/mod.py#L1181-L1408
     # Origina Command Licensed under MPL 2.0: https://github.com/Rapptz/RoboDanny/blob/rewrite/LICENSE.txt
 
-    @commands.group(aliases=['purge', 'clear', 'delete', 'clean'], description="""```yaml
+    @commands.group(aliases=['purge', 'clear', 'clean'], description="""```yaml
     Removes messages that meet a criteria. In order to use this command, you must have Manage Messages permissions.
 
     Remember that the bot needs Manage Messages as well. These commands cannot be used in a private message.
