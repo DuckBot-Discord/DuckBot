@@ -169,11 +169,11 @@ class Coords(commands.Cog):
             """.replace('insert_radius_here', radius).replace('insert_player_here', name))
         lines = ["""{"text":"\\nxcoord","color":"yellow"},{"text":"X","color":"gold"},{"text":" zcoord","color":"yellow"},{"text":"Z","color":"gold"},{"text":" - description","color":"gray"}""".replace('xcoord', str(x)).replace('zcoord', str(z)).replace('description', description) for x, z, description in results]
         header = f"------ Locations within {radius} blocks ------"
-        pages = jishaku.paginators.WrappedPaginator(prefix="", suffix="", max_size=1700)
+        pages = jishaku.paginators.WrappedPaginator(prefix="", suffix="", max_size=1800)
         [pages.add_line(line) for line in lines]
         page = str(pages.pages[0]).replace('\n', ',')
         page = """!xc tellraw insert_player_here ["",{"text":"header_here","color":"blue"},table_thing]
-        """.replace('header_here', header).replace('insert_player_here', name).replace('put_table_here', page.replace('\n', '\\n'))
+        """.replace('header_here', header).replace('insert_player_here', name).replace('table_thing', page)
         await message.channel.send(page[0:2000])
 
 
