@@ -172,7 +172,7 @@ class Coords(commands.Cog):
         pages = jishaku.paginators.WrappedPaginator(prefix="", suffix="", max_size=1800)
         [pages.add_line(line) for line in lines]
         page = str(pages.pages[0]).replace('\n', ',')
-        page = """!xc tellraw insert_player_here ["",{"text":"header_here","color":"blue"},table_thing]
+        page = """!xc tellraw insert_player_here ["",{"text":"header_here","color":"blue"}table_thing]
         """.replace('header_here', header).replace('insert_player_here', name).replace('table_thing', page)
         await message.channel.send(page[0:2000])
 
