@@ -1,5 +1,3 @@
-import json
-import pprint
 import re
 
 import asyncpg
@@ -127,7 +125,13 @@ class Coords(commands.Cog):
         elif name == 'delete':
             option = discord.utils.find(lambda o: o.get('name', '') == 'search' and o.get('focused', False) is True, options)
             user_input = option.get('value', '')
-            results = await self.bot.db.fetch("SELECT x, z, description FROM coords WHERE SIMILARITY(description, $1) > 0.1 AND author = $2 LIMIT 25", user_input, interaction.user.id) or []
+            if not user_input:
+                results = await self.bot.db.fetch("SELECT x, z, description FROM coords WHERE author = $1 LIMIT 25", interaction.user.id) or []
+            elif len(user_input) == 1:
+                results = await self.bot.db.fetch(
+                    "SELECT x, z, description FROM coords WHERE description LIKE $1 AND author = $2 LIMIT 25", str(user_input) + '%', interaction.user.id) or []
+            else:
+                results = await self.bot.db.fetch("SELECT x, z, description FROM coords WHERE SIMILARITY(description, $1) > 0.1 AND author = $2 LIMIT 25", user_input, interaction.user.id) or []
             responses = []
             for x, z, description in results:
                 responses.append(ApplicationCommandOptionChoice(name=description, value=f'{x} | {z}'))
