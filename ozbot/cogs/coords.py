@@ -32,7 +32,7 @@ class Coords(commands.Cog):
         except asyncpg.UniqueViolationError:
             return await ctx.send("Someone has already saved that coordinate to the global spreadsheet!",
                                   ephemeral=True)
-        await ctx.send(f"Coordinate `{x}X {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`")
+        await ctx.send(f"Coordinate `{x}X {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`"[0:2000])
 
     @commands.command(name='list', aliases=['list-coords', 'coords'], brief='Lists all coordinates saved by you.',
                       slash_command=True, message_command=False,
@@ -111,21 +111,42 @@ class Coords(commands.Cog):
     async def type_printer(self, interaction: Interaction):
         if interaction.type != discord.InteractionType.application_command_autocomplete:
             return
-        if interaction.data.get('name', '') != 'list':
+        if not (name := interaction.data.get('name', None)):
             return
-        options = interaction.data.get('options')
+        if not (options := interaction.data.get('options', None)):
+            return
         response: discord.InteractionResponse = interaction.response
-        option = discord.utils.find(lambda o: o.get('name', '') == 'search' and o.get('focused', False) is True, options)
-        if not option:
-            return await response.autocomplete_result([])
-        user_input = option.get('value', '')
-        results = await self.bot.db.fetch("SELECT author, description FROM coords WHERE SIMILARITY(description, $1) > 0.1 LIMIT 25", user_input)
-        if not results:
-            return await response.autocomplete_result([])
-        responses = []
-        for author, description in results:
-            responses.append(ApplicationCommandOptionChoice(name=str(description)[0:100], value=str(description)[0:100]))
-        return await response.autocomplete_result(responses)
+        if name == 'list':
+            option = discord.utils.find(lambda o: o.get('name', '') == 'search' and o.get('focused', False) is True, options)
+            user_input = option.get('value', '')
+            results = await self.bot.db.fetch("SELECT author, description FROM coords WHERE SIMILARITY(description, $1) > 0.1 LIMIT 25", user_input) or []
+            responses = []
+            for author, description in results:
+                responses.append(ApplicationCommandOptionChoice(name=str(description)[0:100], value=str(description)[0:100]))
+            return await response.autocomplete_result(responses)
+        elif name == 'delete':
+            option = discord.utils.find(lambda o: o.get('name', '') == 'search' and o.get('focused', False) is True, options)
+            user_input = option.get('value', '')
+            results = await self.bot.db.fetch("SELECT x, z, description FROM coords WHERE SIMILARITY(description, $1) > 0.1 AND author = $2 LIMIT 25", user_input, interaction.data.get('id', 0)) or []
+            responses = []
+            for x, z, description in results:
+                responses.append(ApplicationCommandOptionChoice(name=description, value=f'{x} | {z}'))
+            return await response.autocomplete_result(responses)
+
+    @commands.command(name='delete', brief='Saves your coordinates to the database.',
+                      slash_command=True, message_command=False,
+                      slash_command_guilds=[706624339595886683])  # Dont ask for fork they all shit!
+    async def delete(self, ctx, *, search: str):
+        """ Deletes one of your saved coordinates """
+        match = re.search(r'^(?P<X>-?\d+) \| (?P<z>-?\d+)$', search)
+        if not match:
+            return await ctx.send("Sorry, but you must select one of the suggested options!", ephemeral=True)
+        x, z = match.group('X'), match.group('z')
+        description = await self.bot.db.fetchval("DELETE FROM coords WHERE x = $1 AND z = $2 AND author = $3 RETURNING description", int(x), int(z), ctx.author.id)
+        if not description:
+            return await ctx.send("Sorry, but somehow, the coordinate you tried to delete wasn't yours, or does not exist anymore!", ephemeral=True)
+        await ctx.send(f"Deleted coordinate `{x}X {z}Z` with note: `{description}`"[0:2000])
+
 
 # !jsk py ```py
 #         from discord.http import Route
