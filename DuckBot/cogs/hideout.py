@@ -422,6 +422,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     @commands.bot_has_permissions(manage_webhooks=True)
     async def send_as_others(self, ctx: CustomContext, member: discord.Member, *, message):
         """ Sends a message as another person. """
+        if len(message) > 2000:
+            raise commands.BadArgument(f'Message too long! {len(message)}/2000')
         wh = await get_webhook(ctx.channel)
         thread = discord.utils.MISSING
         if isinstance(ctx.channel, discord.Thread):
