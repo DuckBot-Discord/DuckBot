@@ -148,6 +148,34 @@ class Coords(commands.Cog):
             return await ctx.send("Sorry, but somehow, the coordinate you tried to delete wasn't yours, or does not exist anymore!", ephemeral=True)
         await ctx.send(f"Deleted coordinate `{x}X {z}Z` with annotation: `{description}`"[0:2000])
 
+    @commands.Cog.listener('on_message')
+    async def fetch_close_by(self, message: discord.Message):
+        if message.author.id != 864969115839758356 or message.channel.id != 851314198654484521:
+            return
+        if not (match := re.search(r'FETCH_NEARBY \| (?P<X>-?\d+) \| (?P<z>-?\d+) \| (?P<Name>\w+) \| (?P<radius>-?\d+)', message.content)):
+            return
+        x, z, name, radius = match.group('X'), match.group('z'), match.group('Name'), match.group('radius')
+        results = await self.bot.db.fetch("""
+        SELECT x, z, description FROM coords 
+        WHERE x 
+            BETWEEN $1::INTEGER - $3::INTEGER 
+            AND $1::INTEGER + $3::INTEGER 
+        AND z 
+            BETWEEN $2::INTEGER - $3::INTEGER 
+            AND $2::INTEGER + $3::INTEGER
+            """, int(x), int(z), int(radius))
+        if not results:
+            return await message.channel.send("""!xc tellraw insert_player_here ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"No results founds within a insert_radius_here block radius!","color":"red"}]
+            """.replace('insert_radius_here', radius).replace('insert_player_here', name))
+        table = [(f"\\n{x}", f"{z}", f"{description}") for x, z, description in results]
+        table = tabulate.tabulate(table, headers=["Author", "X", "Z", "Description"], tablefmt="presto")
+        lines = table.split("\n")
+        lines, headers = lines[2:], '\n'.join(lines[0:2])
+        header = f"Locations within {radius} blocks".center(len(lines[0]))
+        pages = jishaku.paginators.WrappedPaginator(prefix="""!xc tellraw pname {\"text\":\"headers""".replace('pname', name).replace('headers', (header + headers).replace('\n', '\\n')), suffix="\"}", max_size=1950)
+        [pages.add_line(line) for line in lines]
+        page = str(pages.pages[0]).replace('\n', '')
+        await message.channel.send(page)
 
 # !jsk py ```py
 #         from discord.http import Route
