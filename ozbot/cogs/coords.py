@@ -173,7 +173,7 @@ class Coords(commands.Cog):
         [pages.add_line(line) for line in lines]
         page = str(pages.pages[0]).replace('\n', ',')
         page = """!xc tellraw insert_player_here ["",{"text":"header_here","color":"blue"}table_thing{"text":"\\n---------------------------------amountstr","color":"blue"}]
-        """.replace('header_here', header).replace('insert_player_here', name).replace('table_thing', page).replace('amountstr', str('-'*int(radius)))
+        """.replace('header_here', header).replace('insert_player_here', name).replace('table_thing', page).replace('amountstr', str('-'*len(str(results))))
         await message.channel.send(page[0:2000])
 
 
