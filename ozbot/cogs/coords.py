@@ -89,12 +89,12 @@ class Coords(commands.Cog):
         x, z, name, uuid, description = match.group('X'), match.group('Z'), match.group('Name'), match.group('UUID'), match.group('Description')
         author_id = await self.bot.db.fetchval("SELECT user_id FROM usernames WHERE minecraft_id = $1", uuid)
         if not author_id:
-            await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with note ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
+            await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with annotation ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
             """.replace("insert_minecraft_username", name))
             return
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, z, description) VALUES ($1, $2, $3, $4)", author_id, int(x), int(z), description)
-            await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with note ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
+            await message.channel.send("""!xc tellraw insert_minecraft_username ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"]","bold":true,"color":"blue"},{"text":" Succesfully saved to discord database as ","color":"gold"},{"text":"insert_discord_username ","color":"yellow"},{"text":"with annotation ","color":"gold"},{"text":"insert_note_here","color":"yellow"}]
             """.replace("insert_minecraft_username", name).replace("insert_discord_username", str(self.bot.get_user(author_id) or f'User not found (ID: {author_id})')).replace("insert_note_here", description))
         except asyncpg.UniqueViolationError:
             coords_author_id = await self.bot.db.fetchval("SELECT author FROM coords WHERE x = $1 AND z = $2", int(x), int(z))
@@ -146,7 +146,7 @@ class Coords(commands.Cog):
         description = await self.bot.db.fetchval("DELETE FROM coords WHERE x = $1 AND z = $2 AND author = $3 RETURNING description", int(x), int(z), ctx.author.id)
         if not description:
             return await ctx.send("Sorry, but somehow, the coordinate you tried to delete wasn't yours, or does not exist anymore!", ephemeral=True)
-        await ctx.send(f"Deleted coordinate `{x}X {z}Z` with note: `{description}`"[0:2000])
+        await ctx.send(f"Deleted coordinate `{x}X {z}Z` with annotation: `{description}`"[0:2000])
 
 
 # !jsk py ```py
