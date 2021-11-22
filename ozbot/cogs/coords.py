@@ -174,7 +174,7 @@ class Coords(commands.Cog):
         page = str(pages.pages[0]).replace('\n', ',')
         page = """!xc tellraw insert_player_here ["",{"text":"header_here","color":"blue"}table_thing{"text":"\\n---------------------------------amountstr","color":"blue"}]
         """.replace('header_here', header).replace('insert_player_here', name).replace('table_thing', page).replace('amountstr', str('-'*len(str(radius))))
-        if len(page) >= 2000:
+        if len(page) <= 2000:
             await message.channel.send(page)
         else:
             return await message.channel.send("""!xc tellraw insert_player_here ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"The amount of characters exceeded the amount of characters allowed! Please contact Leo and tell him to fix it.","color":"red"}]
