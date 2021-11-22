@@ -131,7 +131,7 @@ class Coords(commands.Cog):
                 results = await self.bot.db.fetch("SELECT x, z, description FROM coords WHERE SIMILARITY(description, $1) > 0.1 AND author = $2 LIMIT 25", user_input, interaction.user.id) or []
             responses = []
             for x, z, description in results:
-                responses.append(ApplicationCommandOptionChoice(name=description, value=f'{x} | {z}'))
+                responses.append(ApplicationCommandOptionChoice(name=f"{x}X {z}Z - {description}", value=f'{x} | {z}'))
             return await response.autocomplete_result(responses)
 
     @commands.command(name='delete', brief='Saves your coordinates to the database.',
