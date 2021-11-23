@@ -459,8 +459,8 @@ if __name__ == '__main__':
     bot = DuckBot()
     try:
         webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))
-        webhook.send(content='Bot is starting up...')
+        webhook.send(content='✅ **Bot is starting up...**')
         bot.run(TOKEN, reconnect=True)
     finally:
         webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))
-        webhook.send(content='Bot is shutting down...')
+        webhook.send(content='🛑 **Bot is shutting down...**')
