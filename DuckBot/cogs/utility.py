@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import io
 import random
 import re
 import typing
@@ -1085,3 +1086,29 @@ class Utility(commands.Cog):
             per_page=10)
         pages = paginator.ViewPaginator(source=source, ctx=ctx, compact=True)
         await pages.start()
+
+    @commands.command()
+    async def spotify(self, ctx, member: discord.Member = None):
+        """ Get the spotify link of a member """
+        member = member or ctx.author
+        spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), member.activities)
+        if spotify is None:
+            return await ctx.send(f"**{member}** is not listening or connected to Spotify.")
+        params = {
+            'title': spotify.title,
+            'cover_url': spotify.album_cover_url,
+            'duration_seconds': spotify.duration.seconds,
+            'start_timestamp': spotify.start.timestamp(),
+            'artists': spotify.artists
+        }
+
+        async with self.bot.session.get('https://api.jeyy.xyz/discord/spotify', params=params) as response:
+            buf = io.BytesIO(await response.read())
+        artists = ', '.join(spotify.artists)
+        file = discord.File(buf, 'spotify.png')
+        embed = discord.Embed(description=f"**{spotify.title}** by **{artists}**")
+        embed.set_author(name=f"{member}'s Spotify", icon_url=member.display_avatar.url)
+        embed.set_image(url='attachment://spotify.png')
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(emoji=constants.SPOTIFY, url=spotify.url, label='Listen to this track'))
+        await ctx.send(embed=embed, file=file, view=view)

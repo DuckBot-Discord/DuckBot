@@ -47,6 +47,31 @@ class WelcomeView(discord.ui.View):
         return False
 
 
+class ExceptionView(discord.ui.View):
+    def __init__(self, exception: Exception, author_id: int):
+        super().__init__(timeout=None)
+        self.exception = exception
+        self.embed: discord.Embed = None
+        self.author_id = author_id
+        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='Support Server', url='https://discord.gg/TdRfGKg8Wh'))
+
+    @discord.ui.button(label='View Error', style=discord.ButtonStyle.blurple)
+    async def view_error(self, _, interaction: discord.Interaction):
+        if not self.embed:
+            traceback_string = ''.join(traceback.format_exception(type(self.exception), self.exception, self.exception.__traceback__))
+            to_send = f"```py\n{traceback_string}```"
+            if len(to_send) > 4096:
+                to_send = traceback_string[:4089] + '...\n```'
+            self.embed = discord.Embed(title='Error', description=to_send, color=discord.Color.red())
+        await interaction.response.send_message(embed=self.embed, ephemeral=True)
+
+    @discord.ui.button(emoji='🗑', style=discord.ButtonStyle.red)
+    async def delete(self, _, interaction: discord.Interaction):
+        if interaction.user and interaction.user.id == self.author_id:
+            return await interaction.message.delete()
+        await interaction.response.defer()
+
+
 class Handler(commands.Cog, name='Handler'):
     """
     🆘 Handle them errors 👀 How did you manage to get a look at this category????
@@ -255,7 +280,7 @@ class Handler(commands.Cog, name='Handler'):
         error_channel = self.bot.get_channel(self.error_channel)
 
         nl = '\n'
-        await ctx.send(f"Uh oh! An unexpected error occurred. Please join my support server for more info.", view=ServerInvite())
+        await ctx.send(f"⚠ **An unexpected error occurred!**", view=ExceptionView(error, ctx.author.id))
 
         traceback_string = "".join(traceback.format_exception(
             etype=None, value=error, tb=error.__traceback__))
