@@ -281,7 +281,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         await self.do_rtfm(ctx, 'master', obj)
 
     @rtfm.command(name='latest', aliases=['1.7'])
-    async def rtfm_master(self, ctx, *, obj: str = None):
+    async def rtfm_latest(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a discord.py entity (master branch)
 
         https://discordpy.readthedocs.io/en/latest
