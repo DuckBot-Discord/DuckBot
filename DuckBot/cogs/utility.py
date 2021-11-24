@@ -43,16 +43,19 @@ def get_channel_positions(ctx: CustomContext, guild: discord.Guild, member_count
     sorted_channels = []
     for category, channels in get_sorted_mapping(guild).items():
         if category:
-            sorted_channels.append((str(category), '✅ --' if category.permissions_for(ctx.author).read_messages else '❌ --'))
+            sorted_channels.append((f"📚 {category}", '✅ --' if category.permissions_for(ctx.author).read_messages else '❌ --'))
         for channel in channels:
             if member_counts:
                 if not isinstance(channel, discord.VoiceChannel):
-                    sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(channel.members)}"))
+                    sorted_channels.append((f"📑 {channel}", ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(channel.members)}"))
                 else:
                     mem_count = [m for m in channel.guild.members if channel.permissions_for(m).read_messages]
-                    sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(mem_count)}"))
+                    sorted_channels.append((f"🔊 {channel}", ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"{len(mem_count)}"))
             else:
-                sorted_channels.append((str(channel), ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"N/A"))
+                if not isinstance(channel, discord.VoiceChannel):
+                    sorted_channels.append((f"📑 {channel}", ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"N/A"))
+                else:
+                    sorted_channels.append((f"🔊 {channel}", ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"N/A"))
     return sorted_channels
 
 
@@ -401,6 +404,7 @@ class ServerInfoView(discord.ui.View):
         if self.is_on_mobile:
             warntext = "If on computer, press the blue button for better fomatting"
         embed.set_footer(text=f"{warntext}"
+                              f"\n📚: Category • 📑: Text Channel • 🔊: Voice Channel"
                               f"\n✅ - Channels you have access to."
                               f"\n❌ - Channels you don't have access to.")
         return embed
@@ -576,9 +580,6 @@ class Utility(commands.Cog):
         Shows a user's information. If not specified, shows your own.
         """
         member = member or ctx.author
-        uid = getattr(ctx.interaction, 'data', {}).get("resolved", {}).get("members", {})
-        member = ctx.guild.get_member(int(next(iter(uid), member.id))) or ctx.author
-        await ctx.trigger_typing()
         fetched_user = await self.bot.fetch_user(member.id)
 
         embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color)

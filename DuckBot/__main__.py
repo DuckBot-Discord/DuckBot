@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import datetime
 import io
 import json
@@ -12,7 +13,6 @@ import typing
 
 import pomice
 from openrobot.api_wrapper import AsyncClient as ORBClient
-import tekore as tk
 from typing import (
     List,
     Optional,
@@ -39,6 +39,7 @@ from asyncdagpi import ImageFeatures
 import asyncgur
 
 from DuckBot import errors
+from DuckBot.helpers import slash_utils
 from DuckBot.helpers.helper import LoggingEventsFlags
 from DuckBot.helpers.context import CustomContext
 
@@ -61,7 +62,7 @@ os.environ['JISHAKU_HIDE'] = 'True'
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]
 
 
-class DuckBot(commands.Bot):
+class DuckBot(slash_utils.Bot):
     PRE: tuple = ('db.',)
 
     def user_blacklisted(self, ctx: CustomContext):
@@ -87,7 +88,6 @@ class DuckBot(commands.Bot):
             activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             enable_debug_events=True,
             strip_after_prefix=True,
-
         )
 
         self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
@@ -162,7 +162,8 @@ class DuckBot(commands.Bot):
             print()  # Empty line
 
     async def dynamic_load_cogs(self) -> None:
-        await self.wait_until_ready()
+        with contextlib.suppress(asyncio.TimeoutError):
+            await self.wait_for('pool_create', timeout=3)
         for filename in os.listdir(f"{os.getenv('COGS_PATH')}"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
@@ -324,15 +325,6 @@ class DuckBot(commands.Bot):
             return url.link
         raise discord.HTTPException(response=response, message='Could not upload to Imgur')
 
-    async def setup(self):
-        return
-
-    async def on_interaction(self, interaction: discord.Interaction):
-        try:
-            await super().on_interaction(interaction)
-        except commands.CommandNotFound:
-            pass
-
     async def populate_cache(self):
         try:
             await self.wait_for('pool_create', timeout=10)
@@ -453,14 +445,13 @@ class DuckBot(commands.Bot):
             self.dispatch('pool_create')
             logging.info('Database successful.')
 
-
 if __name__ == '__main__':
     TOKEN = os.getenv('DISCORD_TOKEN')
     bot = DuckBot()
     try:
         webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))
         webhook.send(content='✅ **Bot is starting up...**')
-        bot.run(TOKEN, reconnect=True)
+        bot.run(TOKEN)
     finally:
         webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))
         webhook.send(content='🛑 **Bot is shutting down...**')

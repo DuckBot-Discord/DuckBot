@@ -4,7 +4,6 @@ import contextlib
 import datetime
 import difflib
 import random
-import time
 import discord
 import re
 import shlex
@@ -55,8 +54,9 @@ async def muterole(ctx) -> discord.Role:
     return role
 
 
+# noinspection PyProtocol
 class BannedMember(commands.Converter):
-    async def convert(self, ctx, argument):
+    async def convert(self, ctx: CustomContext, argument):
         await ctx.trigger_typing()
         if argument.isdigit():
             member_id = int(argument, base=10)

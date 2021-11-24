@@ -16,10 +16,9 @@ from jishaku.paginators import WrappedPaginator
 
 import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.cogs import music as music_cog, hideout
+from DuckBot.cogs import music as music_cog
 from DuckBot.cogs.info import suggestions_channel
 from DuckBot.helpers import constants
-from DuckBot.helpers.paginator import ServerInvite
 
 warned = []
 
@@ -33,7 +32,7 @@ class WelcomeView(discord.ui.View):
         super().__init__(timeout=None)
 
     @discord.ui.button(emoji='🗑', custom_id='delete_joining_message')
-    async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def delete(self, _, interaction: discord.Interaction):
         await interaction.message.delete()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -53,12 +52,14 @@ class ExceptionView(discord.ui.View):
         self.exception = exception
         self.embed: discord.Embed = None
         self.author_id = author_id
-        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='Support Server', url='https://discord.gg/TdRfGKg8Wh'))
+        self.add_item(discord.ui.Button(emoji=constants.SERVERS_ICON, label='Support Server',
+                                        url='https://discord.gg/TdRfGKg8Wh'))
 
     @discord.ui.button(label='View Error', style=discord.ButtonStyle.blurple)
     async def view_error(self, _, interaction: discord.Interaction):
         if not self.embed:
-            traceback_string = ''.join(traceback.format_exception(type(self.exception), self.exception, self.exception.__traceback__))
+            traceback_string = ''.join(
+                traceback.format_exception(type(self.exception), self.exception, self.exception.__traceback__))
             to_send = f"```py\n{traceback_string}```"
             if len(to_send) > 4096:
                 to_send = traceback_string[:4089] + '...\n```'
@@ -107,7 +108,8 @@ class Handler(commands.Cog, name='Handler'):
             if ctx.author.id not in warned:
                 warned.append(ctx.author.id)
                 reason = await self.bot.db.fetchval('SELECT reason FROM blacklist WHERE user_id = $1', ctx.author.id)
-                return await ctx.send("Sorry, you are blacklisted from using DuckBot" + (f" for {reason}" if reason else "") + ".")
+                return await ctx.send(
+                    "Sorry, you are blacklisted from using DuckBot" + (f" for {reason}" if reason else "") + ".")
             else:
                 return
 
@@ -134,12 +136,8 @@ class Handler(commands.Cog, name='Handler'):
                 confirm = await ctx.confirm(message=f"Sorry, but the command **{ctx.invoked_with}** was not found."
                                                     f"\n{f'**did you mean... `{matches[0]}`?**' if matches else ''}",
                                             delete_after_confirm=True, delete_after_timeout=True,
-                                            delete_after_cancel=True, buttons=(
-                        ('▶', f'execute {matches[0]}', discord.ButtonStyle.gray),
-                        ('🗑', None, discord.ButtonStyle.red)
-                    ), timeout=15
-                                            )
-
+                                            delete_after_cancel=True, buttons=(('▶', f'execute {matches[0]}', discord.ButtonStyle.gray),
+                                                                               ('🗑', None, discord.ButtonStyle.red)), timeout=15)
                 if confirm is True:
                     message = copy.copy(ctx.message)
                     message._edited_timestamp = discord.utils.utcnow()
@@ -265,7 +263,8 @@ class Handler(commands.Cog, name='Handler'):
             if isinstance(error, commands.BadInviteArgument):
                 return await ctx.send(f'{error.argument[0:100]} is not a valid invite or it expired.')
             if isinstance(error, commands.BadBoolArgument):
-                return await ctx.send(f'Expected a boolean [yes|no|on|off|y|n|1|0], got `{error.argument[0:100]}` instead')
+                return await ctx.send(
+                    f'Expected a boolean [yes|no|on|off|y|n|1|0], got `{error.argument[0:100]}` instead')
             return await ctx.send(str(error or "Bad argument given!"))
 
         if isinstance(error, commands.NoPrivateMessage):
@@ -279,7 +278,6 @@ class Handler(commands.Cog, name='Handler'):
 
         error_channel = self.bot.get_channel(self.error_channel)
 
-        nl = '\n'
         await ctx.send(f"⚠ **An unexpected error occurred!**", view=ExceptionView(error, ctx.author.id))
 
         traceback_string = "".join(traceback.format_exception(
@@ -591,7 +589,7 @@ class Handler(commands.Cog, name='Handler'):
                               description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
                                           f'\n**Owner:** {guild.owner} • {guild.owner_id}')
         embed.add_field(name='Members',
-                        value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
+                        value=f'👥 {len([m for m in guild.members if not m.bot])} • 🤖 {len([m for m in guild.members if m.bot])}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
 
     @commands.Cog.listener('on_guild_remove')
@@ -601,7 +599,7 @@ class Handler(commands.Cog, name='Handler'):
                               description=f'**Name:** {discord.utils.escape_markdown(guild.name)} • {guild.id}'
                                           f'\n**Owner:** {guild.owner} • {guild.owner_id}')
         embed.add_field(name='Members',
-                        value=f'👥 {len(guild.humans)} • 🤖 {len(guild.bots)}\n**Total:** {guild.member_count}')
+                        value=f'👥 {len([m for m in guild.members if not m.bot])} • 🤖 {len([m for m in guild.members if m.bot])}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
 
     @staticmethod
@@ -655,8 +653,9 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_command')
     async def on_command(self, ctx: CustomContext):
-        await self.bot.db.execute("INSERT INTO commands (guild_id, user_id, command, timestamp) VALUES ($1, $2, $3, $4)",
-                                  getattr(ctx.guild, 'id', None), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
+        await self.bot.db.execute(
+            "INSERT INTO commands (guild_id, user_id, command, timestamp) VALUES ($1, $2, $3, $4)",
+            getattr(ctx.guild, 'id', None), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
 
         bucket = self.bot.global_mapping.get_bucket(ctx.message)
         current = ctx.message.created_at.timestamp()
@@ -701,10 +700,13 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_member_join')
     async def add_previously_muted(self, member: discord.Member):
-        if not await self.bot.db.fetchval("SELECT user_id FROM muted WHERE user_id = $1 AND guild_id = $2", member.id, member.guild.id):
+        if not await self.bot.db.fetchval("SELECT user_id FROM muted WHERE user_id = $1 AND guild_id = $2", member.id,
+                                          member.guild.id):
             return
         await self.bot.db.execute("DELETE FROM muted WHERE user_id = $1 AND guild_id = $2", member.id, member.guild.id)
-        if not (role := await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', member.guild.id)):
+        if not (
+                role := await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1',
+                                                   member.guild.id)):
             return
         if not (role := member.guild.get_role(role)):
             return
@@ -714,7 +716,9 @@ class Handler(commands.Cog, name='Handler'):
 
     @commands.Cog.listener('on_member_remove')
     async def remove_previously_muted(self, member: discord.Member):
-        if not (role := await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', member.guild.id)):
+        if not (
+                role := await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1',
+                                                   member.guild.id)):
             return
         if not (role := member.guild.get_role(role)):
             return

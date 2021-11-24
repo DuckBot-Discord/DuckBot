@@ -17,6 +17,7 @@ def setup(bot):
 
 
 class LoggingBackend(commands.Cog):
+
     def __init__(self, bot):
         self.bot: DuckBot = bot
         self.deliver_logs.start()
@@ -404,7 +405,7 @@ class LoggingBackend(commands.Cog):
 
     @commands.Cog.listener('on_guild_role_delete')
     async def logger_on_guild_role_delete(self, role: discord.Role):
-        if role.guild.id not in self.bot.log_channels  or not self.bot.guild_loggings[role.guild.id].role_delete:
+        if role.guild.id not in self.bot.log_channels or not self.bot.guild_loggings[role.guild.id].role_delete:
             return
         embed = discord.Embed(title='Role Deleted', timestamp=discord.utils.utcnow(), colour=discord.Colour.red(),
                               description=f"**Name:** {role.name}\n"

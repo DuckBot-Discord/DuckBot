@@ -250,4 +250,3 @@ class ImageMan(commands.Cog, name='Image'):
     async def why_are_g(self, ctx: CustomContext, interviewer: typing.Union[discord.Member, discord.User], person: typing.Union[discord.Member, discord.User]):
         """ Why are you gay meme. """
         await ctx.send(file=await ctx.dagpi(interviewer, feature=dtype.why_are_you_gay(), url2=person.display_avatar.url))
-

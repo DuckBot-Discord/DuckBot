@@ -223,7 +223,6 @@ class HelpView(discord.ui.View):
         if self.ctx.channel.permissions_for(self.ctx.me).add_reactions:
             await self.ctx.message.add_reaction(random.choice(constants.DONE))
 
-
     @discord.ui.button(emoji=constants.ARROWFWDZ, row=1)
     async def next(self, _, interaction: Interaction):
         self.current_page += 1
@@ -597,7 +596,7 @@ class About(commands.Cog):
                     text += 1
                 elif isinstance(channel, discord.VoiceChannel):
                     voice += 1
-        avg = [(len(g.bots) / g.member_count) * 100 for g in self.bot.guilds]
+        avg = [(len([m for m in g.members if not m.bot]) / g.member_count) * 100 for g in self.bot.guilds]
 
         embed.add_field(name='Members', value=f'{total_members:,} total\n{total_unique:,} unique')
         embed.add_field(name='Channels', value=f'{total:,} total\n{text:,} text\n{voice:,} voice')

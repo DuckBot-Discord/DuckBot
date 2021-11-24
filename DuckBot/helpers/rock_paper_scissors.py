@@ -49,39 +49,6 @@ class RequestToPlayView(discord.ui.View):
         self.stop()
 
 
-class ObjectSelector(discord.ui.Select):
-    def __init__(self):
-        # Set the options that will be presented inside the dropdown
-        options = [
-            discord.SelectOption(label='Rock', description='Rock beats Scissors', emoji='🗿'),
-            discord.SelectOption(label='Paper', description='Paper beats Rock', emoji='📄'),
-            discord.SelectOption(label='Scissors', description='Scissors beats Paper', emoji='✂')
-        ]
-        super().__init__(placeholder='Select your object...', min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        assert self.view is not None
-        view: RockPaperScissors = self.view
-        view.responses[interaction.user.id] = self.values[0]
-
-        embed = view.message.embeds[0].copy()
-        embed.description = f"> {view.ctx.default_tick(view.player1.id in view.responses)} {view.player1.display_name}" \
-                            f"\n> {view.ctx.default_tick(view.player2.id in view.responses)} {view.player2.display_name}"
-
-        await view.message.edit(embed=embed)
-
-        if len(view.responses) == 2:
-            response = view.check_winner()
-            embed.description = f"> ✅ **{view.player1.display_name}** chose **{view.responses[view.player1.id]}**" \
-                                f"\n> ✅ **{view.player2.display_name}** chose **{view.responses[view.player2.id]}**" \
-                                f"\n" \
-                                f"\n{response}"
-
-            view.clear_items()
-            await view.message.edit(embed=embed, view=view)
-            view.stop()
-
-
 class RockPaperScissors(discord.ui.View):
 
     def __init__(self, ctx: CustomContext, player1: discord.Member, player2: discord.Member):
@@ -91,7 +58,43 @@ class RockPaperScissors(discord.ui.View):
         self.player1: discord.Member = player1
         self.player2: discord.Member = player2
         self.responses = {}
-        self.add_item(ObjectSelector())
+
+    @discord.ui.button(label='Rock', emoji='🗿')
+    async def rock(self, button: discord.ui.Button, interaction: Interaction):
+        await self.update_message(button, interaction)
+
+    @discord.ui.button(label='Paper', emoji='📄')
+    async def paper(self, button: discord.ui.Button, interaction: Interaction):
+        await self.update_message(button, interaction)
+
+    @discord.ui.button(label='Scissors', emoji='✂')
+    async def scissors(self, button: discord.ui.Button, interaction: Interaction):
+        await self.update_message(button, interaction)
+
+    async def update_message(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.responses[interaction.user.id] = button.label
+
+        embed = self.message.embeds[0].copy()
+        embed.description = f"> {self.ctx.default_tick(self.player1.id in self.responses)} {self.player1.display_name}" \
+                            f"\n> {self.ctx.default_tick(self.player2.id in self.responses)} {self.player2.display_name}"
+
+        await self.message.edit(embed=embed)
+
+        if len(self.responses) == 2:
+            response = self.check_winner()
+            embed.description = f"> ✅ **{self.player1.display_name}** chose **{self.responses[self.player1.id]}**" \
+                                f"\n> ✅ **{self.player2.display_name}** chose **{self.responses[self.player2.id]}**" \
+                                f"\n" \
+                                f"\n{response}"
+
+            self.disable_items()
+            await self.message.edit(embed=embed, view=self)
+            self.stop()
+
+    def disable_items(self):
+        for item in self.children:
+            if hasattr(item, 'disabled'):
+                item.disabled = True
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         if not interaction.user or interaction.user.id not in (self.player1.id, self.player2.id):

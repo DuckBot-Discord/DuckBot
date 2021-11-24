@@ -11,6 +11,7 @@ import discord
 from async_timeout import timeout
 from discord.ext import commands
 
+from DuckBot import errors
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import constants
 from DuckBot.helpers.paginator import ViewPaginator, UrbanPageSource
@@ -367,8 +368,7 @@ class Fun(commands.Cog):
     async def catch(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
         """Catches someone. 😂 """
         upper_hand = await ctx.send(constants.CAG_UP, reply=False)
-        message: discord.Message = await self.bot.wait_for('message', check=lambda
-            m: m.channel == ctx.channel and m.author != ctx.me)
+        message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
             await ctx.message.add_reaction(random.choice(constants.DONE))
             return await upper_hand.delete()
@@ -411,11 +411,17 @@ class Fun(commands.Cog):
             if m.author.id in [msg.author.id for msg in messages]:
                 return
             messages.append(m)
-            await m.add_reaction('🎉')
+            try:
+                await m.add_reaction('🎉')
+            except discord.HTTPException:
+                pass
             embed.clear_fields()
             embed.add_field(name='Results:', value='\n'.join(
                 f'{m.author} ({(m.created_at - main.created_at).total_seconds()}s)' for m in messages))
-            await main.edit(embed=embed)
+            try:
+                await main.edit(embed=embed)
+            except discord.HTTPException:
+                raise errors.NoHideout()
 
         async for message in self.message_receiver(content=words, channel=ctx.channel, t_o=amount * 5):
             self.bot.loop.create_task(update_message(message))

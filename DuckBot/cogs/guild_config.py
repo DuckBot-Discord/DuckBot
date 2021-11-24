@@ -103,9 +103,9 @@ class ChannelsView(discord.ui.View):
             m = await self.ctx.send('Please send a channel to change the **Message Events Channel**')
             to_delete.append(m)
 
-            def check(message: discord.Message):
-                if message.channel == self.ctx.channel and message.author == self.ctx.author:
-                    to_delete.append(message)
+            def check(msg: discord.Message):
+                if msg.channel == self.ctx.channel and msg.author == self.ctx.author:
+                    to_delete.append(msg)
                     return True
                 return False
 
@@ -480,6 +480,7 @@ class ChannelsView(discord.ui.View):
         self.message = await self.update_message(edit=False)
 
 
+# noinspection PyProtocol
 class ValidEventConverter(commands.Converter):
     async def convert(self, ctx: CustomContext, argument: str):
         new = argument.replace('-', '_')
@@ -797,7 +798,7 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                           invites) > max_table_length else '')
 
         if return_embed is True:
-            description += 'Invite codes hidden for privacy reasons. See\nthe `invite-stats` command for invite codes.'
+            description += '\nInvite codes hidden for privacy reasons. See\nthe `invite-stats` command for invite codes.'
 
         embed.description = description
 
@@ -1013,13 +1014,13 @@ class GuildSettings(commands.Cog, name='Guild Settings'):
                 return await ctx.send(f"Updated the dj role to {new_role.mention}!",
                                       allowed_mentions=discord.AllowedMentions().none())
 
-            dj_role = await self.bot.db.fetchval('SELECT dj_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+            dj_r = await self.bot.db.fetchval('SELECT dj_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
 
-            if not dj_role:
+            if not dj_r:
                 return await ctx.send("This server doesn't have a DJ role!"
                                       "\nDo `help dj` for more commends")
 
-            role = ctx.guild.get_role(int(dj_role))
+            role = ctx.guild.get_role(int(dj_r))
             if not isinstance(role, discord.Role):
                 return await ctx.send("This server doesn't have a DJ role!"
                                       "\nDo `help dj` for more commends")

@@ -4,30 +4,27 @@ like `search`, `search-next`, `search-now`, etc.
 https://github.com/MiroslavRosenov/DaPanda
 """
 
-import datetime
 import asyncio
+import datetime
 import logging
 import math
-import typing
-
-import discord
-import pomice
 import re
 import time as t
+import typing
+from typing import Union
 
+import jishaku.paginators
+import pomice
+from async_timeout import timeout
 from discord import Interaction
+from openrobot import api_wrapper as openrobot
 
 from DuckBot.__main__ import DuckBot
 from DuckBot.errors import *
-import jishaku.paginators
-from openrobot import api_wrapper as openrobot
-from DuckBot.helpers.music.player import QueuePlayer as Player
-from async_timeout import timeout
-from discord.ext import commands
 from DuckBot.helpers import paginator, helper
 from DuckBot.helpers.context import CustomContext as Context, CustomContext
 from DuckBot.helpers.helper import convert_bytes
-from typing import Union
+from DuckBot.helpers.music.player import QueuePlayer as Player
 
 URL_RX = re.compile(r'https?://(?:www\.)?.+')
 HH_MM_SS_RE = re.compile(r"(?P<h>\d{1,2}):(?P<m>\d{1,2}):(?P<s>\d{1,2})")
@@ -47,6 +44,7 @@ def format_time(milliseconds: Union[float, int]) -> str:
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
+# noinspection PyProtocol
 class MemberMention(commands.Converter):
     async def convert(self, ctx: Context, argument: str):
         m = re.search(r"^<@!?(?P<id>[0-9]+)>$", argument)
