@@ -108,7 +108,7 @@ class DuckBot(slash_utils.Bot):
         # Bot based stuff
         self.invite_url = "https://discord.com/api/oauth2/authorize?client_id=788278464474120202&permissions=8&scope" \
                           "=bot%20applications.commands "
-        self.vote_top_gg = "https://top.gg/bot/788278464474120202#/"
+        self.vote_top_gg = "https://top.gg/bot/788278464474120202"
         self.vote_bots_gg = "https://discord.bots.gg/bots/788278464474120202"
         self.repo = "https://github.com/LeoCx1000/discord-bots"
         self.maintenance = None
@@ -444,6 +444,7 @@ class DuckBot(slash_utils.Bot):
         finally:
             self.dispatch('pool_create')
             logging.info('Database successful.')
+
 
 if __name__ == '__main__':
     TOKEN = os.getenv('DISCORD_TOKEN')

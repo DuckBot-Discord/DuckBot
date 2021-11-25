@@ -524,7 +524,7 @@ class Utility(commands.Cog):
                                                                                     roles=False,
                                                                                     users=allowed),
                               reference=ctx.message.reference,
-                              reply=False)
+                              reply=False, reminders=False)
 
     @commands.command(
         aliases=['a', 'an', 'announce'],
@@ -572,7 +572,7 @@ class Utility(commands.Cog):
         else:
             raise errors.NoQuotedMessage
 
-    @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info', slash_command=True, slash_command_guilds=[774561547930304536, 745059550998298756])
+    @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info')
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
     async def userinfo(self, ctx: CustomContext, *, member: typing.Optional[discord.Member]):
@@ -626,13 +626,15 @@ class Utility(commands.Cog):
 
         spotify = discord.utils.find(lambda act: isinstance(act, discord.Spotify), member.activities)
 
+        ack = await self.bot.db.fetchval("SELECT description FROM ack WHERE user_id = $1", member.id)
+
         embed.add_field(name=f"{constants.SPOTIFY} Spotify:",
-                        value=f"**[{spotify.title}]({spotify.track_url})**"
-                              f"\nBy __{spotify.artist}__"
-                              f"\nOn __{spotify.album}__"
-                              f"\n**Time:** {helper.deltaconv((ctx.message.created_at - spotify.start).total_seconds())}/"
-                              f"{helper.deltaconv(spotify.duration.total_seconds())}"
-                        if spotify else 'Not listening to anything...')
+                        value=(f"**[{spotify.title}]({spotify.track_url})**"
+                               f"\nBy __{spotify.artist}__"
+                               f"\nOn __{spotify.album}__"
+                               f"\n**Time:** {helper.deltaconv((ctx.message.created_at - spotify.start).total_seconds())}/"
+                               f"{helper.deltaconv(spotify.duration.total_seconds())}"
+                               if spotify else 'Not listening to anything...') + (f'\n\n⭐ **Acknowledgements:**\n{ack}' if ack else ''))
 
         perms = helper.get_perms(member.guild_permissions)
         if perms:
@@ -959,8 +961,7 @@ class Utility(commands.Cog):
 
     @commands.command()
     async def afk(self, ctx: CustomContext, *, reason: commands.clean_content = '...'):
-        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[
-            ctx.author.id] is True:
+        if ctx.author.id in self.bot.afk_users and ctx.author.id in self.bot.auto_un_afk and self.bot.auto_un_afk[ctx.author.id] is True:
             return
         if ctx.author.id not in self.bot.afk_users:
             await self.bot.db.execute('INSERT INTO afk (user_id, start_time, reason) VALUES ($1, $2, $3) '

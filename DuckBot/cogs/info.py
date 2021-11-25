@@ -197,10 +197,11 @@ class HelpView(discord.ui.View):
                               f'leoCx1000). You can use me to play games, moderate '
                               f'\nyour server, mess with some images and more! Check out '
                               f'\nall my features using the dropdown below.'
-                              
-                              
                               f'\n\nI\'ve been up since {discord.utils.format_dt(self.bot.uptime)}'
                               f'\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots)')
+        embed.add_field(name='Support DuckBot', inline=False,
+                        value=f'If you like DuckBot, you can support by voting here:'
+                              f'\n⭐ {self.bot.vote_top_gg} ⭐')
         embed.set_footer(text='For more info on the help command press ❓help',
                          icon_url='https://cdn.discordapp.com/emojis/895407958035431434.png')
         embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.display_avatar.url)
@@ -475,7 +476,7 @@ class About(commands.Cog):
             'help': 'Shows help about a command or category, it can also display other useful information, such as '
                     'examples on how to use the command, or special syntax that can be used for a command, for example, '
                     'in the `welcome message` command, it shows all available special tags.',
-            'name': 'help', 'slash_command': True}
+            'name': 'help'}
         help_command.cog = self
         bot.help_command = help_command
         self.select_emoji = constants.INFORMATION_SOURCE

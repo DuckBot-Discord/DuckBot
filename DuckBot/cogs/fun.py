@@ -367,12 +367,12 @@ class Fun(commands.Cog):
     @commands.command(aliases=['cag'])
     async def catch(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
         """Catches someone. 😂 """
-        upper_hand = await ctx.send(constants.CAG_UP, reply=False)
+        upper_hand = await ctx.send(constants.CAG_UP, reply=False, reminders=False)
         message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
         if (member and message.author != member) or message.author == ctx.author:
             await ctx.message.add_reaction(random.choice(constants.DONE))
             return await upper_hand.delete()
-        await ctx.send(constants.CAG_DOWN, reply=False)
+        await ctx.send(constants.CAG_DOWN, reply=False, reminders=False)
 
     async def message_receiver(self, channel: discord.TextChannel, content: str, t_o: int) -> discord.Message:
         def check(m):
@@ -457,7 +457,7 @@ class Fun(commands.Cog):
         """ 𝓯𝓪𝓷𝓬𝓲𝓯𝓲𝓮𝓼 𝓽𝓮𝔁𝓽 """
         style = ['𝓪', '𝓫', '𝓬', '𝓭', '𝓮', '𝓯', '𝓰', '𝓱', '𝓲', '𝓳', '𝓴', '𝓵', '𝓶',
                  '𝓷', '𝓸', '𝓹', '𝓺', '𝓻', '𝓼', '𝓽', '𝓾', '𝓿', '𝔀', '𝔁', '𝔂', '𝔃']
-        await ctx.send(fancify(text, style=style))
+        await ctx.send(fancify(text, style=style), reminders=False)
 
     @commands.command(name='thicc-text', aliases=['thicc', 'tt'])
     async def thicc_text(self, ctx, *, text):
@@ -468,4 +468,4 @@ class Fun(commands.Cog):
         normal = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
                   'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
                   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
-        await ctx.send(fancify(text, style=style, normal=normal))
+        await ctx.send(fancify(text, style=style, normal=normal), reminders=False)

@@ -1,4 +1,6 @@
 import re
+import typing
+from contextvars import ContextVar
 
 import asyncpg
 import discord
@@ -7,6 +9,7 @@ import tabulate
 from discord import Interaction
 from discord.ext import commands
 from discord.types.interactions import ApplicationCommandOptionChoice
+from discord.webhook.async_ import AsyncWebhookAdapter
 
 from ozbot.__main__ import Ozbot
 
@@ -180,6 +183,26 @@ class Coords(commands.Cog):
             return await message.channel.send("""!xc tellraw insert_player_here ["",{"text":"[","bold":true,"color":"blue"},{"text":"discord","color":"aqua"},{"text":"] ","bold":true,"color":"blue"},{"text":"The amount of characters exceeded the amount of characters allowed! Please contact Leo and tell him to fix it.","color":"red"}]
             """.replace('insert_radius_here', radius).replace('insert_player_here', name))
 
+
+async def autocomplete_result(response: discord.InteractionResponse, choices: typing.List[ApplicationCommandOptionChoice]):
+    """ This is enhanced-dpy's way of responding to an autocomplete type interaction """
+    if response.is_done():
+        raise discord.InteractionResponded(response._parent)
+
+    parent = response._parent
+    if parent.type is not discord.InteractionType.application_command_autocomplete:
+        return
+
+    adapter = ContextVar("async_webhook_context", default=AsyncWebhookAdapter()).get()
+    await adapter.create_interaction_response(
+        parent.id,
+        parent.token,
+        session=parent._session,
+        type=discord.InteractionResponseType.application_command_autocomplete_result.value,
+        data={"choices": choices},
+    )
+
+    response.responded_at = discord.utils.utcnow()
 
 
 # !jsk py ```py

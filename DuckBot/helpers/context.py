@@ -6,13 +6,22 @@ import typing
 import random
 
 from asyncdagpi import ImageFeatures
-from discord import Interaction
+from discord import Interaction, InvalidArgument
 from discord.ext import commands
 
 from DuckBot.helpers import constants
 from typing import Union
 
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite]
+
+
+reminder_embeds = [
+    discord.Embed(title='⭐ Support me by voting here!', colour=discord.Colour.yellow(), url='https://top.gg/bot/788278464474120202'),
+    discord.Embed(title=f'{constants.INVITE} Invite me to your server!', colour=discord.Colour.yellow(),
+                  url='https://discord.com/oauth2/authorize?client_id=788278464474120202&scope=applications.commands+bot&permissions=294171045078'),
+    discord.Embed(title='🆘 Join my support server here!', colour=discord.Colour.yellow(), url='https://discord.gg/TdRfGKg8Wh'),
+    discord.Embed(title='<:thanks:913507741727854702> suggest a feature with `db.suggest <feature>`!', colour=discord.Colour.yellow()),
+]
 
 
 class ConfirmButton(discord.ui.Button):
@@ -117,11 +126,17 @@ class CustomContext(commands.Context):
         return emoji
 
     async def send(self, content: str = None, *, embed: discord.Embed = None,
-                   reply: bool = True, footer: bool = True,
+                   embeds: typing.List[discord.Embed] = None, reply: bool = True, footer: bool = True,
                    reference: typing.Union[discord.Message, discord.MessageReference] = None,
-                   gist: bool = False, extension: str = 'py', **kwargs) -> discord.Message:
+                   gist: bool = False, extension: str = 'py', reminders: bool = True,  **kwargs) -> discord.Message:
 
         reference = (reference or self.message.reference or self.message) if reply is True else reference
+
+        if reminders is True:
+            reminders = random.randint(0, 200) == 100
+
+        if embed and embeds:
+            raise InvalidArgument('cannot pass both embed and embeds parameter to send()')
 
         if content or embed:
             test_string = re.sub("[^A-Za-z0-9._-]+", '', (str(content) or '') + str((embed.to_dict() if embed else '')))
@@ -138,16 +153,22 @@ class CustomContext(commands.Context):
             colors = {embed.color} - {discord.Color.default(), discord.Embed.Empty}
             embed.colour = next(iter(colors), self.color)
 
+        embeds = [embed] if embed else (embeds or [])
+
         if gist and content and len(content) > 2000:
             await self.trigger_typing()
             content = await self.bot.create_gist(filename=f'output.{extension}',
                                                  description='DuckBot send',
                                                  content=content, public=True)
 
+        if reminders:
+            if len(embeds) < 10 and sum(len(e) for e in embeds) < 5800:
+                embeds.append(random.choice(reminder_embeds))
+
         try:
-            return await super().send(content=content, embed=embed, reference=reference, **kwargs)
+            return await super().send(content=content, embeds=embeds, reference=reference, **kwargs)
         except discord.HTTPException:
-            return await super().send(content=content, embed=embed, reference=None, **kwargs)
+            return await super().send(content=content, embeds=embeds, reference=None, **kwargs)
 
     async def confirm(self, message: str = 'Do you want to confirm?',
                       buttons: typing.Tuple[typing.Union[discord.PartialEmoji, str],

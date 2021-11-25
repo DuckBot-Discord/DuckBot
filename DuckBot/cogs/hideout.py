@@ -501,7 +501,10 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
                                           "\nhelped me, or because I took a snippet off your"
                                           "\ncode, let me know and I will gladly add a note"
                                           "\nin said command giving proper credits to your"
-                                          "\nrepository 😊 Just that I can't remember anyone.",
+                                          "\nrepository 😊 Just that I can't remember anyone."
+                                          "\n"
+                                          "\n(Some users will show a small acknowledgement in the"
+                                          "\nuser-info command if they did something remarkable)",
                               title='Why no credits?')
         await ctx.send(embed=embed)
 

@@ -5,6 +5,7 @@ import importlib
 import io
 import itertools
 import os
+import random
 import textwrap
 import traceback
 import typing
@@ -19,8 +20,7 @@ from jishaku.features.baseclass import Feature
 from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.helpers import paginator
-
+from DuckBot.helpers import paginator, constants
 
 RebootArg = typing.Optional[typing.Union[bool, typing.Literal['reboot', 'restart', 'r']]]
 
@@ -543,9 +543,9 @@ class Management(commands.Cog, name='Bot Management'):
             await ctx.message.add_reaction('✅')
             await ctx.send(f"Activity changed to `Competing in {text}`")
 
-        @dev.command(aliases=['pm', 'message', 'direct'])
+        @dev.command(name='dm', aliases=['pm', 'message', 'direct'])
         @commands.guild_only()
-        async def dm(self, ctx: CustomContext, member: discord.User, *, message=None):
+        async def dev_dm(self, ctx: CustomContext, member: discord.User, *, message=None):
             if ctx.channel.category_id == 878123261525901342:
                 return
             category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
@@ -570,13 +570,25 @@ class Management(commands.Cog, name='Bot Management'):
 
             try:
                 await member.send(content=message, files=files)
-            except:
+            except discord:
                 return await ctx.message.add_reaction('⚠')
 
             try:
-                await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.display_avatar.url,
-                              files=files)
-            except:
+                await wh.send(content=message, username=ctx.author.name, avatar_url=ctx.author.display_avatar.url, files=files)
+            except discord.HTTPException:
                 await ctx.message.add_reaction('🤖')
                 await ctx.message.add_reaction('‼')
             await ctx.message.add_reaction('💌')
+
+        @dev.command(name='acknowledge', aliases=['ack'])
+        async def dev_acknowledge(self, ctx: CustomContext, user: discord.User, *, message = None):
+            """ Acknowledges a member """
+            if message:
+                await self.bot.db.execute("INSERT INTO ack (user_id, description) VALUES ($1, $2) "
+                                          "ON CONFLICT (user_id) DO UPDATE SET description = $2", user.id, message)
+            else:
+                await self.bot.db.execute("DELETE FROM ack WHERE user_id = $1", user.id)
+            try:
+                await ctx.message.add_reaction(random.choice(constants.DONE))
+            except discord.HTTPException:
+                pass
