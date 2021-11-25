@@ -213,6 +213,14 @@ class DuckBot(slash_utils.Bot):
                     return await message.reply(f"My prefixes here are `{'`, `'.join(prefix[0:10])}`\n For a list of commands do`{prefix[0]}help` 💞"[0:2000])
         await self.process_commands(message)
 
+    async def on_interaction(self, interaction: discord.Interaction):
+        """
+        We're not using any forks of discord.py here but need them for the bot to work
+        so we're just gonna pass so it doesn't display any errors while Maya works on
+        making the slash command wrapper support autocomplete-type functionality.
+        """
+        pass
+
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
         traceback_string = traceback.format_exc()
         for line in traceback_string.split('\n'):
