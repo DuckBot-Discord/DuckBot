@@ -33,35 +33,14 @@ class Coords(slash_utils.ApplicationCog):
         await ctx.send(f"Coordinate `{x}X {z}Z` saved with annotation: `{discord.utils.remove_markdown(description)}`"[0:2000])
 
     @slash_utils.slash_command(name='list', guild_id=706624339595886683)
-    @slash_utils.describe(search='Searches the saved coordinates by description (selecting a suggested result is optional)',
-                          sort='Criteria to sort the entries by. Default: Description A-Z')
-    async def list_coords(self, ctx: commands.Context, search: slash_utils.Autocomplete[str] = None, sort: str = None):
+    @slash_utils.describe(search='Searches the saved coordinates by description (selecting a suggested result is optional)')
+    async def list_coords(self, ctx: commands.Context, search: slash_utils.Autocomplete[str] = None):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"
         logging.info(f'SEARCH: {search}')
         if search:
             q += " WHERE SIMILARITY(description, $1) > 0.2"
-        if sort == 'a_to_z':
-            query = f"{q} ORDER BY description ASC"
-        elif sort == 'z_to_a':
-            query = f"{q} ORDER BY description DESC"
-        elif sort == 'desc_x':
-            query = f"{q} ORDER BY x ASC"
-        elif sort == 'asc_x':
-            query = f"{q} ORDER BY x DESC"
-        elif sort == 'desc_z':
-            query = f"{q} ORDER BY z ASC"
-        elif sort == 'asc_z':
-            query = f"{q} ORDER BY z DESC"
-        elif sort == 'author_a_to_z':
-            query = f"{q} ORDER BY author ASC"
-        elif sort == 'author_z_to_a':
-            query = f"{q} ORDER BY author DESC"
-        else:
-            if not search:
-                query = f"{q} ORDER BY description ASC"
-            else:
-                query = f"{q} ORDER BY SIMILARITY(description, $1) ASC"
+        query = f"{q} ORDER BY description ASC"
         if not search:
             coords = await self.bot.db.fetch(query)
         else:
