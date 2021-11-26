@@ -90,6 +90,7 @@ class Ozbot(slash_utils.Bot):
             print()  # Empty line
 
     async def dynamic_load_cogs(self) -> None:
+        await self.wait_for('cache_ready', timeout=5)
         for filename in os.listdir(f"cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
@@ -147,6 +148,7 @@ class Ozbot(slash_utils.Bot):
         return
 
     async def populate_cache(self):
+        await self.wait_for('cache_ready', timeout=5)
         _temp_prefixes = defaultdict(list)
         for x in await self.db.fetch('SELECT * FROM pre'):
             _temp_prefixes[x['guild_id']].append(x['prefix'] or self.PRE)
