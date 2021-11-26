@@ -22,7 +22,7 @@ class Coords(slash_utils.ApplicationCog):
     @slash_utils.slash_command(name='save', guild_id=706624339595886683)
     @slash_utils.describe(description='Annotation to add to the saved coordinates.',
                           x='X coordinate.', z='Z coordinate.')
-    async def save_coords(self, ctx: slash_utils.Context, x: int, z: int, *, description: discord.utils.remove_markdown):
+    async def save_coords(self, ctx: slash_utils.Context, x: int, z: int, *, description: str):
         """ Saves a coordinate to the public database """
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, z, description) VALUES ($1, $2, $3, $4)",
