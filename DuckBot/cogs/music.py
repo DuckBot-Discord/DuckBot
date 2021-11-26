@@ -289,7 +289,7 @@ class Music(commands.Cog):
         else:
             if int(player.channel.id) != channel.id:
                 raise IncorrectChannelError(ctx)
-            if int(player.text_channel) != ctx.channel.id:
+            if int(player.text_channel.id) != ctx.channel.id:
                 raise IncorrectTextChannelError(ctx)
 
     def get_channel(self, id: int):
