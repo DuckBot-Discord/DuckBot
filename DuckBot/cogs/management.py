@@ -4,11 +4,13 @@ import datetime
 import importlib
 import io
 import itertools
+import math
 import os
 import random
 import textwrap
 import traceback
 import typing
+from collections import defaultdict
 
 import discord
 import emoji as unicode_emoji
@@ -23,6 +25,60 @@ from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants
 
 RebootArg = typing.Optional[typing.Union[bool, typing.Literal['reboot', 'restart', 'r']]]
+
+
+# SQL table formatter by "SYCK UWU" over on the duckbot discord
+def format_table(db_res):
+    result_dict = defaultdict(list)
+    for x in db_res:
+        for key, value in x.items():
+            result_dict[key].append(value)
+
+    def key(i):
+        return len(i)
+
+    # I just wrote some weird code and it worked lmfao
+    total_length = [
+        (len(max([str(column_name)] + [str(row) for row in rows], key=key)) + 2)
+        for column_name, rows in result_dict.items()
+    ]
+    result = (
+        "┍" + ("┯".join("━" * times for times in total_length)) + "┑" + "\n│"
+    )
+    columns = [str(col) for col in result_dict.keys()]
+    rows = [list() for _, _1 in enumerate(list(result_dict.values())[0])]
+    for row in result_dict.values():
+        for index, item in enumerate(row):
+            rows[index].append(item)
+
+    column_lengths = list()
+    for index, column in enumerate(columns):
+        column_length = (
+            len(max([str(column)] + [str(row[index]) for row in rows], key=key)) + 2
+        )
+        column_lengths.append(column_length)
+        before = math.ceil((column_length - len(column)) / 2)
+        after = math.floor((column_length - len(column)) / 2)
+        result += (" " * before) + column + (" " * after) + "│"
+    result += (
+        "\n" + "┝" + ("┿".join("━" * times for times in total_length)) + "┥\n│"
+    )
+
+    for row in rows:
+        for index, item in enumerate(row):
+            before = math.ceil((column_lengths[index] - len(str(item))) / 2)
+            after = math.floor((column_lengths[index] - len(str(item))) / 2)
+            result += (" " * before) + str(item) + (" " * after) + "│"
+        result += (
+            "\n" + "┝" + ("┿".join("━" * times for times in total_length)) + "┥\n│"
+        )
+
+    result = "\n".join(result.split("\n")[:-2])
+    result += (
+        "\n" + "┕" + ("┷".join("━" * times for times in total_length)) + "┙"
+    )
+
+    return result
 
 
 def setup(bot):
@@ -208,7 +264,7 @@ class Management(commands.Cog, name='Bot Management'):
 
     @commands.command(pass_context=True, hidden=True, name='eval', aliases=['ev'])
     @commands.is_owner()
-    async def _eval(self, ctx: CustomContext, *, body: str):
+    async def _eval(self, ctx: CustomContext, *, body: str, return_result: bool = False):
         """ Evaluates arbitrary python code """
         env = {
             'bot': self.bot,
@@ -273,18 +329,21 @@ class Management(commands.Cog, name='Bot Management'):
             except (discord.Forbidden, discord.HTTPException):
                 pass
 
-            if ret is None:
-                if value:
-                    to_send = f'{value}'
-            else:
-                self._last_result = ret
-                to_send = f'{value}{ret}'
-            if to_send:
-                to_send = to_send.replace(self.bot.http.token, '[discord token redacted]')
-                if len(to_send) > 1985:
-                    await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
+            if not return_result:
+                if ret is None:
+                    if value:
+                        to_send = f'{value}'
                 else:
-                    await ctx.send(f"```py\n{to_send}\n```")
+                    self._last_result = ret
+                    to_send = f'{value}{ret}'
+                if to_send:
+                    to_send = to_send.replace(self.bot.http.token, '[discord token redacted]')
+                    if len(to_send) > 1985:
+                        await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
+                    else:
+                        await ctx.send(f"```py\n{to_send}\n```")
+            else:
+                return ret
 
     # Dev commands. `if True` is only to be able to close the whole category at once
     if True:
@@ -411,29 +470,40 @@ class Management(commands.Cog, name='Bot Management'):
         async def dev_sql(self, ctx: CustomContext, *, query: str):
             """Executes an SQL query to the database"""
             body = cleanup_code(query)
-            await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
+            await ctx.invoke(self._eval, body=f"return await bot.db.execute(f\"\"\"{body}\"\"\")")
+
+        @dev_sql.command(name='pretty-fetch', aliases=['pfetch', 'pf'])
+        async def postgre_fetch_pretty(self, ctx: CustomContext, *, query: str):
+            """Executes an SQL query to the database (Fetch | Prettyfied)"""
+            body = cleanup_code(query)
+            result = await self._eval(ctx, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")", return_result=True)
+            if not result:
+                return await ctx.send("No results found...")
+            else:
+                result = format_table(result)
+                await ctx.send(f"```py\n{result}\n```", maybe_attachment=True, extension='txt')
 
         @dev_sql.command(name='fetch', aliases=['f'])
-        async def postgre_fetch(self, ctx, *, query: str):
+        async def postgre_fetch(self, ctx: CustomContext, *, query: str):
             """Executes an SQL query to the database (Fetch)"""
             body = cleanup_code(query)
-            await ctx.invoke(self._eval, body=f"return await bot.db.fetch(f\"\"\"{body}\"\"\")")
+            await ctx.invoke(self._eval, body=f"return await bot.db.fetchval(f\"\"\"{body}\"\"\")")
 
         @dev_sql.command(name='fetchval', aliases=['fr'])
-        async def postgre_fetchval(self, ctx, *, query: str):
+        async def postgre_fetchval(self, ctx: CustomContext, *, query: str):
             """Executes an SQL query to the database (Fetchval)"""
             body = cleanup_code(query)
             await ctx.invoke(self._eval, body=f"return await bot.db.fetchval(f\"\"\"{body}\"\"\")")
 
         @dev_sql.command(name='fetchrow', aliases=['fv'])
-        async def postgre_fetchrow(self, ctx, *, query: str):
+        async def postgre_fetchrow(self, ctx: CustomContext, *, query: str):
             """Executes an SQL query to the database (Fetchrow)"""
             body = cleanup_code(query)
             await ctx.invoke(self._eval, body=f"return await bot.db.fetchrow(f\"\"\"{body}\"\"\")")
 
         @dev_sql.command(name='execute', aliases=['e'])
-        async def postgre_execute(self, ctx, *, query: str):
-            """Executes an SQL query to the database (Fetchrow)"""
+        async def postgre_execute(self, ctx: CustomContext, *, query: str):
+            """Executes an SQL query to the database (Execute)"""
             body = cleanup_code(query)
             await ctx.invoke(self._eval, body=f"return await bot.db.execute(f\"\"\"{body}\"\"\")")
 

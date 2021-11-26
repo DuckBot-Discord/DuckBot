@@ -1,3 +1,4 @@
+import io
 import logging
 import re
 
@@ -22,6 +23,16 @@ reminder_embeds = [
     discord.Embed(title='🆘 Join my support server here!', colour=discord.Colour.yellow(), url='https://discord.gg/TdRfGKg8Wh'),
     discord.Embed(title='<:thanks:913507741727854702> suggest a feature with `db.suggest <feature>`!', colour=discord.Colour.yellow()),
 ]
+
+
+def cleanup_code(content):
+    """Automatically removes code blocks from the code."""
+    # remove ```py\n```
+    if content.startswith('```') and content.endswith('```'):
+        return '\n'.join(content.split('\n')[1:-1])
+
+    # remove `foo`
+    return content.strip('` \n')
 
 
 class ConfirmButton(discord.ui.Button):
@@ -128,7 +139,14 @@ class CustomContext(commands.Context):
     async def send(self, content: str = None, *, embed: discord.Embed = None,
                    embeds: typing.List[discord.Embed] = None, reply: bool = True, footer: bool = True,
                    reference: typing.Union[discord.Message, discord.MessageReference] = None,
-                   gist: bool = False, extension: str = 'py', reminders: bool = True,  **kwargs) -> discord.Message:
+                   gist: bool = False, extension: str = 'py', reminders: bool = True, file: discord.File = None,
+                   maybe_attachment: bool = False, **kwargs) -> discord.Message:
+
+        if gist is True and maybe_attachment is True:
+            raise ValueError('You can\'t use both gist and attachment')
+
+        if file is True and maybe_attachment is True:
+            raise ValueError('You can\'t use both file and attachment')
 
         reference = (reference or self.message.reference or self.message) if reply is True else reference
 
@@ -159,16 +177,22 @@ class CustomContext(commands.Context):
             await self.trigger_typing()
             content = await self.bot.create_gist(filename=f'output.{extension}',
                                                  description='DuckBot send',
-                                                 content=content, public=True)
+                                                 content=cleanup_code(content), public=True)
+            content = f"<{content}>"
+
+        elif maybe_attachment and len(content) > 2000:
+            file = io.StringIO(cleanup_code(content))
+            file = discord.File(file, filename=f'output.{extension}')
+            content = None
 
         if reminders:
             if len(embeds) < 10 and sum(len(e) for e in embeds) < 5800:
                 embeds.append(random.choice(reminder_embeds))
 
         try:
-            return await super().send(content=content, embeds=embeds, reference=reference, **kwargs)
+            return await super().send(content=content, embeds=embeds, reference=reference, file=file, **kwargs)
         except discord.HTTPException:
-            return await super().send(content=content, embeds=embeds, reference=None, **kwargs)
+            return await super().send(content=content, embeds=embeds, reference=None, file=file, **kwargs)
 
     async def confirm(self, message: str = 'Do you want to confirm?',
                       buttons: typing.Tuple[typing.Union[discord.PartialEmoji, str],

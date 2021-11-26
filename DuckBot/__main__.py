@@ -20,6 +20,7 @@ from typing import (
     Any
 )
 
+
 from dotenv import load_dotenv
 import asyncpg
 import asyncpraw
@@ -39,7 +40,7 @@ from asyncdagpi import ImageFeatures
 import asyncgur
 
 from DuckBot import errors
-from DuckBot.helpers import slash_utils
+from DuckBot.helpers import slash_utils, constants
 from DuckBot.helpers.helper import LoggingEventsFlags
 from DuckBot.helpers.context import CustomContext
 
@@ -124,6 +125,7 @@ class DuckBot(slash_utils.Bot):
         self.orb = ORBClient(token=os.getenv('OPENROBOT_KEY'))
         self.dagpi_cooldown = commands.CooldownMapping.from_cooldown(60, 60, commands.BucketType.default)
         self.dagpi_client = DagpiClient(os.getenv('DAGPI_TOKEN'))
+        self.constants = constants
 
         # Cache stuff
         self.lavalink = None
