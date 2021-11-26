@@ -97,6 +97,7 @@ class Ozbot(slash_utils.Bot):
                     logging.info(f"Trying to load cog: {cog}")
                     self._load_extension(f'cogs.{cog}')
         for cog in ['moderation', 'whitelist']:
+            await self.wait_until_ready()
             logging.info(f"Trying to load cog: {cog}")
             self._load_extension(f'cogs.{cog}')
         logging.info('Loading cogs done.')
