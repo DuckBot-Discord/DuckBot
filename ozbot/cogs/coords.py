@@ -1,3 +1,4 @@
+import logging
 import re
 
 import asyncpg
@@ -34,9 +35,10 @@ class Coords(slash_utils.ApplicationCog):
     @slash_utils.slash_command(name='list', guild_id=706624339595886683)
     @slash_utils.describe(search='Searches the saved coordinates by description (selecting a suggested result is optional)',
                           sort='Criteria to sort the entries by. Default: Description A-Z')
-    async def list_coords(self, ctx: commands.Context, sort: str = None, search: slash_utils.Autocomplete[str] = None):
+    async def list_coords(self, ctx: commands.Context, search: slash_utils.Autocomplete[str] = None, sort: str = None):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"
+        logging.info(f'SEARCH: {search}')
         if search:
             q += " WHERE SIMILARITY(description, $1) > 0.2"
         if sort == 'a_to_z':
