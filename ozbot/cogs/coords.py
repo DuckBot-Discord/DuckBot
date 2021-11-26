@@ -22,7 +22,7 @@ class Coords(slash_utils.ApplicationCog):
     @slash_utils.slash_command(name='save', guild_id=706624339595886683)
     @slash_utils.describe(description='Annotation to add to the saved coordinates.',
                           x='X coordinate.', z='Z coordinate.')
-    async def save_coords(self, ctx: slash_utils.Context, x: int, z: int, *, description: str):
+    async def save_coords(self, ctx: slash_utils.Context, x: int, z: int, description: str):
         """ Saves a coordinate to the public database """
         try:
             await self.bot.db.execute("INSERT INTO coords (author, x, z, description) VALUES ($1, $2, $3, $4)",
@@ -88,7 +88,7 @@ class Coords(slash_utils.ApplicationCog):
 
     @slash_utils.slash_command(name='delete', guild_id=706624339595886683)
     @slash_utils.describe(search='Searches trough the descriptions of your saved coordinates.')
-    async def delete(self, ctx, *, search: slash_utils.Autocomplete[str]):
+    async def delete(self, ctx, search: slash_utils.Autocomplete[str]):
         """ Deletes one of your saved coordinates """
         match = re.search(r'^(?P<X>-?\d+) \| (?P<z>-?\d+)$', search)
         if not match:
