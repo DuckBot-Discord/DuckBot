@@ -25,7 +25,7 @@ from discord.ext.commands.errors import (
 )
 from dotenv import load_dotenv
 
-from ozbot import helpers
+from ozbot import helpers, slash_utils
 
 initial_extensions = (
     'jishaku',
@@ -43,7 +43,7 @@ os.environ['JISHAKU_HIDE'] = 'True'
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]
 
 
-class Ozbot(commands.Bot):
+class Ozbot(slash_utils.Bot):
     PRE: tuple = ('!', )
 
     def __init__(self) -> None:
@@ -141,10 +141,7 @@ class Ozbot(commands.Bot):
         return
 
     async def on_interaction(self, interaction: discord.Interaction):
-        try:
-            await super().on_interaction(interaction)
-        except commands.CommandNotFound:
-            pass
+        return
 
     async def populate_cache(self):
         _temp_prefixes = defaultdict(list)

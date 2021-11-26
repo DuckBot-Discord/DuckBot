@@ -79,8 +79,7 @@ class handler(commands.Cog):
             logging.info(f"`{separator}`  `{indicator}`")
             logging.info(error.param)
 
-            return await ctx.send(
-                f"```{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```", ephemeral=True)
+            return await ctx.send(f"```{command}\n{separator}{indicator}\n{missing} is a required argument that is missing.\n```")
 
         elif isinstance(error, commands.errors.PartialEmojiConversionFailure):
             return await ctx.send(f"`{error.argument}` is not a valid Custom Emoji")
@@ -144,7 +143,7 @@ class handler(commands.Cog):
                 f"I've searched far and wide, but `{error.argument}` doesn't seem to be a member discord user...")
 
         elif isinstance(error, commands.BadArgument):
-            return await ctx.send(error or "Bad argument given!", ephemeral=True)
+            return await ctx.send(error or "Bad argument given!")
 
         elif isinstance(error, helpers.NotOz):
             return await ctx.send('Commands are restricted to OZ!')

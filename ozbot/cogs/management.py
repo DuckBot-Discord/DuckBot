@@ -1,12 +1,10 @@
 import datetime
 import io
 import itertools
+import traceback
 
-import asyncio
 import discord
 import jishaku.modules
-import traceback
-import typing
 from discord.ext import commands
 from jishaku.paginators import WrappedPaginator
 
@@ -114,4 +112,4 @@ class Management(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(management(bot))
+    bot.add_cog(Management(bot))
