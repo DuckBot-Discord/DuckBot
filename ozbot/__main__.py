@@ -78,9 +78,9 @@ class Ozbot(slash_utils.Bot):
         for ext in initial_extensions:
             self._load_extension(ext)
 
+        self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
         self.loop.create_task(self.populate_cache())
         self.loop.create_task(self.dynamic_load_cogs())
-        self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
 
     def _load_extension(self, name: str) -> None:
         try:
@@ -90,7 +90,6 @@ class Ozbot(slash_utils.Bot):
             print()  # Empty line
 
     async def dynamic_load_cogs(self) -> None:
-        await self.wait_for('cache_ready', timeout=5)
         for filename in os.listdir(f"cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
@@ -148,7 +147,10 @@ class Ozbot(slash_utils.Bot):
         return
 
     async def populate_cache(self):
-        await self.wait_for('cache_ready', timeout=5)
+        try:
+            await self.wait_for('pool_create', timeout=3)
+        except Exception as e:
+            print(e)
         _temp_prefixes = defaultdict(list)
         for x in await self.db.fetch('SELECT * FROM pre'):
             _temp_prefixes[x['guild_id']].append(x['prefix'] or self.PRE)
