@@ -93,10 +93,10 @@ class Ozbot(slash_utils.Bot):
         for filename in os.listdir(f"cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
-                if cog not in ['moderation', 'whitelist']:
+                if cog not in ['moderation', 'whitelist', 'vcban']:
                     logging.info(f"Trying to load cog: {cog}")
                     self._load_extension(f'cogs.{cog}')
-        for cog in ['moderation', 'whitelist']:
+        for cog in ['moderation', 'whitelist', 'vcban']:
             await self.wait_until_ready()
             logging.info(f"Trying to load cog: {cog}")
             self._load_extension(f'cogs.{cog}')

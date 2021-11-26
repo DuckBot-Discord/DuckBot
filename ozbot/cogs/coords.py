@@ -34,7 +34,7 @@ class Coords(slash_utils.ApplicationCog):
     @slash_utils.slash_command(name='list', guild_id=706624339595886683)
     @slash_utils.describe(search='Searches the saved coordinates by description (selecting a suggested result is optional)',
                           sort='Criteria to sort the entries by. Default: Description A-Z')
-    async def list_coords(self, ctx: commands.Context, sort: str = None, search: str = None):
+    async def list_coords(self, ctx: commands.Context, sort: str = None, search: slash_utils.Autocomplete[str] = None):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"
         if search:
@@ -88,7 +88,7 @@ class Coords(slash_utils.ApplicationCog):
 
     @slash_utils.slash_command(name='delete', guild_id=706624339595886683)
     @slash_utils.describe(search='Searches trough the descriptions of your saved coordinates.')
-    async def delete(self, ctx, *, search: str):
+    async def delete(self, ctx, *, search: slash_utils.Autocomplete[str]):
         """ Deletes one of your saved coordinates """
         match = re.search(r'^(?P<X>-?\d+) \| (?P<z>-?\d+)$', search)
         if not match:
