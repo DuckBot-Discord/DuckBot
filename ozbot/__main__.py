@@ -93,8 +93,12 @@ class Ozbot(slash_utils.Bot):
         for filename in os.listdir(f"cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
-                logging.info(f"Trying to load cog: {cog}")
-                self._load_extension(f'cogs.{cog}')
+                if cog not in ['moderation', 'whitelist']:
+                    logging.info(f"Trying to load cog: {cog}")
+                    self._load_extension(f'cogs.{cog}')
+        for cog in ['moderation', 'whitelist']:
+            logging.info(f"Trying to load cog: {cog}")
+            self._load_extension(f'cogs.{cog}')
         logging.info('Loading cogs done.')
         self.dispatch('restart_complete')
 
