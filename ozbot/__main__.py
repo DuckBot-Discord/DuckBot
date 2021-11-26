@@ -90,7 +90,6 @@ class Ozbot(slash_utils.Bot):
             print()  # Empty line
 
     async def dynamic_load_cogs(self) -> None:
-        await self.wait_until_ready()
         for filename in os.listdir(f"cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]

@@ -13,12 +13,14 @@ class promote(commands.Cog):
         with open(r'files/config.yaml') as file:
             yaml_data = yaml.full_load(file)
         self.main_guild = yaml_data['guildID']
-        self.vcBanRole = self.bot.get_guild(yaml_data['guildID']).get_role(yaml_data['VcBanRole'])
-        self.MuteRole = self.bot.get_guild(yaml_data['guildID']).get_role(yaml_data['MuteRole'])
+        self.data = yaml_data
+        self.bot.loop.create_task(self._update_roles())
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel):
-        if channel.guild.id != self.main_guild: return
+        await self._update_roles()
+        if channel.guild.id != self.main_guild:
+            return
         if channel.type is discord.ChannelType.voice:
             await channel.set_permissions(self.vcBanRole, connect=False, view_channel=False,
                                           reason=f'automatic NoVCRole')
@@ -28,6 +30,11 @@ class promote(commands.Cog):
                                           read_messages=False,
                                           add_reactions=False,
                                           reason="Automatic Mute Role")
+
+    async def _update_roles(self):
+        self.bot.wait_until_ready()
+        self.vcBanRole = self.bot.get_guild(self.data['guildID']).get_role(self.data['VcBanRole'])
+        self.MuteRole = self.bot.get_guild(self.data['guildID']).get_role(self.data['MuteRole'])
 
     @commands.command()
     @commands.is_owner()

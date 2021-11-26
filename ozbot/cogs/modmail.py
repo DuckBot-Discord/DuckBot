@@ -26,13 +26,14 @@ class modmail(commands.Cog):
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
             staff_roles = []
-            for roleid in full_yaml['StaffRoles']:
-                staff_roles.append(self.bot.get_guild(full_yaml['guildID']).get_role(roleid))
         self.staff_roles = staff_roles
         self.yaml_data = full_yaml
 
     @commands.Cog.listener('on_message')
     async def modmail(self, message):
+        await self.bot.wait_until_ready()
+        self._update_staff_roles()
+
         if message.guild or message.author == self.bot.user:
             return
 
@@ -63,6 +64,9 @@ class modmail(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def modmail_reply(self, message):
+        await self.bot.wait_until_ready()
+        self._update_staff_roles()
+
         if any((not message.guild, message.author.bot, getattr(message.channel, 'category_id', 0) != 879414245052284958)):
             return
 
@@ -90,6 +94,9 @@ class modmail(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def dm(self, ctx, member: discord.Member, *, message = None):
+        await self.bot.wait_until_ready()
+        self._update_staff_roles()
+
         if ctx.channel.category_id == 879414245052284958: return
 
         if not any(role in self.staff_roles for role in ctx.author.roles):
@@ -130,8 +137,11 @@ class modmail(commands.Cog):
         except:
             pass
 
-
-
+    def _update_staff_roles(self):
+        staff_roles = []
+        for roleid in self.yaml_data['StaffRoles']:
+            staff_roles.append(self.bot.get_guild(self.yaml_data['guildID']).get_role(roleid))
+        self.staff_roles = staff_roles
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
