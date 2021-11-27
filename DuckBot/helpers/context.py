@@ -283,7 +283,6 @@ class CustomContext(commands.Context):
 
     async def dagpi(self, target: target_type = None, *, feature: ImageFeatures, **kwargs) -> discord.File:
         await self.trigger_typing()
-        target = target or self.reference
         try:
             return await self.bot.dagpi_request(self, target, feature=feature, **kwargs)
         except Exception as e:
@@ -293,3 +292,7 @@ class CustomContext(commands.Context):
     @property
     def reference(self) -> typing.Optional[discord.Message]:
         return getattr(self.message.reference, 'resolved', None)
+
+    @property
+    def referenced_user(self) -> typing.Optional[discord.abc.User]:
+        return getattr(self.reference, 'author', None)

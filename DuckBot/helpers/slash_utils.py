@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import pprint
 import typing
 from collections import defaultdict
 from contextvars import ContextVar
@@ -557,12 +558,17 @@ class ApplicationCog(commands.Cog, Generic[BotT]):
 
         resolved_users = data.get('users')
         if resolved_users:
-            resolved_members = data['members']
+            pprint.pprint(data)
+            resolved_members = data.get('members', {})
             for id, d in resolved_users.items():
-                member_data = resolved_members[id]
-                member_data['user'] = d
-                member = discord.Member(data=member_data, guild=interaction.guild, state=state)
-                resolved[int(id)] = member
+                try:
+                    member_data = resolved_members[id]
+                    member_data['user'] = d
+                    member = discord.Member(data=member_data, guild=interaction.guild, state=state)
+                    resolved[int(id)] = member
+                except KeyError:
+                    user = discord.User(data=d, state=state)
+                    resolved[int(id)] = user
 
         resolved_channels = data.get('channels')
         if resolved_channels:

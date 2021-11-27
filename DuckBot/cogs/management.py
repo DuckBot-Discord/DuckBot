@@ -175,7 +175,7 @@ class Management(commands.Cog, name='Bot Management'):
         err = False
         first_reload_failed_extensions = []
 
-        extensions = extensions or [await jishaku.modules.ExtensionConverter.convert(self, ctx, '~')]
+        extensions = extensions or [await jishaku.modules.ExtensionConverter().convert(ctx, '~')]
 
         for extension in itertools.chain(*extensions):
             method, icon = (
@@ -304,7 +304,8 @@ class Management(commands.Cog, name='Bot Management'):
             to_send = f'{e.__class__.__name__}: {e}'
             if len(to_send) > 1880:
                 return await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
-            return await ctx.send(f'```py\n{to_send}\n```')
+            await ctx.send(f'```py\n{to_send}\n```')
+            return
 
         func = env['func']
         # noinspection PyBroadException
@@ -319,8 +320,10 @@ class Management(commands.Cog, name='Bot Management'):
                 pass
             to_send = f'\n{value}{traceback.format_exc()}'
             if len(to_send) > 1880:
-                return await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
-            return await ctx.send(f'```py\n{to_send}\n```')
+                await ctx.send(file=discord.File(io.StringIO(to_send), filename='output.py'))
+                return
+            await ctx.send(f'```py\n{to_send}\n```')
+            return
 
         else:
             value = stdout.getvalue()

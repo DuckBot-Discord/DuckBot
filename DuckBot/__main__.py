@@ -301,12 +301,11 @@ class DuckBot(slash_utils.Bot):
 
         return f"https://cdn.discordapp.com/role-icons/{role_id}/{role_asset}.png?size={size}"
 
-    async def dagpi_request(self, ctx: CustomContext, target: target_type = None, *, feature: ImageFeatures, **kwargs) -> discord.File:
+    async def dagpi_request(self, ctx: CustomContext, target: target_type, *, feature: ImageFeatures, **kwargs) -> discord.File:
         bucket = self.dagpi_cooldown.get_bucket(ctx.message)
         retry_after = bucket.update_rate_limit()
         if retry_after:
             raise commands.CommandOnCooldown(commands.Cooldown(60, 60), retry_after, commands.BucketType.default)
-        target = target or ctx.author
         url = getattr(target, 'display_avatar', None) or getattr(target, 'icon', None) or getattr(target, 'guild', None) or target
         url = getattr(getattr(url, 'icon', url), 'url', url)
         request = await self.dagpi_client.image_process(feature, url, **kwargs)
