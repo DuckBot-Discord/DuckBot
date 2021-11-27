@@ -41,6 +41,7 @@ class Coords(slash_utils.ApplicationCog):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"
         logging.info(f'SEARCH: {search}')
+        logging.info(f'SORT: {sort}')
         if search:
             q += " WHERE SIMILARITY(description, $1) > 0.2"
 
