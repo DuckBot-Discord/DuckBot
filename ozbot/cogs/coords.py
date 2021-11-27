@@ -36,7 +36,8 @@ class Coords(slash_utils.ApplicationCog):
                               'Descending Z Coord', 'Ascending Z Coord', 'By Author A-Z', 'By Author Z-A']
 
     @slash_utils.slash_command(name='list', guild_id=706624339595886683)
-    @slash_utils.describe(search='Searches the saved coordinates by description (selecting a suggested result is optional)')
+    @slash_utils.describe(search='Searches the saved coordinates by description (selecting a suggested result is optional)',
+                          sort='Sorts the results by the selected criteria.')
     async def list_coords(self, ctx: slash_utils.Context, search: slash_utils.Autocomplete[str] = None, sort: SortType = None):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"

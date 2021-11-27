@@ -611,6 +611,9 @@ class ApplicationCog(commands.Cog, Generic[BotT]):
         resolved_data = self._get_resolved_data(interaction, interaction.data.get('resolved'), state)  # type: ignore
         params = []
 
+        command_args = {str(x): None for x in command.parameters.copy().keys()}  # type: ignore
+        print(command_args)
+
         if interaction.data['type'] == 1:  # type: ignore
             if 'options' in interaction.data:  # type: ignore
                 for option in interaction.data['options']:  # type: ignore
@@ -618,9 +621,10 @@ class ApplicationCog(commands.Cog, Generic[BotT]):
                     if option['type'] in (6, 7, 8):
                         value = resolved_data[int(value)]
 
-                    params.append(value)
-        else:  # type: ignore
-            params.append(resolved_data[int(interaction.data['target_id'])])  # type: ignore
+                    command_args[option['name']] = value
+                params = command_args.values()
+        else:
+            params.append(resolved_data[int(interaction.data['target_id'])])
 
         ctx = Context(self.bot, command, interaction)
         await command.invoke(ctx, *params)
