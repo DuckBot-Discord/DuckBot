@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import inspect
+import pprint
 import typing
 from collections import defaultdict
 from contextvars import ContextVar
-from typing import Coroutine, TypeVar, Union, get_args, get_origin, overload, Generic, TYPE_CHECKING, TypedDict
+from typing import Coroutine, TypeVar, Union, get_args, get_origin, overload, Generic, TYPE_CHECKING, TypedDict, Literal
 
 import discord
 import discord.channel
@@ -447,6 +448,8 @@ class SlashCommand(Command[CogT]):
                 elif get_origin(ann) is Union:
                     args = get_args(ann)
                     real_t = args[0]
+                elif get_origin(ann) is Literal:
+                    real_t = str
                 elif isinstance(ann, Autocomplete):
                     real_t = ann.annotation_type
                 else:
@@ -464,7 +467,7 @@ class SlashCommand(Command[CogT]):
                     option['max_value'] = ann.max
                     option['min_value'] = ann.min
 
-                if isinstance(ann, Autocomplete):
+                elif isinstance(ann, Autocomplete):
                     option['autocomplete'] = True
 
                 elif get_origin(ann) is Union:
@@ -476,6 +479,10 @@ class SlashCommand(Command[CogT]):
                     if len(args) != 3:
                         filtered = [channel_filter[i] for i in args]
                         option['channel_types'] = filtered
+
+                elif get_origin(ann) is Literal:
+                    arguments = ann.__args__
+                    option['choices'] = [{'name': str(a), 'value': str(a)} for a in arguments]
 
                 elif issubclass(ann, discord.abc.GuildChannel):
                     option['channel_types'] = [channel_filter[ann]]
@@ -557,12 +564,17 @@ class ApplicationCog(commands.Cog, Generic[BotT]):
 
         resolved_users = data.get('users')
         if resolved_users:
-            resolved_members = data['members']
+            pprint.pprint(data)
+            resolved_members = data.get('members', {})
             for id, d in resolved_users.items():
-                member_data = resolved_members[id]
-                member_data['user'] = d
-                member = discord.Member(data=member_data, guild=interaction.guild, state=state)
-                resolved[int(id)] = member
+                try:
+                    member_data = resolved_members[id]
+                    member_data['user'] = d
+                    member = discord.Member(data=member_data, guild=interaction.guild, state=state)
+                    resolved[int(id)] = member
+                except KeyError:
+                    user = discord.User(data=d, state=state)
+                    resolved[int(id)] = user
 
         resolved_channels = data.get('channels')
         if resolved_channels:
