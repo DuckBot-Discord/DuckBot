@@ -449,7 +449,7 @@ class DuckBot(slash_utils.Bot):
         try:
             return await asyncpg.create_pool(**credentials)
         except Exception as e:
-            logging.error("Could not create database pool", exc_info=True)
+            logging.error("Could not create database pool", exc_info=e)
         finally:
             self.dispatch('pool_create')
             logging.info('Database successful.')
