@@ -51,10 +51,16 @@ class Coords(slash_utils.ApplicationCog):
                       'Ascending X Coord': 'ORDER BY x DESC',
                       'Descending Z Coord': 'ORDER BY z ASCe',
                       'Ascending Z Coord': 'ORDER BY z DESC',
-                      'By Author A-Z': 'ORDER BY author ASC',
-                      'By Author Z-A': 'ORDER BY author DESC'}
+                      'By Author A-Z': 'ORDER BY description ASC',
+                      'By Author Z-A': 'ORDER BY description ASC'}
 
+        should_sort = False
         if sort := sort_modes.get(sort):
+            if 'Author A-Z' in sort:
+                should_sort = False
+            elif 'Author Z-A' in sort:
+                should_sort = True
+
             query = f"{q} {sort}"
         else:
             if not search:
@@ -74,6 +80,8 @@ class Coords(slash_utils.ApplicationCog):
                 return await ctx.send("There are no coordinates saved that match your search!", ephemeral=True)
 
         table = [(self.bot.get_user(author) or author, str(x), str(z), brief) for author, x, z, brief in coords]
+        if should_sort is not None:
+            table.sort(key=lambda x: x[0], reverse=should_sort)
         table = tabulate.tabulate(table, headers=["Author", "X", "Z", "Description"], tablefmt="presto")
         lines = table.split("\n")
         lines, headers = lines[2:], '\n'.join(lines[0:2])
