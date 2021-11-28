@@ -41,19 +41,18 @@ class Coords(slash_utils.ApplicationCog):
     async def list_coords(self, ctx: slash_utils.Context, search: slash_utils.Autocomplete[str] = None, sort: SortType = None):
         """ Lists all coordinates saved to the database """
         q = "SELECT author, x, z, description FROM coords"
-        logging.info(f'SEARCH: {search}')
-        logging.info(f'SORT: {sort}')
         if search:
             q += " WHERE SIMILARITY(description, $1) > 0.2"
+            await ctx.channel.send(q)
 
-        sort_modes = {'Description A-Z': 'query',
-                      'Description Z-A': 'query',
-                      'Descending X Coord': 'query',
-                      'Ascending X Coord': 'query',
-                      'Descending Z Coord': 'query',
-                      'Ascending Z Coord': 'query',
-                      'By Author A-Z': 'query',
-                      'By Author Z-A': 'query'}
+        sort_modes = {'Description A-Z': 'ORDER BY description ASC',
+                      'Description Z-A': 'ORDER BY description DESC',
+                      'Descending X Coord': 'ORDER BY x ASC',
+                      'Ascending X Coord': 'ORDER BY x DESC',
+                      'Descending Z Coord': 'ORDER BY z ASCe',
+                      'Ascending Z Coord': 'ORDER BY z DESC',
+                      'By Author A-Z': 'ORDER BY author ASC',
+                      'By Author Z-A': 'ORDER BY author DESC'}
 
         if sort := sort_modes.get(sort):
             query = f"{q} {sort}"
