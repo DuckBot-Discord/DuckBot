@@ -54,7 +54,7 @@ class Coords(slash_utils.ApplicationCog):
                       'By Author A-Z': 'ORDER BY description ASC',
                       'By Author Z-A': 'ORDER BY description ASC'}
 
-        should_sort = False
+        should_sort = None
         if sort := sort_modes.get(sort):
             if 'Author A-Z' in sort:
                 should_sort = False
@@ -81,7 +81,7 @@ class Coords(slash_utils.ApplicationCog):
 
         table = [(self.bot.get_user(author) or author, str(x), str(z), brief) for author, x, z, brief in coords]
         if should_sort is not None:
-            table.sort(key=lambda x: x[0], reverse=should_sort)
+            table.sort(key=lambda x: str(x[0]), reverse=should_sort)
         table = tabulate.tabulate(table, headers=["Author", "X", "Z", "Description"], tablefmt="presto")
         lines = table.split("\n")
         lines, headers = lines[2:], '\n'.join(lines[0:2])
