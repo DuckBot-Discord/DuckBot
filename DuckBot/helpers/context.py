@@ -11,9 +11,14 @@ from discord import Interaction, InvalidArgument
 from discord.ext import commands
 
 from DuckBot.helpers import constants
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite]
+
+if TYPE_CHECKING:
+    from DuckBot.__main__ import DuckBot
+else:
+    from discord.ext.commands import Bot as DuckBot
 
 
 reminder_embeds = [
@@ -98,6 +103,7 @@ class Confirm(discord.ui.View):
 
 
 class CustomContext(commands.Context):
+    bot: DuckBot
 
     @property
     def clean_prefix(self) -> str:
