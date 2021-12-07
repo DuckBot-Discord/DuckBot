@@ -182,17 +182,19 @@ class DuckBot(slash_utils.Bot):
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
-            prefix = [x['prefix'] for x in
-                      await bot.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)] or self.PRE
+            prefix = [x['prefix'] for x in await bot.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)] or self.PRE
             self.prefixes[message.guild.id] = prefix
 
-        if await bot.is_owner(message.author) and bot.noprefix is True:
+        if await bot.is_owner(message.author) and (bot.noprefix is True or message.content.startswith(('jishaku', 'eval', 'jsk', 'ev', 'rall', 'dev'))):
             return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
         return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
 
     async def fetch_prefixes(self, message):
-        return tuple([x['prefix'] for x in
-                      await self.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)]) or self.PRE
+        prefixes = [x['prefix'] for x in await self.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)]
+        if not prefixes:
+            await self.db.execute('INSERT INTO pre (guild_id, prefix) VALUES ($1, $2)', message.guild.id, self.PRE[0])
+            return tuple(await self.fetch_prefixes(message))
+        return tuple(prefixes)
 
     async def get_context(self, message, *, cls=CustomContext):
         return await super().get_context(message, cls=cls)
