@@ -123,6 +123,10 @@ class Music(commands.Cog):
         self.select_emoji = '🎵'
         self.select_brief = 'Music Commands'
 
+    async def cog_check(self, ctx: Context) -> bool:
+        await ctx.send('Sorry, but music commands are temporarily disabled... D:')
+        raise NoHideout
+
     async def cog_before_invoke(self, ctx: Context):
         unensured_commands = ('lyrics', 'lyrics user', 'lyrics search', 'current', 'queue', 'nodes', 'toggle', 'role', 'settings', 'dj')
         if (is_guild := ctx.guild is not None) and ctx.command.qualified_name not in unensured_commands:
