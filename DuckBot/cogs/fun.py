@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import pprint
 import random
 import re
 import traceback
@@ -81,6 +82,9 @@ async def create_link(bot: DuckBot, vc: discord.VoiceChannel, option: str) -> st
         Contains the discord invite link which, upon clicked, starts the custom activity in the VC.
     """
 
+    if not vc.permissions_for(vc.guild.me).create_instant_invite:
+        raise commands.BotMissingPermissions(['CREATE_INSTANT_INVITE'])
+
     data = {
         'max_age': 0,
         'max_uses': 0,
@@ -97,15 +101,16 @@ async def create_link(bot: DuckBot, vc: discord.VoiceChannel, option: str) -> st
         result = await resp.json()
 
     if resp_code == 429:
-        raise commands.BadArgument('You are being rate limited, see Rate Limits (<https://discord.com/developers/docs/topics/rate-limits>).')
-    elif resp_code == 401 or resp_code == 403:
-        raise ConnectionError('The Authorization header was missing or invalid. Verify if the token you entered inside the constructor is correct.')
+        raise commands.BadArgument('Woah there! Slow down. You are being rate-limited.'
+                                   f'\nTry again in {result.get("X-RateLimit-Reset-After")}s')
+    elif resp_code == 401:
+        raise commands.BadArgument('Unauthorized')
     elif result['code'] == 10003 or (result['code'] == 50035 and 'channel_id' in result['errors']):
         raise commands.BadArgument('For some reason, that voice channel is not valid...')
     elif result['code'] == 50013:
-        raise commands.MissingPermissions(['CREATE_INSTANT_INVITE'])
+        raise commands.BotMissingPermissions(['CREATE_INSTANT_INVITE'])
     elif result['code'] == 130000:
-        raise ConnectionError('API Resource is currently overloaded. Try again a little later.')
+        raise commands.BadArgument('The api is currently overloaded... Try later maybe?')
 
     return f"https://discord.gg/{result['code']}"
 
@@ -142,7 +147,14 @@ class YoutubeDropdown(discord.ui.View):
                 await interaction.message.delete()
                 await self.ctx.message.add_reaction(random.choice(constants.DONE))
             return
-        link = await create_link(self.ctx.bot, member.voice.channel, select.values[0])
+        try:
+            link = await create_link(self.ctx.bot, member.voice.channel, select.values[0])
+        except Exception as e:
+            self.stop()
+            self.ctx.bot.dispatch('command_error', self.ctx, e)
+            with contextlib.suppress(discord.HTTPException):
+                await self.message.delete()
+            return
         await interaction.response.edit_message(content=f'**To start the activity, press the blue link:**'
                                                         f'\n> <{link}>'
                                                         f'\n_note: activities don\'t work on mobile yet..._', view=None)
