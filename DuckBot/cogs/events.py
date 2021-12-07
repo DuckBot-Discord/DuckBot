@@ -97,8 +97,7 @@ class Handler(commands.Cog, name='Handler'):
         error = getattr(error, "original", error)
         ignored = (
             music_cog.errors,
-            errors.NoHideout,
-            commands.DisabledCommand
+            errors.NoHideout
         )
 
         if isinstance(error, ignored):
@@ -161,6 +160,9 @@ class Handler(commands.Cog, name='Handler'):
 
         if isinstance(error, commands.NotOwner):
             return await ctx.send(f"you must own `{ctx.me.display_name}` to use `{ctx.command}`")
+
+        if isinstance(error, commands.DisabledCommand):
+            return await ctx.send(f"Sorry, but the `{ctx.command.qualified_name}` command is disabled")
 
         if isinstance(error, commands.TooManyArguments):
             return await ctx.send(f"Too many arguments passed to the command!")

@@ -123,10 +123,6 @@ class Music(commands.Cog):
         self.select_emoji = '🎵'
         self.select_brief = 'Music Commands'
 
-    async def cog_check(self, ctx: Context) -> bool:
-        await ctx.send('Sorry, but music commands are temporarily disabled... D:')
-        raise NoHideout
-
     async def cog_before_invoke(self, ctx: Context):
         unensured_commands = ('lyrics', 'lyrics user', 'lyrics search', 'current', 'queue', 'nodes', 'toggle', 'role', 'settings', 'dj')
         if (is_guild := ctx.guild is not None) and ctx.command.qualified_name not in unensured_commands:
@@ -364,7 +360,7 @@ class Music(commands.Cog):
         members = len(self.get_members((ctx.voice_client).channel.id))
         return math.ceil(members / 2.5)
 
-    @commands.command(aliases=["p", "search"])
+    @commands.command(enabled=False, aliases=["p", "search"])
     async def play(self, ctx: Context, *, query: str):
         """Loads your input and adds it to the queue
         Use the `search` alias to search.
@@ -414,7 +410,7 @@ class Music(commands.Cog):
         if not player.is_playing:
             await player.play(player.queue.get())
 
-    @commands.command(aliases=["pn", "search-next"])
+    @commands.command(enabled=False, aliases=["pn", "search-next"])
     async def playnext(self, ctx: Context, *, query: str):
         """Loads your input and adds to the top of the queue
         Use the `search-next` alias to search."""
@@ -465,7 +461,7 @@ class Music(commands.Cog):
             track = player.queue.get()
             await player.play(track)
 
-    @commands.command(aliases=["pnow", "search-now"])
+    @commands.command(enabled=False, aliases=["pnow", "search-now"])
     async def playnow(self, ctx: Context, *, query: str):
         """Loads your input and plays it instantly
         Use the `search-now` alias to search!"""
@@ -521,12 +517,12 @@ class Music(commands.Cog):
         else:
             await player.stop()
 
-    @commands.command(aliases=["join", ])
+    @commands.command(enabled=False, aliases=["join", ])
     async def connect(self, ctx: Context):
         """Connects the bot to your voice channel"""
         await ctx.send(f'🔌 **|** Connected to {ctx.voice_client.channel.mention}')
 
-    @commands.command(aliases=["np", ])
+    @commands.command(enabled=False, aliases=["np", ])
     async def current(self, ctx: Context):
         """Displays info about the current track in the queue"""
         player = ctx.voice_client
@@ -538,7 +534,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=self.build_embed(player))
 
-    @commands.command(aliases=["dc"])
+    @commands.command(enabled=False, aliases=["dc"])
     async def disconnect(self, ctx: Context):
         """Disconnects the player from its voice channel."""
         player = ctx.voice_client
@@ -549,7 +545,7 @@ class Music(commands.Cog):
         await player.destroy()
         await ctx.send(f'👋 **|** Disconnected from {channel.mention}')
 
-    @commands.command(aliases=["next"])
+    @commands.command(enabled=False, aliases=["next"])
     async def skip(self, ctx: Context):
         """Skips the currently playing track"""
         player = ctx.voice_client
@@ -600,7 +596,7 @@ class Music(commands.Cog):
 
                 await ctx.send(embed=embed, footer=False)
 
-    @commands.command(name='stop')
+    @commands.command(enabled=False, name='stop')
     async def stop_playback(self, ctx: Context):
         """Stops the currently playing track and returns to the beginning of the queue"""
         player = ctx.voice_client
@@ -614,7 +610,7 @@ class Music(commands.Cog):
         await player.stop()
         await ctx.send("🛑 **|** The playback was stopped and queue cleared")
 
-    @commands.command(name='qclear')
+    @commands.command(enabled=False, name='qclear')
     async def clear_queue(self, ctx: Context):
         """Removes all tracks from the queue"""
         player = ctx.voice_client
@@ -625,7 +621,7 @@ class Music(commands.Cog):
         player.queue.clear()
         await ctx.send("🛑 **|** The playback was stopped and queue cleared")
 
-    @commands.command(aliases=["q", "upcoming"], name='queue')
+    @commands.command(enabled=False, aliases=["q", "upcoming"], name='queue')
     async def _queue(self, ctx: Context):
         """Displays the current song queue"""
         player = ctx.voice_client
@@ -640,7 +636,7 @@ class Music(commands.Cog):
         menu = paginator.ViewPaginator(paginator.QueueMenu(info, ctx), ctx=ctx)
         await menu.start()
 
-    @commands.command()
+    @commands.command(enabled=False, )
     async def seek(self, ctx: Context, *, time: str):
         """Seeks to a position in the track"""
         player = ctx.voice_client
@@ -713,7 +709,7 @@ class Music(commands.Cog):
         await ctx.send("The current track was sought to {}".format(format_time(new_position)))
         await player.seek(new_position)
 
-    @commands.command()
+    @commands.command(enabled=False, )
     async def pause(self, ctx: Context):
         """Pauses playback (if possible)"""
         player = ctx.voice_client
@@ -727,7 +723,7 @@ class Music(commands.Cog):
         await player.set_pause(True)
         await ctx.send(f"⏸ **|** Playback paused")
 
-    @commands.command()
+    @commands.command(enabled=False, )
     async def resume(self, ctx: Context):
         """Resumes playback (if possible)"""
         player = ctx.voice_client
@@ -741,7 +737,7 @@ class Music(commands.Cog):
         await player.set_pause(False)
         await ctx.send("▶ **|** The current track was resumed.")
 
-    @commands.command(aliases=["vol"])
+    @commands.command(enabled=False, aliases=["vol"])
     async def volume(self, ctx: Context, volume: Union[int, str]):
         """Sets the player's volume; If you input "reset", it will set the volume back to default"""
         player = ctx.voice_client
@@ -762,7 +758,7 @@ class Music(commands.Cog):
             await player.set_volume(volume)
             await ctx.send(f"🔊 **|** The volume is now **{volume}%**")
 
-    @commands.command()
+    @commands.command(enabled=False, )
     async def shuffle(self, ctx: Context):
         """Randomizes the current order of tracks in the queue"""
         player = ctx.voice_client
@@ -833,7 +829,7 @@ class Music(commands.Cog):
         player.loop = 0
         await ctx.send('➡ **|** Loop mode **disabled**!')
 
-    @commands.command(name='dj-swap')
+    @commands.command(enabled=False, name='dj-swap')
     async def dj_swap(self, ctx: Context, member: discord.Member = None):
         """Swap the current DJ to another member in the voice channel."""
         player: Player = ctx.voice_client
@@ -863,7 +859,7 @@ class Music(commands.Cog):
                 player.dj = m
                 return await ctx.send(f'The DJ has been assigned to {m.mention}')
 
-    @commands.command()
+    @commands.command(enabled=False, )
     async def nodes(self, ctx: Context):
         nodes = [x for x in self.bot.pomice.nodes.values()]
         raw = []
