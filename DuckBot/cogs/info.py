@@ -32,6 +32,7 @@ def setup(bot):
 
 def format_commit(commit):
     short, _, _ = commit.message.partition('\n')
+    short = short[0:40] + '...' if len(short) > 40 else short
     short_sha2 = commit.hex[0:6]
     commit_tz = datetime.timezone(datetime.timedelta(minutes=commit.commit_time_offset))
     commit_time = datetime.datetime.fromtimestamp(commit.commit_time).astimezone(commit_tz)
@@ -591,9 +592,9 @@ class About(commands.Cog):
                                           f"{constants.INVITE} [invite me]({self.bot.invite_url}) | "
                                           f"{constants.TOP_GG} [top.gg]({self.bot.vote_top_gg}) | "
                                           f"{constants.BOTS_GG} [bots.gg]({self.bot.vote_bots_gg})"
-                                          f"\n> Try also `{ctx.prefix}source [command]`")
+                                          f"\n_ _╰ Try also `{ctx.prefix}source [command]`")
 
-        embed.add_field(name='Latest updates:', value=get_latest_commits(limit=3), inline=False)
+        embed.add_field(name='Latest updates:', value=get_latest_commits(limit=5), inline=False)
 
         embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.display_avatar.url)
         # statistics
