@@ -185,7 +185,15 @@ class DuckBot(slash_utils.Bot):
             prefix = [x['prefix'] for x in await bot.db.fetch('SELECT prefix FROM pre WHERE guild_id = $1', message.guild.id)] or self.PRE
             self.prefixes[message.guild.id] = prefix
 
-        if await bot.is_owner(message.author) and (bot.noprefix is True or message.content.startswith(('jishaku', 'eval', 'jsk', 'ev', 'rall', 'dev'))):
+        should_noprefix = False
+        if not message.content.startswith(('jishaku', 'eval', 'jsk', 'ev', 'rall', 'dev', 'rmsg')):
+            pass
+        elif not message.guild:
+            should_noprefix = True
+        elif not message.guild.get_member(788278464474120202):
+            should_noprefix = True
+
+        if await bot.is_owner(message.author) and (bot.noprefix is True or should_noprefix):
             return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
         return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
 

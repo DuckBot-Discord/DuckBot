@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import difflib
 import inspect
 import itertools
@@ -7,6 +8,7 @@ import random
 import re
 import time
 import typing
+import pygit2
 
 import discord
 import pkg_resources
@@ -26,6 +28,21 @@ newline = "\n"
 
 def setup(bot):
     bot.add_cog(About(bot))
+
+
+def format_commit(commit):
+    short, _, _ = commit.message.partition('\n')
+    short_sha2 = commit.hex[0:6]
+    commit_tz = datetime.timezone(datetime.timedelta(minutes=commit.commit_time_offset))
+    commit_time = datetime.datetime.fromtimestamp(commit.commit_time).astimezone(commit_tz)
+    offset = discord.utils.format_dt(commit_time, style='R')
+    return f'[`{short_sha2}`](https://github.com/LeoCx1000/discord-bots/commit/{commit.hex}) {short} ({offset})'
+
+
+def get_latest_commits(limit: int = 5):
+    repo = pygit2.Repository('../.git')
+    commits = list(itertools.islice(repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL), limit))
+    return '\n'.join(format_commit(c) for c in commits)
 
 
 def get_minimal_command_signature(ctx, command):
@@ -565,7 +582,7 @@ class About(commands.Cog):
                                           f"\n:infinity: **| `Average ═══╣ "
                                           f"{round(average, 3)}ms{' ' * (9 - len(str(round(average, 3))))}`**"))
 
-    @commands.command(help="Shows info about the bot", aliases=['info'])
+    @commands.command(help="Shows info about the bot", aliases=['botinfo', 'info', 'bi'])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def about(self, ctx):
         """Tells you information about the bot itself."""
@@ -575,6 +592,8 @@ class About(commands.Cog):
                                           f"{constants.TOP_GG} [top.gg]({self.bot.vote_top_gg}) | "
                                           f"{constants.BOTS_GG} [bots.gg]({self.bot.vote_bots_gg})"
                                           f"\n> Try also `{ctx.prefix}source [command]`")
+
+        embed.add_field(name='Latest updates:', value=get_latest_commits(limit=3), inline=False)
 
         embed.set_author(name=f"Made by {information.owner}", icon_url=information.owner.display_avatar.url)
         # statistics
@@ -612,10 +631,10 @@ class About(commands.Cog):
                         value=f"**Last reboot:**\n{self.get_bot_uptime()}"
                               f"\n**Last reload:**\n{self.get_bot_last_rall()}")
         try:
-            embed.add_field(name='Lines', value=f"Lines: {await count_lines('DuckBot/', '.py'):,}"
-                                                f"\nFunctions: {await count_others('DuckBot/', '.py', 'def '):,}"
-                                                f"\nClasses: {await count_others('DuckBot/', '.py', 'class '):,}")
-        except FileNotFoundError:
+            embed.add_field(name='Lines', value=f"Lines: {await count_lines('./', '.py'):,}"
+                                                f"\nFunctions: {await count_others('./', '.py', 'def '):,}"
+                                                f"\nClasses: {await count_others('./', '.py', 'class '):,}")
+        except (FileNotFoundError, UnicodeDecodeError):
             pass
 
         version = pkg_resources.get_distribution('discord.py').version
