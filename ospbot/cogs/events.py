@@ -8,6 +8,22 @@ from discord.ext import commands
 from files import constants
 
 
+def make_ordinal(n):
+    """
+    Convert an integer into its ordinal representation::
+
+        make_ordinal(0)   => '0th'
+        make_ordinal(3)   => '3rd'
+        make_ordinal(122) => '122nd'
+        make_ordinal(213) => '213th'
+    """
+    n = int(n)
+    suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
+    if 11 <= (n % 100) <= 13:
+        suffix = 'th'
+    return str(n) + suffix
+
+
 class events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -258,10 +274,16 @@ You have 5 minutes to do so.""")
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        if member.guild.id != self.yaml_data['guildID']: return
-
+        if member.guild.id != self.yaml_data['guildID']:
+            return
+        xxth = make_ordinal(sorted(member.guild.members, key=lambda user: member.joined_at).index(member) + 1)
+        server_name = member.guild.name
+        rules_channel = member.guild.rules_channel.mention
+        bot_ping = self.bot.user.mention
         embed = discord.Embed(color=0x0066ff,
-                              description=f"""Welcome to the {member.guild.name}! You are the {sorted(member.guild.members, key=lambda user: member.joined_at).index(member) + 1} member. Please check out our <#860610050448031784> and read the {member.guild.rules_channel.mention} to gain access to the rest of the server. If you need anything, please message me, {self.bot.user.mention}, and our admin team will help you out! We hope you enjoy your time here.""",
+                              description=f"Welcome to {server_name}! You are the {xxth} member to join."
+                                          f"\nPlease check out our <#860610050448031784> and read the {rules_channel} to gain access to the rest of the server. "
+                                          f"\nIf you need anything, please message me, {bot_ping}, and our admin team will help you out! We hope you enjoy your time here.",
                               timestamp=discord.utils.utcnow(),
                               title=f"Welcome, {member}")
 
