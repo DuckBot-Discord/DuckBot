@@ -961,9 +961,13 @@ class moderation(commands.Cog):
         await webhook.delete()
         await ctx.send(f'moved {amount} messages to {channel.mention}')
 
+    @commands.has_permissions(manage_messages=True)
     @commands.command(brief='Sends an embed using flags')
     async def embed(self, ctx: commands.Context, *, flags: TestFlags):
         """
+        Sends an embed using flags.
+        USAGE:
+        ```
         A test command for trying out the new flags feature in discord.py v2.0
         Flag usage: `--flag [flag string]`
         Note that `--text... [text]` (with ellipsis) can accept a repeated amount of them:
@@ -994,6 +998,8 @@ class moderation(commands.Cog):
         `FooterFlags:`
         > `--text [text]` Sets the footer's text
         > `--icon [http/https URL]` Sets the footer's icon
+        ```
+        bottom text
         """
         embed = discord.Embed(title=flags.title, description=flags.description, colour=flags.color)
         if flags.field and len(flags.field) > 25:
