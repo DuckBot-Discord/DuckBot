@@ -322,19 +322,19 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         await self.do_rtfm(ctx, 'pycord', obj)
 
     @rtfm.command(name='twitchio')
-    async def rtfm_pycord(self, ctx, *, obj: str = None):
+    async def rtfm_twitchio(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a TwitchIO entry
 
-        https://twitchio.readthedocs.io/en/latest/
+        https://twitchio.readthedocs.io/en/latest
 
         """
         await self.do_rtfm(ctx, 'twitchio', obj)
 
     @rtfm.command(name='pomice')
-    async def rtfm_pycord(self, ctx, *, obj: str = None):
+    async def rtfm_pomice(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a Pomice entry
 
-        https://pycord.readthedocs.io/en/master
+        https://pomice.readthedocs.io/en/latest
         """
         await self.do_rtfm(ctx, 'pomice', obj)
 
