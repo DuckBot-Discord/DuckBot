@@ -1014,9 +1014,9 @@ class moderation(commands.Cog):
             if len(embed) > 6000:
                 raise commands.BadArgument('The embed is too big! (too much text!)')
             try:
-                await ctx.send(embed=embed, footer=False, reply=False)
+                await ctx.send(embed=embed)
             except Exception as e:
-                raise commands.BadArgument(f'CONGRATS! You broke 😭\n{e}')
+                raise commands.BadArgument(f'CONGRATS! You broke the command 😭\n{e}')
         else:
             raise commands.BadArgument('You must pass at least one of the necessary (`*`) flags!')
 
