@@ -54,10 +54,15 @@ def get_complementary(color):
     comp_color = "#%06X" % comp_color
     return comp_color
 
+color = discord.Color.random()
+embeds = []
+for _ in range(0, 10):
+    color = random_color(color)
+    embeds.append(discord.Embed(color=color, title=f'{color}'))
 
 async def do_cotd(ctx: typing.Union[commands.Context, commands.Bot], color: discord.Color = None, manual: bool = False):
     if color is None:
-        previous = await getattr(ctx, 'bot', ctx).db.fetchval('SELECT color_int FROM cotd ORDER BY added_at LIMIT 1')
+        previous = await getattr(ctx, 'bot', ctx).db.fetchval('SELECT color_int FROM cotd ORDER BY added_at DESC LIMIT 1')
         previous = discord.Color(int(previous)) if previous else None
         color = random_color(previous_color=previous)
 
