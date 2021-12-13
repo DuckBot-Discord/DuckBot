@@ -44,7 +44,7 @@ def random_color(previous_color: discord.Color = None):
         previous_color = discord.Color.random()
 
     prev_h = colorsys.rgb_to_hsv(previous_color.r / 255, previous_color.g / 255, previous_color.b / 255)
-    return discord.Color.from_hsv(_get_degree(prev_h[0], aperture=20), random.uniform(0.5, 1), random.uniform(0.5, 1))
+    return discord.Color.from_hsv(_get_degree(prev_h[0], aperture=20), random.uniform(0.8, 1), random.uniform(0.8, 1))
 
 
 def get_complementary(color):
