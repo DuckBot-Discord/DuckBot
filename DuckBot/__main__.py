@@ -11,7 +11,6 @@ from collections import defaultdict, deque, namedtuple
 
 import typing
 
-import pomice
 from openrobot.api_wrapper import AsyncClient as ORBClient
 from typing import (
     List,
@@ -57,8 +56,6 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
 
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
-os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'True'
-os.environ['JISHAKU_USE_BRAILLE_J'] = 'True'
 os.environ['JISHAKU_HIDE'] = 'True'
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]
 
@@ -90,6 +87,7 @@ class DuckBot(slash_utils.Bot):
             enable_debug_events=True,
             strip_after_prefix=True,
         )
+        self.allowed_mentions = discord.AllowedMentions.none()
 
         self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
                                        client_secret=os.getenv('ASYNC_PRAW_CS'),
@@ -114,11 +112,8 @@ class DuckBot(slash_utils.Bot):
         self.repo = "https://github.com/LeoCx1000/discord-bots"
         self.maintenance = None
         self.noprefix = False
-        self.started = False
         self.persistent_views_added = False
-        self.uptime = datetime.datetime.utcnow()
-        self.last_rall = datetime.datetime.utcnow()
-        self.allowed_mentions = discord.AllowedMentions.none()
+        self.uptime = self.last_rall = datetime.datetime.utcnow()
         self.session: aiohttp.ClientSession = None
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
@@ -145,14 +140,12 @@ class DuckBot(slash_utils.Bot):
         self.log_cache = defaultdict(lambda: defaultdict(list))
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
         self.imgur = asyncgur.Imgur(client_id=os.getenv('IMGUR_CL_ID'))
-        self.pomice = pomice.NodePool()
         self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
 
         for ext in initial_extensions:
             self._load_extension(ext)
 
         self.loop.create_task(self.populate_cache())
-        self.loop.create_task(self.populate_pomice_nodes())
         self.loop.create_task(self.dynamic_load_cogs())
         self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
 
@@ -209,8 +202,6 @@ class DuckBot(slash_utils.Bot):
 
     # Event based
     async def on_ready(self) -> None:
-        e = "\033[0m"
-        s = "\033[42m"
         logging.info("======[ BOT ONLINE! ]=======")
         logging.info("\033[42mLogged in as " + self.user.name + "\033[0m")
 
@@ -224,14 +215,6 @@ class DuckBot(slash_utils.Bot):
                 elif isinstance(prefix, (tuple, list)):
                     return await message.reply(f"My prefixes here are `{'`, `'.join(prefix[0:10])}`\n For a list of commands do`{prefix[0]}help` 💞"[0:2000])
         await self.process_commands(message)
-
-    async def on_interaction(self, interaction: discord.Interaction):
-        """
-        We're not using any forks of discord.py here but need them for the bot to work
-        so we're just gonna pass so it doesn't display any errors while Maya works on
-        making the slash command wrapper support autocomplete-type functionality.
-        """
-        pass
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
         traceback_string = traceback.format_exc()
@@ -252,11 +235,6 @@ class DuckBot(slash_utils.Bot):
         else:
             await error_channel.send(f"```yaml\nAn error occurred in an {event_method} event``````py",
                                      file=discord.File(io.StringIO(traceback_string), filename='traceback.py'))
-
-    def get_mapping(self):
-        mapping = {cog: cog.get_commands() for cog in self.cogs.values()}
-        mapping[None] = [c for c in self.commands if c.cog is None]
-        return mapping
 
     async def create_gist(self, *, filename: str, description: str, content: str, public: bool = True):
         headers = {
@@ -295,22 +273,6 @@ class DuckBot(slash_utils.Bot):
             raise errors.NoWelcomeChannel
         return welcome_channel
 
-    async def _fetch_role_icon(self, guild_id: int, role_id: int, size: int = 64) -> str:
-        guild = self.get_guild(guild_id)
-        if not guild or 'ROLE_ICONS' not in guild.features:
-            return None
-        role = guild.get_role(role_id)
-        if not role:
-            return None
-
-        resp = await guild._state.http.get_roles(guild.id)
-        role_asset = {r['id']: r['icon'] for r in resp}[str(role_id)]
-
-        if not role_asset:
-            return None
-
-        return f"https://cdn.discordapp.com/role-icons/{role_id}/{role_asset}.png?size={size}"
-
     async def dagpi_request(self, ctx: CustomContext, target: target_type, *, feature: ImageFeatures, **kwargs) -> discord.File:
         bucket = self.dagpi_cooldown.get_bucket(ctx.message)
         retry_after = bucket.update_rate_limit()
@@ -335,14 +297,6 @@ class DuckBot(slash_utils.Bot):
             self.log_channels[guild_id]._replace(voice=webhook_url)
         elif deliver_type == 'server':
             self.log_channels[guild_id]._replace(server=webhook_url)
-
-    async def upload_imgur(self, *, title: str = 'By DuckBot', name: str = 'By DuckBot', description: str = 'Uploaded by DuckBot Discord', image: typing.Union[str, bytes] = None, video: typing.Union[str, bytes] = None):
-        if not image and not video:
-            raise AttributeError('You did not provide an image or video!')
-        url, response = await self.imgur.upload_image(title=title, name=name, description=description, image=image, video=video)
-        if response.success is True and response.status == 200:
-            return url.link
-        raise discord.HTTPException(response=response, message='Could not upload to Imgur')
 
     async def populate_cache(self):
         try:
@@ -416,28 +370,6 @@ class DuckBot(slash_utils.Bot):
 
         logging.info('All cache populated successfully')
         self.dispatch('cache_ready')
-
-    async def populate_pomice_nodes(self):
-        await self.wait_until_ready()
-        successful = 0
-        failed = 0
-        for node in config['nodes']:
-            try:
-                await self.pomice.create_node(
-                    bot=self,
-                    host=node['host'],
-                    port=node['port'],
-                    password=node['password'],
-                    identifier=node['name'],
-                    spotify_client_id=f"{os.getenv('SPOTIFY_CLIENT_ID')}",
-                    spotify_client_secret=f"{os.getenv('SPOTIFY_CLIENT_SECRET')}"
-                )
-                successful += 1
-            except Exception as e:
-                failed += 1
-                logging.error(f'Failed to load node {node["identifier"]}', exc_info=True)
-
-        logging.info(f'Populated Pomice nodes [SUCC: {successful} | FAIL: {failed}]')
 
     async def start(self, *args, **kwargs):
         self.session = aiohttp.ClientSession()
