@@ -172,8 +172,11 @@ class HelpView(discord.ui.View):
         embed = discord.Embed(title=f"{cog.qualified_name} commands [{len(comm)}]", color=self.ctx.color,
                               description=cog.description or "No description provided")
         for cmd in comm:
-            embed.add_field(name=f"{constants.ARROW}`{cmd.name}{f' {cmd.signature}`' if cmd.signature else '`'}",
-                            value=(cmd.brief or cmd.help or 'No help given...').replace('%PRE%', self.ctx.clean_prefix)[0:1024], inline=False)
+            if cmd.extras.get('nsfw', False):
+                    embed.add_field(name=f"{cmd.name}", value="See help for this command in an NSFW channel.", inline=False)
+            else:
+                embed.add_field(name=f"{constants.ARROW}`{cmd.name}{f' {cmd.signature}`' if cmd.signature else '`'}",
+                                value=(cmd.brief or cmd.help or 'No help given...').replace('%PRE%', self.ctx.clean_prefix)[0:1024], inline=False)
             embed.set_footer(text="For more info on a command run \"help [command]\"")
             if len(embed.fields) == 5:
                 embeds.append(embed)
@@ -369,7 +372,10 @@ class MyHelp(commands.HelpCommand):
                 embed.add_field(name='Cant execute this here:', value='Can only be executed in a server.', inline=False)
             except commands.DisabledCommand:
                 embed.add_field(name='Cant execute this command:',
-                                value='This command is restricted to slash commands.', inline=False)
+                                value='This command is currently disabled.', inline=False)
+            except commands.NSFWChannelRequired:
+                embed.add_field(name='Cant execute this here:', value='This command can only be used in an NSFW channel.',
+                                inline=False)
             except Exception as exc:
                 embed.add_field(name='Cant execute this command:', value='Unknown/unhandled reason.', inline=False)
                 print(f'{command} failed to execute: {exc}')
@@ -517,7 +523,8 @@ class About(commands.Cog):
         """ Generates a discord oauth url """
         return discord.utils.oauth_url(self.bot.user.id,
                                        permissions=discord.Permissions(perms),
-                                       scopes=('applications.commands', 'bot'))
+                                       scopes=('applications.commands', 'bot'),
+                                       redirect_uri='https://discord.gg/TdRfGKg8Wh')
 
     @commands.command(help="Sends a link to invite the bot to your server")
     async def invite(self, ctx: CustomContext):
@@ -638,8 +645,15 @@ class About(commands.Cog):
         except (FileNotFoundError, UnicodeDecodeError):
             pass
 
+        if ctx.guild.id == 336642139381301249 and ctx.message.content.lower() in ('db.about banner', 'dbb.about banner'):
+            embed.add_field(name='Full avatar and banner:', inline=False,
+                            value=f'Very dirty minded of you... but anyways here you go <:thinkuwu:912482477841461258>'
+                                  f'\n> banner: https://cdn.waifu.im/02d78d675fc8f2f0.jpg'
+                                  f'\n> avatar: https://www.pixiv.net/en/artworks/86527954')
+            embed.colour = discord.Colour(0x2EA0F1)
+
         version = pkg_resources.get_distribution('discord.py').version
-        embed.set_footer(text=f'Made with discord.py v{version} 💖', icon_url='http://i.imgur.com/5BFecvA.png')
+        embed.set_footer(text=f'Made with discord.py v{version} 💖', icon_url='https://i.imgur.com/5BFecvA.png')
         embed.timestamp = discord.utils.utcnow()
         await ctx.send(embed=embed)
 
@@ -703,6 +717,7 @@ class About(commands.Cog):
                               description=mpl_advice)
         embed.set_image(url='https://cdn.discordapp.com/attachments/879251951714467840/896445332509040650/unknown.png')
         embed.set_footer(text=f"{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}")
+
         await ctx.send(embed=embed, view=helper.Url(final_url, label=f'Here\'s {str(obj)}', emoji=constants.GITHUB),
                        footer=False)
 
@@ -859,8 +874,9 @@ DuckBot's top role position
         embed = discord.Embed(title='Here\'s some buttons:')
         await ctx.send(embed=embed, view=InvSrc())
 
-    # This is all danny's code:
-    # https://github.com/rapptz/robodanny
+    # This is all Danny / Rapptz code:
+    # https://github.com/Rapptz/RoboDanny
+    # https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/stats.py#L426-L435
     @staticmethod
     async def show_guild_stats(ctx):
         lookup = (
