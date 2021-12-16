@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 import datetime
 import difflib
+import inspect
 import random
 import discord
 import re
@@ -634,7 +635,8 @@ class Moderation(commands.Cog):
         return await ctx.send(f"**{ctx.author}** muted **{member}**{reason or ''}",
                               allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute', 'multimute'], name='multi-mute')
+    @commands.command(aliases=['mass-mute', 'multi_mute', 'mass_mute', 'multimute', 'massmute'], name='multi-mute',
+                      usage='<members>... [reason]')
     @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
@@ -742,7 +744,8 @@ class Moderation(commands.Cog):
         await ctx.send(f"**{ctx.author}** unmuted **{member}**{reason}",
                        allowed_mentions=discord.AllowedMentions().none())
 
-    @commands.command(aliases=['mass-unmute', 'multi_unmute', 'mass_unmute', 'massunmute'], name='multi-unmute')
+    @commands.command(aliases=['mass-unmute', 'multi_unmute', 'mass_unmute', 'massunmute', 'multiunmute'], name='multi-unmute',
+                      usage='<members...> [reason]')
     @ensure_muterole()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
@@ -751,10 +754,11 @@ class Moderation(commands.Cog):
         """
         Mutes a lot of members indefinitely indefinitely.
         """
-        if not can_execute_action(ctx, ctx.author, members):
-            raise commands.BadArgument("You're not high enough in role hierarchy to mute that member.")
-
         role = await muterole(ctx)
+
+        if not members:
+            raise commands.MissingRequiredArgument(inspect.Parameter('members', annotation=commands.Greedy[discord.Member],
+                                                                     kind=inspect.Parameter.POSITIONAL_OR_KEYWORD))
 
         successful: typing.List[discord.Member] = []
         failed_perms: typing.List[discord.Member] = []
@@ -1045,3 +1049,17 @@ class Moderation(commands.Cog):
             await ctx.send('Something went wrong...')
         else:
             await ctx.send(f'✅ **|** Unblocked **{discord.utils.remove_markdown(str(member))}** from **{ctx.channel}**')
+
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.group(invoke_without_command=True)
+    async def role(self, ctx: CustomContext, member: discord.Member, *, role: discord.Role):
+        """
+        Manages roles in your channel.
+        """
+        if role >= ctx.author.top_role:
+            raise commands.BadArgument('You cannot assign roles higher (or equal to) your own top role!')
+        if role >= ctx.me.top_role:
+            raise commands.BadArgument('You cannot assign roles higher (or equal to) **the bot\'s top role!**')
+        await member.add_roles(role, reason=f'Role added by {ctx.author} (ID: {ctx.author.id})')
+
