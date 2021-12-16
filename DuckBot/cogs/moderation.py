@@ -1052,8 +1052,8 @@ class Moderation(commands.Cog):
 
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.group(invoke_without_command=True)
-    async def role(self, ctx: CustomContext, member: discord.Member, *, role: discord.Role):
+    @commands.group(invoke_without_command=True, name='role')
+    async def role_group(self, ctx: CustomContext, member: discord.Member, *, role: discord.Role):
         """
         Manages roles in your channel.
         """
@@ -1062,4 +1062,16 @@ class Moderation(commands.Cog):
         if role >= ctx.me.top_role:
             raise commands.BadArgument('You cannot assign roles higher (or equal to) **the bot\'s top role!**')
         await member.add_roles(role, reason=f'Role added by {ctx.author} (ID: {ctx.author.id})')
+        await ctx.send(f'✅ **|** Added role **{role}** to **{member}**', allowed_mentions=discord.AllowedMentions.none())
+
+    @role_group.command(name='remove')
+    async def role_remove(self, ctx: CustomContext, member: discord.Member, *, role: discord.Role):
+        """ Removes a role from a user. """
+        if role >= ctx.author.top_role:
+            raise commands.BadArgument('You cannot remove roles higher (or equal to) your own top role!')
+        if role >= ctx.me.top_role:
+            raise commands.BadArgument('You cannot remove roles higher (or equal to) **the bot\'s top role!**')
+        await member.remove_roles(role, reason=f'Role removed by {ctx.author} (ID: {ctx.author.id})')
+        await ctx.send(f'✅ **|** Removed role **{role}** from **{member}**', allowed_mentions=discord.AllowedMentions.none())
+
 
