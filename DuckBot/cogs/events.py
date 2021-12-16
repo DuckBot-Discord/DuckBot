@@ -16,7 +16,6 @@ from jishaku.paginators import WrappedPaginator
 
 import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.cogs import music as music_cog
 from DuckBot.cogs.info import suggestions_channel
 from DuckBot.helpers import constants
 
@@ -96,7 +95,6 @@ class Handler(commands.Cog, name='Handler'):
     async def error_handler(self, ctx: CustomContext, error):
         error = getattr(error, "original", error)
         ignored = (
-            music_cog.errors,
             errors.NoHideout
         )
 
