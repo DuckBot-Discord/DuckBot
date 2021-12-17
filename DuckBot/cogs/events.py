@@ -442,8 +442,9 @@ class Handler(commands.Cog, name='Handler'):
                         f'for {time_inputs.human_timedelta(info["start_time"], accuracy=3, brief=True)}!**'
                         f'\n**With reason:** {info["reason"]}\n')
 
-            with contextlib.suppress(discord.HTTPException):
-                await message.add_reaction('‼')
+            if paginator.pages:
+                with contextlib.suppress(discord.HTTPException):
+                    await message.add_reaction('‼')
 
             for page in paginator.pages:
                 await message.reply(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
