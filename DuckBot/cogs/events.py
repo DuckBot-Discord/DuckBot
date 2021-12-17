@@ -5,6 +5,7 @@ import logging
 import random
 import re
 import traceback
+import contextlib
 from collections import Counter
 
 import discord
