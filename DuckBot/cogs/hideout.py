@@ -560,6 +560,7 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     @commands.is_owner()
     @commands.command(name='guild-stats')
     async def _guilds(self, ctx: CustomContext, send_in_channel: bool = False):
+        """ Shows non-sensitive member count data about the bots guilds. """
         pages = WrappedPaginator(max_size=4096)
         title = (f'--- {ctx.me.name} ---', 'All guild stats', '')
         for entr in title:
@@ -579,11 +580,11 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             total_bot += bots
             total_human += humans
             pages.add_line(f"{n}) Total: {g.member_count} - {math.ceil(bot_per * 100)}% bots"
-                           f"\n{'-' * len(str(n))}- Humans: {humans} - Bots {bots}\n")
+                           f"\n{'-' * len(str(n))}- Humans: {humans} - Bots: {bots}\n")
 
         avg_per = (total_per / len(self.bot.guilds)) * 100
-        footer = ['', f'Total users: {total_users} - Average {math.ceil(avg_per)}% bot',
-                  f'Total human: {total_human} - Total bot {total_bot}']
+        footer = ['', f'Total users: {total_users}', f'Average {math.ceil(avg_per)}% bot',
+                  f'Total human: {total_human}', f'Total bot: {total_bot}']
 
         for entr in footer:
             pages.add_line(entr)
