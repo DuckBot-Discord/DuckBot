@@ -6,6 +6,7 @@ import urllib
 import zlib
 from inspect import Parameter
 
+import math
 import discord
 import typing
 import yarl
@@ -14,8 +15,8 @@ from discord.ext import commands
 import DuckBot.__main__
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot
+from jishaku.paginators import WrappedPaginator
 from DuckBot.cogs.management import get_webhook
-from DuckBot.helpers import constants
 from DuckBot.helpers.context import CustomContext
 
 
@@ -555,3 +556,42 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     async def whitelist_rem(self, ctx: CustomContext, user: discord.User):
         await self.bot.db.execute('DELETE FROM inv_whitelist WHERE uid = $1', user.id)
         await ctx.message.add_reaction('✅')
+
+    @commands.is_owner()
+    @commands.command(name='guild-stats')
+    async def _guilds(self, ctx: CustomContext, send_in_channel: bool = False):
+        pages = WrappedPaginator(max_size=4096)
+        title = (f'--- {ctx.me.name} ---', 'All guild stats', '')
+        for entr in title:
+            pages.add_line(entr)
+
+        total_per = 0
+        total_users = 0
+        total_bot = 0
+        total_human = 0
+
+        for n, g in enumerate(sorted(self.bot.guilds, key=lambda gu: gu.member_count, reverse=True), start=1):
+            bots = sum(m.bot for m in g.members)
+            humans = sum(not m.bot for m in g.members)
+            bot_per = bots / g.member_count
+            total_per += bot_per
+            total_users += g.member_count
+            total_bot += bots
+            total_human += humans
+            pages.add_line(f"{n}) Total: {g.member_count} - {math.ceil(bot_per * 100)}% bots"
+                           f"\n{'-' * len(str(n))}- Humans: {humans} - Bots {bots}\n")
+
+        avg_per = (total_per / len(self.bot.guilds)) * 100
+        footer = ['', f'Total users: {total_users} - Average {math.ceil(avg_per)}% bot',
+                  f'Total human: {total_human} - Total bot {total_bot}']
+
+        for entr in footer:
+            pages.add_line(entr)
+
+        if not send_in_channel:
+            await ctx.send('📩 DMing you guild stats...')
+
+        for p in pages.pages:
+            destination = ctx.channel if send_in_channel else ctx.author
+            embed = discord.Embed(description=p, color=discord.Color.blue())
+            await destination.send(embed=embed)
