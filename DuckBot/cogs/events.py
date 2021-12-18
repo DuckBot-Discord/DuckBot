@@ -5,6 +5,7 @@ import logging
 import random
 import re
 import traceback
+import contextlib
 from collections import Counter
 
 import discord
@@ -18,6 +19,7 @@ import DuckBot.errors as errors
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.cogs.info import suggestions_channel
 from DuckBot.helpers import constants
+from DuckBot.helpers import time_inputs
 
 warned = []
 
@@ -437,15 +439,19 @@ class Handler(commands.Cog, name='Handler'):
                     info = await self.bot.db.fetchrow('SELECT * FROM afk WHERE user_id = $1', user_id)
                     paginator.add_line(
                         f'**woah there, {message.author.mention}, it seems like {member.mention} has been afk '
-                        f'since {discord.utils.format_dt(info["start_time"], style="R")}!**'
+                        f'for {time_inputs.human_timedelta(info["start_time"], accuracy=3, brief=True)}!**'
                         f'\n**With reason:** {info["reason"]}\n')
+
+            if paginator.pages:
+                with contextlib.suppress(discord.HTTPException):
+                    await message.add_reaction('‼')
 
             for page in paginator.pages:
                 await message.reply(page, allowed_mentions=discord.AllowedMentions(replied_user=True,
                                                                                    users=False,
                                                                                    roles=False,
                                                                                    everyone=False),
-                                    delete_after=15)
+                                    delete_after=30)
 
     @commands.Cog.listener('on_message')
     async def on_suggestion_receive(self, message: discord.Message):
