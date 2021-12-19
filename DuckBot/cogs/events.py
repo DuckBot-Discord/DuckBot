@@ -115,6 +115,27 @@ class Handler(commands.Cog, name='Handler'):
         if isinstance(error, errors.BotUnderMaintenance):
             return await ctx.send(self.bot.maintenance or 'I am under maintenance... sorry!')
 
+        if isinstance(error, errors.EconomyNotSetup):
+            return await ctx.send(f"❗ **You do not have a wallet!** Start with the `{ctx.clean_prefix}eco start` command.")
+
+        if isinstance(error, errors.AccountNotFound):
+            return await ctx.send(f"❗ Sorry but **{error.user}** does not have a wallet!")
+
+        if isinstance(error, errors.AccountAlreadyExists):
+            return await ctx.send(f"❗ Sorry but **{error.user}** already has a wallet!")
+
+        if isinstance(error, errors.EconomyOnCooldown):
+            messages = {
+                errors.CooldownType.WORK: "work",
+                errors.CooldownType.DAILY: "get your daily reward",
+                errors.CooldownType.WEEKLY: "get your weekly reward",
+                errors.CooldownType.MONTHLY: "get your monthly reward",
+            }
+            return await ctx.send(f"❗ You can **{messages[error.cooldown_type]}** again **in {time_inputs.human_timedelta(error.next_run, brief=True)}**.")
+
+        if isinstance(error, errors.WalletInUse):
+            return await ctx.send(f"❗ Sorry but **{error.user}**\'s wallet is currently in use... Please wait and try again later!")
+
         if isinstance(error, commands.CommandNotFound):
             if self.bot.maintenance is not None or ctx.author.id in self.bot.blacklist or ctx.prefix == '':
                 return

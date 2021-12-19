@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import logging
-import pprint
 import random
 import re
 import traceback

@@ -1,12 +1,9 @@
 import os
+import typing
 
 import aiofiles
-import aiohttp
 import discord
-import typing
 from discord import VoiceRegion
-from discord.ext import commands
-from openrobot import api_wrapper as openrobot
 from discord.flags import BaseFlags, fill_with_flags, flag_value
 
 from DuckBot.helpers import constants
@@ -203,17 +200,6 @@ def generate_user_statuses(member: discord.Member):
         discord.Status.offline: constants.statuses.OFFLINE
     }[member.desktop_status]
     return f"\u200b{desktop}\u200b{web}\u200b{mobile}"
-
-
-class LyricsConverter(commands.Converter):
-    async def convert(self, ctx, argument) -> openrobot.LyricResult:
-        await ctx.trigger_typing()
-        try:
-            return await ctx.bot.orb.lyrics(argument)
-        except openrobot.OpenRobotAPIError:
-            raise commands.BadArgument(f"Sorry, I couldn't find any song named `{argument[0:1000]}`")
-        except aiohttp.ContentTypeError:
-            raise commands.BadArgument("Sorry, but this service is not available right now!")
 
 
 def convert_bytes(size):

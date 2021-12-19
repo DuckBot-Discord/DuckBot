@@ -1,7 +1,10 @@
+import asyncio
+import contextlib
 import io
 import logging
 import re
 
+import asyncpg
 import discord
 import typing
 import random
@@ -10,6 +13,7 @@ from asyncdagpi import ImageFeatures
 from discord import Interaction, InvalidArgument
 from discord.ext import commands
 
+from DuckBot.cogs.economy import Wallet
 from DuckBot.helpers import constants
 from typing import Union, TYPE_CHECKING
 
@@ -20,11 +24,10 @@ if TYPE_CHECKING:
 else:
     from discord.ext.commands import Bot as DuckBot
 
-
 reminder_embeds = [
     discord.Embed(title='⭐ Support me by voting here!', colour=discord.Colour.yellow(), url='https://top.gg/bot/788278464474120202'),
     discord.Embed(title=f'{constants.INVITE} Invite me to your server!', colour=discord.Colour.yellow(),
-                  url='https://discord.com/oauth2/authorize?client_id=788278464474120202&scope=applications.commands+bot&permissions=294171045078'),
+                  url=discord.utils.oauth_url(788278464474120202, permissions=discord.Permissions(294171045078), scopes=['bot', 'applications.commands'], redirect_uri='https://discord.gg/TdRfGKg8Wh')),
     discord.Embed(title='🆘 Join my support server here!', colour=discord.Colour.yellow(), url='https://discord.gg/TdRfGKg8Wh'),
     discord.Embed(title='<:thanks:913507741727854702> suggest a feature with `db.suggest <feature>`!', colour=discord.Colour.yellow()),
 ]
@@ -302,3 +305,55 @@ class CustomContext(commands.Context):
     @property
     def referenced_user(self) -> typing.Optional[discord.abc.User]:
         return getattr(self.reference, 'author', None)
+
+    async def get_wallet(self) -> Wallet:
+        return await self.bot.get_wallet(self.author)
+
+    @property
+    def wallet(self) -> typing.Optional[Wallet]:
+        wallet = self.bot.wallets.get(self.author.id)
+        if not wallet or getattr(wallet, 'deleted', None):
+            with contextlib.suppress(KeyError):
+                del self.bot.wallets[self.author.id]
+            return None
+        else:
+            return wallet
+
+    @property
+    def db(self) -> asyncpg.Pool:
+        return self.bot.db
+
+    async def prompt(self, message, *, timeout: int = 60, delete_after: bool = False, return_message: bool = False):
+        """ Prompts the user for text input. """
+        bot_message = await self.send(**{'content' if not isinstance(message, discord.Embed) else 'embed': message})
+        usermessage = None
+        try:
+            usermessage = await self.bot.wait_for('message', check=lambda m: m.author == self.author and m.channel == self.channel, timeout=timeout)
+            message = usermessage
+        except asyncio.TimeoutError:
+            raise commands.BadArgument('Prompt timed out.')
+        except Exception as e:
+            logging.error(f'Failed to prompt user for input', exc_info=e)
+            message = None
+        else:
+            if message and message.content.lower() == 'cancel':
+                raise commands.BadArgument('✅ Cancelled!')
+
+            if message and not return_message:
+                return message.content
+            else:
+                return message
+        finally:
+            to_do = []
+            if isinstance(usermessage, discord.Message):
+                if delete_after:
+                    to_do.append(bot_message.delete())
+                    if message and self.channel.permissions_for(self.me).manage_messages:
+                        to_do.append(usermessage.delete())
+                    else:
+                        to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
+                else:
+                    to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
+
+                [self.bot.loop.create_task(to_do_item) for to_do_item in to_do]
+

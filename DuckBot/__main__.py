@@ -11,7 +11,6 @@ from collections import defaultdict, deque, namedtuple
 
 import typing
 
-from openrobot.api_wrapper import AsyncClient as ORBClient
 from typing import (
     List,
     Optional,
@@ -39,6 +38,7 @@ from asyncdagpi import ImageFeatures
 import asyncgur
 
 from DuckBot import errors
+from DuckBot.cogs.economy import Wallet
 from DuckBot.helpers import slash_utils, constants
 from DuckBot.helpers.helper import LoggingEventsFlags
 from DuckBot.helpers.context import CustomContext
@@ -117,7 +117,6 @@ class DuckBot(slash_utils.Bot):
         self.session: aiohttp.ClientSession = None
         self.top_gg = topgg.DBLClient(self, os.getenv('TOPGG_TOKEN'))
         self.dev_mode = True if os.getenv('DEV_MODE') == 'yes' else False
-        self.orb = ORBClient(token=os.getenv('OPENROBOT_KEY'))
         self.dagpi_cooldown = commands.CooldownMapping.from_cooldown(60, 60, commands.BucketType.default)
         self.dagpi_client = DagpiClient(os.getenv('DAGPI_TOKEN'))
         self.constants = constants
@@ -132,6 +131,7 @@ class DuckBot(slash_utils.Bot):
         self.welcome_channels = {}
         self.suggestion_channels = {}
         self.dm_webhooks = defaultdict(str)
+        self.wallets: typing.Dict[Wallet] = {}
         self.counting_channels = {}
         self.counting_rewards = {}
         self.saved_messages = {}
@@ -395,6 +395,14 @@ class DuckBot(slash_utils.Bot):
         finally:
             self.dispatch('pool_create')
             logging.info('Database successful.')
+
+    async def get_wallet(self, user) -> Wallet:
+        try:
+            self.wallets[user.id]
+        except KeyError:
+            wallet = await Wallet.from_user(self, user)
+            self.wallets[user.id] = wallet
+        return self.wallets[user.id]
 
 
 if __name__ == '__main__':
