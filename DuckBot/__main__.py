@@ -110,7 +110,7 @@ class DuckBot(slash_utils.Bot):
         self.vote_top_gg = "https://top.gg/bot/788278464474120202"
         self.vote_bots_gg = "https://discord.bots.gg/bots/788278464474120202"
         self.repo = "https://github.com/LeoCx1000/discord-bots"
-        self.maintenance = None
+        self.maintenance = 'Beta only bot.'
         self.noprefix = False
         self.persistent_views_added = False
         self.uptime = self.last_rall = datetime.datetime.utcnow()

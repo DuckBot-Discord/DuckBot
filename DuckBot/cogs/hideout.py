@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 import re
 import urllib
@@ -30,6 +31,7 @@ def hideout_only():
 
 
 url_regex = re.compile(r"^http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+$")
+DUCK_HIDEOUT = 774561547930304536
 
 
 def setup(bot):
@@ -357,7 +359,8 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             embed.set_footer(text=f"Requested by {ctx.author} ({ctx.author.id})")
             await bot_queue.send(embed=embed)
         else:
-            await confirm[1].edit(content='Aborting...', view=None)
+            await confirm[1].delete()
+            raise commands.BadArgument('cancelled')
 
     @commands.command(name='decode-qr-code', aliases=['qr-decode', 'decode-qr', 'qr'])
     @commands.cooldown(2, 30, commands.BucketType.user)
@@ -596,3 +599,55 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             destination = ctx.channel if send_in_channel else ctx.author
             embed = discord.Embed(description=p, color=discord.Color.blue())
             await destination.send(embed=embed)
+
+    @commands.Cog.listener('on_command_completion')
+    async def on_command_completion(self, ctx: CustomContext):
+        if ctx.command.name != 'addbot':
+            return
+        bot: discord.User = discord.utils.find(lambda obj: isinstance(obj, discord.User), ctx.args)
+        await self.bot.db.execute('INSERT INTO addbot (owner_id, bot_id) VALUES ($1, $2)', ctx.author.id, bot.id)
+
+    @commands.Cog.listener('on_member_join')
+    async def on_member_join(self, member: discord.Member):
+        if not member.bot or member.guild.id != DUCK_HIDEOUT:
+            return
+        await self.bot.db.execute('UPDATE addbot SET added = TRUE, pending = FALSE WHERE bot_id = $1', member.id)
+
+    @commands.Cog.listener('on_member_remove')
+    async def on_member_remove(self, member: discord.Member):
+        if not member.bot or member.guild.id != DUCK_HIDEOUT:
+            return
+        await self.bot.db.execute('UPDATE addbot SET added = FALSE WHERE bot_id = $1', member.id)
+
+    @commands.Cog.listener('on_ready')
+    async def on_ready(self):
+        guild = self.bot.get_guild(DUCK_HIDEOUT)
+        if not guild:
+            return logging.error('Could not find Duck Hideout!', exc_info=False)
+
+        bots = await self.bot.db.fetch('SELECT * FROM addbot')
+
+        for bot in bots:
+            bot_user = guild.get_member(bot['bot_id'])
+            if not bot_user and bot['added'] is True:
+                await self.bot.db.execute('UPDATE addbot SET added = FALSE WHERE bot_id = $1', bot['bot_id'])
+            elif bot_user and bot['added'] is False:
+                await self.bot.db.execute('UPDATE addbot SET added = TRUE, pending = FALSE WHERE bot_id = $1', bot['bot_id'])
+            else:
+                await self.bot.db.execute('UPDATE addbot SET pending = FALSE WHERE bot_id = $1', bot['bot_id'])
+
+    @hideout_only()
+    @commands.is_owner()
+    @commands.command(name='register-bot', aliases=['rbot', 'rb'])
+    async def _register_bot(self, ctx: CustomContext, owner: discord.Member, bot: discord.Member):
+        """ Register a bot to the database. """
+        if owner.bot:
+            raise commands.BadArgument('Owner must be a user.')
+        if not bot.bot:
+            raise commands.BadArgument('Bot must be a bot.')
+        try:
+            await self.bot.db.execute('INSERT INTO addbot (owner_id, bot_id, pending, added) VALUES ($1, $2, false, true)', owner.id, bot.id)
+            await ctx.message.add_reaction('✅')
+        except Exception as e:
+            await ctx.message.add_reaction('❌')
+            logging.error(f'Error registering bot:', exc_info=e)
