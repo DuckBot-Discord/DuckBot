@@ -6,7 +6,7 @@ from discord.ext import commands
 class automod(commands.Cog):
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         with open(r'files/config.yaml') as file:
             full_yaml = yaml.full_load(file)
             exempt_ids = full_yaml['IgnoredRoles']
@@ -46,6 +46,24 @@ If you don't already have a `Steeler` or higher subscription, you can get one at
                 embed.set_author(name="Automatic support", icon_url="https://i.imgur.com/GTttbJW.png")
                 await message.reply(embed=embed)
 
+    @commands.Cog.listener('on_message')
+    async def arcane_erradicator(self, message: discord.Message):
+        if not message.author.bot or \
+                not message.guild or \
+                message.guild.id != 717140270789033984 or \
+                message.author.id != 437808476106784770 or \
+                not message.mentions:
+            return
+        await message.add_reaction(discord.PartialEmoji(name='delete', id=934863203706490891))
+
+    @commands.Cog.listener('on_reaction_add')
+    async def arcane_erradicator_reaction(self, reaction: discord.Reaction, user: discord.User):
+        if user.bot or not reaction.message.author.id != 437808476106784770 or reaction.message.guild.id != 717140270789033984:
+            return
+        if str(reaction.emoji) != '<:delete:934863203706490891>':
+            return
+        if user in reaction.message.mentions or reaction.message.channel.permissions_for(user).manage_messages:
+            await reaction.message.delete()
 
 def setup(bot):
     bot.add_cog(automod(bot))

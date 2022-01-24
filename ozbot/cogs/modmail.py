@@ -7,6 +7,10 @@ from discord.ext.commands.errors import UserNotFound
 from ozbot import constants
 
 
+class MyFlags(commands.FlagConverter):
+    pass
+
+
 async def get_webhook(channel):
     hookslist = await channel.webhooks()
     if hookslist:

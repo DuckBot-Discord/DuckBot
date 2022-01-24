@@ -66,6 +66,8 @@ class DuckBot(slash_utils.Bot):
     def user_blacklisted(self, ctx: CustomContext):
         if not self.blacklist.get(ctx.author.id, None) or ctx.author.id == self.owner_id:
             return True
+        if ctx.command.root_parent and ctx.command.root_parent.name == 'pit':
+            return True
         raise errors.UserBlacklisted
 
     def maintenance_mode(self, ctx: CustomContext):
@@ -110,7 +112,7 @@ class DuckBot(slash_utils.Bot):
         self.vote_top_gg = "https://top.gg/bot/788278464474120202"
         self.vote_bots_gg = "https://discord.bots.gg/bots/788278464474120202"
         self.repo = "https://github.com/LeoCx1000/discord-bots"
-        self.maintenance = 'Beta only bot.'
+        self.maintenance = None
         self.noprefix = False
         self.persistent_views_added = False
         self.uptime = self.last_rall = datetime.datetime.utcnow()

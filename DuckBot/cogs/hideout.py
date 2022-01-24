@@ -1,3 +1,4 @@
+import contextlib
 import io
 import json
 import logging
@@ -8,6 +9,8 @@ import zlib
 from inspect import Parameter
 
 import math
+
+import asyncpg
 import discord
 import typing
 import yarl
@@ -21,17 +24,12 @@ from DuckBot.cogs.management import get_webhook
 from DuckBot.helpers.context import CustomContext
 
 
-def hideout_only():
-    def predicate(ctx: CustomContext):
-        if ctx.guild and ctx.guild.id == 774561547930304536:
-            return True
-        raise errors.NoHideout
-
-    return commands.check(predicate)
-
-
 url_regex = re.compile(r"^http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+$")
 DUCK_HIDEOUT = 774561547930304536
+QUEUE_CHANNEL = 927645247226408961
+BOTS_ROLE = 870746847071842374
+GENERAL_CHANNEL = 774561548659458081
+PIT_CATEGORY = 915494807349116958
 
 
 def setup(bot):
@@ -101,6 +99,36 @@ def whitelist():
             raise errors.NoHideout
 
     return commands.check(predicate)
+
+
+def hideout_only():
+    def predicate(ctx: CustomContext):
+        if ctx.guild and ctx.guild.id == DUCK_HIDEOUT:
+            return True
+        raise errors.NoHideout
+
+    return commands.check(predicate)
+
+
+def pit_owner_only():
+    async def predicate(ctx: CustomContext):
+
+        if not ctx.guild or \
+                ctx.guild.id != DUCK_HIDEOUT or \
+                ctx.channel.category_id != PIT_CATEGORY:
+            raise errors.NoHideout
+
+        if await ctx.bot.is_owner(ctx.author):
+            return True
+
+        channel_id = await ctx.bot.db.fetchval('SELECT pit_id FROM pits WHERE pit_owner = $1', ctx.author.id)
+        if ctx.channel.id != channel_id:
+            raise errors.NoHideout
+        return True
+
+    return commands.check(predicate)
+
+# Note: errors.NoHideout is just an error that gets ignored.
 
 
 class Hideout(commands.Cog, name='DuckBot Hideout'):
@@ -344,20 +372,17 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
     @commands.command()
     @hideout_only()
     async def addbot(self, ctx: CustomContext, bot: discord.User, *, reason: commands.clean_content):
-        bot_queue = self.bot.get_channel(870784166705393714)
         if not bot.bot:
             raise commands.BadArgument('That dos not seem to be a bot...')
         if bot in ctx.guild.members:
             raise commands.BadArgument('That bot is already on this server...')
+        if await self.bot.db.fetchval('SELECT owner_id FROM addbot WHERE bot_id = $1 AND pending = TRUE', bot.id):
+            raise commands.BadArgument('That bot is already in the queue...')
         confirm = await ctx.confirm(
             f'Does your bot comply with {ctx.guild.rules_channel.mention if ctx.guild.rules_channel else "<channel deleted?>"}?'
             f'\n If so, press one of these:', return_message=True)
         if confirm[0]:
             await confirm[1].edit(content='✅ Done, you will be @pinged when the bot is added!', view=None)
-            embed = discord.Embed(description=reason)
-            embed.set_author(icon_url=bot.display_avatar.url, name=str(bot), url=discord.utils.oauth_url(bot.id))
-            embed.set_footer(text=f"Requested by {ctx.author} ({ctx.author.id})")
-            await bot_queue.send(embed=embed)
         else:
             await confirm[1].delete()
             raise commands.BadArgument('cancelled')
@@ -605,19 +630,63 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         if ctx.command.name != 'addbot':
             return
         bot: discord.User = discord.utils.find(lambda obj: isinstance(obj, discord.User), ctx.args)
-        await self.bot.db.execute('INSERT INTO addbot (owner_id, bot_id) VALUES ($1, $2)', ctx.author.id, bot.id)
+        reason: str = ctx.kwargs.get('reason', 'no reason given')
+        print(ctx.kwargs)
+        await self.bot.db.execute('INSERT INTO addbot (owner_id, bot_id) VALUES ($1, $2) '
+                                  'ON CONFLICT (owner_id, bot_id) DO UPDATE SET pending = TRUE, added = FALSE',
+                                  ctx.author.id, bot.id)
+        bot_queue = ctx.guild.get_channel(QUEUE_CHANNEL)
+        url = discord.utils.oauth_url(bot.id)
+        embed = discord.Embed(description=reason)
+        embed.set_author(icon_url=bot.display_avatar.url, name=str(bot), url=url)
+        embed.add_field(name='invite:', value=f'[invite {discord.utils.remove_markdown(str(bot))}]({url})')
+        embed.set_footer(text=f"Requested by {ctx.author} ({ctx.author.id})")
+        await bot_queue.send(embed=embed)
 
     @commands.Cog.listener('on_member_join')
     async def on_member_join(self, member: discord.Member):
-        if not member.bot or member.guild.id != DUCK_HIDEOUT:
-            return
-        await self.bot.db.execute('UPDATE addbot SET added = TRUE, pending = FALSE WHERE bot_id = $1', member.id)
+        with contextlib.suppress(discord.HTTPException):
+            if not member.bot or member.guild.id != DUCK_HIDEOUT:
+                return
+            await self.bot.db.execute('UPDATE addbot SET added = TRUE, pending = FALSE WHERE bot_id = $1', member.id)
+            await member.add_roles(member.guild.get_role(BOTS_ROLE))
+            queue_channel = member.guild.get_channel(QUEUE_CHANNEL)
+            general = member.guild.get_channel(GENERAL_CHANNEL)
+            embed = discord.Embed(title='Bot added', description=f'{member} joined.', colour=discord.Colour.green())
+            mem_id = await self.bot.db.fetchval('SELECT owner_id FROM addbot WHERE bot_id = $1', member.id)
+            added_by = await member.guild.audit_logs(action=discord.AuditLogAction.bot_add, limit=1).flatten()
+            added_by = discord.utils.get(added_by, target=member)
+            if added_by:
+                added_by = added_by.user
+                embed.set_footer(text=f'Added by {added_by} ({added_by.id})')
+            embed.add_field(name='Added by', value=str(member.guild.get_member(mem_id)), inline=False)
+            await queue_channel.send(embed=embed)
+            await general.send(f'{member} has been added, <@!{mem_id}>')
 
     @commands.Cog.listener('on_member_remove')
     async def on_member_remove(self, member: discord.Member):
-        if not member.bot or member.guild.id != DUCK_HIDEOUT:
+        if member.guild.id != DUCK_HIDEOUT:
             return
-        await self.bot.db.execute('UPDATE addbot SET added = FALSE WHERE bot_id = $1', member.id)
+        queue_channel = member.guild.get_channel(QUEUE_CHANNEL)
+        if member.bot:
+            await self.bot.db.execute('UPDATE addbot SET added = FALSE WHERE bot_id = $1', member.id)
+            embed = discord.Embed(title='Bot removed', description=f'{member} left.', colour=discord.Colour.red())
+            mem_id = await self.bot.db.fetchval('SELECT owner_id FROM addbot WHERE bot_id = $1', member.id)
+            member = member.guild.get_member(mem_id)
+            if member:
+                embed.add_field(name='Added by', value=str(member), inline=False)
+                await queue_channel.send(embed=embed)
+            return
+        bots = await self.bot.db.fetch('SELECT bot_id FROM addbot WHERE owner_id = $1 AND added = TRUE', member.id)
+        bots = list(filter(lambda ent: ent is not None, list(map(lambda ent: member.guild.get_member(ent['bot_id']), bots))))
+        if not bots:
+            return
+        with contextlib.suppress(discord.HTTPException):
+            for bot in bots:
+                await self.bot.db.execute('UPDATE addbot SET added = FALSE WHERE bot_id = $1', bot.id)
+                await bot.kick(reason='Bot owner left the server.')
+            embed = discord.Embed(title=f'{member} left!', description=f"**Kicking all their bots:**\n{', '.join(map(str, bots))}")
+            await queue_channel.send(embed=embed)
 
     @commands.Cog.listener('on_ready')
     async def on_ready(self):
@@ -626,13 +695,22 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             return logging.error('Could not find Duck Hideout!', exc_info=False)
 
         bots = await self.bot.db.fetch('SELECT * FROM addbot')
+        queue_channel = guild.get_channel(QUEUE_CHANNEL)
 
         for bot in bots:
             bot_user = guild.get_member(bot['bot_id'])
             if not bot_user and bot['added'] is True:
                 await self.bot.db.execute('UPDATE addbot SET added = FALSE WHERE bot_id = $1', bot['bot_id'])
+                await queue_channel.send(f'Bot {bot_user} was not found in the server. Updating database.')
             elif bot_user and bot['added'] is False:
                 await self.bot.db.execute('UPDATE addbot SET added = TRUE, pending = FALSE WHERE bot_id = $1', bot['bot_id'])
+
+                await bot_user.add_roles(guild.get_role(BOTS_ROLE))
+                embed = discord.Embed(title='Bot added', description=f'{bot_user} joined.', colour=discord.Colour.green())
+                mem_id = await self.bot.db.fetchval('SELECT owner_id FROM addbot WHERE bot_id = $1', bot['bot_id'])
+                embed.add_field(name='Added by', value=str(guild.get_member(mem_id)), inline=False)
+                await queue_channel.send(embed=embed)
+
             else:
                 await self.bot.db.execute('UPDATE addbot SET pending = FALSE WHERE bot_id = $1', bot['bot_id'])
 
@@ -651,3 +729,76 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         except Exception as e:
             await ctx.message.add_reaction('❌')
             logging.error(f'Error registering bot:', exc_info=e)
+
+    @pit_owner_only()
+    @commands.group(name='pit')
+    async def pit(self, ctx: CustomContext):
+        """ Pit management commands. """
+        if ctx.invoked_subcommand is None and ctx.subcommand_passed is None:
+            await ctx.send_help(ctx.command)
+
+    @pit.command(name='ban')
+    async def pit_ban(self, ctx: CustomContext, member: discord.Member):
+        """ Ban a member from the pit. """
+        if member.id == ctx.author.id:
+            raise commands.BadArgument('You cannot ban yourself.')
+        try:
+            reason = f'Block by {ctx.author} (ID: {ctx.author.id})'
+            await ctx.channel.set_permissions(member, reason=reason,
+                                              send_messages=False,
+                                              add_reactions=False,
+                                              create_public_threads=False,
+                                              create_private_threads=False,
+                                              send_messages_in_threads=False)
+        except (discord.Forbidden, discord.HTTPException):
+            await ctx.send('🥴 Something went wrong...')
+        else:
+            await ctx.send(f'✅ **|** Blocked **{discord.utils.remove_markdown(str(member))}** from **{ctx.channel}**')
+
+    @pit.command(name='unban')
+    async def pit_unban(self, ctx: CustomContext, member: discord.Member):
+        """ Unban a member from the pit. """
+        if member.id == ctx.author.id:
+            raise commands.BadArgument('You cannot ban yourself.')
+        try:
+            reason = f'Unblock by {ctx.author} (ID: {ctx.author.id})'
+            await ctx.channel.set_permissions(member, reason=reason,
+                                              send_messages=None, add_reactions=None, create_public_threads=None,  # type: ignore
+                                              create_private_threads=None, send_messages_in_threads=None)  # type: ignore
+        except (discord.Forbidden, discord.HTTPException):
+            await ctx.send('Something went wrong...')
+        else:
+            await ctx.send(f'✅ **|** Unblocked **{discord.utils.remove_markdown(str(member))}** from **{ctx.channel}**')
+
+    @commands.is_owner()
+    @pit.command(name='setowner', aliases=['set-owner'])
+    async def pit_set_owner(self, ctx: CustomContext, member: discord.Member):
+        """ Set the owner of the pit. """
+        try:
+            await ctx.bot.db.execute('''INSERT INTO pits (pit_id, pit_owner) VALUES ($1, $2) 
+                                        ON CONFLICT (pit_id) DO UPDATE SET pit_owner = $2''', ctx.channel.id, member.id)
+        except asyncpg.UniqueViolationError:
+            raise commands.BadArgument('This user is already the owner of a pit.')
+        await ctx.message.add_reaction('✅')
+
+    @commands.is_owner()
+    @pit.command(name='create')
+    async def pit_create(self, ctx: CustomContext, owner: discord.Member, *, name: str):
+        """ Create a pit. """
+
+        pit = await ctx.bot.db.fetchval('''SELECT pit_id FROM pits WHERE pit_owner = $1''', owner.id)
+        if pit:
+            raise commands.BadArgument('Owner already owns a pit.')
+
+        category = ctx.guild.get_channel(PIT_CATEGORY)
+        if category is None:
+            raise commands.BadArgument('There is no category for pits, for some reason...')
+        try:
+            channel = await ctx.guild.create_text_channel(name, category=category)
+        except discord.Forbidden:
+            raise commands.BadArgument('I do not have permission to create a channel.')
+        else:
+            await ctx.bot.db.execute('''INSERT INTO pits (pit_id, pit_owner) VALUES ($1, $2) 
+                                        ON CONFLICT (pit_id) DO UPDATE SET pit_owner = $2''', channel.id, owner.id)
+            await ctx.send(f'✅ **|** Created **{channel}**')
+

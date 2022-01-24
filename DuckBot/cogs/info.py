@@ -52,6 +52,23 @@ def get_minimal_command_signature(ctx, command):
     return '(c) %s%s %s' % (ctx.clean_prefix, command.qualified_name, command.signature)
 
 
+class Ephemeral(discord.ui.View):
+    def __init__(self, ctx, embed, timeout=10):
+        super().__init__(timeout=timeout)
+        self.ctx = ctx
+        self.embed = embed
+
+    @discord.ui.button(label='View data ephemerally')
+    async def ephemeral(self, _, interaction: discord.Interaction):
+        await interaction.response.send_message(embed=self.embed, ephemeral=True)
+        await interaction.message.delete()
+        await self.ctx.message.add_reaction(random.choice(constants.DONE))
+        self.stop()
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        return interaction.user == self.ctx.author
+
+
 class HelpCentre(discord.ui.View):
     def __init__(self, ctx: CustomContext, other_view: discord.ui.View):
         super().__init__()
@@ -519,30 +536,41 @@ class About(commands.Cog):
     def get_bot_last_rall(self):
         return f"<t:{round(self.bot.last_rall.timestamp())}:R>"
 
-    def oauth(self, perms: discord.Permissions = 0):
+    def oauth(self, perms: int = 0, client_id=None):
         """ Generates a discord oauth url """
-        return discord.utils.oauth_url(self.bot.user.id,
-                                       permissions=discord.Permissions(perms),
-                                       scopes=('applications.commands', 'bot'),
-                                       redirect_uri='https://discord.gg/TdRfGKg8Wh')
+        kwargs = {'permissions': discord.Permissions(perms),
+                  'scopes': ('applications.commands', 'bot')}
+        if client_id:
+            kwargs['client_id'] = client_id
+        else:
+            kwargs['client_id'] = self.bot.user.id
+            kwargs['redirect_uri'] = 'https://discord.gg/TdRfGKg8Wh'
+        return discord.utils.oauth_url(**kwargs)
 
-    @commands.command(help="Sends a link to invite the bot to your server")
-    async def invite(self, ctx: CustomContext):
-        if not self.bot.is_ready():
-            await ctx.trigger_typing()
-            await self.bot.wait_until_ready()
+    @commands.command()
+    async def invite(self, ctx: CustomContext, bot: discord.Member = None):
+        """
+        Sends a link to invite the bot to your server.
+        """
+        if bot:
+            if not bot.bot:
+                raise commands.BadArgument('That user is not a bot.')
+            c_id = bot.id
+        else:
+            c_id = None
+
         embed = discord.Embed(
-            title="Invite me to your server!",
-            description=f"\n• [No Permissions]({self.oauth(0)})"
-                        f"\n• [Minimal Permissions]({self.oauth(274948541504)})"
-                        f"\n• **[Mod Permissions]({self.oauth(294171045078)})** ⭐"
-                        f"\n• [Admin Permissions]({self.oauth(8)})"
-                        f"\n• [All Permissions]({self.oauth(549755813887)}) <:certified_moderator:895393984308981930>")
-        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(emoji='⭐', label='Recommended', url=self.oauth(294171045078)))
-        view.add_item(discord.ui.Button(emoji='<:certified_moderator:895393984308981930>', label='All',
-                                        url=self.oauth(549755813887)))
+            title=f"Invite {bot or 'me'} to your server!",
+            description=f"\n• [No Permissions]({self.oauth(0, client_id=c_id)})"
+                        f"\n• [Minimal Permissions]({self.oauth(274948541504, client_id=c_id)})"
+                        f"\n• **[Mod Permissions]({self.oauth(294171045078, client_id=c_id)})** ⭐"
+                        f"\n• [Admin Permissions]({self.oauth(8, client_id=c_id)})"
+                        f"\n• [All Permissions]({self.oauth(549755813887, client_id=c_id)}) "
+                        f"<:certified_moderator:895393984308981930>"
+        ).set_thumbnail(url=self.bot.user.display_avatar.url)
+        view = discord.ui.View(timeout=1)
+        view.add_item(discord.ui.Button(emoji='⭐', label='Recommended', url=self.oauth(294171045078, client_id=c_id)))
+        view.add_item(discord.ui.Button(emoji='<:certified_moderator:895393984308981930>', label='All', url=self.oauth(549755813887, client_id=c_id)))
         await ctx.send(embed=embed, view=view)
 
     @commands.command(help="Checks the bot's ping to Discord")
@@ -843,10 +871,12 @@ DuckBot's top role position
     async def mutual_servers(self, ctx: CustomContext, user: typing.Optional[discord.User]):
         user = ctx.author if not await self.bot.is_owner(ctx.author) else (user or ctx.author)
         guilds = sorted(user.mutual_guilds, key=lambda g: g.member_count, reverse=True)[0:30]
-        embed = discord.Embed(title=f'My top {len(guilds)} mutual servers with {user}:',
+
+        embed = discord.Embed(title=f'I have {len(guilds)} servers in common with {user}:',
                               description='\n'.join(
                                   [f"[`{guild.member_count}`] **{guild.name}** " for guild in guilds]))
-        await ctx.send(embed=embed)
+
+        await ctx.send('Here are the mutual servers:', view=Ephemeral(ctx, embed))
 
     @commands.command(name="commands")
     async def _commands(self, ctx: CustomContext) -> discord.Message:

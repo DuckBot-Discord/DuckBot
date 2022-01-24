@@ -66,6 +66,16 @@ event_types = {
 
 
 # Embed command stuff
+def strip_codeblock(content):
+    """Automatically removes code blocks from the code."""
+    # remove ```py\n```
+    if content.startswith('```') and content.endswith('```'):
+        return content.strip('```')
+
+    # remove `foo`
+    return content.strip('` \n')
+
+
 def verify_link(argument: str) -> str:
     link = re.fullmatch('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|%[0-9a-fA-F][0-9a-fA-F])+', argument)
     if not link:
@@ -94,7 +104,9 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter=''):
 
     @classmethod
     async def convert(cls, ctx: CustomContext, argument: str):
-        argument = argument.strip('"')
+        argument = strip_codeblock(argument)
+        return await super().convert(ctx, argument)
+
 
     title: str = discord.Embed.Empty
     description: str = discord.Embed.Empty
@@ -703,9 +715,6 @@ class Fun(commands.Cog):
         --footer --text This is the footer text
         ```
         """
-        if not flags:
-            raise commands.BadArgument('You must pass at least one of the necessary (`*`) flags!')
-
         embed = discord.Embed(title=flags.title, description=flags.description, colour=flags.color)
 
         if flags.field and len(flags.field) > 25:

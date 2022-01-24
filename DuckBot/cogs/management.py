@@ -14,6 +14,7 @@ from collections import defaultdict
 
 import discord
 import emoji as unicode_emoji
+import import_expression
 import jishaku.modules
 import tabulate
 from discord.ext import commands
@@ -316,7 +317,7 @@ class Management(commands.Cog, name='Bot Management'):
         to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
 
         try:
-            exec(to_compile, env)
+            import_expression.exec(to_compile, env)
         except Exception as e:
             try:
                 await ctx.message.add_reaction('⚠')
@@ -761,7 +762,7 @@ class Management(commands.Cog, name='Bot Management'):
             to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
 
             try:
-                exec(to_compile, env)
+                import_expression.exec(to_compile, env)
             except Exception as e:
                 to_send = f'{e.__class__.__name__}: {e}'
                 if len(to_send) > 1985:
@@ -803,4 +804,3 @@ class Management(commands.Cog, name='Bot Management'):
                         await to_edit.edit(content=f"**Output too long:**\n<{gist}>")
                     else:
                         await to_edit.edit(content=f'```py\n{to_send}\n```')
-
