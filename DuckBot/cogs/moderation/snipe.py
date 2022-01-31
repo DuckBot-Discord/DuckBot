@@ -1,9 +1,12 @@
+import asyncio
+
 import discord
 from discord.ext import commands
 
 
 from ._base import ModerationBase
 from ...helpers.context import CustomContext
+from ...helpers.time_inputs import human_timedelta
 
 
 def require_snipe(should_be: bool = True):
@@ -39,9 +42,9 @@ class SimpleMessage:
         if message.content:
             self.content = message.content
         elif message.attachments:
-            self.content = ', '.join(a.filename for a in message.attachments)
+            self.content = '**Attachments:** ' + ', '.join(a.filename for a in message.attachments)
         elif message.stickers:
-            self.content = ', '.join(s.name for s in message.stickers)
+            self.content = '**Stickers:** ' + ', '.join(s.name for s in message.stickers)
         else:
             self.content = None
         self.author = SimpleAuthor(message.author)
@@ -55,17 +58,14 @@ class Snipe(ModerationBase):
 
     @require_snipe()
     @commands.group(name='snipe', invoke_without_command=True)
-    async def snipe(self, ctx, index: int = 1):
+    async def snipe(self, ctx: CustomContext, index: int = 1):
         try:
-            message = self.bot.snipes[ctx.channel.id][index - 1]
-            embed = discord.Embed(description=message.content or 'Message did not contain any content',
-                                  timestamp=message.timestamp)
+            message = self.bot.snipes[ctx.channel.id][-index]
+            embed = discord.Embed(description=message.content or '_No content in message_',
+                                  timestamp=message.timestamp, colour=ctx.color)
             embed.set_author(name=f'{message.author} said in #{ctx.channel}', icon_url=message.author.avatar_url)
-            print(message.embeds)
-            if message.embeds:
-                embed.set_footer(text=f'Message also contained embeds. Sent at')
-            else:
-                embed.set_footer(text=f'Message sent at')
+            embed.set_footer(text=f'Message sent {human_timedelta(message.timestamp)}, '
+                                  f'Index {index}/{len(self.bot.snipes[ctx.channel.id])}')
             view = None
             if message.components:
                 view = discord.ui.View.from_message(message, timeout=0)
@@ -88,6 +88,7 @@ class Snipe(ModerationBase):
     async def snipe_disable(self, ctx):
         await self.bot.db.execute("UPDATE prefixes SET snipe_enabled = FALSE WHERE guild_id = $1", ctx.guild.id)
         await ctx.send('❌ **snipe** has been disabled!')
+        await self.snipe_guild_remove(ctx.guild)
 
     @commands.Cog.listener('on_message_delete')
     async def snipe_hook(self, message: discord.Message):
@@ -98,3 +99,12 @@ class Snipe(ModerationBase):
     async def snipe_channel_delete(self, channel: discord.TextChannel):
         if channel.id in self.bot.snipes:
             del self.bot.snipes[channel.id]
+
+    @commands.Cog.listener('on_guild_remove')
+    async def snipe_guild_remove_listener(self, guild: discord.Guild):
+        await self.snipe_guild_remove(guild)
+
+    async def snipe_guild_remove(self, guild: discord.Guild):
+        for channel in guild.text_channels:
+            if channel.id in self.bot.snipes:
+                del self.bot.snipes[channel.id]
