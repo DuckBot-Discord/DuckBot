@@ -41,7 +41,7 @@ import asyncgur
 
 from DuckBot import errors
 from DuckBot.cogs.economy.helper_classes import Wallet
-from DuckBot.helpers import slash_utils, constants
+from DuckBot.helpers import constants
 from DuckBot.helpers.helper import LoggingEventsFlags
 from DuckBot.helpers.context import CustomContext
 
@@ -56,7 +56,7 @@ initial_extensions = (
 extensions = ('DuckBot.cogs.beta', 'DuckBot.cogs.logs', 'DuckBot.cogs.economy',
               'DuckBot.cogs.events', 'DuckBot.cogs.fun', 'DuckBot.cogs.guild_config',
               'DuckBot.cogs.hideout', 'DuckBot.cogs.image_manipulation', 'DuckBot.cogs.info',
-              'DuckBot.cogs.management', 'DuckBot.cogs.modmail', 'DuckBot.cogs.ipc'
+              'DuckBot.cogs.management', 'DuckBot.cogs.modmail', 'DuckBot.cogs.ipc',
               'DuckBot.cogs.test', 'DuckBot.cogs.utility', 'DuckBot.cogs.moderation')
 
 
@@ -70,7 +70,7 @@ os.environ['JISHAKU_HIDE'] = 'True'
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]
 
 
-class DuckBot(slash_utils.Bot):
+class DuckBot(commands.Bot):
     PRE: tuple = ('db.',)
 
     def user_blacklisted(self, ctx: CustomContext):
@@ -158,23 +158,20 @@ class DuckBot(slash_utils.Bot):
         # Extra stuff
         self.imgur = asyncgur.Imgur(client_id=os.getenv('IMGUR_CL_ID'))
         self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
-        self.loop.create_task(self.populate_cache())
-        self.loop.create_task(self.load_cogs())
         self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
+        self.loop.run_until_complete(self.load_cogs())
+        self.loop.run_until_complete(self.populate_cache())
 
     def _load_extension(self, name: str) -> None:
         try:
             logging.info(f'Attempting to load {name}')
             self.load_extension(name)
-        except (ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed):
-            traceback.print_exc()
-            print()  # Empty line
+        except Exception as e:
+            logging.error(f'Failed to load extension {name}', exc_info=e)
 
     async def load_cogs(self) -> None:
         for ext in initial_extensions:
             self._load_extension(ext)
-        with contextlib.suppress(asyncio.TimeoutError):
-            await self.wait_for('pool_create', timeout=3)
         for ext in extensions:
             self._load_extension(ext)
 
@@ -310,10 +307,6 @@ class DuckBot(slash_utils.Bot):
             self.log_channels[guild_id]._replace(server=webhook_url)
 
     async def populate_cache(self):
-        try:
-            await self.wait_for('pool_create', timeout=10)
-        except asyncio.TimeoutError:
-            pass
         _temp_prefixes = defaultdict(list)
         for x in await self.db.fetch('SELECT * FROM pre'):
             _temp_prefixes[x['guild_id']].append(x['prefix'] or self.PRE)
@@ -353,7 +346,7 @@ class DuckBot(slash_utils.Bot):
                                                        'messages': deque(maxlen=100)})
                                       for x in await self.db.fetch('SELECT * FROM count_settings'))
 
-        for x in await bot.db.fetch('SELECT * FROM counting'):
+        for x in await self.db.fetch('SELECT * FROM counting'):
             try:
                 self.counting_rewards[x['guild_id']].add(x['reward_number'])
             except KeyError:
@@ -361,7 +354,7 @@ class DuckBot(slash_utils.Bot):
 
         for entry in await self.db.fetch('SELECT * FROM log_channels'):
             guild_id = entry['guild_id']
-            await bot.db.execute('INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING',
+            await self.db.execute('INSERT INTO logging_events(guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING',
                                  entry['guild_id'])
 
             self.log_channels[guild_id] = self.log_webhooks(default=entry['default_channel'],
@@ -371,7 +364,7 @@ class DuckBot(slash_utils.Bot):
                                                             voice=entry['voice_channel'],
                                                             server=entry['server_channel'])
 
-            flags = dict(await bot.db.fetchrow(
+            flags = dict(await self.db.fetchrow(
                 'SELECT message_delete, message_purge, message_edit, member_join, member_leave, member_update, user_ban, user_unban, '
                 'user_update, invite_create, invite_delete, voice_join, voice_leave, voice_move, voice_mod, emoji_create, emoji_delete, '
                 'emoji_update, sticker_create, sticker_delete, sticker_update, server_update, stage_open, stage_close, channel_create, '
