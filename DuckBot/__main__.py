@@ -56,9 +56,8 @@ initial_extensions = (
 extensions = ('DuckBot.cogs.beta', 'DuckBot.cogs.logs', 'DuckBot.cogs.economy',
               'DuckBot.cogs.events', 'DuckBot.cogs.fun', 'DuckBot.cogs.guild_config',
               'DuckBot.cogs.hideout', 'DuckBot.cogs.image_manipulation', 'DuckBot.cogs.info',
-              'DuckBot.cogs.lowlight', 'DuckBot.cogs.management', 'DuckBot.cogs.modmail',
-              'DuckBot.cogs.test', 'DuckBot.cogs.utility', 'DuckBot.cogs.moderation',
-              'DuckBot.cogs.ipc')
+              'DuckBot.cogs.management', 'DuckBot.cogs.modmail', 'DuckBot.cogs.ipc'
+              'DuckBot.cogs.test', 'DuckBot.cogs.utility', 'DuckBot.cogs.moderation')
 
 
 load_dotenv()
@@ -154,7 +153,7 @@ class DuckBot(slash_utils.Bot):
         self.log_channels: typing.Dict[int, log_wh] = {}
         self.log_cache = defaultdict(lambda: defaultdict(list))
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
-        self.snipes: typing.Dict[int, typing.Deque[SimpleMessage]] = defaultdict(lambda: deque(maxlen=10))
+        self.snipes: typing.Dict[int, typing.Deque[SimpleMessage]] = defaultdict(lambda: deque(maxlen=50))
 
         # Extra stuff
         self.imgur = asyncgur.Imgur(client_id=os.getenv('IMGUR_CL_ID'))

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections import namedtuple
 
 import discord
@@ -68,8 +69,8 @@ class LoggingBase(commands.Cog):
         except Exception as e:  # noqa
             try:
                 await self.bot.on_error('channel_logs')
-            except:
-                pass
+            except Exception as e:
+                logging.error('something happened while task was running', exc_info=e)
 
     @deliver_logs.before_loop
     async def wait(self):
