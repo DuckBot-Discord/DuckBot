@@ -237,11 +237,11 @@ class LoggingEventsFlags(BaseFlags):
 
     @classmethod
     def join_leave(cls):
-        return cls(0b000000000000000000000000011000)
+        return cls(0b000000000000000000011000011000)
 
     @classmethod
     def member(cls):
-        return cls(0b000000000000000000011111100000)
+        return cls(0b000000000000000000000111100000)
 
     @classmethod
     def voice(cls):

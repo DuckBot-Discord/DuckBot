@@ -15,7 +15,8 @@ from typing import (
     List,
     Optional,
     Union,
-    Any
+    Any,
+    TYPE_CHECKING
 )
 
 
@@ -24,9 +25,10 @@ import asyncpg
 import asyncpraw
 
 import aiohttp
+import aiohttp.web
 import discord
 import topgg
-from discord.ext import commands
+from discord.ext import commands, ipc
 from discord.ext.commands.errors import (
     ExtensionAlreadyLoaded,
     ExtensionFailed,
@@ -38,19 +40,28 @@ from asyncdagpi import ImageFeatures
 import asyncgur
 
 from DuckBot import errors
-from DuckBot.cogs.economy import Wallet
+from DuckBot.cogs.economy.helper_classes import Wallet
 from DuckBot.helpers import slash_utils, constants
 from DuckBot.helpers.helper import LoggingEventsFlags
 from DuckBot.helpers.context import CustomContext
+
+SimpleMessage = None
+if TYPE_CHECKING:
+    from .cogs.moderation.snipe import SimpleMessage
 
 initial_extensions = (
     'jishaku',
 )
 
-load_dotenv()
+extensions = ('DuckBot.cogs.beta', 'DuckBot.cogs.logs', 'DuckBot.cogs.economy',
+              'DuckBot.cogs.events', 'DuckBot.cogs.fun', 'DuckBot.cogs.guild_config',
+              'DuckBot.cogs.hideout', 'DuckBot.cogs.image_manipulation', 'DuckBot.cogs.info',
+              'DuckBot.cogs.lowlight', 'DuckBot.cogs.management', 'DuckBot.cogs.modmail',
+              'DuckBot.cogs.test', 'DuckBot.cogs.utility', 'DuckBot.cogs.moderation',
+              'DuckBot.cogs.ipc')
 
-with open(f'{os.getenv("COGS_PATH")}/music-config.json', "r+") as file:
-    config = json.load(file)
+
+load_dotenv()
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
@@ -89,6 +100,8 @@ class DuckBot(slash_utils.Bot):
             enable_debug_events=True,
             strip_after_prefix=True,
         )
+        self.ipc: ipc.Server = ipc.Server(self, secret_key="testing")
+        self.ipc.start()
         self.allowed_mentions = discord.AllowedMentions.none()
 
         self.reddit = asyncpraw.Reddit(client_id=os.getenv('ASYNC_PRAW_CID'),
@@ -141,33 +154,30 @@ class DuckBot(slash_utils.Bot):
         self.log_channels: typing.Dict[int, log_wh] = {}
         self.log_cache = defaultdict(lambda: defaultdict(list))
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
+        self.snipes: typing.Dict[int, typing.Deque[SimpleMessage]] = defaultdict(lambda: deque(maxlen=10))
+
+        # Extra stuff
         self.imgur = asyncgur.Imgur(client_id=os.getenv('IMGUR_CL_ID'))
         self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
-
-        for ext in initial_extensions:
-            self._load_extension(ext)
-
         self.loop.create_task(self.populate_cache())
-        self.loop.create_task(self.dynamic_load_cogs())
+        self.loop.create_task(self.load_cogs())
         self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
 
     def _load_extension(self, name: str) -> None:
         try:
+            logging.info(f'Attempting to load {name}')
             self.load_extension(name)
         except (ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed):
             traceback.print_exc()
             print()  # Empty line
 
-    async def dynamic_load_cogs(self) -> None:
+    async def load_cogs(self) -> None:
+        for ext in initial_extensions:
+            self._load_extension(ext)
         with contextlib.suppress(asyncio.TimeoutError):
             await self.wait_for('pool_create', timeout=3)
-        for filename in os.listdir(f"{os.getenv('COGS_PATH')}"):
-            if filename.endswith(".py"):
-                cog = filename[:-3]
-                logging.info(f"Trying to load cog: {cog}")
-                self._load_extension(f'DuckBot.cogs.{cog}')
-        logging.info('Loading cogs done.')
-        self.dispatch('restart_complete')
+        for ext in extensions:
+            self._load_extension(ext)
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
@@ -413,6 +423,11 @@ if __name__ == '__main__':
     try:
         webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))
         webhook.send(content='✅ **Bot is starting up...**')
+
+        @bot.ipc.route()
+        async def ping(message):
+            return bot.latency * 1000
+
         bot.run(TOKEN)
     finally:
         webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))

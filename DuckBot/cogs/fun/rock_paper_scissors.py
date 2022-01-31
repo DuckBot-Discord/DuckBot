@@ -1,57 +1,18 @@
 import discord
 from discord import Interaction
+from discord.ext import commands
 
-from DuckBot.helpers.context import CustomContext
-
-
-class RequestToPlayView(discord.ui.View):
-    def __init__(self, ctx: CustomContext, member: discord.Member, game: str = 'Rock Paper Scissors'):
-        super().__init__(timeout=15)
-        self.member = member
-        self.ctx = ctx
-        self.message: discord.Message = None
-        self.value: bool = None
-        self.game = game
-
-    async def interaction_check(self, interaction: Interaction) -> bool:
-        if interaction.user.id in (self.ctx.author.id, self.member.id):
-            return True
-        await interaction.response.defer()
-
-    @discord.ui.button(label='Confirm', emoji='✅')
-    async def confirm(self, _, interaction: Interaction):
-        if interaction.user.id == self.member.id:
-            await interaction.response.defer()
-            self.clear_items()
-            self.message.content = None
-            self.value = True
-            self.stop()
-        else:
-            await interaction.response.defer()
-
-    @discord.ui.button(label='Deny', emoji='❌')
-    async def deny(self, _, interaction: Interaction):
-        if interaction.user.id == self.ctx.author.id:
-            await interaction.response.edit_message(content=f"{self.ctx.author.mention}, you have cancelled the challenge.", view=None)
-        else:
-            await interaction.response.edit_message(content=f"{self.ctx.author.mention}, {self.member} has denied your challenge.", view=None)
-        self.value = False
-        self.stop()
-
-    async def start(self):
-        self.message = await self.ctx.send(f"{self.member.mention}, {self.ctx.author} is challenging you to at {self.game}, do you accept?", view=self)
-
-    async def on_timeout(self) -> None:
-        self.clear_items()
-        await self.message.edit(content=f"{self.ctx.author.mention}, did not respond in time to the challenge!")
-        self.stop()
+from ._base import FunBase
+from ._gamebase import LookingToPlay, RequestToPlayView
+from ...helpers import constants
+from ...helpers.context import CustomContext
 
 
 class RockPaperScissors(discord.ui.View):
 
     def __init__(self, ctx: CustomContext, player1: discord.Member, player2: discord.Member):
         super().__init__()
-        self.message: discord.Message = None
+        self.message: discord.Message = None  # type: ignore
         self.ctx: CustomContext = ctx
         self.player1: discord.Member = player1
         self.player2: discord.Member = player2
@@ -126,3 +87,41 @@ class RockPaperScissors(discord.ui.View):
             return win_2
         else:
             return win_1
+
+
+class RockPaperScissorsCommand(FunBase):
+
+    @commands.command(name='rock-paper-scissors', aliases=['rps', 'rock_paper_scissors'], usage='[to-invite]')
+    async def rock_paper_scissors(self, ctx: CustomContext, to_invite: discord.Member = None):
+        """Starts a rock-paper-scissors game."""
+        player1 = ctx.author
+        if not to_invite:
+            embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
+                                              f'\n👀 | User is looking for someone to play **Rock-Paper-Scissors**')
+            embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
+            embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
+
+            sep = '\u2001'
+            view = LookingToPlay(timeout=120, label=f'{sep * 13}Join this game!{sep * 13}')
+            view.ctx = ctx
+            view.message = await ctx.send(embed=embed,
+                                          view=view, footer=False)
+            await view.wait()
+            player2 = view.value
+        else:
+            view = RequestToPlayView(ctx, to_invite)
+            await view.start()
+            await view.wait()
+            if view.value:
+                player2 = to_invite
+            else:
+                player2 = None
+
+        if player2:
+            embed = discord.Embed(description=f"> ❌ {player1.display_name}"
+                                              f"\n> ❌ {player2.display_name}",
+                                  colour=discord.Colour.blurple())
+            embed.set_author(name='Rock-Paper-Scissors', icon_url='https://i.imgur.com/ZJvaA90.png')
+            rps = RockPaperScissors(ctx, player1, player2)
+            rps.message = await view.message.edit(embed=embed, content=None, view=rps)
+            await rps.wait()

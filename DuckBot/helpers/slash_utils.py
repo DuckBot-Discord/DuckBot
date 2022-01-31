@@ -5,19 +5,13 @@ import inspect
 import json
 import traceback
 import sys
-import typing
 from collections import defaultdict
-from contextvars import ContextVar
-from typing import Coroutine, TypeVar, Union, get_args, get_origin, overload, Generic, TYPE_CHECKING, TypedDict, Literal
 
 import discord, discord.channel, discord.http, discord.state
-from discord import InteractionResponded
 from discord.ext import commands
-from discord.utils import MISSING, maybe_coroutine
+from discord.utils import MISSING
 
-from typing import Coroutine, TypeVar, Union, get_args, get_origin, overload, Generic, TYPE_CHECKING
-
-from discord.webhook.async_ import AsyncWebhookAdapter
+from typing import Coroutine, TypeVar, Union, get_args, get_origin, overload, Generic, TYPE_CHECKING, Literal
 
 BotT = TypeVar("BotT", bound='Bot')
 CtxT = TypeVar("CtxT", bound='Context')
@@ -154,12 +148,6 @@ class _RangeMeta(type):
         return cls(None, max)
 
 
-# Complete shit i know... idk what im doing.
-class _AutocompleteMeta(type):
-    def __getitem__(cls, annotation_type):
-        return cls(annotation_type)
-
-
 class Range(metaclass=_RangeMeta):
     """
     Defines a minimum and maximum value for float or int values. The minimum value is optional.
@@ -175,17 +163,9 @@ class Range(metaclass=_RangeMeta):
         self.max = max
 
 
-class AutocompleteChoice(TypedDict):
-    name: str
-    value: Union[str, int]
-
-
-class Autocomplete(metaclass=_AutocompleteMeta):
-    def __init__(self, annotation_type: type = str):
-        self.annotation_type: type = annotation_type
-
-
 class Bot(commands.Bot):
+    application_id: int  # hack to avoid linting errors on http methods
+
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         await self.login(token)
 
@@ -224,17 +204,10 @@ class Bot(commands.Bot):
         - guild_id: ``Optional[str]``
         - - The guild ID to delete from, or ``None`` to delete global commands.
         """
-        path = f'/applications/{self.application_id}'
         if guild_id is not None:
-            path += f'/guilds/{guild_id}'
-        path += '/commands'
-
-        route = discord.http.Route("GET", path)
-        data = await self.http.request(route)
-
-        for cmd in data:
-            snow = cmd['id']
-            await self.delete_command(snow, guild_id=guild_id)
+            await self.http.bulk_upsert_guild_commands(self.application_id, guild_id, [])
+        else:
+            await self.http.bulk_upsert_global_commands(self.application_id, [])
 
     async def delete_command(self, id: int, *, guild_id: int | None = None):
         """
@@ -246,9 +219,10 @@ class Bot(commands.Bot):
         - guild_id: ``Optional[str]``
         - - The guild ID to delete from, or ``None`` to delete a global command.
         """
-        route = discord.http.Route('DELETE',
-                                   f'/applications/{self.application_id}{f"/guilds/{guild_id}" if guild_id else ""}/commands/{id}')
-        await self.http.request(route)
+        if guild_id is not None:
+            await self.http.delete_guild_command(self.application_id, guild_id, id)
+        else:
+            await self.http.delete_global_command(self.application_id, id)
 
     async def sync_commands(self) -> None:
         """
@@ -258,22 +232,27 @@ class Bot(commands.Bot):
         if not self.application_id:
             raise RuntimeError("sync_commands must be called after `run`, `start` or `login`")
 
+        command_payloads = defaultdict(list)
         for cog in self.cogs.values():
             if not isinstance(cog, ApplicationCog):
                 continue
 
-            for cmd in cog._commands.values():
+            if not hasattr(cog, "_commands"):
+                cog._commands = {}
+
+            slashes = inspect.getmembers(cog, lambda c: isinstance(c, Command))
+            for _, cmd in slashes:
                 cmd.cog = cog
-                route = f"/applications/{self.application_id}"
-
-                if cmd.guild_id:
-                    route += f"/guilds/{cmd.guild_id}"
-                route += '/commands'
-
+                cog._commands[cmd.name] = cmd
                 body = cmd._build_command_payload()
+                command_payloads[cmd.guild_id].append(body)
 
-                route = discord.http.Route('POST', route)
-                await self.http.request(route, json=body)
+        global_commands = command_payloads.pop(None, [])
+        if global_commands:
+            await self.http.bulk_upsert_global_commands(self.application_id, global_commands)
+
+        for guild_id, payload in command_payloads.items():
+            await self.http.bulk_upsert_guild_commands(self.application_id, guild_id, payload)
 
 
 class Context(Generic[BotT, CogT]):
@@ -292,7 +271,6 @@ class Context(Generic[BotT, CogT]):
         self.bot = bot
         self.command = command
         self.interaction = interaction
-        self._responded = False
 
     @overload
     def send(self, content: str = MISSING, *, embed: discord.Embed = MISSING, ephemeral: bool = MISSING,
@@ -333,6 +311,7 @@ class Context(Generic[BotT, CogT]):
         - - A list of files to send with the message. Incompatible with ``file``.
         - ephemeral: ``bool``
         - - Whether the message should be ephemeral (only visible to the interaction user).
+        - - Note: This field is ignored if the interaction was deferred.
         - tts: ``bool``
         - - Whether the message should be played via Text To Speech. Send TTS Messages permission is required.
         - view: [``discord.ui.View``](https://discordpy.readthedocs.io/en/master/api.html#discord.ui.View)
@@ -342,13 +321,34 @@ class Context(Generic[BotT, CogT]):
         - [``discord.InteractionMessage``](https://discordpy.readthedocs.io/en/master/api.html#discord.InteractionMessage) if this is the first time responding.
         - [``discord.WebhookMessage``](https://discordpy.readthedocs.io/en/master/api.html#discord.WebhookMessage) for consecutive responses.
         """
-        if self._responded:
+        if self.interaction.response.is_done():
             return await self.interaction.followup.send(content, wait=True, **kwargs)
 
         await self.interaction.response.send_message(content or None, **kwargs)
-        self._responded = True
 
         return await self.interaction.original_message()
+
+    async def defer(self, *, ephemeral: bool = False) -> None:
+        """
+        Defers the given interaction.
+
+        This is done to acknowledge the interaction.
+        A secondary action will need to be sent within 15 minutes through the follow-up webhook.
+
+        Parameters:
+        - ephemeral: ``bool``
+        - - Indicates whether the deferred message will eventually be ephemeral. Defaults to `False`
+
+        Returns
+        - ``None``
+
+        Raises
+        - [``discord.HTTPException``](https://discordpy.readthedocs.io/en/master/api.html#discord.HTTPException)
+        - - Deferring the interaction failed.
+        - [``discord.InteractionResponded``](https://discordpy.readthedocs.io/en/master/api.html#discord.InteractionResponded)
+        - - This interaction has been responded to before.
+        """
+        await self.interaction.response.defer(ephemeral=ephemeral)
 
     @property
     def cog(self) -> CogT:
@@ -406,7 +406,6 @@ class SlashCommand(Command[CogT]):
 
         self.parameters = self._build_parameters()
         self._parameter_descriptions: dict[str, str] = defaultdict(lambda: "No description provided")
-        self.on_autocomplete_callbacks = {}
 
     def _build_arguments(self, interaction, state):
         if 'options' not in interaction.data:
@@ -473,9 +472,7 @@ class SlashCommand(Command[CogT]):
                     args = get_args(ann)
                     real_t = args[0]
                 elif get_origin(ann) is Literal:
-                    real_t = str
-                elif isinstance(ann, Autocomplete):
-                    real_t = ann.annotation_type
+                    real_t = type(ann.__args__[0])
                 else:
                     real_t = ann
 
@@ -492,9 +489,6 @@ class SlashCommand(Command[CogT]):
                     option['max_value'] = ann.max
                     option['min_value'] = ann.min
 
-                elif isinstance(ann, Autocomplete):
-                    option['autocomplete'] = True
-
                 elif get_origin(ann) is Union:
                     args = get_args(ann)
 
@@ -507,7 +501,7 @@ class SlashCommand(Command[CogT]):
 
                 elif get_origin(ann) is Literal:
                     arguments = ann.__args__
-                    option['choices'] = [{'name': str(a), 'value': str(a)} for a in arguments]
+                    option['choices'] = [{'name': str(a), 'value': a} for a in arguments]
 
                 elif issubclass(ann, discord.abc.GuildChannel):
                     option['channel_types'] = [channel_filter[ann]]
@@ -516,13 +510,6 @@ class SlashCommand(Command[CogT]):
             options.sort(key=lambda f: not f.get('required'))
             payload['options'] = options
         return payload
-
-    def on_autocomplete(self, option):
-        def on_autocomplete_inner(func):
-            self.on_autocomplete_callbacks[option] = func
-            return func
-
-        return on_autocomplete_inner
 
 
 class ContextMenuCommand(Command[CogT]):
@@ -560,19 +547,6 @@ class UserCommand(ContextMenuCommand[CogT]):
     _type = 2
 
 
-async def respond_autocomplete(response: typing.Union[discord.InteractionResponse, typing.Any], choices: typing.List[AutocompleteChoice]):
-    if response.is_done():
-        raise InteractionResponded(response._parent)
-    parent = response._parent
-    adapter = ContextVar("async_webhook_context", default=AsyncWebhookAdapter()).get()
-    await adapter.create_interaction_response(
-        parent.id,
-        parent.token,
-        session=parent._session,
-        type=8,
-        data={"choices": choices})
-
-
 def _parse_resolved_data(interaction: discord.Interaction, data, state: discord.state.ConnectionState):
     if not data:
         return {}
@@ -582,16 +556,12 @@ def _parse_resolved_data(interaction: discord.Interaction, data, state: discord.
 
     resolved_users = data.get('users')
     if resolved_users:
-        resolved_members = data.get('members', {})
+        resolved_members = data['members']
         for id, d in resolved_users.items():
-            try:
-                member_data = resolved_members[id]
-                member_data['user'] = d
-                member = discord.Member(data=member_data, guild=interaction.guild, state=state)
-                resolved[int(id)] = member
-            except KeyError:
-                user = discord.User(data=d, state=state)
-                resolved[int(id)] = user
+            member_data = resolved_members[id]
+            member_data['user'] = d
+            member = discord.Member(data=member_data, guild=interaction.guild, state=state)
+            resolved[int(id)] = member
 
     resolved_channels = data.get('channels')
     if resolved_channels:
@@ -626,11 +596,7 @@ class ApplicationCog(commands.Cog, Generic[BotT]):
 
     def __init__(self, bot: BotT):
         self.bot: BotT = bot
-        self._commands: dict[str, Command] = {}
-
-        slashes = inspect.getmembers(self, lambda c: isinstance(c, Command))
-        for k, v in slashes:
-            self._commands[v.name] = v
+        self._commands: dict[str, Command]
 
     async def slash_command_error(self, ctx: Context[BotT, Self], error: Exception) -> None:
         print("Error occured in command", ctx.command.name, file=sys.stderr)
@@ -638,7 +604,7 @@ class ApplicationCog(commands.Cog, Generic[BotT]):
 
     @commands.Cog.listener("on_interaction")
     async def _internal_interaction_handler(self, interaction: discord.Interaction):
-        if interaction.type.value not in (2, 4):  # type: ignore
+        if interaction.type is not discord.InteractionType.application_command:
             return
 
         name = interaction.data['name']  # type: ignore
@@ -646,13 +612,6 @@ class ApplicationCog(commands.Cog, Generic[BotT]):
 
         if not command:
             return
-
-        if isinstance(command, SlashCommand) and interaction.type.value == 4:  # type: ignore
-            selected_option = discord.utils.find(lambda o: o['focused'], interaction.data['options'])
-            callback = command.on_autocomplete_callbacks[selected_option['name']]
-            autocomplete_options = await maybe_coroutine(callback, command.cog, interaction, selected_option['value'])
-            responses = [AutocompleteChoice(name=n, value=v) for v, n in autocomplete_options.items()]  # type: ignore
-            return await respond_autocomplete(interaction.response, responses)
 
         state = self.bot._connection
         params: dict = command._build_arguments(interaction, state)

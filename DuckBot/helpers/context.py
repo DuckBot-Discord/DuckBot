@@ -13,7 +13,7 @@ from asyncdagpi import ImageFeatures
 from discord import Interaction, InvalidArgument
 from discord.ext import commands
 
-from DuckBot.cogs.economy import Wallet
+from DuckBot.cogs.economy.helper_classes import Wallet
 from DuckBot.helpers import constants
 from typing import Union, TYPE_CHECKING
 
@@ -145,7 +145,7 @@ class CustomContext(commands.Context):
             return f"{emoji} {text}"
         return emoji
 
-    async def send(self, content: str = None, *, embed: discord.Embed = None,
+    async def send(self, content: typing.Union[str, typing.Any] = None, *, embed: discord.Embed = None,
                    embeds: typing.List[discord.Embed] = None, reply: bool = True, footer: bool = True,
                    reference: typing.Union[discord.Message, discord.MessageReference] = None,
                    gist: bool = False, extension: str = 'py', reminders: bool = True, file: discord.File = None,
