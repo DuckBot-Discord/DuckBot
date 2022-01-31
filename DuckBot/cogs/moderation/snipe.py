@@ -26,6 +26,7 @@ class SimpleAuthor:
 
     def __init__(self, member: discord.Member):
         self.name = member.name
+        self.id = member.id
         self.discriminator = member.discriminator
         self.avatar_url = member.display_avatar.url
 
@@ -63,9 +64,9 @@ class Snipe(ModerationBase):
             message = self.bot.snipes[ctx.channel.id][-index]
             embed = discord.Embed(description=message.content or '_No content in message_',
                                   timestamp=message.timestamp, colour=ctx.color)
-            embed.set_author(name=f'{message.author} said in #{ctx.channel}', icon_url=message.author.avatar_url)
-            embed.set_footer(text=f'Message sent {human_timedelta(message.timestamp)}, '
-                                  f'Index {index}/{len(self.bot.snipes[ctx.channel.id])}')
+            embed.set_author(name=f'{message.author} ({message.author.id}) said in #{ctx.channel}', icon_url=message.author.avatar_url)
+            embed.set_footer(text=f'Index {index}/{len(self.bot.snipes[ctx.channel.id])} - '
+                                  f'Message sent {human_timedelta(message.timestamp)}, at')
             view = None
             if message.components:
                 view = discord.ui.View.from_message(message, timeout=0)
