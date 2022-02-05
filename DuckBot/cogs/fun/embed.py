@@ -24,28 +24,30 @@ def verify_link(argument: str) -> str:
     return link.string
 
 
-class FieldFlags(commands.FlagConverter, prefix='--', delimiter=''):
+class FieldFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     name: str
     value: str
     inline: bool = True
 
 
-class FooterFlags(commands.FlagConverter, prefix='--', delimiter=''):
+class FooterFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     text: str
     icon: verify_link = discord.Embed.Empty
 
 
-class AuthorFlags(commands.FlagConverter, prefix='--', delimiter=''):
+class AuthorFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     name: str
     icon: verify_link = discord.Embed.Empty
     url: verify_link = discord.Embed.Empty
 
 
-class EmbedFlags(commands.FlagConverter, prefix='--', delimiter=''):
+class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
 
     @classmethod
     async def convert(cls, ctx: CustomContext, argument: str):
-        argument = strip_codeblock(argument)
+        argument = strip_codeblock(argument).replace(' —', ' --')
+        # Here we strip the code block if any and replace the iOS dash with
+        # a regular double-dash for ease of use.
         return await super().convert(ctx, argument)
 
     title: str = discord.Embed.Empty
