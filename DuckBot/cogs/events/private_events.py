@@ -42,3 +42,13 @@ class PrivateEvents(EventsBase):
         embed.add_field(name='Members',
                         value=f'👥 {len([m for m in guild.members if not m.bot])} • 🤖 {len([m for m in guild.members if m.bot])}\n**Total:** {guild.member_count}')
         await channel.send(embed=embed)
+
+    @commands.Cog.listener('on_message')
+    async def nsfw_protector(self, message: discord.Message):
+        if self.bot.user.id != 788278464474120202:
+            return
+        if message.channel.id != 939677888809140294 or message.author.bot:
+            return
+        if not all([a.is_spoiler() for a in message.attachments]):
+            await message.reply('Please mark **all** your images as spoiler.', allowed_mentions=discord.AllowedMentions.all(), delete_after=10)
+            await message.delete()
