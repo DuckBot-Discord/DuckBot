@@ -71,8 +71,10 @@ class ServerLogs(LoggingBase):
                     if value != a_o[perm]:
                         updated_perms.append(f"{str(perm).replace('server', 'guild').replace('_', ' ').title()}: {constants.SQUARE_TICKS[value]} ➜ {constants.SQUARE_TICKS[a_o[perm]]}")
                 if updated_perms:
-                    embed.add_field(name=f'Updated {target}', value='\n'.join(updated_perms), inline=False)
-            deliver = True
+                    perm_emb = discord.Embed(title=f'Permissions for {target} updated', colour=discord.Colour.blurple(), timestamp=discord.utils.utcnow(),
+                                             description='\n'.join(updated_perms))
+                    perm_emb.set_footer(text=f'Object ID: {target.id}\nChannel ID: {after.id}')
+                    self.log(perm_emb, guild=after.guild, send_to=self.send_to.server)
         if deliver:
             self.log(embed, guild=after.guild, send_to=self.send_to.server)
 
@@ -186,7 +188,8 @@ class ServerLogs(LoggingBase):
         position_update = ''
         if before.position != after.position:
             position_update = f"\n**Updated Position:** `{before.position}` ➜ `{after.position}`"
-            deliver = True
+            # Added just in case, but we don't set deliver to True, so it will only
+            # be sent to the logs if other attributes of the role have changed
 
         embed.description = role_update + hoist_update + ping_update + color_update + position_update
         if deliver:
