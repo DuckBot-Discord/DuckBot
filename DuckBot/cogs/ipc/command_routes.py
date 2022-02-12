@@ -2,7 +2,6 @@ import inspect
 
 from ._base import IpcBase
 
-
 class CommandRoutes(IpcBase):
 
     async def get_command(self, data) -> dict:

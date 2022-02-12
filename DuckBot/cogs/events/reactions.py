@@ -35,6 +35,9 @@ class ReactionHandling(EventsBase):
                 'Approved ': ''
             }
 
+            if self.bot.user.id != 788278464474120202:
+                return
+
             pattern = '|'.join(sorted(re.escape(k) for k in sub))
             title = re.sub(pattern, lambda m: sub.get(m.group(0).upper()), embed.title, flags=re.IGNORECASE)
 

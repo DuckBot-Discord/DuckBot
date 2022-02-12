@@ -7,6 +7,7 @@ import itertools
 import math
 import os
 import random
+import re
 import textwrap
 import traceback
 import typing
@@ -21,6 +22,7 @@ from discord.ext import commands
 from jishaku.codeblocks import Codeblock, codeblock_converter
 from jishaku.features.baseclass import Feature
 from jishaku.paginators import WrappedPaginator
+from jishaku.shim.paginator_200 import PaginatorInterface
 
 from DuckBot.__main__ import DuckBot, CustomContext
 from DuckBot.helpers import paginator, constants
@@ -804,3 +806,37 @@ class Management(commands.Cog, name='Bot Management'):
                         await to_edit.edit(content=f"**Output too long:**\n<{gist}>")
                     else:
                         await to_edit.edit(content=f'```py\n{to_send}\n```')
+
+    async def parse_tags(self, text: str):
+        """ Parses tags in a string """
+        to_r = []
+        tags = await self.bot.loop.run_in_executor(None, re.findall, r"^\| +(?P<id>[0-9]+) +\|(?P<name>.{102})\| +(?P<user_id>[0-9]{15,19}) \| +[0-9]+ +\| +(?P<can_delete>True|False)+ +\| +(?P<is_alias>True|False)+ +\|$", text, re.MULTILINE)
+        for tag_id, name, user_id, can_delete, is_alias in tags:
+            to_r.append((int(tag_id), name.strip(), int(user_id), can_delete == 'True', is_alias == 'True'))
+        return to_r
+
+    @dev.command(name='unclaimed')
+    async def dev_unclaimed(self, ctx: CustomContext):
+        """
+        Parses all unclaimed tags from an attachment file.
+        """
+
+        if not ctx.reference or not ctx.reference.attachments:
+            raise commands.BadArgument('No attachment found.')
+
+        unclaimed = []
+        text = (await ctx.reference.attachments[0].read()).decode('utf-8')
+        parsed_tags = await self.parse_tags(text)
+        for tag_id, name, user_id, can_delete, is_alias in parsed_tags:
+            print(user_id)
+            if not ctx.guild.get_member(user_id):
+                unclaimed.append((name, str(self.bot.get_user(user_id) or user_id), is_alias))
+        if not unclaimed:
+            raise commands.BadArgument(f'No unclaimed tags found. searched {len(parsed_tags)} tags.')
+        table = tabulate.tabulate(sorted(unclaimed), headers=["Name", "User", "Alias"])
+        pages = WrappedPaginator(max_size=1985)
+        for line in table.splitlines():
+            pages.add_line(line)
+        interface = PaginatorInterface(self.bot, pages)
+        await interface.send_to(ctx.author)
+        await ctx.send(f"Delivering {len(unclaimed)} unclaimed tags to {ctx.author}'s DMs.")
