@@ -7,12 +7,13 @@ from .muted_members import MutedMembers
 from .private_events import PrivateEvents
 from .reactions import ReactionHandling
 from .suggestion_channels import SuggestionChannels
+from .blackout_mode import BlackoutMode
 from .tasks import Tasks
 
 
 class Handler(AfkHandler, ArrivalAndCleanup, AutoBlacklist,
               WelcomeMessages, ErrorHandler, MutedMembers, PrivateEvents,
-              ReactionHandling, SuggestionChannels, Tasks):
+              ReactionHandling, SuggestionChannels, Tasks, BlackoutMode):
     """
     This class is the event handler for the bot.
     """
