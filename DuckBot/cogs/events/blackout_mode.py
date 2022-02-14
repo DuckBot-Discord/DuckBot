@@ -34,12 +34,11 @@ class BlackoutMode(EventsBase):
             logging.error('could not remove reaction:', exc_info=True)
 
         db: asyncpg.Pool = self.bot.db
-        if not payload.member._roles.has(self.BLACKOUT_ROLE_ID):
+        if not (await db.fetchval('SELECT roles FROM blackout WHERE user_id = $1', payload.member.id)):
             to_remove = [r for r in payload.member.roles if r.is_assignable()]
             role = self.bot.get_guild(payload.guild_id).get_role(self.BLACKOUT_ROLE_ID)
             if not role:
                 return
-            await db.execute('DELETE FROM blackout WHERE user_id = $1', payload.user_id)
             await db.execute('INSERT INTO blackout (user_id, roles) VALUES ($1, $2)', payload.member.id, [r.id for r in to_remove])
             try:
                 await payload.member.remove_roles(*to_remove, reason='Blackout mode')
@@ -51,7 +50,7 @@ class BlackoutMode(EventsBase):
                 logging.error('could not add role', exc_info=True)
 
         else:
-            roles = await db.fetchval('DELETE FROM blackout WHERE user_id = $1 RETURNING roles', payload.member.id)
+            roles = (await db.fetchval('SELECT roles FROM blackout WHERE user_id = $1', payload.member.id)) or []
             guild = self.bot.get_guild(payload.guild_id)
             to_add = []
             for role_id in roles:
@@ -60,9 +59,9 @@ class BlackoutMode(EventsBase):
                     to_add.append(role)
             await payload.member.add_roles(*to_add, reason='Blackout mode ended')
             role = guild.get_role(self.BLACKOUT_ROLE_ID)
-            if not role:
-                return
-            await payload.member.remove_roles(role, reason='Blackout mode ended')
+            if role:
+                await payload.member.remove_roles(role, reason='Blackout mode ended')
+            await db.execute('DELETE FROM blackout WHERE user_id = $1', payload.member.id)
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
