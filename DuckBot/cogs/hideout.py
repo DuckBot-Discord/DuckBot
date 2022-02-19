@@ -631,12 +631,12 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
             return
         bot: discord.User = discord.utils.find(lambda obj: isinstance(obj, discord.User), ctx.args)
         reason: str = ctx.kwargs.get('reason', 'no reason given')
-        print(ctx.kwargs)
+
         await self.bot.db.execute('INSERT INTO addbot (owner_id, bot_id) VALUES ($1, $2) '
                                   'ON CONFLICT (owner_id, bot_id) DO UPDATE SET pending = TRUE, added = FALSE',
                                   ctx.author.id, bot.id)
         bot_queue = ctx.guild.get_channel(QUEUE_CHANNEL)
-        url = discord.utils.oauth_url(bot.id)
+        url = discord.utils.oauth_url(bot.id, scopes=['bot', 'applications.commands'], guild=ctx.guild)
         embed = discord.Embed(description=reason)
         embed.set_author(icon_url=bot.display_avatar.url, name=str(bot), url=url)
         embed.add_field(name='invite:', value=f'[invite {discord.utils.remove_markdown(str(bot))}]({url})')
@@ -648,20 +648,35 @@ class Hideout(commands.Cog, name='DuckBot Hideout'):
         with contextlib.suppress(discord.HTTPException):
             if not member.bot or member.guild.id != DUCK_HIDEOUT:
                 return
-            await self.bot.db.execute('UPDATE addbot SET added = TRUE, pending = FALSE WHERE bot_id = $1', member.id)
-            await member.add_roles(member.guild.get_role(BOTS_ROLE))
-            queue_channel = member.guild.get_channel(QUEUE_CHANNEL)
-            general = member.guild.get_channel(GENERAL_CHANNEL)
-            embed = discord.Embed(title='Bot added', description=f'{member} joined.', colour=discord.Colour.green())
+            if len(member.roles) > 1:
+                await member.kick(reason='Was invited with permissions')
+                queue_channel = member.guild.get_channel(QUEUE_CHANNEL)
+                return await queue_channel.send(f'{member} automatically kicked for having a role.')
+
             mem_id = await self.bot.db.fetchval('SELECT owner_id FROM addbot WHERE bot_id = $1', member.id)
+            if not mem_id:
+                await member.kick(reason='Unauthorised bot')
+                queue_channel = member.guild.get_channel(QUEUE_CHANNEL)
+                return await queue_channel.send(f'{member} automatically kicked - unauthorised. Please re-invite using the `addbot` command.')
+
+            await self.bot.db.execute('UPDATE addbot SET added = TRUE, pending = FALSE WHERE bot_id = $1', member.id)
+
+            await member.add_roles(member.guild.get_role(BOTS_ROLE))
+
+            embed = discord.Embed(title='Bot added', description=f'{member} joined.', colour=discord.Colour.green())
             added_by = await member.guild.audit_logs(action=discord.AuditLogAction.bot_add, limit=1).flatten()
             added_by = discord.utils.get(added_by, target=member)
             if added_by:
                 added_by = added_by.user
                 embed.set_footer(text=f'Added by {added_by} ({added_by.id})')
             embed.add_field(name='Added by', value=str(member.guild.get_member(mem_id)), inline=False)
+
+            queue_channel = member.guild.get_channel(QUEUE_CHANNEL)
             await queue_channel.send(embed=embed)
-            await general.send(f'{member} has been added, <@!{mem_id}>')
+
+            if mem_id:
+                general = member.guild.get_channel(GENERAL_CHANNEL)
+                await general.send(f'{member} has been added, <@{mem_id}>', allowed_mentions=discord.AllowedMentions(users=True))
 
     @commands.Cog.listener('on_member_remove')
     async def on_member_remove(self, member: discord.Member):
