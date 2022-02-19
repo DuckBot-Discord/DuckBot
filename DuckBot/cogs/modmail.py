@@ -64,7 +64,6 @@ class ModMail(commands.Cog):
                 position=0,
                 reason="DuckBot ModMail"
             )
-            discord.Guild.create_text_channel()
 
         wh = await self.get_dm_hook(channel)
 
