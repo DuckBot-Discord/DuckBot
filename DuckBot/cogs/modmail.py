@@ -6,6 +6,7 @@ from discord.ext.commands.errors import UserNotFound
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot
 from DuckBot.helpers import constants
+from DuckBot.helpers.context import CustomContext
 
 
 def setup(bot):
@@ -45,12 +46,8 @@ class ModMail(commands.Cog):
         if message.guild or message.author == self.bot.user or self.bot.dev_mode is True:
             return
 
-        ctx = await self.bot.get_context(message)
-
-        try:
-            self.bot.user_blacklisted(ctx)
-        except errors.UserBlacklisted:
-            return await ctx.send("Sorry but that message wasn't delivered! You are blacklisted.")
+        if self.bot.blacklist.get(message.author.id, None):
+            return await message.channel.send("Sorry but that message wasn't delivered! You are blacklisted.")
 
         category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
         channel = discord.utils.get(category.channels, topic=str(message.author.id))
@@ -67,6 +64,7 @@ class ModMail(commands.Cog):
                 position=0,
                 reason="DuckBot ModMail"
             )
+            discord.Guild.create_text_channel()
 
         wh = await self.get_dm_hook(channel)
 
