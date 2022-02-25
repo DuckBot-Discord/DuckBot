@@ -72,7 +72,7 @@ class Snipe(ModerationBase):
                 view = discord.ui.View.from_message(message, timeout=0)
                 for child in view.children:
                     child.disabled = True
-            await ctx.send(embeds=[embed] + message.embeds, view=view)
+            await ctx.send(embeds=[embed] + message.embeds[:9], view=view)
         except (KeyError, IndexError):
             raise commands.BadArgument(f'No message found at index {index}')
 
