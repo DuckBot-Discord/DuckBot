@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import io
 import logging
@@ -147,14 +148,17 @@ class BaseDuck(slash_util.Bot):
 
         self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
         self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
-        self.loop.run_until_complete(self.load_cogs())
+        self.load_cogs()
         self.loop.run_until_complete(self.populate_cache())
 
-    async def load_cogs(self) -> None:
+    def load_cogs(self) -> None:
         for ext in initial_extensions:
-            self.load_extension(ext)
+            with contextlib.suppress(Exception):
+                self.load_extension(ext)
+
         for ext in extensions:
-            self.load_extension(ext)
+            with contextlib.suppress(Exception):
+                self.load_extension(ext)
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
