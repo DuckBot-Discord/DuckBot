@@ -61,11 +61,11 @@ class Snipe(ModerationBase):
     @commands.group(name='snipe', invoke_without_command=True)
     async def snipe(self, ctx: CustomContext, index: int = 1):
         try:
-            message = self.bot.snipes[ctx.channel.id][-index]
+            message = self.bot.snipes[ctx.guild.id][ctx.channel.id][-index]
             embed = discord.Embed(description=message.content or '_No content in message_',
                                   timestamp=message.timestamp, colour=ctx.color)
             embed.set_author(name=f'{message.author} ({message.author.id}) said in #{ctx.channel}', icon_url=message.author.avatar_url)
-            embed.set_footer(text=f'Index {index}/{len(self.bot.snipes[ctx.channel.id])} - '
+            embed.set_footer(text=f'Index {index-1}/{len(self.bot.snipes[ctx.channel.id][ctx.channel.id])} - '
                                   f'Message sent {human_timedelta(message.timestamp)}, at')
             view = None
             if message.components:
@@ -94,18 +94,18 @@ class Snipe(ModerationBase):
     @commands.Cog.listener('on_message_delete')
     async def snipe_hook(self, message: discord.Message):
         if await self.bot.db.fetchval('SELECT snipe_enabled FROM prefixes WHERE guild_id = $1', message.guild.id):
-            self.bot.snipes[message.channel.id].append(SimpleMessage(message))
+            self.bot.snipes[message.guild.id][message.channel.id].append(SimpleMessage(message))
 
     @commands.Cog.listener('on_guild_channel_delete')
     async def snipe_channel_delete(self, channel: discord.TextChannel):
-        if channel.id in self.bot.snipes:
-            del self.bot.snipes[channel.id]
+        if channel.guild.id in self.bot.snipes:
+            if channel.id in self.bot.snipes[channel.guild.id]:
+                del self.bot.snipes[channel.guild.id][channel.id]
 
     @commands.Cog.listener('on_guild_remove')
     async def snipe_guild_remove_listener(self, guild: discord.Guild):
         await self.snipe_guild_remove(guild)
 
     async def snipe_guild_remove(self, guild: discord.Guild):
-        for channel in guild.text_channels:
-            if channel.id in self.bot.snipes:
-                del self.bot.snipes[channel.id]
+        if guild.id in self.bot.snipes:
+            del self.bot.snipes[guild.id]

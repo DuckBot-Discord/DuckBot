@@ -6,16 +6,14 @@ from typing import (
 
 import discord
 from asyncdagpi import ImageFeatures
-from asyncpg import Record
 from discord.ext import commands
 
 from DuckBot import errors
 from DuckBot.cogs.economy.helper_classes import Wallet
-from DuckBot.helpers.bot_base import BaseDuck, LoggingConfig
+from DuckBot.helpers.bot_base import BaseDuck, col
 from DuckBot.helpers.context import CustomContext
 
-log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format='[%(asctime)-15s] %(message)s')
+logging.basicConfig(level=logging.INFO, format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s')
 
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
 os.environ['JISHAKU_HIDE'] = 'True'
@@ -24,7 +22,7 @@ target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.
 
 
 class DuckBot(BaseDuck):
-    async def create_gist(self, *, filename: str, description: str, content: str, public: bool = True):
+    async def create_gist(self, *, filename: str, description: str, content: str, public: bool = False):
         headers = {
             'Accept': 'application/vnd.github.v3+json',
             'User-Agent': 'DuckBot-Discord',
