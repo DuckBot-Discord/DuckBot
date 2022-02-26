@@ -16,7 +16,7 @@ from ...helpers.context import CustomContext
 
 class TypeRace(FunBase):
 
-    async def message_receiver(self, channel: discord.TextChannel, content: str, timeout: int) -> collections.AsyncIterable[discord.Message]:
+    async def message_receiver(self, channel: discord.TextChannel, content: str, timeout: int) -> typing.AsyncIterable[discord.Message]:
         def check(m: discord.Message):
             return m.channel == channel and m.content.lower() == content.lower() and not m.author.bot
 
