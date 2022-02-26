@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import datetime
 import importlib
+import inspect
 import io
 import itertools
 import math
@@ -149,12 +150,19 @@ class UnicodeEmoji:
         return argument
 
 
+def get_syntax_error(e):
+    if e.text is None:
+        return f'```py\n{e.__class__.__name__}: {e}\n```'
+    return f'```py\n{e.text}{"^":>{e.offset}}\n{e.__class__.__name__}: {e}```'
+
+
 class Management(commands.Cog, name='Bot Management'):
     """
     🤖 Commands meant for the bot developers to manage the bots functionalities. Not meant for general use.
     """
 
     def __init__(self, bot):
+        self.sessions = set()
         self.bot: DuckBot = bot
         self._last_result = None
 
@@ -372,7 +380,107 @@ class Management(commands.Cog, name='Bot Management'):
             else:
                 return ret
 
-    # Dev commands. `if True` is only to be able to close the whole category at once
+    @commands.command(pass_context=True, hidden=True)
+    async def repl(self, ctx, *, flags: None = None):
+        """Launches an interactive REPL session."""
+        variables = {
+            'bot': self.bot,
+            '_b': self.bot,
+            'ctx': ctx,
+            'channel': ctx.channel,
+            '_c': ctx.channel,
+            'author': ctx.author,
+            '_a': ctx.author,
+            'guild': ctx.guild,
+            '_g': ctx.guild,
+            'message': ctx.message,
+            '_m': ctx.message,
+            '_': None,
+            'reference': getattr(ctx.message.reference, 'resolved', None),
+            '_r': getattr(ctx.message.reference, 'resolved', None),
+            '_get': discord.utils.get,
+            '_find': discord.utils.find,
+            '_gist': ctx.gist,
+            '_now': discord.utils.utcnow,
+        }
+
+        if ctx.channel.id in self.sessions:
+            await ctx.send('Already running a REPL session in this channel. Exit it with `quit`.')
+            return
+
+        self.sessions.add(ctx.channel.id)
+        await ctx.send('Enter code to execute or evaluate. `exit()` or `quit` to exit.')
+
+        def check(m):
+            return m.author.id == ctx.author.id and \
+                   m.channel.id == ctx.channel.id and \
+                   m.content.startswith('`')
+
+        while True:
+            try:
+                response = await self.bot.wait_for('message', check=check, timeout=10.0 * 60.0)
+            except asyncio.TimeoutError:
+                await ctx.send('Exiting REPL session.')
+                self.sessions.remove(ctx.channel.id)
+                break
+
+            cleaned = cleanup_code(response.content)
+
+            if cleaned in ('quit', 'exit', 'exit()'):
+                await ctx.send('Exiting.')
+                self.sessions.remove(ctx.channel.id)
+                return
+
+            executor = exec
+            if cleaned.count('\n') == 0:
+                # single statement, potentially 'eval'
+                try:
+                    code = compile(cleaned, '<repl session>', 'eval')
+                except SyntaxError:
+                    pass
+                else:
+                    executor = eval
+
+            if executor is exec:
+                try:
+                    code = compile(cleaned, '<repl session>', 'exec')
+                except SyntaxError as e:
+                    await ctx.send(get_syntax_error(e))
+                    continue
+
+            variables['message'] = response
+
+            fmt = None
+            stdout = io.StringIO()
+
+            try:
+                with contextlib.redirect_stdout(stdout):
+                    result = executor(code, variables)
+                    if inspect.isawaitable(result):
+                        result = await result
+            except Exception as e:
+                value = stdout.getvalue()
+                fmt = f'```py\n{value}{traceback.format_exc()}\n```'
+            else:
+                value = stdout.getvalue()
+                if result is not None:
+                    fmt = f'```py\n{value}{result}\n```'
+                    variables['_'] = result
+                elif value:
+                    fmt = f'```py\n{value}\n```'
+
+            try:
+                if fmt is not None:
+                    if len(fmt) > 2000:
+                        await ctx.send('Content too big to be printed.')
+                    else:
+                        await ctx.send(fmt)
+            except discord.Forbidden:
+                pass
+            except discord.HTTPException as e:
+                await ctx.send(f'Unexpected error: `{e}`')
+
+    # Dev commands. `if True` is only to be able to close or "fold" the whole category at once
     if True:
 
         @commands.group()
@@ -807,36 +915,36 @@ class Management(commands.Cog, name='Bot Management'):
                     else:
                         await to_edit.edit(content=f'```py\n{to_send}\n```')
 
-    async def parse_tags(self, text: str):
-        """ Parses tags in a string """
-        to_r = []
-        tags = await self.bot.loop.run_in_executor(None, re.findall, r"^\| +(?P<id>[0-9]+) +\|(?P<name>.{102})\| +(?P<user_id>[0-9]{15,19}) \| +[0-9]+ +\| +(?P<can_delete>True|False)+ +\| +(?P<is_alias>True|False)+ +\|$", text, re.MULTILINE)
-        for tag_id, name, user_id, can_delete, is_alias in tags:
-            to_r.append((int(tag_id), name.strip(), int(user_id), can_delete == 'True', is_alias == 'True'))
-        return to_r
+        async def parse_tags(self, text: str):
+            """ Parses tags in a string """
+            to_r = []
+            tags = await self.bot.loop.run_in_executor(None, re.findall, r"^\| +(?P<id>[0-9]+) +\|(?P<name>.{102})\| +(?P<user_id>[0-9]{15,19}) \| +[0-9]+ +\| +(?P<can_delete>True|False)+ +\| +(?P<is_alias>True|False)+ +\|$", text, re.MULTILINE)
+            for tag_id, name, user_id, can_delete, is_alias in tags:
+                to_r.append((int(tag_id), name.strip(), int(user_id), can_delete == 'True', is_alias == 'True'))
+            return to_r
 
-    @dev.command(name='unclaimed')
-    async def dev_unclaimed(self, ctx: CustomContext):
-        """
-        Parses all unclaimed tags from an attachment file.
-        """
+        @dev.command(name='unclaimed')
+        async def dev_unclaimed(self, ctx: CustomContext):
+            """
+            Parses all unclaimed tags from an attachment file.
+            """
 
-        if not ctx.reference or not ctx.reference.attachments:
-            raise commands.BadArgument('No attachment found.')
+            if not ctx.reference or not ctx.reference.attachments:
+                raise commands.BadArgument('No attachment found.')
 
-        unclaimed = []
-        text = (await ctx.reference.attachments[0].read()).decode('utf-8')
-        parsed_tags = await self.parse_tags(text)
-        for tag_id, name, user_id, can_delete, is_alias in parsed_tags:
-            print(user_id)
-            if not ctx.guild.get_member(user_id):
-                unclaimed.append((name, str(self.bot.get_user(user_id) or user_id), is_alias))
-        if not unclaimed:
-            raise commands.BadArgument(f'No unclaimed tags found. searched {len(parsed_tags)} tags.')
-        table = tabulate.tabulate(sorted(unclaimed), headers=["Name", "User", "Alias"])
-        pages = WrappedPaginator(max_size=1985)
-        for line in table.splitlines():
-            pages.add_line(line)
-        interface = PaginatorInterface(self.bot, pages)
-        await interface.send_to(ctx.author)
-        await ctx.send(f"Delivering {len(unclaimed)} unclaimed tags to {ctx.author}'s DMs.")
+            unclaimed = []
+            text = (await ctx.reference.attachments[0].read()).decode('utf-8')
+            parsed_tags = await self.parse_tags(text)
+            for tag_id, name, user_id, can_delete, is_alias in parsed_tags:
+                print(user_id)
+                if not ctx.guild.get_member(user_id):
+                    unclaimed.append((name, str(self.bot.get_user(user_id) or user_id), is_alias))
+            if not unclaimed:
+                raise commands.BadArgument(f'No unclaimed tags found. searched {len(parsed_tags)} tags.')
+            table = tabulate.tabulate(sorted(unclaimed), headers=["Name", "User", "Alias"])
+            pages = WrappedPaginator(max_size=1985)
+            for line in table.splitlines():
+                pages.add_line(line)
+            interface = PaginatorInterface(self.bot, pages)
+            await interface.send_to(ctx.author)
+            await ctx.send(f"Delivering {len(unclaimed)} unclaimed tags to {ctx.author}'s DMs.")

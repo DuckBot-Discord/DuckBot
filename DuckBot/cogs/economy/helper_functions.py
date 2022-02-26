@@ -23,7 +23,6 @@ def require_setup(prompt: bool = False):
                 await ctx.wallet.delete()
             return True
         except Exception as e:
-            print('error in require_setup:', e)
             raise EconomyNotSetup(prompt=prompt)
 
     return commands.check(predicate)

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import random
+import typing
 from typing import TYPE_CHECKING
 from types import SimpleNamespace
 
@@ -33,17 +36,86 @@ def make_ordinal(n):
     return str(n) + suffix
 
 
+class SilentError(errors.NoHideout):
+    pass
+
+
+Q_T = typing.Union[str, discord.Embed]
+
+
 class Welcome(ConfigBase):
 
-    @commands.group()
+    async def prompt(self, ctx: CustomContext, question: Q_T, *, timeout: int = 60) -> str:
+        try:
+            return await ctx.prompt(question, timeout=timeout)
+        except commands.UserInputError:
+            raise SilentError
+
+    async def prompt_converter(self, ctx: CustomContext, question: Q_T, retry_question: Q_T = None,
+                               converter: commands.Converter | typing.Any = None, timeout: int = 60):
+        """ Prompts the user for something """
+        if retry_question and not converter:
+            raise ValueError("You must provide a converter if you want to use a retry question")
+
+        answer = await self.prompt(ctx, question, timeout=timeout)
+        if answer.casefold() == 'cancel':
+            raise SilentError
+        if not retry_question:
+            if converter:
+                try:
+                    answer = await converter.convert(ctx, answer)
+                except commands.UserInputError:
+                    raise SilentError
+            return answer
+        else:
+            while True:
+                answer = await self.prompt(ctx, retry_question, timeout=timeout)
+                if answer.casefold() == 'cancel':
+                    raise SilentError
+                try:
+                    answer = await converter.convert(ctx, answer)
+                    return answer
+                except commands.UserInputError:
+                    continue
+
+    @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     async def welcome(self, ctx: CustomContext):
         """
         Commands to manage the welcome message for this server.
         """
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+        text = await ctx.prompt("Would you like to set up welcome messages? (y/n) ")
+        if text.casefold() not in ("y", "yes", "n", "no"):
+            raise commands.BadArgument("Please enter either `y` or `n`")
+        if text.casefold() in ("y", "no"):
+            raise commands.BadArgument("Alright! I'll stop now.")
+
+        question = "Where would you like me to send the welcome message to? Please mention a channel / ID"
+        retry_question = "That's not a valid channel / ID. Please try again or say `cancel` to cancel"
+        channel = await self.prompt_converter(ctx, question, retry_question=retry_question,
+                                              converter=commands.TextChannelConverter())
+        embed = discord.Embed(title="What do you want the welcome message to say?",
+                              description="**__Here are all available placeholders__**\n"
+                                          "To use these placeholders, surround them in `{}`. For example: {user-mention}\n\n"
+                                          "> **`server`** : returns the server's name (Server Name)\n"
+                                          "> **`user`** : returns the user's name (Name)\n"
+                                          "> **`full-user`** : returns the user's full name (Name#1234)\n"
+                                          "> **`user-mention`** : will mention the user (@Name)\n"
+                                          "> **`count`** : returns the member count of the server(4385)\n"
+                                          "> **`ordinal`** : returns the ordinal member count of the server(4385th)\n"
+                                          "> **`code`** : the invite code the member used to join(TdRfGKg8Wh) **\\***\n"
+                                          "> **`full-code`** : the full invite (discord.gg/TdRfGKg8Wh) **\\***\n"
+                                          "> **`full-url`** : the full url (<https://discord.gg/TdRfGKg8Wh>) **\\***\n"
+                                          "> **`inviter`** : returns the inviters name (Name) *****\n"
+                                          "> **`full-inviter`** : returns the inviters full name (Name#1234) **\\***\n"
+                                          "> **`inviter-mention`** : returns the inviters mention (@Name) **\\***\n\n"
+                                          "⚠ These placeholders are __CASE SENSITIVE.__\n"
+                                          "⚠ Placeholders marked with **\\*** may not be populated when a member joins, "
+                                          "like when a bot joins, or when a user is added by an integration.\n")
+        embed.set_footer(text="If you want to cancel, say cancel")
+        r_q = 'Sorry but there was an invalid placeholder. Please try again or say `cancel` to cancel'
+        message = await self.prompt_converter(ctx, question=embed, retry_question=r_q)
 
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
@@ -54,10 +126,8 @@ class Welcome(ConfigBase):
         Send it without the channel
         """
         channel = new_channel
-        query = """
-                INSERT INTO prefixes(guild_id, welcome_channel) VALUES ($1, $2)
-                ON CONFLICT (guild_id) DO UPDATE SET welcome_channel = $2
-                """
+        query = """ INSERT INTO prefixes(guild_id, welcome_channel) VALUES ($1, $2)
+                    ON CONFLICT (guild_id) DO UPDATE SET welcome_channel = $2 """
         if channel:
             if not channel.permissions_for(ctx.author).send_messages:
                 raise commands.BadArgument("You can't send messages in that channel!")

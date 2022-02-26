@@ -5,7 +5,7 @@ import os
 import re
 import traceback
 import typing
-from collections import defaultdict, deque, namedtuple
+from collections import defaultdict, deque
 from typing import (
     List,
     Optional,
@@ -18,13 +18,12 @@ import aiohttp.web
 import asyncpg
 import asyncpraw
 import discord
+import slash_util
 import topgg
-from asyncpg import Record
-from dotenv import load_dotenv
 from asyncdagpi import Client as DagpiClient
 from discord.ext import commands, ipc
+from dotenv import load_dotenv
 
-from DuckBot import errors
 from DuckBot.cogs.economy.helper_classes import Wallet
 from DuckBot.helpers import constants
 from DuckBot.helpers.context import CustomContext
@@ -46,6 +45,21 @@ extensions = ('DuckBot.cogs.beta', 'DuckBot.cogs.logs', 'DuckBot.cogs.economy',
 load_dotenv()
 
 
+def col(color=None, /, *, fmt=0, bg=False):
+    base = "\u001b["
+    if fmt != 0:
+        base += "{fmt};"
+    if color is None:
+        base += "{color}m"
+        color = 0
+    else:
+        if bg is True:
+            base += "4{color}m"
+        else:
+            base += "3{color}m"
+    return base.format(fmt=fmt, color=color)
+
+
 class LoggingConfig:
     __slots__ = ('default', 'message', 'member', 'join_leave', 'voice', 'server')
 
@@ -62,8 +76,10 @@ class LoggingConfig:
             setattr(self, key, value)
 
 
-class BaseDuck(commands.Bot):
+class BaseDuck(slash_util.Bot):
     PRE: tuple = ('db.',)
+    logger = logging.getLogger('DuckBot')
+    _ext_log = logging.getLogger('ExtensionManager')
 
     def __init__(self) -> None:
         intents = discord.Intents.all()
@@ -127,25 +143,18 @@ class BaseDuck(commands.Bot):
         self.log_channels: typing.Dict[int, LoggingConfig] = {}
         self.log_cache = defaultdict(lambda: defaultdict(list))
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
-        self.snipes: typing.Dict[int, typing.Deque[SimpleMessage]] = defaultdict(lambda: deque(maxlen=50))
+        self.snipes: typing.Dict[int, typing.Dict[int, typing.Deque[SimpleMessage]]] = defaultdict(lambda: defaultdict(lambda: deque(maxlen=50)))
 
         self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
         self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
         self.loop.run_until_complete(self.load_cogs())
         self.loop.run_until_complete(self.populate_cache())
 
-    def _load_extension(self, name: str) -> None:
-        try:
-            logging.info(f'Attempting to load {name}')
-            self.load_extension(name)
-        except Exception as e:
-            logging.error(f'Failed to load extension {name}', exc_info=e)
-
     async def load_cogs(self) -> None:
         for ext in initial_extensions:
-            self._load_extension(ext)
+            self.load_extension(ext)
         for ext in extensions:
-            self._load_extension(ext)
+            self.load_extension(ext)
 
     async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> List[str]:
         if not message:
@@ -183,8 +192,8 @@ class BaseDuck(commands.Bot):
         return await super().get_context(message, cls=cls)
 
     async def on_ready(self) -> None:
-        logging.info("======[ BOT ONLINE! ]=======")
-        logging.info("\033[42mLogged in as " + self.user.name + "\033[0m")
+        self.logger.info(f"{col(2)}======[ BOT ONLINE! ]======={col()}")
+        self.logger.info(f"{col(2, bg=True)}Logged in as {self.user} {col()}")
 
     async def on_message(self, message: discord.Message) -> None:
         await self.wait_until_ready()
@@ -202,7 +211,7 @@ class BaseDuck(commands.Bot):
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
         traceback_string = traceback.format_exc()
         for line in traceback_string.split('\n'):
-            logging.info(line)
+            self.logger.error(line, exc_info=None)
         await self.wait_until_ready()
         error_channel = self.get_channel(880181130408636456)
         to_send = f"```yaml\nAn error occurred in an {event_method} event``````py" \
@@ -288,7 +297,7 @@ class BaseDuck(commands.Bot):
                 guild_id))
             self.guild_loggings[guild_id] = LoggingEventsFlags(**flags)
 
-        logging.info('All cache populated successfully')
+        self.logger.info(f'{col(2)}All cache populated successfully')
         self.dispatch('cache_ready')
 
     async def start(self, *args, **kwargs):
@@ -308,10 +317,40 @@ class BaseDuck(commands.Bot):
             "host": f"{os.getenv('PSQL_HOST')}",
             "port": f"{os.getenv('PSQL_PORT')}"
         }
+        db = None
         try:
-            return await asyncpg.create_pool(**credentials)
+            db = await asyncpg.create_pool(**credentials)
         except Exception as e:
-            logging.error("Could not create database pool", exc_info=e)
+            self.logger.error("Could not create database pool", exc_info=e)
+        else:
+            self.logger.info(f'{col(2)}Database successful.')
         finally:
             self.dispatch('pool_create')
-            logging.info('Database successful.')
+            return db
+
+    def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        self._ext_log.info(f'{col(7)}Attempting to load {col(7, fmt=4)}{name}{col()}')
+        try:
+            super().load_extension(name, package=package)
+            self._ext_log.info(f'{col(2)}Loaded extension {col(2, fmt=4)}{name}{col()}')
+        except Exception as e:
+            self._ext_log.error(f'Failed to load extension {name}', exc_info=e)
+            raise e
+
+    def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        self._ext_log.info(f'{col(7)}Attempting to unload extension {col(7, fmt=4)}{name}{col()}')
+        try:
+            super().unload_extension(name, package=package)
+            self._ext_log.info(f'{col(2)}Unloaded extension {col(2, fmt=4)}{name}{col()}')
+        except Exception as e:
+            self._ext_log.error(f'Failed to unload extension {name}', exc_info=e)
+            raise e
+
+    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        self._ext_log.info(f'{col(7)}Attempting to reload extension {col(7, fmt=4)}{name}{col()}')
+        try:
+            super().reload_extension(name, package=package)
+            self._ext_log.info(f'{col(2)}Reloaded extension {col(2, fmt=4)}{name}{col()}')
+        except Exception as e:
+            self._ext_log.error(f'Failed to reload extension {name}', exc_info=e)
+            raise e

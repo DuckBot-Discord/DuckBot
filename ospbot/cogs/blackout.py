@@ -35,7 +35,8 @@ class BlackoutMode(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
-        if channel.guild.id != self.main_guild_id: return
+        if channel.guild.id != self.main_guild_id:
+            return
         await channel.set_permissions(channel.guild.get_role(self.blackout_role_id), view_channel=False,
                                       reason=f'automatic Blackout mode')
 

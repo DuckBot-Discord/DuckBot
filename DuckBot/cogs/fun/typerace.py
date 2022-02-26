@@ -1,10 +1,12 @@
+import collections
 import random
 
 import asyncio
+
 import discord
 import typing
 from discord.ext import commands
-from async_timeout import timeout
+import async_timeout
 
 from ._base import FunBase
 from ... import errors
@@ -14,18 +16,17 @@ from ...helpers.context import CustomContext
 
 class TypeRace(FunBase):
 
-    async def message_receiver(self, channel: discord.TextChannel, content: str, t_o: int) -> discord.Message:
-        def check(m):
+    async def message_receiver(self, channel: discord.TextChannel, content: str, timeout: int) -> collections.AsyncIterable[discord.Message]:
+        def check(m: discord.Message):
             return m.channel == channel and m.content.lower() == content.lower() and not m.author.bot
 
         try:
-            async with timeout(t_o):
+            async with async_timeout.timeout(timeout):
                 while True:
-                    message = await self.bot.wait_for('message', timeout=t_o, check=check)
+                    message = await self.bot.wait_for('message', timeout=timeout, check=check)
                     yield message
         except asyncio.TimeoutError:
             return
-
 
     @commands.max_concurrency(1, per=commands.BucketType.channel)
     @commands.command(name='type-race', aliases=['tr'], brief='Starts a type-race game. No cheating!')
@@ -64,7 +65,7 @@ class TypeRace(FunBase):
             except discord.HTTPException:
                 raise errors.NoHideout()
 
-        async for message in self.message_receiver(content=words, channel=ctx.channel, t_o=amount * 5):
+        async for message in self.message_receiver(content=words, channel=ctx.channel, timeout=amount * 5):
             self.bot.loop.create_task(update_message(message))
 
         if not messages:
