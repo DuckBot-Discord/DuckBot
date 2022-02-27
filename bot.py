@@ -4,6 +4,9 @@ import re
 import logging
 import discord
 import asyncpg
+import functools
+import asyncio
+import concurrent.futures
 from typing import (
     TYPE_CHECKING,
     List,
@@ -11,8 +14,13 @@ from typing import (
     TypeVar,
     Type,
     Generic,
-    Tuple
+    Tuple,
+    Callable,
+    Awaitable,
+    Coroutine,
+    Any
 )
+
 from discord.ext import commands
 from collections import defaultdict
 
@@ -21,12 +29,19 @@ from utils.helpers import col
 from utils.time import human_timedelta
 from utils.errors import *
 
+try:
+    from typing import ParamSpec
+except ImportError:
+    from typing_extensions import ParamSpec
+
 if TYPE_CHECKING:
     from asyncpg import Pool
     from aiohttp import ClientSession
 
 DBT = TypeVar('DBT', bound='DuckBot')
 DCT = TypeVar('DCT', bound='DuckContext')
+P = ParamSpec('P')
+T = TypeVar('T')
 
 
 fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
@@ -82,6 +97,7 @@ class DuckBot(commands.Bot):
         self.prefix_cache = defaultdict(set)
         self.session: ClientSession = session
         self.pool: Pool = pool
+        self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
         
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -230,3 +246,39 @@ class DuckBot(commands.Bot):
                 f"For a list of commands do`{prefixes[0]}help` 💞"[0:2000])
             
         await self.process_commands(message)
+
+    def wrap(self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> Awaitable[T]:
+        """Wrap a blocking function to be not blocking.
+        
+        Parameters
+        ----------
+        Callable[P, T]
+            The function to wrap.
+        *args
+            The arguments to pass to the function.
+        **kwargs
+            The keyword arguments to pass to the function.
+        
+        Returns
+        -------
+        Awaitable[T]
+            The wrapped function you can await.
+        """
+        return self.loop.run_in_executor(self.thread_pool, functools.partial(func, *args, **kwargs))
+    
+    def create_task(self, coro: Coroutine[T, Any, Any], *, name: Optional[str] = None) -> asyncio.Task[T]:
+        """Create a task from a coroutine object.
+        
+        Parameters
+        ----------
+        coro: :class:`~asyncio.Coroutine`
+            The coroutine to create the task from.
+        name: Optional[:class:`str`]
+            The name of the task.
+            
+        Returns
+        -------
+        :class:`~asyncio.Task`
+            The task that was created.
+        """
+        return self.loop.create_task(coro, name=name)
