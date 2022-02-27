@@ -19,18 +19,36 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-import asyncio
+import re
 import datetime
-from typing import Tuple
 from dateutil.relativedelta import relativedelta
 import parsedatetime as pdt
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union
+)
+
 from discord.ext import commands
-import re
+
+if TYPE_CHECKING:
+    from .context import DuckContext 
 
 # Monkey patch mins and secs into the units
 units = pdt.pdtLocales['en_US'].units
 units['minutes'].append('mins')
 units['seconds'].append('secs')
+
+STT = TypeVar('STT', bound='ShortTime')
+HTT = TypeVar('HTT', bound='HumanTime')
+TT = TypeVar('TT', bound='Time')
 
 
 class ShortTime:
@@ -47,18 +65,19 @@ class ShortTime:
                              (?:(?P<seconds>[0-9]{1,5})(?:seconds?|s))?    # e.g. 15s
                           """, re.VERBOSE)
 
-    def __init__(self, argument, *, now=None):
+    def __init__(self, argument: str, *, now: Optional[datetime.datetime] = None) -> None:
         match = self.compiled.fullmatch(argument)
         if match is None or not match.group(0):
             raise commands.BadArgument('invalid time provided')
 
-        data = { k: int(v) for k, v in match.groupdict(default=0).items() }
+        data = {k: int(v) for k, v in match.groupdict(default=0).items()}
         now = now or datetime.datetime.now(datetime.timezone.utc)
         self.dt = now + relativedelta(**data)
 
     @classmethod
-    async def convert(cls, ctx, argument):
+    async def convert(cls: Type[STT], ctx: DuckContext, argument: str) -> STT:
         return cls(argument, now=ctx.message.created_at)
+
 
 class HumanTime:
     __slots__: Tuple[str, ...] = (
@@ -68,7 +87,7 @@ class HumanTime:
     
     calendar = pdt.Calendar(version=pdt.VERSION_CONTEXT_STYLE)
 
-    def __init__(self, argument, *, now=None):
+    def __init__(self, argument: str, *, now: Optional[datetime.datetime] = None) -> None:
         now = now or datetime.datetime.utcnow()
         dt, status = self.calendar.parseDT(argument, sourceTime=now)
         if not status.hasDateOrTime:
@@ -82,14 +101,14 @@ class HumanTime:
         self._past = dt < now
 
     @classmethod
-    async def convert(cls, ctx, argument):
+    async def convert(cls: Type[HTT], ctx: DuckContext, argument: str) -> HTT:
         return cls(argument, now=ctx.message.created_at)
     
     
 class Time(HumanTime):
     __slots__: Tuple[str, ...] = ()
     
-    def __init__(self, argument, *, now=None):
+    def __init__(self, argument: str, *, now: Optional[datetime.datetime] = None) -> None:
         try:
             o = ShortTime(argument, now=now)
         except Exception as e:
@@ -102,7 +121,7 @@ class Time(HumanTime):
 class FutureTime(Time):
     __slots__: Tuple[str, ...] = ()
     
-    def __init__(self, argument, *, now=None):
+    def __init__(self, argument: str, *, now: Optional[datetime.datetime] = None) -> None:
         super().__init__(argument, now=now)
 
         if self._past:
@@ -118,17 +137,22 @@ class UserFriendlyTime(commands.Converter):
         'default',
     )
     
-    def __init__(self, converter=None, *, default=None):
+    def __init__(
+        self, 
+        converter: Optional[Union[Callable[[DuckContext, str], Any], Type[commands.Converter], commands.Converter]] = None, 
+        *, 
+        default: Optional[str] = None
+    ) -> None:
         if isinstance(converter, type) and issubclass(converter, commands.Converter):
             converter = converter() # type: ignore
 
         if converter is not None and not isinstance(converter, commands.Converter):
             raise TypeError('commands.Converter subclass necessary.')
 
-        self.converter = converter
-        self.default = default
+        self.converter = converter # type: Optional[Union[Callable[[DuckContext, str], Any], Type[commands.Converter], commands.Converter]] # Fuck you im commenting it
+        self.default: Optional[str] = default
 
-    async def check_constraints(self, ctx, now, remaining):
+    async def check_constraints(self, ctx: DuckContext, now: datetime.datetime, remaining: Union[str, datetime.datetime]) -> UserFriendlyTime: 
         if self.dt < now:
             raise commands.BadArgument('This time is in the past.')
 
@@ -141,16 +165,17 @@ class UserFriendlyTime(commands.Converter):
             self.arg = await self.converter.convert(ctx, remaining) # type: ignore
         else:
             self.arg = remaining
+            
         return self
 
-    def copy(self):
+    def copy(self) -> UserFriendlyTime:
         cls = self.__class__
         obj = cls.__new__(cls)
         obj.converter = self.converter
         obj.default = self.default
         return obj
 
-    async def convert(self, ctx, argument):
+    async def convert(self, ctx: DuckContext, argument: str) -> UserFriendlyTime:
         # Create a copy of ourselves to prevent race conditions from two
         # events modifying the same instance of a converter
         result = self.copy()
@@ -165,7 +190,6 @@ class UserFriendlyTime(commands.Converter):
                 remaining = argument[match.end():].strip()
                 result.dt = now + relativedelta(**data)
                 return await result.check_constraints(ctx, now, remaining)
-
 
             # apparently nlp does not like "from now"
             # it likes "from x" in other cases though so let me handle the 'now' case
@@ -229,18 +253,21 @@ class UserFriendlyTime(commands.Converter):
             raise
             
 class plural:
-    def __init__(self, value):
-        self.value = value
-    def __format__(self, format_spec):
+    def __init__(self, value: int) -> None:
+        self.value: int = value
+        
+    def __format__(self, format_spec: str) -> str:
         v = self.value
         singular, sep, plural = format_spec.partition('|')
         plural = plural or f'{singular}s'
+        
         if abs(v) != 1:
             return f'{v} {plural}'
+        
         return f'{v} {singular}'
 
 
-def human_join(seq, delim=', ', final='or'):
+def human_join(seq: List[str], delim=', ', final='or') -> str:
     size = len(seq)
     if size == 0:
         return ''
@@ -254,7 +281,14 @@ def human_join(seq, delim=', ', final='or'):
     return delim.join(seq[:-1]) + f' {final} {seq[-1]}'
 
 
-def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
+def human_timedelta(
+    dt: datetime.datetime, 
+    *, 
+    source: Optional[datetime.datetime] = None, 
+    accuracy: int = 3, 
+    brief: bool = False, 
+    suffix: Union[bool, str] =True
+) -> str:
     now = source or datetime.datetime.now(datetime.timezone.utc)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=datetime.timezone.utc)
