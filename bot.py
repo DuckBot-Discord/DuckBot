@@ -18,6 +18,8 @@ from collections import defaultdict
 
 from cogs.utils.context import DuckContext
 from cogs.utils.helpers import col
+from cogs.utils.time import human_timedelta
+from cogs.utils.errors import *
 
 if TYPE_CHECKING:
     from asyncpg import Pool
@@ -117,9 +119,12 @@ class DuckBot(commands.Bot):
         
         Raises
         ------
-        AttributeError
+        DuckBotNotStarted
             The bot has not hit on-ready yet.
         """
+        if not self.is_ready():
+            raise DuckBotNotStarted('The bot has not hit on-ready yet.')
+        
         return discord.utils.oauth_url(self.user.id, permissions=discord.Permissions(8), scopes=('bot', 'applications.commands'))
     
     @discord.utils.cached_property
@@ -128,17 +133,27 @@ class DuckBot(commands.Bot):
         
         Raises
         ------
-        RuntimeError
-            The bot has not hit on-ready yet."""
+        DuckBotNotStarted
+            The bot has not hit on-ready yet.
+        """
         if not self.is_ready():
-            raise RuntimeError('Bot has not started yet.')
+            raise DuckBotNotStarted('The bot has not hit on-ready yet.')
         
         return discord.utils.format_dt(self.start_time)
     
     @property
     def human_uptime(self) -> str:
-        raise NotImplementedError()
-    
+        """:class:`str`: The uptime of the bot in a human readable format.
+        
+        Raises
+        ------
+        DuckBotNotStarted
+            The bot has not hit on-ready yet.
+        """
+        if not self.is_ready():
+            raise DuckBotNotStarted('The bot has not hit on-ready yet.')
+        
+        return human_timedelta(self.start_time)
     
     async def get_prefix(self, message: discord.Message, raw: bool = False) -> List[str]:
         """|coro|
