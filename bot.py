@@ -22,6 +22,8 @@ load_dotenv()
 fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
 logging.basicConfig(level=logging.INFO, format=fmt)
 
+log = logging.getLogger('DuckBot.main')
+
 
 class DuckBot(commands.Bot):
     def __init__(self) -> None:
@@ -29,13 +31,12 @@ class DuckBot(commands.Bot):
         intents.typing = False  # noqa
 
         super().__init__(
-            command_prefix=('dbb.', 'Dbb.', 'DBB.'),
+            command_prefix={'dbb.', 'Dbb.', 'DBB.'},
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions.none(),
             intents=intents
         )
         self.prefix_cache = defaultdict(set)
-        self.logger = logging.getLogger('DuckBot.main')
         
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
@@ -91,7 +92,7 @@ class DuckBot(commands.Bot):
         Called when the bot connects to the gateway. Used to log to console
         some basic information about the bot.
         """
-        self.logger.info(f'{col(2)}Logged in as {self.user}! ({self.user.id})')
+        log.info(f'{col(2)}Logged in as {self.user}! ({self.user.id})')
 
     async def on_ready(self):
         """|coro|
@@ -99,7 +100,7 @@ class DuckBot(commands.Bot):
         Called when the internal cache of the bot is ready, and the bot is
         connected to the gateway.
         """
-        self.logger.info(f'{col(2)}All guilds are chunked and ready to go!')
+        log.info(f'{col(2)}All guilds are chunked and ready to go!')
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         """|coro|
