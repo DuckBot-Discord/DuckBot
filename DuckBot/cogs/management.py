@@ -876,7 +876,7 @@ class Management(commands.Cog, name='Bot Management'):
             except Exception as e:
                 to_send = f'{e.__class__.__name__}: {e}'
                 if len(to_send) > 1985:
-                    gist = await self.bot.create_gist(filename='output.py', description='Eval output', content=to_send, public=False)
+                    gist = await self.bot.create_gist(filename='output.py', description='Eval output', content=to_send)
                     await ctx.trigger_typing()
                     return await to_edit.edit(content=f"**Output too long:**\n<{gist}>")
                 await to_edit.edit(content=f'```py\n{to_send}\n```')

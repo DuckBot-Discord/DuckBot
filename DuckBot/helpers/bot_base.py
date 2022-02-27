@@ -79,8 +79,8 @@ class LoggingConfig:
 
 class BaseDuck(slash_util.Bot):
     PRE: tuple = ('db.',)
-    logger = logging.getLogger('DuckBot')
-    _ext_log = logging.getLogger('ExtensionManager')
+    logger = logging.getLogger('DuckBot.logging')
+    _ext_log = logging.getLogger('DuckBot.extensions')
 
     def __init__(self) -> None:
         intents = discord.Intents.all()

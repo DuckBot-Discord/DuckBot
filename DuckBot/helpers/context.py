@@ -186,7 +186,7 @@ class CustomContext(commands.Context):
             await self.trigger_typing()
             content = await self.bot.create_gist(filename=f'output.{extension}',
                                                  description='DuckBot send',
-                                                 content=cleanup_code(content), public=True)
+                                                 content=cleanup_code(content))
             content = f"<{content}>"
 
         elif maybe_attachment and len(content) > 2000:
