@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional
 
 import discord
 from discord.ext import commands
 
 if TYPE_CHECKING:
     from discord.message import Message
-
+    from bot import DuckBot
+    
 __all__: Tuple[str, ...] = (
     'DuckContext',
     'tick',
@@ -48,6 +49,9 @@ class DuckContext(commands.Context):
     tick: Callable[[Optional[:class:`str`], Optional[:class:`str`]], :class:`str`]
         A function to convert a boolean value with label to an emoji with label.
     """
+    if TYPE_CHECKING:
+        bot: DuckBot
+        
     __slots__: Tuple[str, ...] = ()
     
     def __init__(self, *args, **kwargs) -> None:
