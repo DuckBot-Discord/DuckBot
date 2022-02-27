@@ -1,5 +1,6 @@
 # exceptions.py
 import datetime
+from typing import Tuple
 
 import discord
 from discord import Enum
@@ -43,6 +44,10 @@ class NoHideout(commands.CheckFailure):
 
 
 class EconomyNotSetup(commands.CheckFailure):
+    __slots__: Tuple[str, ...] = (
+        'prompt',
+    )
+    
     def __init__(self, prompt: bool = False):
         self.prompt: bool = prompt
 
