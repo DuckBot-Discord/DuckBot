@@ -14,9 +14,13 @@ TOKEN = os.environ.get('TOKEN')
 if not TOKEN:
     raise RuntimeError('No token found in .env')
 
+URI = os.environ.get('POSTGRES')
+if not URI:
+    raise RuntimeError('No URI found in .env')
+
 async def run_bot() -> None:
     try:
-        pool = await DuckBot.setup_pool(uri='postgresql://duck:duck@localhost:5432/duck')
+        pool = await DuckBot.setup_pool(uri=URI)
     except:
         traceback.print_exc()
         return
