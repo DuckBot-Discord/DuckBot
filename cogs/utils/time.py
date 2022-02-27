@@ -27,7 +27,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Iterable,
     List,
     Optional,
     Tuple,
