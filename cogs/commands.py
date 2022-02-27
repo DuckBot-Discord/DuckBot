@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Tuple
 import discord
 from discord.ext import commands
 
-from .utils import DuckCog
+from utils import DuckCog
 
 if TYPE_CHECKING:
     from bot import DuckBot
