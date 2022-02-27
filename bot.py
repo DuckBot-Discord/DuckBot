@@ -63,7 +63,10 @@ class DuckBot(commands.Bot):
             command_prefix={'dbb.', 'Dbb.', 'DBB.'},
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions.none(),
-            intents=intents
+            intents=intents,
+            activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+            strip_after_prefix=True,
+            chunk_guilds_at_startup=False
         )
         self.prefix_cache = defaultdict(set)
         self.session: ClientSession = session
