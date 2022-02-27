@@ -2,7 +2,9 @@ import re
 import logging
 import discord
 
-from typing import List
+from typing import (
+    List,
+)
 from discord.ext import commands
 from collections import defaultdict
 from dotenv import load_dotenv
@@ -10,14 +12,14 @@ from dotenv import load_dotenv
 from cogs.utils.context import DuckContext
 from cogs.utils.helpers import col
 
-
 load_dotenv()
+
 fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
 logging.basicConfig(level=logging.INFO, format=fmt)
 
 
 class DuckBot(commands.Bot):
-    def __init__(self):
+    def __init__(self) -> None:
         intents = discord.Intents.all()
         intents.typing = False  # noqa
 
@@ -31,9 +33,17 @@ class DuckBot(commands.Bot):
         self.logger = logging.getLogger('DuckBot.main')
 
     async def get_prefix(self, message: discord.Message, raw: bool = False) -> List[str]:
-        """
+        """|coro|
+        
         Returns the prefixes for the given message.
         if raw is True, returns the prefixes without the bots mention.
+        
+        Parameters
+        ----------
+        message: :class:`~discord.Message`
+            The message to get the prefix of.
+        raw: :class:`bool`
+            Whether to return the raw prefixes or not.
         """
         meth = commands.when_mentioned_or if raw is False else lambda *pres: lambda _, __: list(pres)
 
