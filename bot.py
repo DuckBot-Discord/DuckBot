@@ -14,7 +14,6 @@ from typing import (
 )
 from discord.ext import commands
 from collections import defaultdict
-from dotenv import load_dotenv
 
 from cogs.utils.context import DuckContext
 from cogs.utils.helpers import col
@@ -26,7 +25,6 @@ if TYPE_CHECKING:
 DBT = TypeVar('DBT', bound='DuckBot')
 DCT = TypeVar('DCT', bound='DuckContext')
 
-load_dotenv()
 
 fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
 logging.basicConfig(level=logging.INFO, format=fmt)

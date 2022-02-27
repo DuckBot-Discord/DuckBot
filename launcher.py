@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import os
+import aiohttp
 import asyncio
 import traceback
-import aiohttp
+from dotenv import load_dotenv
+
 from bot import DuckBot
 
+load_dotenv()
+
+TOKEN = os.environ.get('TOKEN')
+if not TOKEN:
+    raise RuntimeError('No token found in .env')
 
 async def run_bot() -> None:
     try:
