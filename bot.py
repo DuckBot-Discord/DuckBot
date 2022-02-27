@@ -16,10 +16,10 @@ from typing import (
 from discord.ext import commands
 from collections import defaultdict
 
-from cogs.utils.context import DuckContext
-from cogs.utils.helpers import col
-from cogs.utils.time import human_timedelta
-from cogs.utils.errors import *
+from utils.context import DuckContext
+from utils.helpers import col
+from utils.time import human_timedelta
+from utils.errors import *
 
 if TYPE_CHECKING:
     from asyncpg import Pool
