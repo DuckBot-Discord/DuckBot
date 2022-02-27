@@ -14,8 +14,22 @@ __all__: Tuple[str, ...] = (
 )
 
 def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
+    """A function to convert a boolean value with label to an emoji with label.
+        
+    Parameters
+    ----------
+    opt: Optional[:class:`bool`]
+        The boolean value to convert.
+    label: Optional[:class:`str`]
+        The label to use for the emoji.
+    
+    Returns
+    -------
+    :class:`str`
+        The emoji with label.
+    """
     lookup = {
-        True: '✅',
+        True: '\N{WHITE HEAVY CHECK MARK}',
         False: '❌',
         None: '❔',
     }
@@ -34,13 +48,15 @@ class DuckContext(commands.Context):
     tick: Callable[[Optional[:class:`str`], Optional[:class:`str`]], :class:`str`]
         A function to convert a boolean value with label to an emoji with label.
     """
-    __slots__: Tuple[str, ...] = (
-        'tick',
-    )
+    __slots__: Tuple[str, ...] = ()
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.tick: Callable[[Optional[bool], Optional[str]], str] = tick
+        
+    @staticmethod
+    @discord.utils.copy_doc(tick)
+    def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
+        return tick(opt, label)
         
     @discord.utils.cached_property
     def color(self) -> discord.Color:
