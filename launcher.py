@@ -17,10 +17,9 @@ async def run_bot() -> None:
     try:
         async with aiohttp.ClientSession() as session:
             duck = DuckBot(session=session, pool=pool)
-            
             await duck.start(TOKEN, reconnect=True)
     except Exception:
-        traceback.print_exc()
+        return traceback.print_exc()
     finally:
         if duck and not duck.is_closed():
             await duck.close()
