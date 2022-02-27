@@ -86,7 +86,7 @@ class DuckBot(commands.Bot):
         intents.typing = False  # noqa
         
         super().__init__(
-            command_prefix={'dbb.', 'Dbb.', 'DBB.'},
+            command_prefix={'dbb.',},
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions.none(),
             intents=intents,
@@ -191,7 +191,10 @@ class DuckBot(commands.Bot):
         meth = commands.when_mentioned_or if raw is False else lambda *pres: lambda _, __: list(pres)
 
         if message.guild:
-            prefixes = self.prefix_cache.get(message.guild.id) or self.command_prefix
+            if not (prefixes := self.prefix_cache.get(message.guild.id)):
+                for prefix in self.command_prefix:
+                    self.prefix_cache[message.guild.id].add(prefix)
+                prefixes = self.command_prefix
         else:
             prefixes = self.command_prefix
 
@@ -247,7 +250,7 @@ class DuckBot(commands.Bot):
             
         await self.process_commands(message)
 
-    def wrap(self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> Awaitable[T]:
+    def wrap(self, func: Callable[[P], T], *args: P.args, **kwargs: P.kwargs) -> Awaitable[T]:
         """Wrap a blocking function to be not blocking.
         
         Parameters
