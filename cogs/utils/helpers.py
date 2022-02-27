@@ -1,3 +1,9 @@
+from typing import Tuple
+
+__all__: Tuple[str, ...] = (
+    'col',
+)
+
 def col(color=None, /, *, fmt=0, bg=False) -> str:
     """
     Returns the ascii color escape string for the given number.

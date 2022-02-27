@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import re
 import logging
 import discord
-
+import asyncpg
 from typing import (
+    TYPE_CHECKING,
     List,
     Optional,
     TypeVar,
-    Type
+    Type,
+    Generic
 )
 from discord.ext import commands
 from collections import defaultdict
@@ -15,6 +19,11 @@ from dotenv import load_dotenv
 from cogs.utils.context import DuckContext
 from cogs.utils.helpers import col
 
+if TYPE_CHECKING:
+    from asyncpg import Pool
+    from aiohttp import ClientSession
+
+DBT = TypeVar('DBT', bound='DuckBot')
 DCT = TypeVar('DCT', bound='DuckContext')
 
 load_dotenv()
@@ -25,11 +34,25 @@ logging.basicConfig(level=logging.INFO, format=fmt)
 log = logging.getLogger('DuckBot.main')
 
 
+class DbTempContextManager(Generic[DBT]):
+    def __init__(self, chai: Type[DBT], uri: str) -> None:
+        self.bot: Type[DBT] = chai
+        self.uri: str = uri
+        self._pool: Optional[asyncpg.Pool] = None
+    
+    async def __aenter__(self) -> asyncpg.Pool:
+        self._pool = pool = await self.bot.setup_pool(uri=self.uri)
+        return pool
+    
+    async def __aexit__(self, *args) -> None:
+        if self._pool:
+            await self._pool.close()
+
 class DuckBot(commands.Bot):
-    def __init__(self) -> None:
+    def __init__(self, *, session: ClientSession, pool: Pool) -> None:
         intents = discord.Intents.all()
         intents.typing = False  # noqa
-
+        
         super().__init__(
             command_prefix={'dbb.', 'Dbb.', 'DBB.'},
             case_insensitive=True,
@@ -37,6 +60,30 @@ class DuckBot(commands.Bot):
             intents=intents
         )
         self.prefix_cache = defaultdict(set)
+        self.session: ClientSession = session
+        self.pool: Pool = pool
+        
+    @classmethod
+    def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
+        return DbTempContextManager(cls, uri)
+        
+    @classmethod
+    async def setup_pool(cls: Type[DBT], *, uri: str, **kwargs) -> asyncpg.Pool: 
+        def _encode_jsonb(value):
+            return discord.utils._to_json(value)
+
+        def _decode_jsonb(value):
+            return discord.utils._from_json(value)
+        
+        old_init = kwargs.pop('init', None)
+        
+        async def init(con):
+            await con.set_type_codec('jsonb', schema='pg_catalog', encoder=_encode_jsonb, decoder=_decode_jsonb, format='text')
+            if old_init is not None:
+                await old_init(con)
+                
+        pool = await asyncpg.create_pool(uri, init=init, **kwargs)
+        return pool
         
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
