@@ -55,6 +55,12 @@ class DbTempContextManager(Generic[DBT]):
 
 
 class DuckBot(commands.Bot):
+    if TYPE_CHECKING:
+        # We do this to make sure we dont get annoying 
+        # type checker errors. Most of the time user isnt going to be 
+        # None, so this is just a convenience thing.
+        user: discord.ClientUser
+    
     def __init__(self, *, session: ClientSession, pool: Pool) -> None:
         intents = discord.Intents.all()
         intents.typing = False  # noqa
@@ -104,7 +110,36 @@ class DuckBot(commands.Bot):
             The bot has not hit on-ready yet.
         """
         return re.compile(rf"<@!?{self.user.id}>")
-
+    
+    @discord.utils.cached_property
+    def invite_url(self) -> str:
+        """:class:`str`: The invite URL for the bot.
+        
+        Raises
+        ------
+        AttributeError
+            The bot has not hit on-ready yet.
+        """
+        return discord.utils.oauth_url(self.user.id, permissions=discord.Permissions(8), scopes=('bot', 'applications.commands'))
+    
+    @discord.utils.cached_property
+    def timestamp_uptime(self) -> str:
+        """:class:`str`: The uptime of the bot in a human readable Discord timestamp format.
+        
+        Raises
+        ------
+        RuntimeError
+            The bot has not hit on-ready yet."""
+        if not self.is_ready():
+            raise RuntimeError('Bot has not started yet.')
+        
+        return discord.utils.format_dt(self.start_time)
+    
+    @property
+    def human_uptime(self) -> str:
+        raise NotImplementedError()
+    
+    
     async def get_prefix(self, message: discord.Message, raw: bool = False) -> List[str]:
         """|coro|
         
@@ -157,6 +192,7 @@ class DuckBot(commands.Bot):
         connected to the gateway.
         """
         log.info(f'{col(2)}All guilds are chunked and ready to go!')
+        self.start_time = discord.utils.utcnow()
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         """|coro|
@@ -169,7 +205,7 @@ class DuckBot(commands.Bot):
         Optional[:class:`~discord.Message`]
             The message that was created for replying to the user.
         """
-        if self.mention_regex.fullmatch(rf"<@!?{self.user.id}>", message.content):
+        if self.mention_regex.fullmatch(message.content):
             prefixes = await self.get_prefix(message, raw=True)
             return await message.reply(
                 f"My prefixes here are `{'`, `'.join(prefixes[0:10])}`\n"

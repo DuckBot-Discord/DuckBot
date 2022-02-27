@@ -71,7 +71,12 @@ class DuckContext(commands.Context):
             you_color if check(you_color := self.author.color) else None,
             discord.Color.blurple()
         )
-        return any(checks)
+        
+        result = discord.utils.find(lambda e: e, checks)
+        if not result:
+            raise RuntimeError('Unreachable code has been reached')
+        
+        return result
         
     async def send(self, *args, **kwargs) -> Message:
         """|coro|
