@@ -23,6 +23,10 @@ def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
 
 
 class DuckContext(commands.Context):
+    __slots__: Tuple[str, ...] = (
+        'tick',
+    )
+    
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.tick: Callable[[Optional[bool], Optional[str]], str] = tick
