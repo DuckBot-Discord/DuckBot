@@ -10,7 +10,8 @@ from typing import (
     Optional,
     TypeVar,
     Type,
-    Generic
+    Generic,
+    Tuple
 )
 from discord.ext import commands
 from collections import defaultdict
@@ -33,6 +34,12 @@ log = logging.getLogger('DuckBot.main')
 
 
 class DbTempContextManager(Generic[DBT]):
+    __slots__: Tuple[str, ...] = (
+        'bot',
+        'uri',
+        '_pool'
+    )
+    
     def __init__(self, chai: Type[DBT], uri: str) -> None:
         self.bot: Type[DBT] = chai
         self.uri: str = uri
@@ -45,6 +52,7 @@ class DbTempContextManager(Generic[DBT]):
     async def __aexit__(self, *args) -> None:
         if self._pool:
             await self._pool.close()
+
 
 class DuckBot(commands.Bot):
     def __init__(self, *, session: ClientSession, pool: Pool) -> None:
