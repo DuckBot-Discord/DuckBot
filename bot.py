@@ -34,6 +34,9 @@ logging.basicConfig(level=logging.INFO, format=fmt)
 
 log = logging.getLogger('DuckBot.main')
 
+initial_extensions: Tuple[str, ...] = (
+    '',
+)
 
 class DbTempContextManager(Generic[DBT]):
     __slots__: Tuple[str, ...] = (

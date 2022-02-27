@@ -9,6 +9,13 @@ if TYPE_CHECKING:
 
 
 class DuckCog(commands.Cog):
+    """The base class for all DuckBot cogs.
+    
+    Attributes
+    ----------
+    bot: DuckBot
+        The bot instance.
+    """
     __slots__: Tuple[str, ...] = (
         'bot',
     )
