@@ -66,6 +66,44 @@ class DbTempContextManager(Generic[DBT]):
     async def __aexit__(self, *args) -> None:
         if self._pool:
             await self._pool.close()
+            
+            
+class DbContextManager(Generic[DBT]):
+    """A simple context manager used to manage database connections.
+    
+    .. note::
+        
+        Please note this was created instead of using `contextlib.asynccontextmanager` because
+        I plan to add additional functionality to this class in the future.
+    
+    Attributes
+    ----------
+    bot: :class:`DuckBot`
+        The bot instance.
+    timeout: :class:`float`
+        The timeout for acquiring a connection.
+    """
+    
+    __slots__: Tuple[str, ...] = (
+        'bot',
+        'timeout',
+        '_pool',
+        '_conn'
+    )
+    
+    def __init__(self, bot: DBT, *, timeout: float = 10.0) -> None:
+        self.bot: DBT = bot
+        self.timeout: float = timeout
+        self._pool: asyncpg.Pool = bot.pool
+        self._conn: Optional[asyncpg.Connection] = None
+    
+    async def __aenter__(self) -> asyncpg.Connection:
+        self._conn = conn = await self._pool.acquire(timeout=self.timeout)
+        return conn
+    
+    async def __aexit__(self, *args):
+        if self._conn:
+            await self._pool.release(self._conn)
 
 
 class DuckBot(commands.Bot):
@@ -167,6 +205,18 @@ class DuckBot(commands.Bot):
             raise DuckBotNotStarted('The bot has not hit on-ready yet.')
         
         return human_timedelta(self.start_time)
+    
+    def safe_connection(self, *, timeout: float = 10.0) -> DbContextManager:
+        """A context manager that will acquire a connection from the bot's pool.
+        
+        This will neatly manage the connection and release it back to the pool when the context is exited.
+        
+        .. code-block:: python3
+            
+            async with bot.safe_connection(timeout=10) as conn:
+                await conn.execute('SELECT * FROM table')
+        """
+        return DbContextManager(self, timeout=timeout)
     
     async def get_prefix(self, message: discord.Message, raw: bool = False) -> List[str]:
         """|coro|
