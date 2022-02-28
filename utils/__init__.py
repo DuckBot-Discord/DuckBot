@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 P = ParamSpec('P')
 
-def add_logging(func: Callable[[P], Union[Awaitable[T], T]]) -> Callable[P, Union[Awaitable[T], T]]:
+def add_logging(func: Callable[P, Union[Awaitable[T], T]]) -> Callable[P, Union[Awaitable[T], T]]:
     """
     Used to add logging to a coroutine or function.
     
