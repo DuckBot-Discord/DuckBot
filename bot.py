@@ -47,14 +47,12 @@ DCT = TypeVar('DCT', bound='DuckContext')
 T = TypeVar('T')
 P = ParamSpec('P')
 
-log_fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-
 log = logging.getLogger('DuckBot.main')
 
 initial_extensions: Tuple[str, ...] = (
     # Helpers
     'jishaku',
+    'utils.context',
     
     # Cogs
     'cogs.guild_config',
@@ -68,7 +66,7 @@ def _wrap_extension(func: Callable[[P], T]) -> Callable[[P], T]:
         result = func(*args, **kwargs)
         
         fmt_args = 'on ext "{}"{}'.format(args[1], f' with kwargs {kwargs}' if kwargs else '')
-        fmt = f'{func.__name__} took {time.time() - start:.2f} seconds {fmt_args}'
+        fmt = f'{col(5)}{func.__name__}{col()} took {time.time() - start:.2f} seconds {fmt_args}'
         log.info(fmt)
         
         return result
@@ -188,6 +186,7 @@ class DuckBot(commands.Bot):
         
         self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
+        self._context_cls = commands.Context
         
         for extension in initial_extensions:
             self.load_extension(extension)
@@ -359,7 +358,7 @@ class DuckBot(commands.Bot):
 
         return meth(*prefixes)(self, message)
 
-    async def get_context(self, message: discord.Message, *, cls: Type[DCT] = DuckContext) -> DuckContext:
+    async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> DuckContext | commands.Context:
         """|coro|
         
         Used to get the invocation context from the message.
@@ -371,6 +370,7 @@ class DuckBot(commands.Bot):
         cls: Type[:class:`DuckContext`]
             The class to use for the context.
         """
+        cls = cls or self._context_cls
         return await super().get_context(message, cls=cls)
 
     async def on_connect(self):

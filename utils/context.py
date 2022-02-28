@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Tuple, Optional
 
 import discord
@@ -13,6 +14,7 @@ __all__: Tuple[str, ...] = (
     'DuckContext',
     'tick',
 )
+
 
 def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
     """A function to convert a boolean value with label to an emoji with label.
@@ -104,3 +106,25 @@ class DuckContext(commands.Context):
             kwargs['embeds'] = embeds
 
         return await super().send(*args, **kwargs)
+
+
+def setup(bot: DuckBot) -> None:
+    """Sets up the DuckContext class.
+
+    Parameters
+    ----------
+    bot: DuckBot
+        The bot to set up the DuckContext class for.
+    """
+    bot._context_cls = DuckContext
+
+
+def teardown(bot: DuckBot) -> None:
+    """Tears down the DuckContext class.
+
+    Parameters
+    ----------
+    bot: DuckBot
+        The bot to tear down the DuckContext class for.
+    """
+    bot._context_cls = commands.Context
