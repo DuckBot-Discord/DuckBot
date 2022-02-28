@@ -7,11 +7,14 @@ from typing import (
     Optional, 
     Tuple,
     TypeVar,
-    ParamSpec,
     Callable,
     Awaitable,
     Union,
 )
+try:
+    from typing import ParamSpec
+except ImportError:
+    from typing_extensions import ParamSpec
 
 from discord.ext import commands
 
@@ -22,7 +25,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 P = ParamSpec('P')
 
-def add_logging(func: Callable[P, Union[Awaitable[T], T]]) -> Callable[P, Union[Awaitable[T], T]]:
+def add_logging(func: Callable[[P], Union[Awaitable[T], T]]) -> Callable[P, Union[Awaitable[T], T]]:
     """
     Used to add logging to a coroutine or function.
     
@@ -71,6 +74,16 @@ class DuckCog(commands.Cog):
     __slots__: Tuple[str, ...] = (
         'bot',
     )
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        """
+        This is called when a subclass is created.
+        Its purpose is to add parameters to the cog
+        that will later be used in the help command.
+        """
+        cls.emoji = kwargs.pop('emoji', None)
+        cls.brief = kwargs.pop('brief', None)
+        super().__init_subclass__(**kwargs)
      
     def __init__(self, bot: DuckBot) -> None:
         self.bot: DuckBot = bot
