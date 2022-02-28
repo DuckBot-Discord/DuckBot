@@ -6,6 +6,7 @@ import discord
 import asyncpg
 import functools
 import asyncio
+import time
 import concurrent.futures
 from typing import (
     TYPE_CHECKING,
@@ -29,6 +30,11 @@ from utils.helpers import col
 from utils.time import human_timedelta
 from utils.errors import *
 
+try:
+    from typing import ParamSpec
+except ImportError:
+    from typing_extensions import ParamSpec
+
 if TYPE_CHECKING:
     from asyncpg import Pool
     from aiohttp import ClientSession
@@ -36,7 +42,7 @@ if TYPE_CHECKING:
 DBT = TypeVar('DBT', bound='DuckBot')
 DCT = TypeVar('DCT', bound='DuckContext')
 T = TypeVar('T')
-
+P = ParamSpec('P')
 
 fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
 logging.basicConfig(level=logging.INFO, format=fmt)
@@ -49,8 +55,24 @@ initial_extensions: Tuple[str, ...] = (
     
     # Cogs
     'cogs.guild_config.prefixes',
-    
 )
+
+
+def _wrap_extension(func: Callable[P, T]) -> Callable[P, T]:
+    
+    def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
+        start = time.time()
+        result = func(*args, **kwargs)
+        
+        fmt = f'{func.__name__} took {time.time() - start:.2f} seconds on ext "{args[1]}"'
+        if kwargs:
+            fmt += f' with kwargs {kwargs}'
+        log.info(fmt)
+        
+        return result
+    
+    return wrapped
+    
 
 class DbTempContextManager(Generic[DBT]):
     """A class to handle a short term pool connection.
@@ -142,7 +164,7 @@ class DuckBot(commands.Bot):
         # type checker errors. Most of the time user isnt going to be 
         # None, so this is just a convenience thing.
         user: discord.ClientUser
-    
+        
     def __init__(self, *, session: ClientSession, pool: Pool) -> None:
         intents = discord.Intents.all()
         intents.typing = False  # noqa
@@ -160,6 +182,9 @@ class DuckBot(commands.Bot):
         self.session: ClientSession = session
         self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+        
+        for extension in initial_extensions:
+            self.load_extension(extension)
         
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -236,6 +261,21 @@ class DuckBot(commands.Bot):
         
         return human_timedelta(self.start_time)
     
+    @_wrap_extension
+    @discord.utils.copy_doc(commands.Bot.load_extension)
+    def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        return super().load_extension(name, package=package)
+    
+    @_wrap_extension
+    @discord.utils.copy_doc(commands.Bot.unload_extension)
+    def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        return super().unload_extension(name, package=package)
+    
+    @_wrap_extension
+    @discord.utils.copy_doc(commands.Bot.reload_extension)
+    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        return super().reload_extension(name, package=package)
+        
     def safe_connection(self, *, timeout: float = 10.0) -> DbContextManager:
         """A context manager that will acquire a connection from the bot's pool.
         
