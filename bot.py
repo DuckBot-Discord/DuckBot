@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import re
 import logging
 import discord
@@ -9,7 +10,6 @@ import asyncio
 import time
 import sys
 import concurrent.futures
-import traceback
 from typing import (
     TYPE_CHECKING,
     List,
@@ -38,6 +38,7 @@ except ImportError:
     from typing_extensions import ParamSpec
 
 if TYPE_CHECKING:
+    from asyncpg.transaction import Transaction
     from asyncpg import Pool
     from aiohttp import ClientSession
     
@@ -46,8 +47,8 @@ DCT = TypeVar('DCT', bound='DuckContext')
 T = TypeVar('T')
 P = ParamSpec('P')
 
-fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
-logging.basicConfig(level=logging.INFO, format=fmt)
+log_fmt = f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
+logging.basicConfig(level=logging.INFO, format=log_fmt)
 
 log = logging.getLogger('DuckBot.main')
 
@@ -56,11 +57,11 @@ initial_extensions: Tuple[str, ...] = (
     'jishaku',
     
     # Cogs
-    'cogs.guild_config.prefixes',
+    'cogs.guild_config',
 )
 
 
-def _wrap_extension(func: Callable[P, T]) -> Callable[P, T]:
+def _wrap_extension(func: Callable[[P], T]) -> Callable[[P], T]:
     
     def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
         start = time.time()
@@ -140,7 +141,7 @@ class DbContextManager(Generic[DBT]):
         self.timeout: float = timeout
         self._pool: asyncpg.Pool = bot.pool
         self._conn: Optional[asyncpg.Connection] = None
-        self._tr: Optional[asyncpg.Transaction] = None
+        self._tr: Optional[Transaction] = None
     
     async def __aenter__(self) -> asyncpg.Connection:
         self._conn = conn = await self._pool.acquire(timeout=self.timeout)
@@ -167,6 +168,7 @@ class DuckBot(commands.Bot):
         user: discord.ClientUser
         
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
+        self.start_time: datetime.datetime = None  # type: ignore
         intents = discord.Intents.all()
         intents.typing = False  # noqa
         
@@ -197,7 +199,7 @@ class DuckBot(commands.Bot):
     @classmethod
     async def setup_pool(cls: Type[DBT], *, uri: str, **kwargs) -> asyncpg.Pool: 
         def _encode_jsonb(value):
-            return discord.utils._to_json(value)
+            return discord.utils._to_json(value) 
 
         def _decode_jsonb(value):
             return discord.utils._from_json(value)
@@ -239,7 +241,7 @@ class DuckBot(commands.Bot):
     
     @discord.utils.cached_property
     def timestamp_uptime(self) -> str:
-        """:class:`str`: The uptime of the bot in a human readable Discord timestamp format.
+        """:class:`str`: The uptime of the bot in a human-readable Discord timestamp format.
         
         Raises
         ------
@@ -250,6 +252,11 @@ class DuckBot(commands.Bot):
             raise DuckBotNotStarted('The bot has not hit on-ready yet.')
         
         return discord.utils.format_dt(self.start_time)
+
+    @discord.utils.cached_property
+    def color(self) -> discord.Colour:
+        """:class:`~discord.Colour`: The vanity colour of the bot."""
+        return discord.Colour(0xf4d58c)
     
     @property
     def human_uptime(self) -> str:
@@ -414,7 +421,7 @@ class DuckBot(commands.Bot):
         if not error:
             raise
         
-        await self.exceptions.add_error(error=error) # type: ignore
+        await self.exceptions.add_error(error=error)  # type: ignore
         return await super().on_error(event, *args, **kwargs)
 
     def wrap(self, func: Callable[..., T], *args, **kwargs) -> Awaitable[T]:
@@ -422,7 +429,7 @@ class DuckBot(commands.Bot):
         
         Parameters
         ----------
-        Callable
+        func: Callable[..., :class:`T`]
             The function to wrap.
         *args
             The arguments to pass to the function.
