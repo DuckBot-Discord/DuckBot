@@ -54,8 +54,8 @@ class DbTempContextManager(Generic[DBT]):
         '_pool'
     )
     
-    def __init__(self, chai: Type[DBT], uri: str) -> None:
-        self.bot: Type[DBT] = chai
+    def __init__(self, bot: Type[DBT], uri: str) -> None:
+        self.bot: Type[DBT] = bot
         self.uri: str = uri
         self._pool: Optional[asyncpg.Pool] = None
     
