@@ -182,6 +182,7 @@ class DuckBot(commands.Bot):
         self.session: ClientSession = session
         self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+        self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
         
         for extension in initial_extensions:
             self.load_extension(extension)
