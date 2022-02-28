@@ -167,7 +167,7 @@ class DuckBot(commands.Bot):
         # None, so this is just a convenience thing.
         user: discord.ClientUser
         
-    def __init__(self, *, session: ClientSession, pool: Pool) -> None:
+    def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
         intents = discord.Intents.all()
         intents.typing = False  # noqa
         
@@ -184,6 +184,8 @@ class DuckBot(commands.Bot):
         self.session: ClientSession = session
         self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+        
+        self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
         
         for extension in initial_extensions:

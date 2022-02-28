@@ -11,13 +11,16 @@ from utils.helpers import col
 
 load_dotenv()
 
-TOKEN = os.environ.get('TOKEN')
-if not TOKEN:
-    raise RuntimeError('No token found in .env')
+def _get_or_fail(env_var: str) -> str:
+    val = os.environ.get(env_var)
+    if not val:
+        raise RuntimeError(f'{env_var} not set in .env file. Set it.')
+    
+    return val
 
-URI = os.environ.get('POSTGRES')
-if not URI:
-    raise RuntimeError('No URI found in .env')
+TOKEN = _get_or_fail('TOKEN')
+URI = _get_or_fail('POSTGRES')
+ERROR_WEBHOOK_URL = _get_or_fail('ERROR_WEBHOOK_URL')
 
 log = logging.getLogger('DuckBot.launcher')
 
@@ -33,7 +36,8 @@ async def run_bot() -> None:
     duck = None
     try:
         async with aiohttp.ClientSession() as session:
-            duck = DuckBot(session=session, pool=pool)
+            duck = DuckBot(session=session, pool=pool, error_webhook_url=ERROR_WEBHOOK_URL)
+            
             await duck.start(TOKEN, reconnect=True)
     except Exception as e:
         return log.error('Failed to start bot', exc_info=e)

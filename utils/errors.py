@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import datetime
 import asyncio
 import traceback
@@ -13,7 +12,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    TypedDict
 )
 
 import discord
@@ -30,11 +28,6 @@ __all__: Tuple[str, ...] = (
     'DuckBotException',
     'DuckBotNotStarted',
 )
-
-try:
-    ERROR_WEBHOOK_URL = os.environ['ERROR_WEBHOOK_URL']
-except KeyError:
-    raise RuntimeError('ERROR_WEBHOOK_URL not set in .env file. Set it.')
     
     
 class DuckExceptionManager:
@@ -73,17 +66,20 @@ class DuckExceptionManager:
     )
     
     def __init__(self, bot: DuckBot, *, cooldown: datetime.timedelta = datetime.timedelta(seconds=5)) -> None:
+        if not bot.error_webhook_url:
+            raise DuckBotException('No error webhokk set in .env!')
+        
         self.bot: DuckBot = bot
         self.cooldown: datetime.timedelta = cooldown
         
-        self._lock: asyncio.Lock = asyncio.Lock(loop=bot.loop)
+        self._lock: asyncio.Lock = asyncio.Lock()
         self._most_recent: Optional[datetime.datetime] = None
         
         self.errors: Dict[str, List[DuckTraceback]] = {}
         self.code_blocker: str = '```py\n{}```'
-        self.error_webhook: discord.Webhook = discord.Webhook.from_url(ERROR_WEBHOOK_URL, session=bot.session, bot_token=bot.http.token)
+        self.error_webhook: discord.Webhook = discord.Webhook.from_url(bot.error_webhook_url, session=bot.session, bot_token=bot.http.token)
         
-    def _yield_code_chunks(self, iterable: str, *, chunksize: int = 200) -> Generator[str, None, None]:
+    def _yield_code_chunks(self, iterable: str, *, chunksize: int = 2000) -> Generator[str, None, None]:
         cbs = len(self.code_blocker) - 2 # code blocker size
         
         for i in range(0, len(iterable), chunksize - cbs):
@@ -116,7 +112,7 @@ class DuckExceptionManager:
         
         # This is a bit of a hack,  but I do it here so guild_id
         # can be optional, and I wont get type errors.
-        guild_id = packet.get('guild_id')
+        guild_id = packet.get('guild')
         guild = self.bot._connection._get_guild(guild_id)
         if guild:
             fmt['guild'] = f'{guild.name} ({guild.id})'
@@ -124,7 +120,7 @@ class DuckExceptionManager:
             log.warning('Ignoring error packet with unknown guild id %s', guild_id)
             
         if guild:
-            channel_id = packet.get('channel_id')
+            channel_id = packet.get('channel')
             if channel_id and (channel := guild.get_channel(channel_id)):
                 fmt['channel'] = f'{channel.name} - {channel.mention} - ({channel.id})'
                 
@@ -140,28 +136,46 @@ class DuckExceptionManager:
             
         if (command := packet.get('command')):
             fmt['command'] = command.qualified_name
-        
+            display = f'in command "{command.qualified_name}"'
+        else:
+            display = f'in no command (in DuckBot)'
+            
         embed = discord.Embed(
-            title=f'An error has occured in {fmt.get("command", "DuckBot")}',
-            description='\n'.join([f'**{k.title()}**: {v}' for k, v in fmt.items()]),
+            title=f'An error has occured in {display}',
             timestamp=packet['time']
         )
+        embed.add_field(name='Metadata', value='\n'.join([f'**{k.title()}**: {v}' for k, v in fmt.items()]),)
         
-        kwargs: Dict[str, Any] = {
-            'embed': embed,
-        }
-        
-        if self.bot.is_ready():
+        kwargs: Dict[str, Any] = {}
+        if self.bot.user:
             kwargs['username'] = self.bot.user.display_name
             kwargs['avatar_url'] = self.bot.user.display_avatar.url
+            
+            embed.set_author(name=str(self.bot.user), icon_url=self.bot.user.display_avatar.url)
         
         webhook = self.error_webhook
         if webhook.is_partial():
             self.error_webhook = webhook = await self.error_webhook.fetch()
+        
+        code_chunks = list(self._yield_code_chunks(traceback))
+        
+        embed.description = code_chunks.pop(0)
+        await webhook.send(embed=embed, **kwargs)
+        
+        embeds: List[discord.Embed] = []
+        for entry in code_chunks:
+            embed = discord.Embed(description=entry)
+            if self.bot.user:
+                embed.set_author(name=str(self.bot.user), icon_url=self.bot.user.display_avatar.url)
             
-        await webhook.send(**kwargs)
-        for entry in self._yield_code_chunks(traceback):
-            await webhook.send(content=entry)
+            embeds.append(embed)
+            
+            if len(embeds) == 10:
+                await webhook.send(embeds=embeds, **kwargs)
+                embeds = []
+        
+        if embeds:
+            await webhook.send(embeds=embeds, **kwargs)
                 
     async def add_error(self, *, error: Exception, ctx: Optional[DuckContext] = None) -> None:
         """|coro|
