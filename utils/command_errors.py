@@ -4,7 +4,7 @@ from bot import DuckBot
 from utils.context import DuckContext
 
 
-async def on_command_error(ctx: DuckContext, error: commands.CommandError) -> None:
+async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     """|coro|
 
     A handler called when an error is raised while invoking a command.
@@ -18,14 +18,14 @@ async def on_command_error(ctx: DuckContext, error: commands.CommandError) -> No
     """
     ignored = (
         commands.CommandNotFound,
-        commands.CheckFailure
+        commands.CheckFailure,
     )
     if isinstance(error, ignored):
         return
     elif isinstance(error, commands.UserInputError):
         await ctx.send(error)
     elif isinstance(error, commands.CommandInvokeError):
-        return await on_command_error(ctx, error.original)  # type: ignore
+        return await on_command_error(ctx, error.original)
     else:
         await ctx.bot.exceptions.add_error(error=error, ctx=ctx)
 
