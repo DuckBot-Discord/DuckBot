@@ -7,7 +7,9 @@ import asyncpg
 import functools
 import asyncio
 import time
+import sys
 import concurrent.futures
+import traceback
 from typing import (
     TYPE_CHECKING,
     List,
@@ -364,6 +366,43 @@ class DuckBot(commands.Bot):
                 f"For a list of commands do`{prefixes[0]}help` 💞"[0:2000])
             
         await self.process_commands(message)
+        
+    async def on_command_error(self, ctx: DuckContext, error: commands.CommandError) -> None:
+        """|coro|
+
+        A handler called when an error is raised while invoking a command.
+
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context for the command.
+        error: :class:`commands.CommandError`
+            The error that was raised.
+        """
+        # We have no custom error handling rn, so every time we'll release an error to the error logger
+        await self.exceptions.add_error(error=error, ctx=ctx)
+        await super().on_command_error(ctx, error)
+    
+    async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
+        """|coro|
+        
+        Called when an error is raised and it's not from a command.
+        
+        Parameters
+        ----------
+        event: :class:`str`
+            The name of the event that raised the exception.
+        args: :class:`Any`
+            The positional arguments for the event that raised the exception.
+        kwargs: :class:`Any`
+            The keyword arguments for the event that raised the exception.
+        """
+        type, error, traceback_obj = sys.exc_info()
+        if not error:
+            raise
+        
+        await self.exceptions.add_error(error=error) # type: ignore
+        return await super().on_error(event, *args, **kwargs)
 
     def wrap(self, func: Callable[..., T], *args, **kwargs) -> Awaitable[T]:
         """Wrap a blocking function to be not blocking.
