@@ -4,8 +4,9 @@ import asyncio
 import time as time_lib
 from typing import (
     TYPE_CHECKING,
-    Optional, 
+    Optional,
     Tuple,
+    Type,
     TypeVar,
     Callable,
     Awaitable,
@@ -20,7 +21,6 @@ from discord.ext import commands
 
 if TYPE_CHECKING:
     from bot import DuckBot
-    from logging import Logger
 
 T = TypeVar('T')
 P = ParamSpec('P')
@@ -71,11 +71,15 @@ class DuckCog(commands.Cog):
     bot: DuckBot
         The bot instance.
     """
+    if TYPE_CHECKING:
+        emoji: Optional[str]
+        brief: Optional[str]
+    
     __slots__: Tuple[str, ...] = (
         'bot',
     )
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls: Type[DuckCog], **kwargs) -> None:
         """
         This is called when a subclass is created.
         Its purpose is to add parameters to the cog
@@ -83,7 +87,7 @@ class DuckCog(commands.Cog):
         """
         cls.emoji = kwargs.pop('emoji', None)
         cls.brief = kwargs.pop('brief', None)
-        super().__init_subclass__(**kwargs)
+        return super().__init_subclass__(**kwargs)
      
     def __init__(self, bot: DuckBot) -> None:
         self.bot: DuckBot = bot
