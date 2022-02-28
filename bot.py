@@ -44,7 +44,12 @@ logging.basicConfig(level=logging.INFO, format=fmt)
 log = logging.getLogger('DuckBot.main')
 
 initial_extensions: Tuple[str, ...] = (
-    '',
+    # Helpers
+    'jishaku',
+    
+    # Cogs
+    'cogs.guild_config.prefixes',
+    
 )
 
 class DbTempContextManager(Generic[DBT]):
@@ -103,7 +108,8 @@ class DbContextManager(Generic[DBT]):
         'bot',
         'timeout',
         '_pool',
-        '_conn'
+        '_conn',
+        '_tr'
     )
     
     def __init__(self, bot: DBT, *, timeout: float = 10.0) -> None:
@@ -111,12 +117,21 @@ class DbContextManager(Generic[DBT]):
         self.timeout: float = timeout
         self._pool: asyncpg.Pool = bot.pool
         self._conn: Optional[asyncpg.Connection] = None
+        self._tr: Optional[asyncpg.Transaction] = None
     
     async def __aenter__(self) -> asyncpg.Connection:
         self._conn = conn = await self._pool.acquire(timeout=self.timeout)
+        self._tr = conn.transaction()
+        await self._tr.start()
         return conn
     
-    async def __aexit__(self, *args):
+    async def __aexit__(self, exc_type, exc, tb):
+        if exc and self._tr:
+            await self._tr.rollback()
+            
+        elif not exc and self._tr:
+            await self._tr.commit()
+            
         if self._conn:
             await self._pool.release(self._conn)
 
