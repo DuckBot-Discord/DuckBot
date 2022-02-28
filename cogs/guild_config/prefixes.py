@@ -46,9 +46,11 @@ class PrefixChanges(DuckCog):
             prefixes = await self.bot.get_prefix(ctx.message, raw=True)
             embed = discord.Embed(title='Current Prefixes', description='\n'.join(prefixes))
             return await ctx.send(embed=embed)
+        elif len(prefix) > 25:
+            return await ctx.send('Prefixes can only be up to 25 characters long.')
 
         guild = ctx.guild
-        if not guild: # Safty net for type checker
+        if not guild:  # Safety net for type checker
             return
         
         async with self.bot.safe_connection() as conn:
@@ -56,11 +58,19 @@ class PrefixChanges(DuckCog):
         
             if not data:
                 # This server had no existing prefix data but wants it, let's create it
-                query = 'INSERT INTO prefixes(guild_id, prefixes) VALUES ($1, $2) RETURNING prefixes'
+                query = 'INSERT INTO guilds(guild_id, prefixes) VALUES ($1, $2) RETURNING prefixes'
                 args = (guild.id, [prefix])
             else:
+                if prefix in data['prefixes']:
+                    # We don't want to litter our database with duplicate data
+                    return await ctx.send('This is already one of my prefixes.')
+
+                if len(data['prefixes']) >= 25:
+                    # We don't want people to have unlimited prefixes
+                    return await ctx.send('The limit of prefixes is 25!')
+
                 # This server had existing prefix data, append it onto the array of prefixes
-                query = 'UPDATE prefixes SET prefixes = array_append(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
+                query = 'UPDATE guilds SET prefixes = array_append(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
                 args = (prefix, guild.id)
                 
             result = await conn.fetchrow(query, *args)
@@ -68,7 +78,7 @@ class PrefixChanges(DuckCog):
         prefixes = result['prefixes']
         
         # Cleanup bot cache before anything else
-        self.bot.prefix_cache[guild.id] = prefixes
+        self.bot.prefix_cache[guild.id] = set(prefixes)
         
         embed = discord.Embed(
             title=f'Prefix "{prefix}" added.',
@@ -146,9 +156,13 @@ class PrefixChanges(DuckCog):
         except (KeyError, ValueError):
             # No guild cache or prefix not in the cache
             pass
-        
+
         prefixes.remove(prefix)
-        
+        if not prefixes:
+            # if we removed the last prefix, it will go
+            # back to the default bot prefixes.
+            prefixes.extend(self.bot.command_prefix)
+
         embed = discord.Embed(
             title='Prefix removed',
             description=f'The prefix `{prefix}` has been removed from this server.'
