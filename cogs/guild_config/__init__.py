@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from bot import DuckBot
+
 from .prefixes import PrefixChanges
 
 
