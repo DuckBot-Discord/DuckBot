@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 class PrefixChanges(DuckCog):
     
+    # NOTE: Delete me later
     @commands.command(hidden=True)
     @commands.is_owner()
     async def __give_error(self, ctx: DuckContext):
