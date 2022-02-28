@@ -9,9 +9,14 @@ __all__: Tuple[str, ...] = (
     'DuckBotNotStarted',
 )
 
+
 class DuckBotException(ClientException):
-    pass
+    """The base exception for DuckBot. All other exceptions should inherit from this."""
+    __slots__: Tuple[str, ...] = ()
 
 
 class DuckBotNotStarted(DuckBotException):
-    pass
+    """An exeption that gets raised when a method tries to use :attr:`Duckbot.user` before
+    DuckBot is ready.
+    """
+    __slots__: Tuple[str, ...] = ()
