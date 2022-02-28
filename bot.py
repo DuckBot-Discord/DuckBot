@@ -29,18 +29,12 @@ from utils.helpers import col
 from utils.time import human_timedelta
 from utils.errors import *
 
-try:
-    from typing import ParamSpec
-except ImportError:
-    from typing_extensions import ParamSpec
-
 if TYPE_CHECKING:
     from asyncpg import Pool
     from aiohttp import ClientSession
-
+    
 DBT = TypeVar('DBT', bound='DuckBot')
 DCT = TypeVar('DCT', bound='DuckContext')
-P = ParamSpec('P')
 T = TypeVar('T')
 
 
@@ -250,12 +244,12 @@ class DuckBot(commands.Bot):
             
         await self.process_commands(message)
 
-    def wrap(self, func: Callable[[P], T], *args: P.args, **kwargs: P.kwargs) -> Awaitable[T]:
+    def wrap(self, func: Callable[..., T], *args, **kwargs) -> Awaitable[T]:
         """Wrap a blocking function to be not blocking.
         
         Parameters
         ----------
-        Callable[P, T]
+        Callable
             The function to wrap.
         *args
             The arguments to pass to the function.
