@@ -30,6 +30,7 @@ from discord.ext import commands
 from collections import defaultdict
 
 from utils.context import DuckContext
+from utils.errorhandler import DuckExceptionManager
 from utils.helpers import col
 from utils.time import human_timedelta
 from utils.errors import *
@@ -54,6 +55,7 @@ initial_extensions: Tuple[str, ...] = (
     # Helpers
     'jishaku',
     'utils.context',
+    'utils.command_errors',
     
     # Cogs
     'cogs.guild_config',
@@ -191,6 +193,8 @@ class DuckBot(commands.Bot):
         self.session: ClientSession = session
         self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+
+        self.create_task(self.populate_cache())
         
         self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
@@ -237,6 +241,12 @@ class DuckBot(commands.Bot):
                 
         pool = await asyncpg.create_pool(uri, init=init, **kwargs)
         return pool
+
+    async def populate_cache(self) -> None:
+        """ Populates all cache that comes from the database. """
+        async with self.safe_connection() as conn:
+            for guild_id, prefixes in await conn.fetch("SELECT guild_id, prefixes FROM guilds"):
+                self.prefix_cache[guild_id] = set(prefixes)
 
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
@@ -404,22 +414,6 @@ class DuckBot(commands.Bot):
                 f"For a list of commands do`{prefixes[0]}help` 💞"[0:2000])
             
         await self.process_commands(message)
-        
-    async def on_command_error(self, ctx: DuckContext, error: commands.CommandError) -> None:
-        """|coro|
-
-        A handler called when an error is raised while invoking a command.
-
-        Parameters
-        ----------
-        ctx: :class:`DuckContext`
-            The context for the command.
-        error: :class:`commands.CommandError`
-            The error that was raised.
-        """
-        # We have no custom error handling rn, so every time we'll release an error to the error logger
-        await self.exceptions.add_error(error=error, ctx=ctx)
-        await super().on_command_error(ctx, error)
     
     async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
