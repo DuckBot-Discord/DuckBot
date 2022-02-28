@@ -1,7 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import discord
 from discord.ext import commands
+
 from utils import DuckCog
 from utils.context import DuckContext
+
+if TYPE_CHECKING:
+    from bot import DuckBot
 
 
 class PrefixChanges(DuckCog):
@@ -22,3 +30,5 @@ class PrefixChanges(DuckCog):
         # TODO: finish this, went to sleep.
 
 
+def setup(bot: DuckBot) -> None:
+    return bot.add_cog(PrefixChanges(bot))
