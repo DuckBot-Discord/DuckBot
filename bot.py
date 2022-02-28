@@ -48,6 +48,21 @@ initial_extensions: Tuple[str, ...] = (
 )
 
 class DbTempContextManager(Generic[DBT]):
+    """A class to handle a short term pool connection.
+    
+    .. code-block:: python3
+
+        async with DbTempContextManager(bot, 'postgresql://user:password@localhost/database') as pool:
+            async with pool.acquire() as conn:
+                await conn.execute('SELECT * FROM table')
+    
+    Attributes
+    ----------
+    bot: Type[:class:`DuckBot`]
+        A class reference to DuckBot.
+    uri: :class:`str`
+        The URI to connect to the database with.
+    """
     __slots__: Tuple[str, ...] = (
         'bot',
         'uri',
