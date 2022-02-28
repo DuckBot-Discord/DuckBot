@@ -21,7 +21,8 @@ from typing import (
     Callable,
     Awaitable,
     Coroutine,
-    Any
+    Any,
+    Union
 )
 
 from discord.ext import commands
@@ -358,7 +359,7 @@ class DuckBot(commands.Bot):
 
         return meth(*prefixes)(self, message)
 
-    async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> DuckContext | commands.Context:
+    async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
         """|coro|
         
         Used to get the invocation context from the message.
@@ -370,8 +371,8 @@ class DuckBot(commands.Bot):
         cls: Type[:class:`DuckContext`]
             The class to use for the context.
         """
-        cls = cls or self._context_cls
-        return await super().get_context(message, cls=cls)
+        new_cls = cls or self._context_cls
+        return await super().get_context(message, cls=new_cls)
 
     async def on_connect(self):
         """|coro|
