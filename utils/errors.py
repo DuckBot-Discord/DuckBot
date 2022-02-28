@@ -98,8 +98,7 @@ class DuckExceptionManager:
         packet: :class:`dict`
             The additional information about the error.
         """
-        log.info('Releasing error to log')
-        log.warning(traceback)
+        log.error('Releasing error to log', exc_info=packet['exception'])
 
         if self.error_webhook.is_partial():
             self.error_webhook = await self.error_webhook.fetch()
