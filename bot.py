@@ -14,6 +14,7 @@ from typing import (
     TYPE_CHECKING,
     List,
     Optional,
+    Set,
     TypeVar,
     Type,
     Generic,
@@ -172,9 +173,9 @@ class DuckBot(commands.Bot):
         # type checker errors. Most of the time user isnt going to be 
         # None, so this is just a convenience thing.
         user: discord.ClientUser
+        start_time: datetime.datetime
         
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
-        self.start_time: datetime.datetime = None  # type: ignore
         intents = discord.Intents.all()
         intents.typing = False  # noqa
         
@@ -187,7 +188,7 @@ class DuckBot(commands.Bot):
             strip_after_prefix=True,
             chunk_guilds_at_startup=False
         )
-        self.prefix_cache = defaultdict(set)
+        self.prefix_cache: defaultdict[int, Set[str]] = defaultdict(set)
         self.session: ClientSession = session
         self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
