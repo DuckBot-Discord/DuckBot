@@ -69,7 +69,7 @@ class DuckContext(commands.Context):
         checks = (
             me_color if check(me_color := self.me.color) else None,
             you_color if check(you_color := self.author.color) else None,
-            self.bot.colour
+            self.bot.color
         )
 
         result = discord.utils.find(lambda e: e, checks)

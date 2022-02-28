@@ -255,12 +255,17 @@ class DuckBot(commands.Bot):
 
     @discord.utils.cached_property
     def color(self) -> discord.Colour:
-        """:class:`~discord.Colour`: The vanity colour of the bot."""
+        """:class:`~discord.Color`: The vanity color of the bot."""
         return discord.Colour(0xf4d58c)
     
+    @discord.utils.cached_property
+    def colour(self) -> discord.Colour:
+        """:class:`~discord.Colour`: The vanity colour of the bot."""
+        return discord.Colour(0xf4d58c)
+
     @property
     def human_uptime(self) -> str:
-        """:class:`str`: The uptime of the bot in a human readable format.
+        """:class:`str`: The uptime of the bot in a human-eadable format.
         
         Raises
         ------
