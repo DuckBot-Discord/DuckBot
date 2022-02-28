@@ -179,7 +179,8 @@ class DuckExceptionManager:
         log.info('Adding error "%s" to log.', type(error))
         
         packet: DuckTraceback = {
-            'time': (ctx and ctx.message.created_at) or discord.utils.utcnow()
+            'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(),
+            'exception': error
         }
         
         if ctx is not None:

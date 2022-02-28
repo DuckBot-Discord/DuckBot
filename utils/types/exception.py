@@ -20,3 +20,4 @@ class _DuckTracebackOptional(TypedDict, total=False):
 
 class DuckTraceback(_DuckTracebackOptional):
     time: datetime.datetime
+    exception: Exception
