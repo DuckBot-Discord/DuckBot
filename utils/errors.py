@@ -189,7 +189,7 @@ class DuckExceptionManager:
         ctx: Optional[:class:`DuckContext`]
             The invocation context of the error, if any.
         """
-        log.info('Adding error "%s" to log.', type(error))
+        log.info('Adding error "%s" to log.', str(error))
         
         packet: DuckTraceback = {
             'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(),
