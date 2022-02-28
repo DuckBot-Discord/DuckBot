@@ -66,9 +66,8 @@ def _wrap_extension(func: Callable[P, T]) -> Callable[P, T]:
         start = time.time()
         result = func(*args, **kwargs)
         
-        fmt = f'{func.__name__} took {time.time() - start:.2f} seconds on ext "{args[1]}"'
-        if kwargs:
-            fmt += f' with kwargs {kwargs}'
+        fmt_args = 'on ext "{}"{}'.format(args[1], f' with kwargs {kwargs}' if kwargs else '')
+        fmt = f'{func.__name__} took {time.time() - start:.2f} seconds {fmt_args}'
         log.info(fmt)
         
         return result
@@ -266,20 +265,32 @@ class DuckBot(commands.Bot):
         
         return human_timedelta(self.start_time)
     
+    # NOTE: I don't like how every extension method has a try except,
+    # but moving it to the deocrator crashes the loop and
+    # stops the bot.... look into fix later
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.load_extension)
     def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return super().load_extension(name, package=package)
+        try:
+            return super().load_extension(name, package=package)
+        except Exception as exc:
+            self.create_task(self.exceptions.add_error(error=exc))
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.unload_extension)
     def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return super().unload_extension(name, package=package)
+        try:
+            return super().unload_extension(name, package=package)
+        except Exception as exc:
+            self.create_task(self.exceptions.add_error(error=exc))
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.reload_extension)
     def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return super().reload_extension(name, package=package)
+        try:
+            return super().reload_extension(name, package=package)
+        except Exception as exc: 
+            self.create_task(self.exceptions.add_error(error=exc))
         
     def safe_connection(self, *, timeout: float = 10.0) -> DbContextManager:
         """A context manager that will acquire a connection from the bot's pool.
