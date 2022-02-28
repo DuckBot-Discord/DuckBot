@@ -194,7 +194,7 @@ class DuckBot(commands.Bot):
         
         self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
-        self._context_cls = commands.Context
+        self._context_cls: Type[commands.Context] = commands.Context
         
         for extension in initial_extensions:
             self.load_extension(extension)
