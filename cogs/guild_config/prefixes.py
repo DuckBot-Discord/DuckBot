@@ -21,6 +21,11 @@ if TYPE_CHECKING:
 
 class PrefixChanges(DuckCog):
     
+    @commands.command(hidden=True)
+    @commands.is_owner()
+    async def __give_error(self, ctx: DuckContext):
+        raise commands.BotMissingRole(888609991265746944)
+    
     @commands.group(name='prefix', aliases=['prefixes'], invoke_without_command=True)
     @commands.guild_only()
     async def prefix(self, ctx: DuckContext, *, prefix: Optional[str] = None) -> Optional[discord.Message]:
