@@ -243,11 +243,19 @@ class DuckBot(commands.Bot):
         return pool
 
     async def populate_cache(self) -> None:
-        """Populates all cache that comes from the database."""
+        """|coro|
+        
+        Populates all cache that comes from the database. Please note if commands are
+        processed before this data is complete, some guilds may not have custom prefixes.
+        """
         async with self.safe_connection() as conn:
-            for guild_id, prefixes in await conn.fetch("SELECT guild_id, prefixes FROM guilds"):
-                self.prefix_cache[guild_id] = set(prefixes)
-
+            data = await conn.fetch('SELECT guild_id, prefixes FROM guilds')
+        
+        def mapper(guild: int, prefixes: List[str]) -> None:
+            self.prefix_cache[guild] = set(prefixes)
+        
+        map(mapper, data) # type: ignore
+            
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
         """:class:`re.Pattern`: A regex pattern that matches the bot's mention.
