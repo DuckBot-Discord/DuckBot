@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 
 
 class PrefixChanges(DuckCog):
-    def __init__(self, bot):
-        super().__init__(bot)
-
+    
     @commands.command(name='prefix', aliases=['prefixes'])
     async def prefix(self, ctx: DuckContext, *, prefixes: str = None):
         """
