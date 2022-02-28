@@ -194,10 +194,27 @@ class DuckBot(commands.Bot):
         
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
+        """:class:`DbTempContextManager` A context manager that creates a
+        temporary connection pool.
+
+        Parameters
+        ----------
+        uri: :class:`str`
+            The URI to connect to the database with.
+        """
         return DbTempContextManager(cls, uri)
         
     @classmethod
-    async def setup_pool(cls: Type[DBT], *, uri: str, **kwargs) -> asyncpg.Pool: 
+    async def setup_pool(cls: Type[DBT], *, uri: str, **kwargs) -> asyncpg.Pool:
+        """:meth: `asyncpg.create_pool` with some extra functionality.
+
+        Parameters
+        ----------
+        uri: :class:`str`
+            The Postgres connection URI.
+        **kwargs:
+            Extra keyword arguments to pass to :meth:`asyncpg.create_pool`.
+        """  # copy_doc for create_pool maybe?
         def _encode_jsonb(value):
             return discord.utils._to_json(value) 
 
@@ -213,7 +230,7 @@ class DuckBot(commands.Bot):
                 
         pool = await asyncpg.create_pool(uri, init=init, **kwargs)
         return pool
-        
+
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
         """:class:`re.Pattern`: A regex pattern that matches the bot's mention.
