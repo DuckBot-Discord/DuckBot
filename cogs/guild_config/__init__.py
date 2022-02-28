@@ -5,7 +5,7 @@ from .prefixes import PrefixChanges
 class GuildConfig(
     PrefixChanges,
     name="Guild Config",
-    emoji="🔧",
+    emoji="\N{WRENCH}",
     brief="Configurations for the current server.",
 ):
     pass
