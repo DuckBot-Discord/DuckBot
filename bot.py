@@ -60,13 +60,20 @@ initial_extensions: Tuple[str, ...] = (
 )
 
 
-def _wrap_extension(func: Callable[P, T]) -> Callable[P, T]:
+def _wrap_extension(func: Callable[P, T]) -> Callable[P, Optional[T]]:
     
-    def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
-        start = time.time()
-        result = func(*args, **kwargs)
-        
+    def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
         fmt_args = 'on ext "{}"{}'.format(args[1], f' with kwargs {kwargs}' if kwargs else '')
+        start = time.time()
+        
+        try:
+            result = func(*args, **kwargs)
+        except Exception as exc:
+            log.warning(f'Failed to load extension in {time.time() - start:.2f} seconds {fmt_args}')
+            bot: DuckBot = args[0] # type: ignore
+            bot.create_task(bot.exceptions.add_error(error=exc))
+            return
+        
         fmt = f'{col(5)}{func.__name__}{col()} took {time.time() - start:.2f} seconds {fmt_args}'
         log.info(fmt)
         
@@ -294,32 +301,20 @@ class DuckBot(commands.Bot):
         
         return human_timedelta(self.start_time)
     
-    # NOTE: I don't like how every extension method has a try except,
-    # but moving it to the deocrator crashes the loop and
-    # stops the bot.... look into fix later
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.load_extension)
     def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        try:
-            return super().load_extension(name, package=package)
-        except Exception as exc:
-            self.create_task(self.exceptions.add_error(error=exc))
+        return super().load_extension(name, package=package)
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.unload_extension)
     def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        try:
-            return super().unload_extension(name, package=package)
-        except Exception as exc:
-            self.create_task(self.exceptions.add_error(error=exc))
+        return super().unload_extension(name, package=package)
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.reload_extension)
     def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        try:
-            return super().reload_extension(name, package=package)
-        except Exception as exc: 
-            self.create_task(self.exceptions.add_error(error=exc))
+        return super().reload_extension(name, package=package)
         
     def safe_connection(self, *, timeout: float = 10.0) -> DbContextManager:
         """A context manager that will acquire a connection from the bot's pool.
