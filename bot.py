@@ -243,7 +243,7 @@ class DuckBot(commands.Bot):
         return pool
 
     async def populate_cache(self) -> None:
-        """ Populates all cache that comes from the database. """
+        """Populates all cache that comes from the database."""
         async with self.safe_connection() as conn:
             for guild_id, prefixes in await conn.fetch("SELECT guild_id, prefixes FROM guilds"):
                 self.prefix_cache[guild_id] = set(prefixes)
@@ -344,7 +344,6 @@ class DuckBot(commands.Bot):
         Returns the prefixes for the given message.
         if raw is True, returns the prefixes without the bots mention.
         
-        
         Parameters
         ----------
         message: :class:`~discord.Message`
@@ -353,16 +352,13 @@ class DuckBot(commands.Bot):
             Whether to return the raw prefixes or not.
         """
         meth = commands.when_mentioned_or if raw is False else lambda *pres: lambda _, __: list(pres)
-
-        if message.guild:
-            if not (prefixes := self.prefix_cache.get(message.guild.id)):
-                for prefix in self.command_prefix:
-                    self.prefix_cache[message.guild.id].add(prefix)
-                prefixes = self.command_prefix
-        else:
-            prefixes = self.command_prefix
-
-        return meth(*prefixes)(self, message)
+        base = self.command_prefix.copy()
+        
+        cached_prefixes = self.prefix_cache.get((message.guild and message.guild.id), None) # type: ignore
+        if cached_prefixes is not None:
+            base.update(cached_prefixes)
+        
+        return meth(*base)(self, message)
 
     async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
         """|coro|
