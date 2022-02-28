@@ -169,6 +169,3 @@ class PrefixChanges(DuckCog):
         )
         embed.add_field(name='Current Prefixes', value=human_join(prefixes, final='and'))
         return await ctx.send(embed=embed)
-
-def setup(bot: DuckBot) -> None:
-    return bot.add_cog(PrefixChanges(bot))
