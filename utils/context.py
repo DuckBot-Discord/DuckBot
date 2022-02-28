@@ -44,13 +44,7 @@ def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
 
 
 class DuckContext(commands.Context):
-    """The subclassed Context to allow some extra functionality.
-    
-    Attributes
-    ----------
-    tick: Callable[[Optional[:class:`str`], Optional[:class:`str`]], :class:`str`]
-        A function to convert a boolean value with label to an emoji with label.
-    """
+    """The subclassed Context to allow some extra functionality."""
     if TYPE_CHECKING:
         bot: DuckBot
 
