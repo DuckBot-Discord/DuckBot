@@ -18,7 +18,7 @@ class PrefixChanges(DuckCog):
     @commands.command(hidden=True)
     @commands.is_owner()
     async def __give_error(self, ctx: DuckContext):
-        raise commands.BotMissingRole(888609991265746944)
+        raise discord.DiscordException('This is an error.')
     
     @commands.group(name='prefix', aliases=['prefixes'], invoke_without_command=True)
     @commands.guild_only()
