@@ -102,7 +102,7 @@ class DuckExceptionManager:
         packet: :class:`dict`
             The additional information about the error.
         """
-        log.info('Releasing error %s to log', traceback)
+        log.info('Releasing error to log')
         log.warning(traceback)
 
         if self.error_webhook.is_partial():
