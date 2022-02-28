@@ -22,6 +22,10 @@ TOKEN = _get_or_fail('TOKEN')
 URI = _get_or_fail('POSTGRES')
 ERROR_WEBHOOK_URL = _get_or_fail('ERROR_WEBHOOK_URL')
 
+logging.basicConfig(
+    level=logging.INFO,
+    format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
+)
 log = logging.getLogger('DuckBot.launcher')
 
 async def run_bot() -> None:
