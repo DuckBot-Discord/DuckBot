@@ -40,8 +40,7 @@ except ImportError:
     from typing_extensions import ParamSpec
 
 if TYPE_CHECKING:
-    from asyncpg.transaction import Transaction
-    from asyncpg import Pool
+    from asyncpg import Pool, Transaction, Connection
     from aiohttp import ClientSession
     
 DBT = TypeVar('DBT', bound='DuckBot')
@@ -147,10 +146,10 @@ class DbContextManager(Generic[DBT]):
         self.bot: DBT = bot
         self.timeout: float = timeout
         self._pool: asyncpg.Pool = bot.pool
-        self._conn: Optional[asyncpg.Connection] = None
+        self._conn: Optional[Connection] = None
         self._tr: Optional[Transaction] = None
     
-    async def __aenter__(self) -> asyncpg.Connection:
+    async def __aenter__(self) -> Connection:
         self._conn = conn = await self._pool.acquire(timeout=self.timeout)
         self._tr = conn.transaction()
         await self._tr.start()
