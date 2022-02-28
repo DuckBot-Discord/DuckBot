@@ -101,8 +101,9 @@ class PrefixChanges(DuckCog):
             data = await conn.fetchrow('SELECT prefixes FROM guilds WHERE guild_id = $1', guild.id) 
             
             if not data or not data.get('prefixes'):
-                # NOTE: Leo embed this im too lazy
-                return await ctx.send('This server has no prefixes to clear.')
+                embed = discord.Embed(title='No prefixes!')
+                embed.description = 'This server has no custom prefixes to clear! (only the default one)'
+                return await ctx.send(embed=embed)
             
             result = await conn.fetchrow('UPDATE guilds SET prefixes = $1 WHERE guild_id = $2 RETURNING prefixes', [], guild.id)
         
