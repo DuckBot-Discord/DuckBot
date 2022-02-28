@@ -12,12 +12,6 @@ from utils import DuckCog
 from utils.context import DuckContext
 from utils.time import human_join
 
-if TYPE_CHECKING:
-    from bot import DuckBot
-
-# Leo im gonna be honest I have 0 clue
-# if any of these commands work I havent tested any of them yet.
-# Feel free to if you get a chance
 
 class PrefixChanges(DuckCog):
     
@@ -98,24 +92,24 @@ class PrefixChanges(DuckCog):
             return
         
         async with self.bot.safe_connection() as conn:
-            data = await conn.fetchrow('SELECT prefixes FROM guilds WHERE guild_id = $1', guild.id) 
+            data = await conn.fetchval('SELECT prefixes FROM guilds WHERE guild_id = $1', guild.id)
             
-            if not data or not data.get('prefixes'):
+            if not data:
+                # The bot doesn't have any prefixes for this server
                 embed = discord.Embed(title='No prefixes!')
                 embed.description = 'This server has no custom prefixes to clear! (only the default one)'
                 return await ctx.send(embed=embed)
             
-            result = await conn.fetchrow('UPDATE guilds SET prefixes = $1 WHERE guild_id = $2 RETURNING prefixes', [], guild.id)
+            prefixes = await conn.fetchval('UPDATE guilds SET prefixes = $1 WHERE guild_id = $2 RETURNING prefixes', [], guild.id)
         
         # Cleanup bot cache before anything else
         self.bot.prefix_cache.pop(guild.id, None)
         
-        prefixes = result['prefixes']
         embed = discord.Embed(
             title=f'Cleared {len(prefixes)} prefixes.',
             description=f'I\'ve cleared all prefixes from this server.\n'
         )
-        embed.add_field(name='Old Prefixes', value=human_join(prefixes, final='and'))
+        embed.add_field(name='Old Prefixes', value=human_join(prefixes, final='and') or '\u200b')
         return await ctx.send(embed=embed)
       
     @discord.utils.copy_doc(prefix)  
