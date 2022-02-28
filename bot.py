@@ -59,7 +59,7 @@ initial_extensions: Tuple[str, ...] = (
 )
 
 
-def _wrap_extension(func: Callable[[P], T]) -> Callable[[P], T]:
+def _wrap_extension(func: Callable[P, T]) -> Callable[P, T]:
     
     def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
         start = time.time()
