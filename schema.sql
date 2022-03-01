@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS news (
 
 CREATE TABLE IF NOT EXISTS timers(
     id BIGSERIAL PRIMARY KEY,
-    percise BOOLEAN DEFAULT TRUE,
+    precise BOOLEAN DEFAULT TRUE,
     event TEXT,
     extra JSONB,
     created TIMESTAMP,
