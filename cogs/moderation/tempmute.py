@@ -81,8 +81,8 @@ class TempMute(DuckCog):
     
     @commands.group(name='tempmute', aliases=['tm'], invoke_without_command=True)
     @commands.guild_only()
-    #@commands.bot_has_guild_permissions(timeout_members=True, manage_roles=True)
-    #@commands.has_guild_permissions(timeout_members=True, manage_roles=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def tempmute(
         self, 
         ctx: DuckContext, 
@@ -188,6 +188,8 @@ class TempMute(DuckCog):
             return await ctx.send(embed=embed)
     
     @tempmute.command(name='remove')
+    @commands.bot_has_guild_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     @commands.guild_only()
     async def tempmute_remove(self, ctx: DuckContext, member: discord.Member) -> Optional[discord.Message]:
         # Fuck me. This whole command. So bad.
