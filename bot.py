@@ -53,7 +53,7 @@ log = logging.getLogger('DuckBot.main')
 
 initial_extensions: Tuple[str, ...] = (
     # Helpers
-    'jishaku',
+    'utils.jishaku.__init__',
     'utils.context',
     'utils.command_errors',
     
