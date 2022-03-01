@@ -67,9 +67,11 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
                 f'**Spoiler**: {result.spoiler}',
             ]
             embed.add_field(name='Metadata', value='\n'.join(fmt))
-            
-            # LEO THS ISNT SETTING THE IMAGE ALTHOUGH IT SHOULD BE
-            # THE IF STATEMENT IS CORRECT BUT THE SET IMAGE IS NOT WORKING PLS FIX
+
+            result.fp.seek(0)
+            # Reading it for metadata made this go to the end of
+            # the file, so we need to seek back to the start
+
             if filename and filename.endswith(('jpg', 'png', 'jpeg', 'gif')):
                 embed.set_image(url=f'attachment://{filename}')
             
