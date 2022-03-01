@@ -287,7 +287,7 @@ class TimerManager:
         *args, 
         now: Optional[datetime.datetime] = None,
         precise: bool = True,
-        **kwargs: Dict[str, Any]
+        **kwargs
     ) -> Timer:
         """|coro|
         
