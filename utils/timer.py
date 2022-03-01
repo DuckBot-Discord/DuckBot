@@ -341,8 +341,8 @@ class TimerManager:
                 event,
                 now,
                 when,
+                {'args': args, 'kwargs': kwargs},
                 precise,
-                {'args': args, 'kwargs': kwargs}
             )
             
         # only set the data check if it can be waited on
