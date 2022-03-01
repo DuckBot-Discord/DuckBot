@@ -305,6 +305,8 @@ class TimerManager:
         precise: :class:`bool`
             Whether or not to dispatch the timer listener with the timer's args and kwargs. If ``False``, only
             the timer will be passed to the listener. Defaults to ``True``.
+        connection: Optional[:class:`asyncpg.Connection`]
+            The connection to use. Defaults to a new connection via :meth:`DuckBot.safe_connection`.
         **kwargs: Dict[:class:`str`, Any]
             A dictionary of keyword arguments to be passed to :class:`Timer.kwargs`. Please note each element
             in this dictionary must be JSON serializable.
