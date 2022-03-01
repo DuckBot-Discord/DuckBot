@@ -6,7 +6,8 @@ import contextlib
 from typing import (
     TYPE_CHECKING,
     Any,
-    Optional
+    Optional,
+    TypeVar,
 )
 
 import discord
@@ -26,6 +27,8 @@ from .. import add_logging
 
 if TYPE_CHECKING:
     from bot import DuckBot
+    
+T = TypeVar('T')
 
 
 class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
@@ -36,19 +39,22 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
         result: Any, 
         *, 
         start_time: Optional[float] = None,
-        redirect_stdout: Optional[str] = None
+        redirect_stdout: Optional[str] = None,
+        short: bool = False
     ):
         embed = discord.Embed(
-            title='Python REPL Return Result',
+            title='Python REPL Return Result' if not short else '',
             description=repr(result).replace(self.bot.http.token, "[token omitted]"),
         )
-        embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         
         if redirect_stdout and redirect_stdout != '':
             embed.add_field(name='Redirect Stdout:', value=redirect_stdout.replace(self.bot.http.token, "[token omitted]"))
         
-        if start_time:
-            embed.set_footer(text=f'Took {time.perf_counter() - start_time:.2f} seconds')
+        if not short:
+            embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
+            
+            if start_time:
+                embed.set_footer(text=f'Took {time.perf_counter() - start_time:.2f} seconds')
         
         if isinstance(result, discord.Message):
             embed.add_field(name='Jump to message', value=f'[Jump to message]({result.jump_url})')
@@ -112,9 +118,19 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
     @discord.utils.copy_doc(PythonFeature.jsk_python)
     @Feature.Command(parent='jsk', name='py', aliases=['python'])
     async def jsk_python(self, ctx: DuckContext, *, argument: codeblock_converter) -> None:
+        """|coro|
+        
+        The subclassed jsk python command to implement some more functionality and features.
+        
+        Added
+        -----
+        - :meth:`contextlib.redirect_stdout` to allow for print statements.
+        - :meth:`utils.add_logging` and `self` to the scope.
+        """
         
         arg_dict = get_var_dict_from_ctx(ctx, Flags.SCOPE_PREFIX)
         arg_dict['add_logging'] = add_logging
+        arg_dict['self'] = self
         arg_dict['_'] = self.last_result
         
         scope = self.scope
@@ -126,13 +142,23 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
                     with contextlib.redirect_stdout(printed):
                         executor = AsyncCodeExecutor(argument.content, scope, arg_dict=arg_dict)
                         start = time.perf_counter()
+                        
+                        # Thanks Jishaku  for the amazing lib that I dont need to jump through
+                        # hoops to fix SO GOOD OMG ILYSM :):):):):):):):):):):):):):):)
+                        #:):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):)
+                        index = 0
                         async for send, result in AsyncSender(executor):
-                            if result is None:
-                                continue
-
                             self.last_result = result
-                            send(await self.jsk_python_result_handling(ctx, result, start_time=start, redirect_stdout=printed.getvalue()))
-
+                            
+                            send(await self.jsk_python_result_handling(
+                                ctx, 
+                                result, 
+                                start_time=start, 
+                                redirect_stdout=printed.getvalue(),
+                                short=False if index == 0 else True
+                            ))
+                            
+                            index += 1
         finally:
             scope.clear_intersection(arg_dict)
     
