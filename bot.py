@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import datetime
+import random
 import re
 import logging
+import typing
+
 import discord
 import asyncpg
 import functools
@@ -29,6 +32,7 @@ from typing import (
 
 from discord.ext import commands
 
+from utils import constants
 from utils.context import DuckContext
 from utils.errorhandler import DuckExceptionManager
 from utils.helpers import col
@@ -53,12 +57,13 @@ log = logging.getLogger('DuckBot.main')
 
 initial_extensions: Tuple[str, ...] = (
     # Helpers
-    'utils.jishaku.__init__',
+    'utils.jishaku',
     'utils.context',
     'utils.command_errors',
     
     # Cogs
     'cogs.guild_config',
+    'cogs.meta',
 )
 
 
@@ -195,7 +200,7 @@ class DuckBot(commands.Bot):
             strip_after_prefix=True,
             chunk_guilds_at_startup=False
         )
-        self.prefix_cache: defaultdict[int, Set[str]] = defaultdict(set)
+        self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
         self.session: ClientSession = session
         self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
@@ -208,7 +213,9 @@ class DuckBot(commands.Bot):
         
         for extension in initial_extensions:
             self.load_extension(extension)
-        
+
+        self.constants = constants
+
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
         """:class:`DbTempContextManager` A context manager that creates a
@@ -324,6 +331,11 @@ class DuckBot(commands.Bot):
             raise DuckBotNotStarted('The bot has not hit on-ready yet.')
         
         return human_timedelta(self.start_time)
+
+    @property
+    def done_emoji(self) -> discord.PartialEmoji:
+        """:class:`~discord.PartialEmoji`: The emoji used to denote a command has finished processing."""
+        return discord.PartialEmoji.from_str(random.choice(self.constants.DONE))
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.load_extension)
