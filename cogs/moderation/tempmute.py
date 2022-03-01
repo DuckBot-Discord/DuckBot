@@ -38,7 +38,8 @@ __all__: Tuple[str, ...] = (
 # and needs it to work. Thanks danny.
 class ToLower(commands.Converter):
     __slots__: Tuple[str, ...] = ()
-    
+
+    # noinspection PyProtocol
     async def convert(self, ctx: DuckContext, argument: str) -> str:
         return argument.lower()
     
@@ -264,7 +265,7 @@ class TempMute(DuckCog):
                 if not timer:
                     raise TimerNotFound(0)
                 
-                await conn.execute('DELETE FROM timers WHERE timer_id = $1', timer.id)
+                await conn.execute('DELETE FROM timers WHERE id = $1', timer.id)
                 self.bot.call_timer(timer)
             
         embed = discord.Embed(
@@ -290,6 +291,7 @@ class TempMute(DuckCog):
         member: :class:`discord.Member`
             The member to unmute.
         """
+        # noinspection PyTypeChecker
         return await ctx.invoke(self.tempmute_remove, member)
         
     @commands.Cog.listener('on_member_update')

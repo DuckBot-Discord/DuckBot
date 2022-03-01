@@ -9,6 +9,10 @@ from typing import (
     Optional, 
     TYPE_CHECKING,
     Tuple,
+    Union,
+    Dict,
+    Any,
+    List,
 )
 
 import discord
@@ -23,6 +27,12 @@ if TYPE_CHECKING:
     from asyncpg import Record, Connection
 
 log = logging.getLogger('DuckBot.utils.timer')
+
+
+if TYPE_CHECKING:
+
+    JSONValue = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
+    JSONType = Union[JSONValue, Dict[str, JSONValue], List[JSONValue]]
 
     
 class Timer:
@@ -61,7 +71,6 @@ class Timer:
         The time the timer was created.
     expires: :class:`datetime.datetime`
         The time the timer expires.
-    member_id: Optional[:class:`int`]
     """
     __slots__: Tuple[str, ...] = (
         'args', 
@@ -284,10 +293,11 @@ class TimerManager:
         self, 
         when: datetime.datetime,
         event: str = 'timer',
-        *args, 
+        *args: JSONType,
         now: Optional[datetime.datetime] = None,
         precise: bool = True,
-        **kwargs
+        connection: Optional[asyncpg.Connection] = None,
+        **kwargs: JSONType
     ) -> Timer:
         """|coro|
         
@@ -337,10 +347,10 @@ class TimerManager:
                         $5
                     )
                     RETURNING *;
+                    -- Man this looks like crap
                 """
         args = (event, now, when, {'args': args, 'kwargs': kwargs}, precise,)
-        
-        connection = kwargs.pop('connection', None)
+
         if connection:
             row = await connection.fetchrow(query, *args)
         else:
