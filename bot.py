@@ -504,3 +504,9 @@ class DuckBot(commands.Bot, DuckHelper):
             The task that was created.
         """
         return self.loop.create_task(coro, name=name)
+
+    # This is overridden so we dont get so many annoying type errors when passing
+    # a Member into is_owner
+    @discord.utils.copy_doc(commands.Bot.is_owner)
+    async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
+        return await super().is_owner(user) # type: ignore
