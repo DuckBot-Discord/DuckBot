@@ -268,9 +268,9 @@ class News(DuckCog):
 
         Parameters
         ----------
-        title: str
+        title: :class:`str`
             The title of the news item (up to 256 characters)
-        content: str
+        content: :class:`str`
             The content of the news item (up to 1024 characters)
         """
         if not await ctx.bot.is_owner(ctx.author):
@@ -291,7 +291,7 @@ class News(DuckCog):
 
         Parameters
         ----------
-        news_id: int
+        news_id: :class:`int`
             The snowflake ID of the news item to remove
         """
         if not await ctx.bot.is_owner(ctx.author):
