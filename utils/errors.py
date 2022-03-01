@@ -48,6 +48,7 @@ class TimerError(DuckBotException):
     """
     __slots__: Tuple[str, ...] = ()
 
+
 class TimerNotFound(TimerError):
     """Raised when trying to fetch a timer that does not exist."""
     __slots__: Tuple[str, ...] = (
@@ -58,3 +59,29 @@ class TimerNotFound(TimerError):
         self.id: int = id
         super().__init__(f'Timer with ID {id} not found.')
     
+    
+class MuteException(DuckBotException):
+    """Raised whenever an operation related to a mute fails."""
+    pass
+
+
+class MemberNotMuted(MuteException):
+    """Raised when trying to unmute a member that is not muted."""
+    __slots__: Tuple[str, ...] = (
+        'member',
+    )
+    
+    def __init__(self, member: discord.Member) -> None:
+        self.member: discord.Member = member
+        super().__init__(f'{member} is not muted.')
+        
+        
+class MemberAlreadyMuted(MuteException):
+    """Raised when trying to mute a member that is already muted."""
+    __slots__: Tuple[str, ...] = (
+        'member',
+    )
+    
+    def __init__(self, member: discord.Member) -> None:
+        self.member: discord.Member = member
+        super().__init__(f'{member} is already muted.')
