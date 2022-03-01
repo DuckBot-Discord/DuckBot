@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS guilds (
     guild_id BIGINT PRIMARY KEY,
     prefixes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     muted_role_id BIGINT NOT NULL
-    muted BIGINT[] ARRAY[]::BIGINT[],
+    muted BIGINT[] NOT NULL DEFAULT ARRAY[]::BIGINT[],
 );
 
 CREATE TABLE IF NOT EXISTS news (
