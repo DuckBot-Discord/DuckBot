@@ -5,7 +5,8 @@ import datetime
 from typing import (
     TYPE_CHECKING,
     Optional,
-    List
+    List, 
+    Tuple
 )
 
 import discord
@@ -26,16 +27,41 @@ if TYPE_CHECKING:
     
 log = logging.getLogger('DuckBot.cogs.moderation.tempmute')
 
+__all__: Tuple[str, ...] = (
+    'ToLower',
+    'TempMute',
+)
 
+
+# I understand this can be a simple function,
+# but the UserFriendlyTime class is a bit of a mess
+# and needs it to work. Thanks danny.
 class ToLower(commands.Converter):
+    __slots__: Tuple[str, ...] = ()
+    
     async def convert(self, ctx: DuckContext, argument: str) -> str:
         return argument.lower()
     
     
 class TempMute(DuckCog):
     """A helper cog to tempmute users."""
+    __slots__: Tuple[str, ...] = ()
     
     async def _create_muted_role(self, guild: discord.Guild) -> discord.Role:
+        """|coro|
+        
+        Create a muted role for the guild.
+        
+        Parameters
+        ----------
+        guild: :class:`discord.Guild`
+            The guild to create the muted role for.
+        
+        Returns
+        -------
+        :class:`discord.Role`
+            The newly created muted role.
+        """
         role = await guild.create_role(
             name='Muted',
             permissions=discord.Permissions(send_messages=False, connect=False),
@@ -50,6 +76,23 @@ class TempMute(DuckCog):
         return role
     
     async def _get_muted_role(self, guild: discord.Guild, *, conn: Connection) -> discord.Role:
+        """|coro|
+        
+        A helper function used internally. Will get the "Muted" role and return it whilst
+        managing DB interactions.
+        
+        Parameters
+        ----------
+        guild: :class:`discord.Guild`
+            The guild to get the muted role from.
+        conn: :class:`asyncpg.Connection`
+            The connection to use.
+        
+        Returns
+        -------
+        :class:`discord.Role`
+            The muted role.
+        """
         # I'm using fetchrow here to validate we even have data in the guilds table.
         # If packet is None, then we dont have ANY data in the guilds table, and we need to create it.
         packet = await conn.fetchrow('SELECT guild_id, muted_role_id FROM guilds WHERE guild_id = $1', guild.id)
@@ -192,6 +235,15 @@ class TempMute(DuckCog):
     @commands.has_guild_permissions(manage_roles=True)
     @commands.guild_only()
     async def tempmute_remove(self, ctx: DuckContext, member: discord.Member) -> Optional[discord.Message]:
+        """|coro|
+        
+        Umute a member that was muted.
+        
+        Parameters
+        ----------
+        member: :class:`discord.Member`
+            The member to unmute.
+        """
         # Fuck me. This whole command. So bad.
         guild = ctx.guild
         if not guild:
@@ -223,9 +275,39 @@ class TempMute(DuckCog):
         embed.set_author(name=str(member), icon_url=member.display_avatar.url)
         embed.set_footer(text=f'Member ID: {member.id}')
         return await ctx.send(embed=embed)
+    
+    @commands.command(name='unmute')
+    @commands.bot_has_guild_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
+    @commands.guild_only()
+    @discord.utils.copy_doc(tempmute_remove)
+    async def unmute(self, ctx: DuckContext, member: discord.Member) -> Optional[discord.Message]:
+        """|coro|
+        
+        Unmute a member that was muted.
+        
+        Parameters
+        ----------
+        member: :class:`discord.Member`
+            The member to unmute.
+        """
+        return await ctx.invoke(self.tempmute_remove, member)
         
     @commands.Cog.listener('on_member_update')
     async def cache_validation(self, before: discord.Member, after: discord.Member) -> None:
+        """|coro|
+        
+        A listener that updates the internal cache of muted members.
+        
+        This even gets called when the member's timeout expires, removing it from the DB.
+        
+        Parameters
+        ----------
+        before: :class:`discord.Member`
+            The member before the update.
+        after: :class:`discord.Member`
+            The member after the update.
+        """
         if after.communication_disabled_until:
             return
         
@@ -239,6 +321,20 @@ class TempMute(DuckCog):
     
     @commands.Cog.listener('on_mute_timer_complete')
     async def mute_dispatcher(self, member_id: int, guild_id: int, *, roles: List[int]) -> None:
+        """|coro|
+        
+        A mute dispatcher that listenes for when a timer expires. Once it does, it restores the member's roles 
+        back to what they were before the mute.
+    
+        Parameters
+        ----------
+        member_id: :class:`int`
+            The member ID.
+        guild_id: :class:`int`
+            The guild ID.
+        roles: List[:class:`int`]
+            A list of role IDS to restore to the member.
+        """
         guild = self.bot.get_guild(guild_id)
         if guild is None:
             return log.debug('Ignoring mute timer for guild %s, it no longer exists.', guild_id)
