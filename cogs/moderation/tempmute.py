@@ -280,7 +280,6 @@ class TempMute(DuckCog):
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
     @commands.guild_only()
-    @discord.utils.copy_doc(tempmute_remove)
     async def unmute(self, ctx: DuckContext, member: discord.Member) -> Optional[discord.Message]:
         """|coro|
         
