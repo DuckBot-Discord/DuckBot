@@ -16,6 +16,7 @@ import concurrent.futures
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
+    AsyncContextManager,
     List,
     Optional,
     Set,
@@ -27,7 +28,7 @@ from typing import (
     Awaitable,
     Coroutine,
     Any,
-    Union
+    Union,
 )
 
 from discord.ext import commands
@@ -37,6 +38,7 @@ from utils.context import DuckContext
 from utils.errorhandler import DuckExceptionManager
 from utils.helpers import col
 from utils.time import human_timedelta
+from utils.timer import TimerManager
 from utils.errors import *
 
 try:
@@ -179,7 +181,13 @@ class DbContextManager(Generic[DBT]):
             await self._pool.release(self._conn)
 
 
-class DuckBot(commands.Bot):
+
+class DuckHelper(TimerManager):
+    def __init__(self, *, bot: DuckBot) -> None:
+        super().__init__(bot=bot) 
+    
+
+class DuckBot(commands.Bot, DuckHelper):
     if TYPE_CHECKING:
         # We do this to make sure we dont get annoying 
         # type checker errors. Most of the time user isnt going to be 
@@ -200,6 +208,8 @@ class DuckBot(commands.Bot):
             strip_after_prefix=True,
             chunk_guilds_at_startup=False
         )
+        super(DuckHelper, self).__init__(bot=self)
+        
         self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
         self.session: ClientSession = session
         self.pool: Pool = pool
