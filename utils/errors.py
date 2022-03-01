@@ -2,14 +2,11 @@ from __future__ import annotations
 
 import logging
 from typing import (
-    TYPE_CHECKING,
     Tuple,
 )
 
 import discord
 
-if TYPE_CHECKING:
-    pass
 
 log = logging.getLogger('Duckbot.utils.errors')
 
@@ -29,3 +26,21 @@ class DuckBotNotStarted(DuckBotException):
     DuckBot is ready.
     """
     __slots__: Tuple[str, ...] = ()
+
+
+class TimerError(DuckBotException):
+    """The base for all timer base exceptions. Every Timer based error should inherit
+    from this.
+    """
+
+
+class TimerNotFound(TimerError):
+    """Raised when trying to fetch a timer that does not exist."""
+    __slots__: Tuple[str, ...] = (
+        'id',
+    )
+    
+    def __init__(self, id: int) -> None:
+        self.id: int = id
+        super().__init__(f'Timer with ID {id} not found.')
+    
