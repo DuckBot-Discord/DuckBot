@@ -252,7 +252,7 @@ class News(DuckCog):
     async def news(self, ctx: DuckContext):
         """|coro|
         
-        Opens the bot's news feed
+        Opens the bot's news feed.
         """
         news = await ctx.bot.pool.fetch("SELECT * FROM news ORDER BY news_id DESC")
         if not news:
