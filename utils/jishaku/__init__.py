@@ -126,6 +126,11 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
         -----
         - :meth:`contextlib.redirect_stdout` to allow for print statements.
         - :meth:`utils.add_logging` and `self` to the scope.
+        
+        Parameters
+        ----------
+        argument: :class:`str`
+            The code block to evaluate and return.
         """
         
         arg_dict = get_var_dict_from_ctx(ctx, Flags.SCOPE_PREFIX)
