@@ -150,6 +150,12 @@ class DbContextManager(Generic[DBT]):
         self._pool: asyncpg.Pool = bot.pool
         self._conn: Optional[Connection] = None
         self._tr: Optional[Transaction] = None
+        
+    async def acquire(self) -> Connection:
+        return await self.__aenter__()
+    
+    async def release(self) -> None:
+        return await self.__aexit__(None, None, None)
     
     async def __aenter__(self) -> Connection:
         self._conn = conn = await self._pool.acquire(timeout=self.timeout)
