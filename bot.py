@@ -10,6 +10,7 @@ import asyncio
 import time
 import sys
 import concurrent.futures
+from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
     List,
@@ -27,7 +28,6 @@ from typing import (
 )
 
 from discord.ext import commands
-from collections import defaultdict
 
 from utils.context import DuckContext
 from utils.errorhandler import DuckExceptionManager
