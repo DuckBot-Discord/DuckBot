@@ -306,4 +306,5 @@ class News(DuckCog):
             removed = await conn.fetchval(query, news_id)
             
         with contextlib.suppress(discord.HTTPException):
+            # Leo really...
             await ctx.message.add_reaction(f"{removed}\N{VARIATION SELECTOR-16}\N{COMBINING ENCLOSING KEYCAP}")
