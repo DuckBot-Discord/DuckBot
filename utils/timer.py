@@ -119,8 +119,6 @@ class TimerManager:
     
     Attributes
     ----------
-    name: :class:`str`
-        The name of the Database Table to store timers in. Defaults to ``timers``.
     bot: :class:`~.DuckBot` 
         The bot instance.
     """
@@ -133,9 +131,8 @@ class TimerManager:
         '_cs_display_emoji',
     )
     
-    def __init__(self, *, bot: DuckBot, name: str = 'timers'):
+    def __init__(self, *, bot: DuckBot):
         self.bot: DuckBot = bot
-        self.name: str = name
         
         self._have_data = asyncio.Event()
         self._current_timer = None
@@ -201,7 +198,7 @@ class TimerManager:
         Optional[:class:`Timer`]
             The timer that is expired and should be dispatched.
         """
-        query = f"SELECT * FROM {self.name} WHERE expires IS NOT NULL AND expires < (CURRENT_DATE + $1::interval) ORDER BY expires LIMIT 1;"
+        query = f"SELECT * FROM timers WHERE expires IS NOT NULL AND expires < (CURRENT_DATE + $1::interval) ORDER BY expires LIMIT 1;"
         if connection:
             record = await connection.fetchrow(query, datetime.timedelta(days=days), False)
         else:
@@ -325,7 +322,7 @@ class TimerManager:
 
         async with self.bot.safe_connection() as conn:
             row = await conn.fetchrow(
-                f"""INSERT INTO {self.name}(
+                f"""INSERT INTO timers(
                         event,
                         created,
                         expires,
@@ -382,7 +379,7 @@ class TimerManager:
             A timer with that ID does not exist.
         """
         async with self.bot.safe_connection() as conn:
-            data = await conn.fetchrow(f'SELECT * FROM {self.name} WHERE id = $1', id)
+            data = await conn.fetchrow(f'SELECT * FROM timers WHERE id = $1', id)
         
         if not data:
             raise TimerNotFound(id)
@@ -406,9 +403,9 @@ class TimerManager:
             to delete.
         """
         async with self.bot.safe_connection() as conn:
-            data = await conn.fetchrow(f'SELECT * FROM {self.name} WHERE id = $1', id)
+            data = await conn.fetchrow(f'SELECT * FROM timers WHERE id = $1', id)
         
             if not data:
                 raise TimerNotFound(id)
             
-            await conn.execute(f'DELETE FROM {self.name} WHERE id = $1', id)
+            await conn.execute(f'DELETE FROM timers WHERE id = $1', id)
