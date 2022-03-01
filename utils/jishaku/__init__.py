@@ -157,10 +157,9 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
                         executor = AsyncCodeExecutor(argument.content, scope, arg_dict=arg_dict)
                         start = time.perf_counter()
                         
-                        # Thanks Jishaku  for the amazing lib that I dont need to jump through
-                        # hoops to fix SO GOOD OMG ILYSM :):):):):):):):):):):):):):):)
-                        #:):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):)
-                        index = 0
+                        # Absolutely a garbage lib that I have to fix jesus christ.
+                        # I have to rewrite this lib holy jesus its so bad.
+                        sent: bool = False
                         async for send, result in AsyncSender(executor):
                             self.last_result = result
                             
@@ -169,10 +168,12 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
                                 result, 
                                 start_time=start, 
                                 redirect_stdout=printed.getvalue(),
-                                short=False if index == 0 else True
+                                short=sent
                             ))
                             
-                            index += 1
+                            if not sent:
+                                sent = True
+                                
         finally:
             scope.clear_intersection(arg_dict)
     
