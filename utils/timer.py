@@ -5,11 +5,10 @@ import asyncio
 import asyncpg
 import logging
 from typing import (
+    List,
     Optional, 
     TYPE_CHECKING,
     Tuple,
-    Dict,
-    Any
 )
 
 import discord
@@ -62,6 +61,7 @@ class Timer:
         The time the timer was created.
     expires: :class:`datetime.datetime`
         The time the timer expires.
+    member_id: Optional[:class:`int`]
     """
     __slots__: Tuple[str, ...] = (
         'args', 
@@ -320,9 +320,7 @@ class TimerManager:
 
         delta = (when - now).total_seconds()
 
-        async with self.bot.safe_connection() as conn:
-            row = await conn.fetchrow(
-                f"""INSERT INTO timers(
+        query = """INSERT INTO timers(
                         event,
                         created,
                         expires,
@@ -337,13 +335,15 @@ class TimerManager:
                         $5
                     )
                     RETURNING *;
-                """, 
-                event,
-                now,
-                when,
-                {'args': args, 'kwargs': kwargs},
-                precise,
-            )
+                """
+        args = (event, now, when, {'args': args, 'kwargs': kwargs}, precise,)
+        
+        connection = kwargs.pop('connection', None)
+        if connection:
+            row = await connection.fetchrow(query, *args)
+        else:
+            async with self.bot.safe_connection() as conn:
+                row = await conn.fetchrow(query, *args)
             
         # only set the data check if it can be waited on
         if delta <= (86400 * 40): # 40 days
@@ -409,3 +409,18 @@ class TimerManager:
                 raise TimerNotFound(id)
             
             await conn.execute(f'DELETE FROM timers WHERE id = $1', id)
+            
+    async def fetch_timers(self) -> List[Timer]:
+        """|coro|
+        
+        Used to fetch all timers from the database.
+        
+        Returns
+        -------
+        :class:`list`
+            A list of :class:`Timer` objects.
+        """
+        async with self.bot.safe_connection() as conn:
+            data = await conn.fetch(f'SELECT * FROM timers')
+        
+        return [Timer(record=row) for row in data]
