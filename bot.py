@@ -66,6 +66,7 @@ initial_extensions: Tuple[str, ...] = (
     # Cogs
     'cogs.guild_config',
     'cogs.meta',
+    'cogs.moderation',
 )
 
 
