@@ -11,6 +11,10 @@ from utils.helpers import col
 
 load_dotenv()
 
+os.environ['JISHAKU_NO_UNDERSCORE'] = 'true'
+os.environ['JISHAKU_RETAIN'] = 'true'
+
+
 def _get_or_fail(env_var: str) -> str:
     val = os.environ.get(env_var)
     if not val:
