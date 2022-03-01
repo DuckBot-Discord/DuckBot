@@ -94,7 +94,9 @@ class DuckContext(commands.Context):
         if embeds:
             for embed in embeds:
                 if embed.color is discord.Embed.Empty:
-                    embed.color = self.color
+                    # Made this the bot's vanity colour, although we'll
+                    # be keeping self.color for other stuff like userinfo
+                    embed.color = self.bot.color
 
             kwargs['embeds'] = embeds
 
