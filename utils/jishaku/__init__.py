@@ -11,6 +11,7 @@ from typing import (
 )
 
 import discord
+import humanize
 
 from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
 from jishaku.features.python import PythonFeature
@@ -61,11 +62,14 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
             return await ctx.send(embed=embed)
 
         if isinstance(result, discord.File):
+            size_limit = ctx.guild.filesize_limit if ctx.guild else 8388608
             fmt = [
                 f'**Filename**: {(filename := result.filename)}',
-                f'**Size**: {len(result.fp.read())} bytes.',
+                f'**Size**: {humanize.naturalsize(size := len(result.fp.read()))} bytes.',
                 f'**Spoiler**: {result.spoiler}',
             ]
+            if size > size_limit:
+                fmt.append(f'**Error** Size exceeds {humanize.naturalsize(size_limit)}')
             embed.add_field(name='Metadata', value='\n'.join(fmt))
 
             result.fp.seek(0)
@@ -74,8 +78,11 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
 
             if filename and filename.endswith(('jpg', 'png', 'jpeg', 'gif')):
                 embed.set_image(url=f'attachment://{filename}')
-            
-            return await ctx.send(embed=embed, file=result)
+
+            if size > size_limit:
+                return await ctx.send(embed=embed)
+            else:
+                return await ctx.send(embed=embed, file=result)
 
         if isinstance(result, discord.Embed):
             return await ctx.send(embeds=[embed, result])
