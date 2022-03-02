@@ -3,6 +3,9 @@ from __future__ import annotations
 import asyncio
 import datetime
 import traceback
+import typing
+from contextlib import AbstractAsyncContextManager
+from types import TracebackType
 from typing import Tuple, Optional, Dict, List, Generator, Any, TYPE_CHECKING
 
 import discord
@@ -10,12 +13,12 @@ import discord
 if TYPE_CHECKING:
     from bot import DuckBot
 from utils.context import DuckContext
-from utils.errors import DuckBotException, log
+from utils.errors import DuckBotException, SilentCommandError, log
 from utils.types.exception import DuckTraceback, _DuckTracebackOptional
-
 
 __all__: Tuple[str, ...] = (
     'DuckExceptionManager',
+    'HandleHTTPException'
 )
 
 
@@ -66,10 +69,11 @@ class DuckExceptionManager:
 
         self.errors: Dict[str, List[DuckTraceback]] = {}
         self.code_blocker: str = '```py\n{}```'
-        self.error_webhook: discord.Webhook = discord.Webhook.from_url(bot.error_webhook_url, session=bot.session, bot_token=bot.http.token)
+        self.error_webhook: discord.Webhook = discord.Webhook.from_url(bot.error_webhook_url, session=bot.session,
+                                                                       bot_token=bot.http.token)
 
     def _yield_code_chunks(self, iterable: str, *, chunksize: int = 2000) -> Generator[str, None, None]:
-        cbs = len(self.code_blocker) - 2 # code blocker size
+        cbs = len(self.code_blocker) - 2  # code blocker size
 
         for i in range(0, len(iterable), chunksize - cbs):
             yield self.code_blocker.format(iterable[i:i + chunksize - cbs])
@@ -132,7 +136,7 @@ class DuckExceptionManager:
             title=f'An error has occured in {display}',
             timestamp=packet['time']
         )
-        embed.add_field(name='Metadata', value='\n'.join([f'**{k.title()}**: {v}' for k, v in fmt.items()]),)
+        embed.add_field(name='Metadata', value='\n'.join([f'**{k.title()}**: {v}' for k, v in fmt.items()]), )
 
         kwargs: Dict[str, Any] = {}
         if self.bot.user:
@@ -192,7 +196,7 @@ class DuckExceptionManager:
                 'guild': (ctx.guild and ctx.guild.id) or None,
                 'channel': ctx.channel.id,
             }
-            packet.update(addons) # type: ignore
+            packet.update(addons)  # type: ignore
 
         traceback_string = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
         current = self.errors.get(traceback_string)
@@ -216,9 +220,57 @@ class DuckExceptionManager:
                 if time_between > self.cooldown:
                     self._most_recent = discord.utils.utcnow()
                     return await self.release_error(traceback_string, packet)
-                else: # We have to wait
+                else:  # We have to wait
                     log.debug('Waiting %s seconds to release error', time_between.total_seconds())
                     await asyncio.sleep(time_between.total_seconds())
 
                     self._most_recent = discord.utils.utcnow()
                     return await self.release_error(traceback_string, packet)
+
+
+class HandleHTTPException(AbstractAsyncContextManager):
+    """
+    A context manager that handles HTTP exceptions for them to be
+    delivered to a destination channel without needing to create
+    an embed and send every time.
+
+    This is useful for handling errors that are not critical, but
+    still need to be reported to the user.
+
+    Parameters
+    ----------
+    destination: :class:`discord.abc.Messageable`
+        The destination channel to send the error to.
+
+    Attributes
+    ----------
+    destination: :class:`discord.abc.Messageable`
+        The destination channel to send the error to.
+
+    Raises
+    ------
+    `SilentCommandError`
+        Error raised if an HTTPException is encountered. This
+        error is specifically ignored by the command error handler.
+    """
+
+    def __init__(self, destination: discord.abc.Messageable):
+        self.destination = destination
+
+    async def __aenter__(self):
+        pass
+
+    async def __aexit__(
+            self,
+            exc_type: typing.Optional[typing.Type[BaseException]],
+            exc_val: typing.Optional[BaseException],
+            exc_tb: typing.Optional[TracebackType]
+    ) -> bool:
+        if exc_val is not None and isinstance(exc_val, discord.HTTPException):
+            embed = discord.Embed(
+                title='An unexpected error occurred!',
+                description=f'{exc_type.__name__}: {exc_val.text}',
+                colour=discord.Colour.red())
+            await self.destination.send(embed=embed)
+            raise SilentCommandError
+        return False
