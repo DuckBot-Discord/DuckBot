@@ -13,6 +13,7 @@ from discord.guild import BanEntry
 
 from utils.errorhandler import HandleHTTPException
 from utils.errors import HierarchyException, ActionNotExecutable
+from utils.context import DuckContext
 
 
 def can_execute_action():
@@ -21,7 +22,7 @@ def can_execute_action():
     Checks if the action can be executed on the author and the bot.
     """
     
-    async def predicate(ctx):
+    async def predicate(ctx: DuckContext) -> Optional[bool]:
         """|coro|
         
         A wrapped predicate to check if the action can be executed.
