@@ -12,6 +12,7 @@ from utils.helpers import col
 load_dotenv()
 
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'true'
+os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'true'
 os.environ['JISHAKU_RETAIN'] = 'true'
 
 
