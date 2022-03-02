@@ -20,3 +20,10 @@ CREATE TABLE IF NOT EXISTS timers(
     created TIMESTAMP,
     expires TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS blocks (
+    guild_id BIGINT,
+    channel_id BIGINT,
+    user_id BIGINT,
+    PRIMARY KEY (guild_id, channel_id, user_id)
+)
