@@ -27,9 +27,15 @@ URI = _get_or_fail('POSTGRES')
 ERROR_WEBHOOK_URL = _get_or_fail('ERROR_WEBHOOK_URL')
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
 )
+_gw_log = logging.getLogger('discord.gateway')
+_gw_log.disabled = True
+
+_cl_log = logging.getLogger('discord.client')
+_cl_log.disabled = True
+
 log = logging.getLogger('DuckBot.launcher')
 
 async def run_bot() -> None:
