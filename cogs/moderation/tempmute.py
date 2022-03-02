@@ -267,8 +267,12 @@ class TempMute(DuckCog):
                 # Let's find the timer(s)
                 timer = await conn.fetch("""
                 SELECT * FROM timers WHERE event = 'mute'
-                    AND (extra->'args'->0)::bigint = $1
+                
+                    AND (extra->'args'->0)::bigint = $1 
+                        -- arg at position 0 is the member id
+                        
                     AND (extra->'args'->1)::bigint = $2;
+                        -- arg at position 1 is the guild id
                 """, member.id, guild.id)
                 timers = [Timer(record=r) for r in timer]
 
