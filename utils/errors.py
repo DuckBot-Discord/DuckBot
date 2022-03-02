@@ -85,3 +85,11 @@ class MemberAlreadyMuted(MuteException):
     def __init__(self, member: discord.Member) -> None:
         self.member: discord.Member = member
         super().__init__(f'{member} is already muted.')
+
+
+class SilentCommandError(DuckBotException):
+    """This exception will be purposely ignored by the error handler
+    and will not be logged. Handy for stopping something that can't
+    be stopped with a simple ``return`` statement.
+    """
+    __slots__: Tuple[str, ...] = ()
