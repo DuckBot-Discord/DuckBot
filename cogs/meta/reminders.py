@@ -34,7 +34,7 @@ class Reminders(DuckCog):
     async def remindme(
             self,
             ctx: DuckContext,
-            when: UserFriendlyTime(ToLower, default='...')
+            when: UserFriendlyTime(ToLower, default='...') # type: ignore
     ) -> None:
         """|coro|
         Reminds you of something in the future.
