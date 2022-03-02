@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 from bot import DuckBot
+from utils.errors import DuckBotException
 from utils.context import DuckContext
 
 
@@ -22,7 +23,7 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     )
     if isinstance(error, ignored):
         return
-    elif isinstance(error, commands.UserInputError):
+    elif isinstance(error, (commands.UserInputError, DuckBotException)):
         await ctx.send(error)
     elif isinstance(error, commands.CommandInvokeError):
         return await on_command_error(ctx, error.original)
