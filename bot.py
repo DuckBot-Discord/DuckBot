@@ -16,7 +16,7 @@ import concurrent.futures
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
-    AsyncContextManager,
+    Generator,
     List,
     Optional,
     Set,
@@ -187,6 +187,19 @@ class DuckHelper(TimerManager):
     def __init__(self, *, bot: DuckBot) -> None:
         super().__init__(bot=bot)
 
+    def chunker(self, item: str, *, size: int = 2000) -> Generator[str, None, None]:
+        """Split a string into chunks of a given size.
+        
+        Parameters
+        ----------
+        item: :class:`str`
+            The string to split.
+        size: :class:`int`
+            The size of each chunk. Defaults to 2000.
+        """
+        for i in range(0, len(item), size):
+            yield item[i:i + size]
+        
 
 class DuckBot(commands.Bot, DuckHelper):
     if TYPE_CHECKING:
