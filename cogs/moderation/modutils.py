@@ -40,14 +40,16 @@ async def can_execute_action(ctx: commands.Context, target: typing.Union[discord
             return
         target = upgraded
 
-    if ctx.me.top_role < target.top_role:
+    if ctx.me.top_role <= target.top_role:
         raise HierarchyException(target)
-    if ctx.author.top_role < target.top_role:
-        raise HierarchyException(target, author_error=True)
     if ctx.author == target:
         raise ActionNotExecutable('You cannot execute this action on yourself!')
     if ctx.guild is not None and ctx.guild.owner == target:
         raise ActionNotExecutable('I cannot execute any action on the server owner!')
+    if ctx.guild is not None and ctx.guild.owner == ctx.author:
+        return
+    if ctx.author.top_role <= target.top_role:
+        raise HierarchyException(target, author_error=True)
 
 def safe_reason(ctx: commands.Context, reason: str, *, length: int = 512):
     base = f'Action by {ctx.author} ({ctx.author.id}) for: '
