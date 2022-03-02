@@ -85,7 +85,8 @@ class Reminders(DuckCog):
             jump_url = f'https://discordapp.com/channels/{guild_id}/{channel_id}/{message_id}'
             view = JumpView(jump_url)
         
-        await channel.send(msg, view=view) # type: ignore
+        mentions = discord.AllowedMentions(users=[user_id])
+        await channel.send(msg, view=view, allowed_mentions=mentions) # type: ignore
      
 
 
