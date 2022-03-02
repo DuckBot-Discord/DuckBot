@@ -516,7 +516,40 @@ class DuckBot(commands.Bot, DuckHelper):
         return self.loop.create_task(coro, name=name)
 
     # This is overridden so we dont get so many annoying type errors when passing
-    # a Member into is_owner
+    # a Member into is_owner  ## Nah chai it's your shitty type checker smh!
     @discord.utils.copy_doc(commands.Bot.is_owner)
     async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
         return await super().is_owner(user) # type: ignore
+
+    async def start(self, token: str, *, reconnect: bool = True, verbose: bool = True) -> None:
+        """|coro|
+
+        Starts the bot.
+
+        Parameters
+        ----------
+        token: :class:`str`
+            The authentication token. Do not prefix this token with
+            anything as the library will do it for you.
+        reconnect: :class:`bool`
+            If we should attempt reconnecting, either due to internet
+            failure or a specific failure on Discord's part. Certain
+            disconnects that lead to bad state will not be handled (such as
+            invalid sharding payloads or bad tokens).
+        verbose: :class:`bool`
+            If we should log debug events. Set this to ``False`` if you want
+            to reduce the verbosity of the bot when logging mode is set to
+            DEBUG. Defaults to ``True``.
+
+        """
+        if verbose is False:
+            _gw_log = logging.getLogger('discord.gateway')
+            _gw_log.disabled = True
+
+            _cl_log = logging.getLogger('discord.client')
+            _cl_log.disabled = True
+
+            _cl_log = logging.getLogger('discord.client')
+            _cl_log.disabled = True
+
+        await super().start(token, reconnect=reconnect)

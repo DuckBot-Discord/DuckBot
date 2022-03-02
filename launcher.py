@@ -31,11 +31,6 @@ logging.basicConfig(
     level=logging.INFO,
     format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
 )
-_gw_log = logging.getLogger('discord.gateway')
-_gw_log.disabled = True
-
-_cl_log = logging.getLogger('discord.client')
-_cl_log.disabled = True
 
 log = logging.getLogger('DuckBot.launcher')
 
@@ -53,7 +48,7 @@ async def run_bot() -> None:
         async with aiohttp.ClientSession() as session:
             duck = DuckBot(session=session, pool=pool, error_webhook_url=ERROR_WEBHOOK_URL)
             
-            await duck.start(TOKEN, reconnect=True)
+            await duck.start(TOKEN, reconnect=True, verbose=True)
     except Exception as e:
         return log.error('Failed to start bot', exc_info=e)
     finally:
