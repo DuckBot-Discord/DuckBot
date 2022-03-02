@@ -41,6 +41,7 @@ class Block(DuckCog):
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
+    @can_execute_action()
     async def block(self, ctx: DuckContext, *, member: discord.Member):
         """|coro|
 
@@ -51,8 +52,6 @@ class Block(DuckCog):
         member: :class:`discord.Member`
             The member to block.
         """
-        await can_execute_action(ctx, member)
-
         reason = f'Block by {ctx.author} (ID: {ctx.author.id})'
 
         async with HandleHTTPException(ctx):
@@ -63,6 +62,7 @@ class Block(DuckCog):
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
+    @can_execute_action()
     async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: discord.Member):
         """|coro|
 
@@ -75,8 +75,6 @@ class Block(DuckCog):
         member: :class:`discord.Member`
             The member to block.
         """
-        await can_execute_action(ctx, member)
-
         reason = f'Tempblock by {ctx.author} (ID: {ctx.author.id}) until {time.dt}'
 
         await self.bot.create_timer(time.dt, 'tempblock', ctx.guild.id, ctx.channel.id,
@@ -91,10 +89,9 @@ class Block(DuckCog):
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
+    @can_execute_action()
     async def unblock(self, ctx: DuckContext, *, member: discord.Member):
         """Unblocks a user from your channel."""
-        await can_execute_action(ctx, member)
-
         # Firstly, we get any running temp-block timers.
         # If there are any, we cancel them.
 

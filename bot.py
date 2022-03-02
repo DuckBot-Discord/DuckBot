@@ -553,3 +553,27 @@ class DuckBot(commands.Bot, DuckHelper):
             _cl_log.disabled = True
 
         await super().start(token, reconnect=reconnect)
+
+    async def get_or_fetch_member(self, guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:
+        """|coro|
+        
+        Used to get a member from a guild. If the member was not found, the function
+        will return nothing.
+        
+        Parameters
+        ----------
+        guild: :class:`~discord.Guild`
+            The guild to get the member from.
+        user: Union[:class:`~discord.User`, :class:`int`]
+            The user to get the member from.
+        
+        Returns
+        -------
+        Optional[:class:`~discord.Member`]
+            The member that was requested.
+        """
+        id = user.id if isinstance(user, discord.User) else user
+        try:
+            return guild.get_member(id) or await guild.fetch_member(id)
+        except discord.HTTPException:
+            return None

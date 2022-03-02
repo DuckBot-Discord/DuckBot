@@ -28,6 +28,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
+    @can_execute_action()
     async def kick(self, ctx: DuckContext, member: discord.Member, *, reason: str = '...') -> Optional[discord.Message]:
         """|coro|
         
@@ -44,8 +45,6 @@ class StandardModeration(DuckCog):
         if guild is None:
             return
 
-        await can_execute_action(ctx, member)
-
         async with HandleHTTPException(ctx, title=f'Failed to kick {member}'):
             await member.kick(reason=safe_reason(ctx, reason))
 
@@ -55,6 +54,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(ban_members=True)
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
+    @can_execute_action()
     async def ban(self, ctx: DuckContext, user: discord.User, *, reason: str = '...') -> Optional[discord.Message]:
         """|coro|
 
@@ -70,8 +70,6 @@ class StandardModeration(DuckCog):
         guild = ctx.guild
         if guild is None:
             return
-
-        await can_execute_action(ctx, user)
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
             await guild.ban(user, reason=safe_reason(ctx, reason))
