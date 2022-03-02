@@ -143,8 +143,8 @@ class TimerManager:
     def __init__(self, *, bot: DuckBot):
         self.bot: DuckBot = bot
         
-        self._have_data = asyncio.Event()
-        self._current_timer = None
+        self._have_data: asyncio.Event = asyncio.Event()
+        self._current_timer: Optional[Timer] = None
         self._task = bot.loop.create_task(self.dispatch_timers())
     
     @discord.utils.cached_slot_property('_cs_display_emoji')
@@ -207,12 +207,12 @@ class TimerManager:
         Optional[:class:`Timer`]
             The timer that is expired and should be dispatched.
         """
-        query = f"SELECT * FROM timers WHERE expires IS NOT NULL AND expires < (CURRENT_DATE + $1::interval) ORDER BY expires LIMIT 1;"
+        query = f"SELECT * FROM timers WHERE (expires IS NOT NULL AND expires < (CURRENT_DATE + $1::interval)) AND dispatched = $2 ORDER BY expires LIMIT 1;"
         if connection:
-            record = await connection.fetchrow(query, datetime.timedelta(days=days), False)
+            record = await connection.fetchrow(query, datetime.timedelta(days=days))
         else:
             async with self.bot.safe_connection() as conn:
-                record = await conn.fetchrow(query, datetime.timedelta(days=days), False)
+                record = await conn.fetchrow(query, datetime.timedelta(days=days))
 
         return Timer(record=record) if record else None
     
@@ -233,11 +233,10 @@ class TimerManager:
         """
         # Please note the return value in the doc is different than the one in the function.
         # This function actually only returns a Timer but pyright doesn't like typehinting that.
-        
         async with self.bot.safe_connection() as con:
             timer = await self.get_active_timer(connection=con, days=days)
+            log.info(timer)
             if timer is not None:
-                log.debug('Recieved active timer: %s', timer)
                 self._have_data.set()
                 return timer
 
@@ -255,9 +254,9 @@ class TimerManager:
             The timer to dispatch.
         """
         async with self.bot.safe_connection() as conn:
-            await conn.execute('DELETE FROM timers WHERE id = $!', timer.id)
+            await conn.execute('DELETE FROM timers WHERE id = $1', timer.id)
         
-        log.debug('Dispatching timer %s', timer)
+        log.info('Dispatching timer %s', timer)
         if timer.precise:
             self.bot.dispatch(timer.event_name, *timer.args, **timer.kwargs)
         else:
@@ -270,21 +269,25 @@ class TimerManager:
         Please note if you use this class, you need to cancel the task when you're done 
         with it.
         """
+        log.info('Went into dispatch_timers')
         try:
             while not self.bot.is_closed():
                 # can only asyncio.sleep for up to ~48 days reliably
                 # so we're gonna cap it off at 40 days
                 # see: http://bugs.python.org/issue20493
                 timer = self._current_timer = await self.wait_for_active_timers(days=40)
+                log.info('Timer is: %s', timer)
                 if timer is None: # To make type checker happy
+                    log.info('Timer expired, but no timer was found.')
                     continue
                 
                 now = datetime.datetime.utcnow()
-
                 if timer.expires >= now: 
                     to_sleep = (timer.expires - now).total_seconds() 
+                    log.info('Sleeping for %s seconds', to_sleep)
                     await asyncio.sleep(to_sleep)
 
+                log.info('Calling timer %s', timer)
                 await self.call_timer(timer)
         except asyncio.CancelledError:
             raise
@@ -324,35 +327,17 @@ class TimerManager:
             A dictionary of keyword arguments to be passed to :class:`Timer.kwargs`. Please note each element
             in this dictionary must be JSON serializable.
         """
-        now = now or discord.utils.utcnow()
-            
-        # Remove timezone information since the database does not deal with it
-        if not when:
-            when = datetime.datetime(year=3000, month=1, day=1)
-        
         when = when.astimezone(datetime.timezone.utc).replace(tzinfo=None)
-        now = now.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        now = (now or discord.utils.utcnow()).astimezone(datetime.timezone.utc).replace(tzinfo=None)
 
         delta = (when - now).total_seconds()
 
-        query = """INSERT INTO timers(
-                        event,
-                        created,
-                        expires,
-                        extra,
-                        precise
-                    )
-                    VALUES(
-                        $1,
-                        $2,
-                        $3,
-                        $4,
-                        $5
-                    )
+        query = """INSERT INTO timers(event, created, expires, extra, precise)
+                    VALUES( $1, $2, $3, $4::jsonb, $5)
                     RETURNING *;
+                    
                     -- Man this looks like crap
                     -- Chai here -> this is smexy wdym
-                    
                 """
         query_args = (event, now, when, {'args': args, 'kwargs': kwargs}, precise,)
 
@@ -362,6 +347,8 @@ class TimerManager:
             async with self.bot.safe_connection() as conn:
                 row = await conn.fetchrow(query, *query_args)
             
+        timer = Timer(record=row)
+
         # only set the data check if it can be waited on
         if delta <= (86400 * 40): # 40 days
             self._have_data.set()
@@ -372,7 +359,6 @@ class TimerManager:
             self._task.cancel()
             self._task = self.bot.loop.create_task(self.dispatch_timers())
         
-        timer = Timer(record=row)
         return timer
     
     async def get_timer(self, id: int) -> Timer:

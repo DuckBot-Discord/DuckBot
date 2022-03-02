@@ -72,13 +72,13 @@ class Reminders(DuckCog):
 
     @commands.Cog.listener('on_reminder_timer_complete')
     async def reminder_dispatch(self, timer: Timer) -> None:
+        await self.bot.wait_until_ready()
+        
         user_id, channel_id, user_input = timer.args
 
-        try:
-            channel = self.bot.get_channel(channel_id) or await self.bot.fetch_channel(channel_id)
-        except discord.NotFound:
-            log.warning(f'Could not find channel {channel_id} - not dispatching reminder!')
-            return
+        channel = self.bot.get_channel(channel_id)
+        if channel is None:
+            return log.warning('Discarding channel %s as it\'s not found in cache.', channel_id)
 
         guild_id = channel.guild.id if isinstance(channel, (discord.TextChannel, discord.Thread)) else '@me'
         msg = f'<@{user_id}>, {discord.utils.format_dt(timer.created_at, "R")}: {user_input}'
@@ -88,5 +88,8 @@ class Reminders(DuckCog):
         if message_id:
             jump_url = f'https://discordapp.com/channels/{guild_id}/{channel_id}/{message_id}'
             view = JumpView(jump_url)
+        
+        await channel.send(f'<@{user_id}>, {msg}', view=view)
+    
 
 
