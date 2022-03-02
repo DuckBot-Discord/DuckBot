@@ -41,77 +41,43 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
         *, 
         start_time: Optional[float] = None,
         redirect_stdout: Optional[str] = None,
-        short: bool = False
-    ):
-        embed = discord.Embed(
-            title='Python REPL Return Result' if not short else '',
-            description=repr(result).replace(self.bot.http.token, "[token omitted]"),
-        )
-        
-        if redirect_stdout and redirect_stdout != '':
-            embed.add_field(name='Redirect Stdout:', value=redirect_stdout.replace(self.bot.http.token, "[token omitted]"))
-        
-        if not short:
-            embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
-            
-            if start_time:
-                embed.set_footer(text=f'Took {time.perf_counter() - start_time:.2f} seconds')
-        
+    ) -> Optional[discord.Message]:
         if isinstance(result, discord.Message):
-            embed.add_field(name='Jump to message', value=f'[Jump to message]({result.jump_url})')
-            return await ctx.send(embed=embed)
-
-        if isinstance(result, discord.File):
-            size_limit = ctx.guild.filesize_limit if ctx.guild else 8388608
-            fmt = [
-                f'**Filename**: {(filename := result.filename)}',
-                f'**Size**: {humanize.naturalsize(size := len(result.fp.read()))} bytes.',
-                f'**Spoiler**: {result.spoiler}',
-            ]
-            if size > size_limit:
-                fmt.append(f'**Error** Size exceeds {humanize.naturalsize(size_limit)}')
-            embed.add_field(name='Metadata', value='\n'.join(fmt))
-
-            result.fp.seek(0)
-            # Reading it for metadata made this go to the end of
-            # the file, so we need to seek back to the start
-
-            if filename and filename.endswith(('jpg', 'png', 'jpeg', 'gif')):
-                embed.set_image(url=f'attachment://{filename}')
-
-            if size > size_limit:
-                return await ctx.send(embed=embed)
-            else:
-                return await ctx.send(embed=embed, file=result)
-
-        if isinstance(result, discord.Embed):
-            return await ctx.send(embeds=[embed, result])
-
-        if isinstance(result, PaginatorInterface):
-            await ctx.send(embed=embed)
+            return await ctx.send(f'<Message <{result.jump_url}>>')
+        
+        elif isinstance(result, discord.File):
+            return await ctx.send(file=result)
+        
+        elif isinstance(result, discord.Embed):
+            return await ctx.send(embed=result)
+        
+        elif isinstance(result, PaginatorInterface):
             return await result.send_to(ctx)
-
+        
         if not isinstance(result, str):
-            # repr all non-strings
             result = repr(result)
-
-        # Eventually the below handling should probably be put somewhere else
-        if len(result) <= 2000:
-            if result.strip() == '':
-                embed.description = "\u200b"
-
-            return await ctx.send(
-                embed=embed,
-                allowed_mentions=discord.AllowedMentions.none()
-            )
-
+        
+        stripper = '**Redirected stdout**:\n{}'
+        total = 2000
+        if redirect_stdout:
+            total -= len(f'{stripper.format(redirect_stdout)}\n')
+        
+        if len(result) <= total:
+            if result.strip == '':
+                result = '\u200b'
+            
+            if redirect_stdout:
+                result = f'{stripper.format(redirect_stdout)}\n{result}'
+            
+            return await ctx.send(result.replace(self.bot.http.token, "[token omitted]"))
+        
         if use_file_check(ctx, len(result)):  # File "full content" preview limit
             # Discord's desktop and web client now supports an interactive file content
             #  display for files encoded in UTF-8.
             # Since this avoids escape issues and is more intuitive than pagination for
             #  long results, it will now be prioritized over PaginatorInterface if the
             #  resultant content is below the filesize threshold
-            return await ctx.send(embed=embed, file=discord.File(
+            return await ctx.send(file=discord.File(
                 filename="output.py",
                 fp=io.BytesIO(result.encode('utf-8'))
             ))
@@ -119,7 +85,13 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
         # inconsistency here, results get wrapped in codeblocks when they are too large
         #  but don't if they're not. probably not that bad, but noting for later review
         paginator = WrappedPaginator(prefix='```py', suffix='```', max_size=1985)
-        paginator.add_line(result)
+
+        if redirect_stdout:
+            for chunk in self.bot.chunker(f'{stripper.format(redirect_stdout).replace("**", "")}\n', size=1975):
+                paginator.add_line(chunk)
+        
+        for chunk in self.bot.chunker(result, size=1975):
+            paginator.add_line(chunk)
 
         interface = PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
         return await interface.send_to(ctx)
@@ -159,20 +131,16 @@ class DuckBotJishaku(*STANDARD_FEATURES, *OPTIONAL_FEATURES):
                         
                         # Absolutely a garbage lib that I have to fix jesus christ.
                         # I have to rewrite this lib holy jesus its so bad.
-                        sent: bool = False
                         async for send, result in AsyncSender(executor):
                             self.last_result = result
                             
+                            value = printed.getvalue()
                             send(await self.jsk_python_result_handling(
                                 ctx, 
                                 result, 
                                 start_time=start, 
-                                redirect_stdout=printed.getvalue(),
-                                short=sent
+                                redirect_stdout=None if value == '' else value,
                             ))
-                            
-                            if not sent:
-                                sent = True
                                 
         finally:
             scope.clear_intersection(arg_dict)
