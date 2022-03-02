@@ -349,13 +349,13 @@ class TimerManager:
                     RETURNING *;
                     -- Man this looks like crap
                 """
-        args = (event, now, when, {'args': args, 'kwargs': kwargs}, precise,)
+        query_args = (event, now, when, {'args': args, 'kwargs': kwargs}, precise,)
 
         if connection:
-            row = await connection.fetchrow(query, *args)
+            row = await connection.fetchrow(query, *query_args)
         else:
             async with self.bot.safe_connection() as conn:
-                row = await conn.fetchrow(query, *args)
+                row = await conn.fetchrow(query, *query_args)
             
         # only set the data check if it can be waited on
         if delta <= (86400 * 40): # 40 days
