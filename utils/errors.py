@@ -35,11 +35,21 @@ class HierarchyException(DuckBotException):
     """
     __slots__: Tuple[str, ...] = (
         'member',
+        'author_error',
     )
     
-    def __init__(self, member: discord.Member) -> None:
+    def __init__(self, member: discord.Member, *, author_error: bool = False) -> None:
         self.member: discord.Member = member
-        super().__init__(f'{member}\'s top role, {member.top_role.mention} is higher than mine. I can not do this operation.')
+        self.author_error: bool = author_error
+        if author_error is False:
+            super().__init__(f'**{member}**\'s top role is higher than mine. I can\'t do that!')
+        else:
+            super().__init__(f'**{member}**\'s top role is higher than your top role. You can\'t do that!')
+
+
+class ActionNotExecutable(DuckBotException):
+    def __init__(self, message):
+        super().__init__(f'{message}')
 
 
 class TimerError(DuckBotException):
