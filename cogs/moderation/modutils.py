@@ -13,7 +13,6 @@ from discord.guild import BanEntry
 
 from utils.errorhandler import HandleHTTPException
 from utils.errors import HierarchyException, ActionNotExecutable
-from utils.context import DuckContext
 
 
 def can_execute_action():
