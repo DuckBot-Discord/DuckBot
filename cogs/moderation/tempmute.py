@@ -267,7 +267,7 @@ class TempMute(DuckCog):
                     raise TimerNotFound(0)
                 
                 await conn.execute('DELETE FROM timers WHERE id = $1', timer.id)
-                self.bot.call_timer(timer)
+                await self.bot.call_timer(timer)
             
         embed = discord.Embed(
             title=f'{str(member)} has been unmuted.',
