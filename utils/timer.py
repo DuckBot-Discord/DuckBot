@@ -249,7 +249,12 @@ class TimerManager:
         timer: :class:`Timer`
             The timer to dispatch.
         """
-        await self.delete_timer(timer.id)
+        try:
+            await self.delete_timer(timer.id)
+        except TimerNotFound:
+            # We don't want to call a
+            # timer that was deleted.
+            return
         
         if timer.precise:
             self.bot.dispatch(timer.event_name, *timer.args, **timer.kwargs)
