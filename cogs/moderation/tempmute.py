@@ -21,6 +21,7 @@ from utils.errors import (
     MemberAlreadyMuted, 
     TimerNotFound
 )
+from utils.timer import Timer
 
 if TYPE_CHECKING:
     from asyncpg import Connection
@@ -199,6 +200,10 @@ class TempMute(DuckCog):
             async with ctx.typing():
                 muted_role = await self._get_muted_role(guild, conn=connection)
             roles_to_keep = [role for role in member.roles if not role.is_assignable()]
+
+            # We need to get this before editing the member, because the member .roles attribute
+            # will get updated after the edit. (singleton moment)
+            roles_to_restore = [role for role in member.roles if role.is_assignable()]
             
             try:
                 await member.edit(roles=[*roles_to_keep, *[muted_role]])
@@ -218,7 +223,7 @@ class TempMute(DuckCog):
                 'mute',
                 member.id, 
                 guild.id, 
-                roles=[role.id for role in member.roles if role not in roles_to_keep],
+                roles=[role.id for role in roles_to_restore],
             )
             await connection.execute('UPDATE guilds SET mutes = array_append(mutes, $1) WHERE guild_id = $2', member.id, guild.id)
             
@@ -259,14 +264,16 @@ class TempMute(DuckCog):
             if member.communication_disabled_until:
                 await member.edit(communication_disabled_until=None)
             else:
-                # Let's find the timer
-                timers = await self.bot.fetch_timers()
-                timer = discord.utils.find(lambda timer: all((member.id in timer.args, guild.id in timer.args)), timers)
-                if not timer:
-                    raise TimerNotFound(0)
-                
-                await conn.execute('DELETE FROM timers WHERE id = $1', timer.id)
-                await self.bot.call_timer(timer)
+                # Let's find the timer(s)
+                timer = await conn.fetch("""
+                SELECT * FROM timers WHERE event = 'mute'
+                    AND (extra->'args'->0)::bigint = $1
+                    AND (extra->'args'->1)::bigint = $2;
+                """, member.id, guild.id)
+                timers = [Timer(record=r) for r in timer]
+
+                for timer in timers:
+                    await self.bot.call_timer(timer)
             
         embed = discord.Embed(
             title=f'{str(member)} has been unmuted.',
@@ -336,6 +343,7 @@ class TempMute(DuckCog):
         roles: List[:class:`int`]
             A list of role IDS to restore to the member.
         """
+        log.info(f'Mute timer for {member_id} in {guild_id} has expired. Restoring {len(roles)} roles.')
         guild = self.bot.get_guild(guild_id)
         if guild is None:
             return log.debug('Ignoring mute timer for guild %s, it no longer exists.', guild_id)
@@ -351,7 +359,7 @@ class TempMute(DuckCog):
         try:
             await member.edit(roles=list(discord.Object(id=id) for id in roles))
         except discord.HTTPException:
-            pass
+            log.debug('Failed to restore roles for member %s', member_id)
         
         async with self.bot.safe_connection() as conn:
             await conn.execute('UPDATE guilds SET mutes = array_remove(mutes, $1) WHERE guild_id = $2', member_id, guild_id)

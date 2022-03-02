@@ -325,13 +325,13 @@ class TimerManager:
                    VALUES ($1, $2::jsonb, $3, $4, $5)
                    RETURNING *;
                 """
-        sanitized_args = (event, { 'args': args, 'kwargs': kwargs }, when, now, precise)
+        sanitized_args = (event, {'args': args, 'kwargs': kwargs}, when, now, precise)
         
         async with self.bot.safe_connection() as conn:
             row = await conn.fetchrow(query, *sanitized_args)
             
         # only set the data check if it can be waited on
-        if delta <= (86400 * 40): # 40 days
+        if delta <= (86400 * 40):  # 40 days
             self._have_data.set()
 
         # check if this timer is earlier than our currently run timer
