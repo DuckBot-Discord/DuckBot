@@ -49,18 +49,18 @@ class Reminders(DuckCog):
 
             Times are in UTC.
         """
-        async with self.bot.safe_connection() as conn:
-            await self.bot.create_timer(
-                when.dt,
-                'reminder',
+        await self.bot.create_timer(
+            when.dt,
+            'reminder',
 
-                ctx.author.id,
-                ctx.channel.id,
-                when.arg,
+            ctx.author.id,
+            ctx.channel.id,
+            when.arg,
 
-                precise=False
-            )
-            await ctx.send(f"Alright {ctx.author.mention}, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
+            message_id=ctx.message.id,
+            precise=False
+        )
+        await ctx.send(f"Alright {ctx.author.mention}, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
     @commands.Cog.listener('on_reminder_timer_complete')
     async def reminder_dispatch(self, timer: Timer) -> None:
@@ -81,12 +81,12 @@ class Reminders(DuckCog):
         msg = f'<@{user_id}>, {discord.utils.format_dt(aware, "R")}: {user_input}'
         
         view = discord.utils.MISSING
-        if (message_id := timer.kwargs.get('message_id')):
+        if message_id := timer.kwargs.get('message_id'):
             jump_url = f'https://discordapp.com/channels/{guild_id}/{channel_id}/{message_id}'
             view = JumpView(jump_url)
         
-        mentions = discord.AllowedMentions(users=[user_id])
-        await channel.send(msg, view=view, allowed_mentions=mentions) # type: ignore
+        mentions = discord.AllowedMentions(users=True, everyone=False, roles=False)
+        await channel.send(msg, view=view, allowed_mentions=mentions)
      
 
 
