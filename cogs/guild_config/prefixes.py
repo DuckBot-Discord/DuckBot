@@ -47,7 +47,7 @@ class PrefixChanges(DuckCog):
             return
 
         async with self.bot.safe_connection() as conn:
-            data = await conn.fetchval('SELECT prefixes FROM guilds WHERE guild_id = $1', guild.id)
+            data = await conn.fetchrow('SELECT prefixes FROM guilds WHERE guild_id = $1', guild.id)
 
             if not data:
                 # This server had no existing prefix data but wants it, let's create it
