@@ -80,7 +80,7 @@ class TempMute(DuckCog):
         """|coro|
         
         A helper function used internally. Will get the "Muted" role and return it whilst
-        managing DB interactions.
+        managing DB interactions.  // TODO: *not* do this. raise a "no role" error instead.
         
         Parameters
         ----------
@@ -111,7 +111,7 @@ class TempMute(DuckCog):
             if not role: # Role was deleted, re-create it.
                 role = await self._create_muted_role(guild)
                 await conn.execute('UPDATE guilds SET muted_role_id = $1 WHERE guild_id = $2', role.id, guild.id)
-            
+
             return role
     
         # Let's check for a muted role, and if not found create one.
@@ -196,7 +196,8 @@ class TempMute(DuckCog):
                 return await ctx.send(embed=embed)
             
             # We need to manage roles now. Who TF mutes someone for over 28 days???? Like I dont understand...
-            muted_role = await self._get_muted_role(guild, conn=connection)
+            async with ctx.typing():
+                muted_role = await self._get_muted_role(guild, conn=connection)
             roles_to_keep = [role for role in member.roles if not role.is_assignable()]
             
             try:
@@ -324,7 +325,7 @@ class TempMute(DuckCog):
     async def mute_dispatcher(self, member_id: int, guild_id: int, *, roles: List[int]) -> None:
         """|coro|
         
-        A mute dispatcher that listenes for when a timer expires. Once it does, it restores the member's roles 
+        A mute dispatcher that listenes for when a timer expires. Once it does, it restores the member's roles
         back to what they were before the mute.
     
         Parameters
