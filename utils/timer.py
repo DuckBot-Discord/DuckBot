@@ -348,6 +348,8 @@ class TimerManager:
                     )
                     RETURNING *;
                     -- Man this looks like crap
+                    -- Chai here -> this is smexy wdym
+                    
                 """
         query_args = (event, now, when, {'args': args, 'kwargs': kwargs}, precise,)
 
