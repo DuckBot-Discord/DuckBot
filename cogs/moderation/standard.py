@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 from utils import DuckCog
-from .modutils import can_execute_action, safe_reason
+from .modutils import can_execute_action, safe_reason, BanEntryConverter
 from utils.context import DuckContext
 from utils.errorhandler import HandleHTTPException
 
@@ -77,3 +77,22 @@ class StandardModeration(DuckCog):
             await guild.ban(user, reason=safe_reason(ctx, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
+
+    @commands.command()
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True, ban_members=True)
+    @commands.cooldown(1, 3.0, commands.BucketType.user)
+    async def unban(self, ctx: DuckContext, *, user: BanEntryConverter):
+        """unbans a user from this server.
+        Can search by:
+        - `user ID` (literal - number)
+        - `name#0000` (literal - case insensitive)
+        - `name` (literal - case insensitive)
+        - `name` (close matches - will prompt to confirm)
+        """
+        async with HandleHTTPException(ctx):
+            await ctx.guild.unban(user.user, reason=f"Unban by {ctx.author} ({ctx.author.id})")
+
+        extra = f"Previously banned for: {user.reason}" if user.reason else ''
+        return await ctx.send(f"Unbanned **{user}**\n{extra}")
+

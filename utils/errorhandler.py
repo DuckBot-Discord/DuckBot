@@ -4,7 +4,7 @@ import asyncio
 import datetime
 import traceback
 import typing
-from contextlib import AbstractAsyncContextManager
+from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from types import TracebackType
 from typing import Tuple, Optional, Dict, List, Generator, Any, TYPE_CHECKING
 
@@ -228,7 +228,7 @@ class DuckExceptionManager:
                     return await self.release_error(traceback_string, packet)
 
 
-class HandleHTTPException(AbstractAsyncContextManager):
+class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
     """
     A context manager that handles HTTP exceptions for them to be
     delivered to a destination channel without needing to create
@@ -257,8 +257,30 @@ class HandleHTTPException(AbstractAsyncContextManager):
     def __init__(self, destination: discord.abc.Messageable):
         self.destination = destination
 
+    def __enter__(self):
+        pass
+
     async def __aenter__(self):
         pass
+
+    def __exit__(
+            self,
+            exc_type: typing.Optional[typing.Type[BaseException]],
+            exc_val: typing.Optional[BaseException],
+            exc_tb: typing.Optional[TracebackType]
+    ) -> bool:
+        log.warning('Context manager HandleHTTPException was used with `with` statement.'
+                    '\nThis can be somewhat unreliable as it uses create_task, '
+                    'please use `async with` syntax instead.')
+        if exc_val is not None and isinstance(exc_val, discord.HTTPException):
+            embed = discord.Embed(
+                title='An unexpected error occurred!',
+                description=f'{exc_type.__name__}: {exc_val.text}',
+                colour=discord.Colour.red())
+            loop = asyncio.get_event_loop()
+            loop.create_task(self.destination.send(embed=embed))
+            raise SilentCommandError
+        return False
 
     async def __aexit__(
             self,
