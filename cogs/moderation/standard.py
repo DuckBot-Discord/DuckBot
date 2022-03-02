@@ -28,7 +28,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
-    async def kick(self, ctx: DuckContext, member: discord.Member, *, reason: Optional[str] = '...') -> Optional[discord.Message]:
+    async def kick(self, ctx: DuckContext, member: discord.Member, *, reason: str = '...') -> Optional[discord.Message]:
         """|coro|
         
         Kick a member from the server.
@@ -55,7 +55,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(ban_members=True)
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
-    async def ban(self, ctx: DuckContext, user: discord.User, *, reason: Optional[str] = '...') -> Optional[discord.Message]:
+    async def ban(self, ctx: DuckContext, user: discord.User, *, reason: str = '...') -> Optional[discord.Message]:
         """|coro|
 
         Ban a member from the server.
@@ -90,8 +90,12 @@ class StandardModeration(DuckCog):
         - `name` (literal - case insensitive)
         - `name` (close matches - will prompt to confirm)
         """
+        guild = ctx.guild
+        if guild is None:
+            return
+        
         async with HandleHTTPException(ctx, title=f'Failed to unban {user}'):
-            await ctx.guild.unban(user.user, reason=f"Unban by {ctx.author} ({ctx.author.id})")
+            await guild.unban(user.user, reason=f"Unban by {ctx.author} ({ctx.author.id})")
 
         extra = f"Previously banned for: {user.reason}" if user.reason else ''
         return await ctx.send(f"Unbanned **{user}**\n{extra}")
