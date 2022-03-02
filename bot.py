@@ -185,8 +185,8 @@ class DbContextManager(Generic[DBT]):
 
 class DuckHelper(TimerManager):
     def __init__(self, *, bot: DuckBot) -> None:
-        super().__init__(bot=bot) 
-    
+        super().__init__(bot=bot)
+
 
 class DuckBot(commands.Bot, DuckHelper):
     if TYPE_CHECKING:
@@ -274,12 +274,9 @@ class DuckBot(commands.Bot, DuckHelper):
         """
         async with self.safe_connection() as conn:
             data = await conn.fetch('SELECT guild_id, prefixes FROM guilds')
-        
-        def mapper(guild: int, prefixes: List[str]) -> None:
-            self.prefix_cache[guild] = set(prefixes)
-        
-        map(mapper, data) # type: ignore
-            
+            for guild_id, prefixes in data:
+                self.prefix_cache[guild_id] = set(prefixes)
+
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
         """:class:`re.Pattern`: A regex pattern that matches the bot's mention.
