@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
+import pytz
 from typing import (
     Optional, 
-    Tuple
 )
 
 import discord
@@ -13,17 +13,9 @@ from utils import DuckCog
 from utils.context import DuckContext
 from utils.time import UserFriendlyTime
 from utils.timer import Timer
-
+from cogs.moderation.tempmute import ToLower
 
 log = logging.getLogger('DuckBot.cogs.meta.reminders')
-
-
-class ToLower(commands.Converter):
-    __slots__: Tuple[str, ...] = ()
-
-    # noinspection PyProtocol
-    async def convert(self, ctx: DuckContext, argument: str) -> str:
-        return argument.lower()
 
 
 class JumpView(discord.ui.View):
@@ -38,6 +30,7 @@ class Reminders(DuckCog):
     async def remindme(
         self,
         ctx: DuckContext,
+        *,
         when: UserFriendlyTime(ToLower, default='...') # type: ignore
     ) -> None:
         """|coro|
@@ -56,8 +49,8 @@ class Reminders(DuckCog):
 
             Times are in UTC.
         """
-        async with ctx.bot.safe_connection() as conn:
-            timer = await ctx.bot.create_timer(
+        async with self.bot.safe_connection() as conn:
+            await self.bot.create_timer(
                 when.dt,
                 'reminder',
 
@@ -65,7 +58,6 @@ class Reminders(DuckCog):
                 ctx.channel.id,
                 when.arg,
 
-                connection=conn,
                 precise=False
             )
             await ctx.send(f"Alright {ctx.author.mention}, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
@@ -75,21 +67,25 @@ class Reminders(DuckCog):
         await self.bot.wait_until_ready()
         
         user_id, channel_id, user_input = timer.args
-
+        
         channel = self.bot.get_channel(channel_id)
         if channel is None:
             return log.warning('Discarding channel %s as it\'s not found in cache.', channel_id)
 
         guild_id = channel.guild.id if isinstance(channel, (discord.TextChannel, discord.Thread)) else '@me'
-        msg = f'<@{user_id}>, {discord.utils.format_dt(timer.created_at, "R")}: {user_input}'
-        message_id = timer.kwargs.get('message_id')
-
+        
+        # We need to format_dt in utc so the user
+        # can see the time in their local timezone. If not
+        # the user will see the timestamp as 5 hours ahead.
+        aware = timer.created_at.replace(tzinfo=pytz.UTC)
+        msg = f'<@{user_id}>, {discord.utils.format_dt(aware, "R")}: {user_input}'
+        
         view = discord.utils.MISSING
-        if message_id:
+        if (message_id := timer.kwargs.get('message_id')):
             jump_url = f'https://discordapp.com/channels/{guild_id}/{channel_id}/{message_id}'
             view = JumpView(jump_url)
         
-        await channel.send(f'<@{user_id}>, {msg}', view=view)
-    
+        await channel.send(msg, view=view) # type: ignore
+     
 
 

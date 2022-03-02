@@ -219,7 +219,6 @@ class TempMute(DuckCog):
                 member.id, 
                 guild.id, 
                 roles=[role.id for role in member.roles if role not in roles_to_keep],
-                connection=connection
             )
             await connection.execute('UPDATE guilds SET mutes = array_append(mutes, $1) WHERE guild_id = $2', member.id, guild.id)
             

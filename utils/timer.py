@@ -128,23 +128,23 @@ class TimerManager:
     
     Attributes
     ----------
-    bot: :class:`~.DuckBot` 
+    bot: :class:`~.DuckBot`
         The bot instance.
     """
     __slots__: Tuple[str, ...] = (
-        'name',
-        'bot', 
-        '_have_data',
+        'name', 
+        'bot',
+        '_have_data', 
         '_current_timer', 
         '_task',
-        '_cs_display_emoji',
+        '_cs_display_emoji'
     )
     
-    def __init__(self, *, bot: DuckBot):
+    def __init__(self, bot: DuckBot):
         self.bot: DuckBot = bot
         
-        self._have_data: asyncio.Event = asyncio.Event()
-        self._current_timer: Optional[Timer] = None
+        self._have_data = asyncio.Event()
+        self._current_timer = None
         self._task = bot.loop.create_task(self.dispatch_timers())
     
     @discord.utils.cached_slot_property('_cs_display_emoji')
@@ -207,16 +207,13 @@ class TimerManager:
         Optional[:class:`Timer`]
             The timer that is expired and should be dispatched.
         """
-        query = f"SELECT * FROM timers WHERE (expires IS NOT NULL AND expires < (CURRENT_DATE + $1::interval)) AND dispatched = $2 ORDER BY expires LIMIT 1;"
-        if connection:
-            record = await connection.fetchrow(query, datetime.timedelta(days=days))
-        else:
-            async with self.bot.safe_connection() as conn:
-                record = await conn.fetchrow(query, datetime.timedelta(days=days))
+        query = f"SELECT * FROM timers WHERE (expires IS NOT NULL AND expires < (CURRENT_DATE + $1::interval)) ORDER BY expires LIMIT 1;"
+        con = connection or self.bot.pool
 
+        record = await con.fetchrow(query, datetime.timedelta(days=days))
         return Timer(record=record) if record else None
     
-    async def wait_for_active_timers(self, *, days: int = 7) -> Optional[Timer]:
+    async def wait_for_active_timers(self, *, days: int=  7) -> Optional[Timer]:
         """|coro|
         
         Waity for a timer that has expired. This will wait until a timer is expired and should be dispatched.
@@ -253,8 +250,7 @@ class TimerManager:
         timer: :class:`Timer`
             The timer to dispatch.
         """
-        async with self.bot.safe_connection() as conn:
-            await conn.execute('DELETE FROM timers WHERE id = $1', timer.id)
+        await self.delete_timer(timer.id)
         
         log.info('Dispatching timer %s', timer)
         if timer.precise:
@@ -262,32 +258,28 @@ class TimerManager:
         else:
             self.bot.dispatch(timer.event_name, timer)
     
-    async def dispatch_timers(self) -> None:
+    async def dispatch_timers(self):
         """|coro|
         
         The main dispatch loop. This will wait for a timer to expire and dispatch it.
         Please note if you use this class, you need to cancel the task when you're done 
         with it.
         """
-        log.info('Went into dispatch_timers')
         try:
             while not self.bot.is_closed():
                 # can only asyncio.sleep for up to ~48 days reliably
                 # so we're gonna cap it off at 40 days
                 # see: http://bugs.python.org/issue20493
                 timer = self._current_timer = await self.wait_for_active_timers(days=40)
-                log.info('Timer is: %s', timer)
-                if timer is None: # To make type checker happy
-                    log.info('Timer expired, but no timer was found.')
-                    continue
-                
+                if not timer:
+                    log.warning('Timer was supposted to be here, but isn\'t.. oh no.')
+                    return
+                    
                 now = datetime.datetime.utcnow()
                 if timer.expires >= now: 
-                    to_sleep = (timer.expires - now).total_seconds() 
-                    log.info('Sleeping for %s seconds', to_sleep)
+                    to_sleep = (timer.expires - now).total_seconds()
                     await asyncio.sleep(to_sleep)
 
-                log.info('Calling timer %s', timer)
                 await self.call_timer(timer)
         except asyncio.CancelledError:
             raise
@@ -302,7 +294,6 @@ class TimerManager:
         *args: JSONType,
         now: Optional[datetime.datetime] = None,
         precise: bool = True,
-        connection: Optional[asyncpg.Connection] = None,
         **kwargs: JSONType
     ) -> Timer:
         """|coro|
@@ -321,34 +312,26 @@ class TimerManager:
         precise: :class:`bool`
             Whether or not to dispatch the timer listener with the timer's args and kwargs. If ``False``, only
             the timer will be passed to the listener. Defaults to ``True``.
-        connection: Optional[:class:`asyncpg.Connection`]
-            The connection to use. Defaults to a new connection via :meth:`DuckBot.safe_connection`.
         **kwargs: Dict[:class:`str`, Any]
             A dictionary of keyword arguments to be passed to :class:`Timer.kwargs`. Please note each element
             in this dictionary must be JSON serializable.
         """
+        
+        # Remove timezone information since the database does not deal with it
         when = when.astimezone(datetime.timezone.utc).replace(tzinfo=None)
         now = (now or discord.utils.utcnow()).astimezone(datetime.timezone.utc).replace(tzinfo=None)
 
         delta = (when - now).total_seconds()
 
-        query = """INSERT INTO timers(event, created, expires, extra, precise)
-                    VALUES( $1, $2, $3, $4::jsonb, $5)
-                    RETURNING *;
-                    
-                    -- Man this looks like crap
-                    -- Chai here -> this is smexy wdym
+        query = f"""INSERT INTO timers (event, extra, expires, created, precise)
+                   VALUES ($1, $2::jsonb, $3, $4, $5)
+                   RETURNING *;
                 """
-        query_args = (event, now, when, {'args': args, 'kwargs': kwargs}, precise,)
-
-        if connection:
-            row = await connection.fetchrow(query, *query_args)
-        else:
-            async with self.bot.safe_connection() as conn:
-                row = await conn.fetchrow(query, *query_args)
+        sanitized_args = (event, { 'args': args, 'kwargs': kwargs }, when, now, precise)
+        
+        async with self.bot.safe_connection() as conn:
+            row = await conn.fetchrow(query, *sanitized_args)
             
-        timer = Timer(record=row)
-
         # only set the data check if it can be waited on
         if delta <= (86400 * 40): # 40 days
             self._have_data.set()
@@ -359,6 +342,7 @@ class TimerManager:
             self._task.cancel()
             self._task = self.bot.loop.create_task(self.dispatch_timers())
         
+        timer = Timer(record=row)
         return timer
     
     async def get_timer(self, id: int) -> Timer:
