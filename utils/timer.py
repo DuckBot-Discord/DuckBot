@@ -232,7 +232,6 @@ class TimerManager:
         # This function actually only returns a Timer but pyright doesn't like typehinting that.
         async with self.bot.safe_connection() as con:
             timer = await self.get_active_timer(connection=con, days=days)
-            log.info(timer)
             if timer is not None:
                 self._have_data.set()
                 return timer
@@ -252,7 +251,6 @@ class TimerManager:
         """
         await self.delete_timer(timer.id)
         
-        log.info('Dispatching timer %s', timer)
         if timer.precise:
             self.bot.dispatch(timer.event_name, *timer.args, **timer.kwargs)
         else:
