@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import logging
+from typing import (
+    Optional, 
+    Tuple
+)
 
 import discord
-
-from utils import DuckCog
-from typing import Tuple
-from utils.context import DuckContext
-from utils.time import UserFriendlyTime
 from discord.ext import commands
 
+from utils import DuckCog
+from utils.context import DuckContext
+from utils.time import UserFriendlyTime
 from utils.timer import Timer
 
 
@@ -23,7 +27,7 @@ class ToLower(commands.Converter):
 
 
 class JumpView(discord.ui.View):
-    def __init__(self, jump_url: str, *, label: str = None):
+    def __init__(self, jump_url: str, *, label: Optional[str] = None):
         super().__init__(timeout=1)
         self.add_item(discord.ui.Button(label=label or 'Go to message', url=jump_url))
 
@@ -32,9 +36,9 @@ class Reminders(DuckCog):
 
     @commands.command(name='remindme', aliases=['remind'])
     async def remindme(
-            self,
-            ctx: DuckContext,
-            when: UserFriendlyTime(ToLower, default='...') # type: ignore
+        self,
+        ctx: DuckContext,
+        when: UserFriendlyTime(ToLower, default='...') # type: ignore
     ) -> None:
         """|coro|
         Reminds you of something in the future.
