@@ -246,7 +246,7 @@ class TimerManager:
             await self._have_data.wait()
             return await self.get_active_timer(connection=con, days=days)
         
-    def call_timer(self, timer: Timer) -> None:
+    async def call_timer(self, timer: Timer) -> None:
         """Call an expired timer to dispatch it.
         
         Parameters
@@ -254,6 +254,9 @@ class TimerManager:
         timer: :class:`Timer`
             The timer to dispatch.
         """
+        async with self.bot.safe_connection() as conn:
+            await conn.execute('DELETE FROM timers WHERE id = $!', timer.id)
+        
         log.debug('Dispatching timer %s', timer)
         if timer.precise:
             self.bot.dispatch(timer.event_name, *timer.args, **timer.kwargs)
@@ -282,7 +285,7 @@ class TimerManager:
                     to_sleep = (timer.expires - now).total_seconds() 
                     await asyncio.sleep(to_sleep)
 
-                self.call_timer(timer)
+                await self.call_timer(timer)
         except asyncio.CancelledError:
             raise
         except (OSError, discord.ConnectionClosed, asyncpg.PostgresConnectionError): 
