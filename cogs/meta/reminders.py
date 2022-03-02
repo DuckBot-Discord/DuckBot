@@ -41,6 +41,7 @@ class Reminders(DuckCog):
         when: UserFriendlyTime(ToLower, default='...') # type: ignore
     ) -> None:
         """|coro|
+        
         Reminds you of something in the future.
 
         Parameters
