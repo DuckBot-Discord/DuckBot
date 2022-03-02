@@ -241,11 +241,15 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
     ----------
     destination: :class:`discord.abc.Messageable`
         The destination channel to send the error to.
+    title: Optional[:class:`str`]
+        The title of the embed. Defaults to ``'An unexpected error occurred!'``.
 
     Attributes
     ----------
     destination: :class:`discord.abc.Messageable`
         The destination channel to send the error to.
+    message: Optional[:class:`str`]
+        The string to put the embed title in.
 
     Raises
     ------
@@ -254,8 +258,11 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
         error is specifically ignored by the command error handler.
     """
 
-    def __init__(self, destination: discord.abc.Messageable):
+    __slots__ = ('destination', 'message')
+
+    def __init__(self, destination: discord.abc.Messageable, *, title: str = None):
         self.destination = destination
+        self.message = title
 
     def __enter__(self):
         pass
@@ -273,10 +280,12 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
                     '\nThis can be somewhat unreliable as it uses create_task, '
                     'please use `async with` syntax instead.')
         if exc_val is not None and isinstance(exc_val, discord.HTTPException):
+
             embed = discord.Embed(
-                title='An unexpected error occurred!',
+                title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
                 colour=discord.Colour.red())
+
             loop = asyncio.get_event_loop()
             loop.create_task(self.destination.send(embed=embed))
             raise SilentCommandError
@@ -290,7 +299,7 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
     ) -> bool:
         if exc_val is not None and isinstance(exc_val, discord.HTTPException):
             embed = discord.Embed(
-                title='An unexpected error occurred!',
+                title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
                 colour=discord.Colour.red())
             await self.destination.send(embed=embed)

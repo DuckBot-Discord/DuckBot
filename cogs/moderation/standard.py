@@ -46,7 +46,7 @@ class StandardModeration(DuckCog):
 
         await can_execute_action(ctx, member)
 
-        async with HandleHTTPException(ctx):
+        async with HandleHTTPException(ctx, title=f'Failed to kick {member}'):
             await member.kick(reason=safe_reason(ctx, reason))
 
         return await ctx.send(f'Kicked **{member}** for: {reason}')
@@ -73,7 +73,7 @@ class StandardModeration(DuckCog):
 
         await can_execute_action(ctx, user)
 
-        async with HandleHTTPException(ctx):
+        async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
             await guild.ban(user, reason=safe_reason(ctx, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
@@ -90,7 +90,7 @@ class StandardModeration(DuckCog):
         - `name` (literal - case insensitive)
         - `name` (close matches - will prompt to confirm)
         """
-        async with HandleHTTPException(ctx):
+        async with HandleHTTPException(ctx, title=f'Failed to unban {user}'):
             await ctx.guild.unban(user.user, reason=f"Unban by {ctx.author} ({ctx.author.id})")
 
         extra = f"Previously banned for: {user.reason}" if user.reason else ''
