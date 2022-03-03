@@ -316,7 +316,7 @@ class DuckBot(commands.Bot, DuckHelper):
         return discord.utils.oauth_url(self.user.id, permissions=discord.Permissions(8), scopes=('bot', 'applications.commands'))
     
     @discord.utils.cached_property
-    def timestamp_uptime(self) -> str:
+    def uptime_timestamp(self) -> str:
         """:class:`str`: The uptime of the bot in a human-readable Discord timestamp format.
         
         Raises
