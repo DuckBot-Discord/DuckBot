@@ -1,7 +1,9 @@
 import asyncio
 import contextlib
 import logging
-from typing import Optional
+import math
+import typing
+from typing import Optional, List
 
 import discord
 from discord.ext import commands
@@ -74,6 +76,37 @@ class Block(DuckCog):
 
             async with self.bot.safe_connection() as conn:
                 await conn.execute(query, channel.guild.id, channel.id, member.id)  # type: ignore
+
+    async def format_block(self, guild: discord.Guild, user_id: int, channel_id: int = None):
+        """|coro|
+
+        Format a block entry from the database into a human-readable string.
+
+        Parameters
+        ----------
+        guild: :class:`discord.Guild`
+            The guild the block is in.
+        channel_id: :class:`int`
+            The channel ID of the block.
+        user_id: :class:`int`
+            The user ID of the block.
+
+        Returns
+        -------
+        :class:`str`
+            The formatted block entry.
+        """
+        if channel_id:
+            channel = guild.get_channel(channel_id)
+            if channel is None:
+                channel = '#deleted-channel - '
+            else:
+                channel = f"#{channel} ({channel_id}) - "
+        else:
+            channel = ''
+        user = await self.bot.get_or_fetch_member(guild, user_id) or f"Unknown User"
+
+        return f"{channel}@{user} ({user_id})"
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
@@ -169,6 +202,61 @@ class Block(DuckCog):
 
         await ctx.send(f'✅ **|** Unblocked **{mdr(member)}**')
 
+    @commands.command(aliases=['blocks'])
+    @commands.has_permissions(manage_messages=True)
+    async def blocked(self, ctx: DuckContext, page: typing.Optional[int] = 1, *, channel: discord.TextChannel = None):
+        """|coro|
+        Gets a list of all blocked users in a channel.
+        If no channel is specified, it will show the
+        blocked users for all the chnannels in the server.
+
+        Parameters
+        ----------
+        page: :class:`int`
+            The page number to show.
+        channel: :class:`discord.TextChannel`
+            The channel to get the blocked users from.
+        """
+        guild = ctx.guild
+        if guild is None:
+            return  # i hate your type checker chai.
+
+        # Firstly we generate the queries and arguments
+        args = [guild.id]
+
+        if channel is not None:
+            query = "SELECT user_id FROM blocks WHERE guild_id = $1 AND channel_id = $2"
+            count_query = "SELECT COUNT(*) FROM blocks WHERE guild_id = $1 AND channel_id = $2"
+            args.append(channel.id)
+        else:
+            query = "SELECT channel_id, user_id FROM blocks WHERE guild_id = $1"
+            count_query = "SELECT COUNT(*) FROM blocks WHERE guild_id = $1"
+        query += f"ORDER BY channel_id OFFSET {(page - 1) * 10}"
+
+        # Then we get the results and check if there are any
+        fetched_blocks = await self.bot.pool.fetch(query, *args)
+
+        if not fetched_blocks:
+            return await ctx.send('❌ **|** No blocked users found.')
+
+        # then we format the results and send them
+        count = await self.bot.pool.fetchval(count_query, *args)
+        max_pages = math.ceil(count / 10)
+
+        blocks: str = '\n'.join([await self.format_block(guild=guild, **block) for block in fetched_blocks])  # type: ignore
+
+        if max_pages > 1:
+            ch_m = f' {channel.mention}' if channel else ''
+            extra = f"\nNext page: `{ctx.clean_prefix}{ctx.invoked_with} {page + 1}{ch_m}`"
+        else:
+            extra = ''
+
+        channel = f"{channel.mention}\n" if channel else 'all channels - '
+        await ctx.send(f'📋 **|** Blocked users in {channel}'
+                       f'Showing: `{len(fetched_blocks)}/{count}` - '
+                       f'Showing Page: `{page}/{max_pages}`\n'
+                       f'```\n{blocks}\n```' + extra)
+
     @commands.Cog.listener('on_member_join')
     async def on_member_join(self, member: discord.Member):
         """Blocks a user from your channel."""
@@ -190,13 +278,15 @@ class Block(DuckCog):
                 continue
             else:
                 try:
-                    await self.toggle_block(
-                        channel,  # type: ignore
-                        member,
-                        blocked=True, update_db=False,
-                        reason='[MEMBER-JOIN] Automatic re-block for previously blocked user.'
-                    )
-                    await asyncio.sleep(1)
+                    if channel.permissions_for(guild.me).manage_permissions:
+                        await self.toggle_block(
+                            channel,  # type: ignore
+                            member,
+                            blocked=True,
+                            update_db=False,
+                            reason='[MEMBER-JOIN] Automatic re-block for previously blocked user. See "db.blocked" for a list of blocked users.'
+                        )
+                        await asyncio.sleep(1)
                 except discord.Forbidden:
                     log.debug(f"Did not unblock user {member} in channel {channel} due to missing permissions.",
                               exc_info=False)
