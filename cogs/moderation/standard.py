@@ -30,7 +30,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
-    async def kick(self, ctx: DuckContext, member: discord.Member, *, reason: str = '...') -> Optional[discord.Message]:
+    async def kick(self, ctx: DuckContext, member: TargetVerifier[discord.Member], *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
         """|coro|
         
         Kick a member from the server.
