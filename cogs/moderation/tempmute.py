@@ -19,7 +19,6 @@ from utils.errors import (
     HierarchyException, 
     MemberNotMuted,
     MemberAlreadyMuted, 
-    TimerNotFound
 )
 from utils.timer import Timer
 
