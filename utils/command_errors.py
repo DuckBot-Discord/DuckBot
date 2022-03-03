@@ -1,9 +1,16 @@
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+)
+
 from discord.ext import commands
 
 from bot import DuckBot
 from utils import errors
-from utils.context import DuckContext
 
+if TYPE_CHECKING:
+    from .context import DuckContext
 
 async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     """|coro|
@@ -17,6 +24,8 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     error: :class:`commands.CommandError`
         The error that was raised.
     """
+    error = getattr(error, 'original', error)
+    
     ignored = (
         commands.CommandNotFound,
         commands.CheckFailure,
@@ -25,13 +34,9 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
 
     if isinstance(error, ignored):
         return
-
-    elif isinstance(error, (
-            commands.UserInputError,
-            errors.DuckBotException
-    )):
+    # Did pycharm give you shit about this? It's fine lmfao
+    elif isinstance(error, (commands.UserInputError,errors.DuckBotException)):
         await ctx.send(error)
-
     elif isinstance(error, commands.CommandInvokeError):
         return await on_command_error(ctx, error.original)
     else:

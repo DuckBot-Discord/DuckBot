@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from typing import (
     Optional,
-    Union,
 )
 
 import discord
 from discord.ext import commands
 
-from utils import DuckCog
-from .modutils import can_execute_action, safe_reason, BanEntryConverter
+from utils import (
+    DuckCog, 
+    safe_reason, 
+)
 from utils.context import DuckContext
 from utils.errorhandler import HandleHTTPException
+from utils.converters import TargetVerifier, BanEntryConverter
 
 
 class StandardModeration(DuckCog):
@@ -28,7 +30,6 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
-    @can_execute_action()
     async def kick(self, ctx: DuckContext, member: discord.Member, *, reason: str = '...') -> Optional[discord.Message]:
         """|coro|
         
@@ -46,7 +47,7 @@ class StandardModeration(DuckCog):
             return
 
         async with HandleHTTPException(ctx, title=f'Failed to kick {member}'):
-            await member.kick(reason=safe_reason(ctx, reason))
+            await member.kick(reason=safe_reason(ctx.author, reason))
 
         return await ctx.send(f'Kicked **{member}** for: {reason}')
 
@@ -54,8 +55,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(ban_members=True)
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
-    @can_execute_action()
-    async def ban(self, ctx: DuckContext, user: discord.User, *, reason: str = '...') -> Optional[discord.Message]:
+    async def ban(self, ctx: DuckContext, user: TargetVerifier[discord.User], *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
         """|coro|
 
         Ban a member from the server.
@@ -72,7 +72,7 @@ class StandardModeration(DuckCog):
             return
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
-            await guild.ban(user, reason=safe_reason(ctx, reason))
+            await guild.ban(user, reason=safe_reason(ctx.author, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
 

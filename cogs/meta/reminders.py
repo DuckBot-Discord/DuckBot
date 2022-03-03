@@ -68,7 +68,7 @@ class Reminders(DuckCog):
         
         user_id, channel_id, user_input = timer.args
         
-        channel = self.bot.get_channel(channel_id)
+        channel: Union[discord.TextChannel, discord.Thread] = self.bot.get_channel(channel_id) # type: ignore # Type checker hates me
         if channel is None:
             return log.warning('Discarding channel %s as it\'s not found in cache.', channel_id)
 
