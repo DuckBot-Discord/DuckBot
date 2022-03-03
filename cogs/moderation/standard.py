@@ -81,11 +81,18 @@ class StandardModeration(DuckCog):
     @commands.bot_has_permissions(send_messages=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def unban(self, ctx: DuckContext, *, user: BanEntryConverter):
-        """unbans a user from this server.
-        Can search by:
+        """|coro|
+        
+        Unbans a user from this server.
+        
+        Can search by
+        --------------
         - `user ID` (literal - number)
+        
         - `name#0000` (literal - case insensitive)
+        
         - `name` (literal - case insensitive)
+        
         - `name` (close matches - will prompt to confirm)
         """
         guild = ctx.guild
