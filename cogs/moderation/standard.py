@@ -94,6 +94,11 @@ class StandardModeration(DuckCog):
         - `name` (literal - case insensitive)
         
         - `name` (close matches - will prompt to confirm)
+        
+        Parameters
+        ----------
+        user: :class:`discord.User`
+            The user to unban.
         """
         guild = ctx.guild
         if guild is None:
