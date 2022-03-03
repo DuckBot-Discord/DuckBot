@@ -83,18 +83,14 @@ class StandardModeration(DuckCog):
     async def unban(self, ctx: DuckContext, *, user: BanEntryConverter):
         """|coro|
         
-        Unbans a user from this server.
-        
-        Can search by
-        --------------
-        - `user ID` (literal - number)
-        
-        - `name#0000` (literal - case insensitive)
-        
-        - `name` (literal - case insensitive)
-        
-        - `name` (close matches - will prompt to confirm)
-        
+        Unbans a user from this server. You can search for this by:
+ 
+        +------------------+--------------------------+--------------------------+----------------------------------------+
+        |     User ID      |        Name#0000         |           Name           |                  Name                  |
+        +------------------+--------------------------+--------------------------+----------------------------------------+
+        | Literal - Number | Literal - case sensitive | Literal - case sensitive | close matches - will prompt to confirm |
+        +------------------+--------------------------+--------------------------+----------------------------------------+
+
         Parameters
         ----------
         user: :class:`discord.User`
