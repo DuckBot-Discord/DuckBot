@@ -2,15 +2,21 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
+    Tuple
 )
 
 from discord.ext import commands
 
-from bot import DuckBot
 from utils import errors
 
 if TYPE_CHECKING:
     from .context import DuckContext
+    from bot import DuckBot
+    
+__all__: Tuple[str, ...] = (
+    'on_command_error',
+    'setup',
+)
 
 async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     """|coro|

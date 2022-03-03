@@ -24,6 +24,15 @@ InteractionCheck = Callable[[discord.ui.View, discord.Interaction], Optional[boo
 QUESTION_MARK = '\N{BLACK QUESTION MARK ORNAMENT}'
 HOME = '\N{HOUSE BUILDING}'
 
+__all__: Tuple[str, ...] = (
+    '_interaction_check',
+    'HelpSelect',
+    'HelpHome',
+    'AboutHelpView',
+    'HelpCog',
+    'HelpCommand',
+    'HelpView',
+)
 
 async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction) -> Optional[bool]:
     # NOTE: Implement this in a bit

@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 __all__: Tuple[str, ...] = (
     'DuckContext',
     'tick',
+    'setup',
+    'teardown'
 )
 
 

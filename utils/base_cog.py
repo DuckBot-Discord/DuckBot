@@ -4,6 +4,7 @@ from typing import (
     TYPE_CHECKING,
     Optional,
     Type,
+    Tuple
 )
 
 try:
@@ -18,6 +19,9 @@ from .errors import *
 if TYPE_CHECKING:
     from bot import DuckBot
 
+__all__: Tuple[str, ...] = (
+    'DuckCog',
+)
 
 class DuckCog(commands.Cog):
     """The base class for all DuckBot cogs.

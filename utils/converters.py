@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from typing import (
+    TYPE_CHECKING,
     Type,
     Union,
     Tuple,
-    overload,
     Dict,
     TypeVar
 )
@@ -17,41 +17,20 @@ from .context import DuckContext
 from .errorhandler import HandleHTTPException
 
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
-
-
-class TargetVerifierMeta(type):
+T = TypeVar('T')
     
-    @overload
-    def __getitem__(cls, item: Type[discord.Member]) -> TargetVerifier:
-        ...
-        
-    @overload
-    def __getitem__(cls, item: Type[discord.User]) -> TargetVerifier:
-        ...
-        
-    @overload
-    def __getitem__(cls, item: Type[Tuple[Union[discord.Member, discord.User], ...]]) -> TargetVerifier:
-        ...
-        
-    @overload
-    def __getitem__(cls, item: Type[Tuple[Union[discord.User, discord.Member], ...]]) -> TargetVerifier:
-        ...
 
-    def __getitem__(cls, item) -> TargetVerifier:
-        return cls(item)
-    
-    
-class TargetVerifier(metaclass=TargetVerifierMeta):
+class TargetVerifier(commands.Converter[T]):
     """Used to verify a traget is permitted to perform
     an action upon another target.
-    
+            
     In this use case, the target is being checked by 
     :attr:`DuckBot.author` for an operation.
     
     .. code-block:: python3
     
         @commands.command()
-        async def ban(self, ctx: DuckContext, member: TargetVerifier[discord.Member, discord.User], *, reason: str = '...'):
+        async def ban(self, ctx: DuckContext, member: TargetVerifier(discord.Member, discord.User), *, reason: str = '...'):
             await member.ban(reason=reason)
     
     Attributes
@@ -67,22 +46,13 @@ class TargetVerifier(metaclass=TargetVerifierMeta):
         '_cs_converter_mapping',
     )
     
-    def __init__(
-        self, 
-        targets: Type[
-            Union[
-                Union[discord.Member, discord.User],
-                Tuple[Union[discord.Member, discord.User], ...]
-            ]
-        ],
-        fail_if_not_upgrade: bool = True,
-    ) -> None:
-        self._targets = targets
+    def __init__(self, *targets: Type[T], fail_if_not_upgrade: bool = True) -> None:
+        self._targets: Tuple[Type[T]] = targets
         self.fail_if_not_upgrade: bool = fail_if_not_upgrade
         
     @discord.utils.cached_slot_property('_cs_converter_mapping')
-    def converter_mapping(self) -> Dict[Type[Union[discord.Member, discord.User]], Type[commands.Converter]]:
-        """Dict[Type[Union[:class:`~discord.Member`, :class:`~discord.User`]], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
+    def converter_mapping(self) -> Dict[Type[T], Type[commands.Converter]]:
+        """Dict[Type[T], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
         return {
             discord.Member: commands.MemberConverter,
             discord.User: commands.UserConverter
@@ -109,14 +79,11 @@ class TargetVerifier(metaclass=TargetVerifierMeta):
         # We need to determine what we're trying to upgrade to.
         # To do that, let's check the targets attribute.
         target = None
-        try:
-            if issubclass(self._targets, (discord.Member, discord.User)):
-                # We upgrade to a member or user based upon the guild in this case.
-                converter = self.converter_mapping[self._targets]
-            else:
-                # Something goofed here
-                raise RuntimeError(f'Invalid target type {self._targets} ({type(self._targets)})')
-        except TypeError:
+        if len(self._targets) == 1:
+            converter = self.converter_mapping[self._targets[0]]
+            target = await converter().convert(ctx, argument)
+
+        else:
             # We need to this manually. It's both discord.Member and discord.User
             if ctx.guild:
                 try:
@@ -126,8 +93,6 @@ class TargetVerifier(metaclass=TargetVerifierMeta):
             
             if not target:
                 target = await commands.UserConverter().convert(ctx, argument)
-        else:
-            target = await converter().convert(ctx, argument)
         
         # Then check if the operation is legal
         await can_execute_action(ctx, target, fail_if_not_upgrade=self.fail_if_not_upgrade)

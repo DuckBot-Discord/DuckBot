@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import logging
 import math
 import typing
-from typing import Optional, List
+from typing import (
+    Optional, 
+)
 
 import discord
 from discord.ext import commands
@@ -14,10 +18,11 @@ from utils import (
     DuckContext,
     DuckCog,
     HandleHTTPException,
-    TargetVerifier,
     mdr,
-    FutureTime
+    FutureTime,
+    TargetVerifier
 )
+
 
 log = logging.getLogger('DuckBot.moderation.block')
 
@@ -25,12 +30,12 @@ log = logging.getLogger('DuckBot.moderation.block')
 class Block(DuckCog):
 
     async def toggle_block(
-            self,
-            channel: discord.abc.Messageable,
-            member: discord.Member,
-            blocked: bool = True,
-            update_db: bool = True,
-            reason: Optional[str] = None
+        self,
+        channel: discord.abc.Messageable,
+        member: TargetVerifier(discord.Member),  # type: ignore
+        blocked: bool = True,
+        update_db: bool = True,
+        reason: Optional[str] = None
     ) -> None:
         """|coro|
         
@@ -47,7 +52,6 @@ class Block(DuckCog):
         update_db : `bool`, optional
             Whether to update the database with the new block status.
         """
-
         # The prereq here is that channel is not a DM channel
         # and the channel has a guild attr.
         if isinstance(channel, discord.Thread):
@@ -77,7 +81,7 @@ class Block(DuckCog):
             async with self.bot.safe_connection() as conn:
                 await conn.execute(query, channel.guild.id, channel.id, member.id)  # type: ignore
 
-    async def format_block(self, guild: discord.Guild, user_id: int, channel_id: int = None):
+    async def format_block(self, guild: discord.Guild, user_id: int, channel_id: Optional[int] = None):
         """|coro|
 
         Format a block entry from the database into a human-readable string.
@@ -111,7 +115,7 @@ class Block(DuckCog):
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def block(self, ctx: DuckContext, *, member: TargetVerifier[discord.Member]):  # type: ignore
+    async def block(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)): # type: ignore
         """|coro|
 
         Blocks a user from your channel.
@@ -131,8 +135,7 @@ class Block(DuckCog):
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def tempblock(self, ctx: DuckContext, time: FutureTime, *,
-                        member: TargetVerifier[discord.Member]):  # type: ignore
+    async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: TargetVerifier(discord.Member)):  # type: ignore
         """|coro|
 
         Temporarily blocks a user from your channel.
@@ -150,19 +153,17 @@ class Block(DuckCog):
 
         reason = f'Tempblock by {ctx.author} (ID: {ctx.author.id}) until {time.dt}'
 
-        await self.bot.create_timer(time.dt, 'tempblock', guild.id, ctx.channel.id, member.id, ctx.author.id,
-                                    precise=False)
+        await self.bot.create_timer(time.dt, 'tempblock', guild.id, ctx.channel.id, member.id, ctx.author.id, precise=False) # type: ignore
 
         async with HandleHTTPException(ctx):
             await self.toggle_block(ctx.channel, member, blocked=True, reason=reason)
 
-        await ctx.send(f'✅ **|** Blocked **{mdr(member)}** '
-                       f'until {discord.utils.format_dt(time.dt, "R")}')
+        await ctx.send(f'✅ **|** Blocked **{mdr(member)}** until {discord.utils.format_dt(time.dt, "R")}')
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def unblock(self, ctx: DuckContext, *, member: TargetVerifier[discord.Member]):  # type: ignore
+    async def unblock(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)):  # type: ignore
         """|coro|
 
         Unblocks a user from your channel.
@@ -204,7 +205,7 @@ class Block(DuckCog):
 
     @commands.command(aliases=['blocks'])
     @commands.has_permissions(manage_messages=True)
-    async def blocked(self, ctx: DuckContext, page: typing.Optional[int] = 1, *, channel: discord.TextChannel = None):
+    async def blocked(self, ctx: DuckContext, page: int = 1, *, channel: Optional[discord.TextChannel ] = None):
         """|coro|
         Gets a list of all blocked users in a channel.
         If no channel is specified, it will show the
@@ -251,8 +252,8 @@ class Block(DuckCog):
         else:
             extra = ''
 
-        channel = f"{channel.mention}\n" if channel else 'all channels - '
-        await ctx.send(f'📋 **|** Blocked users in {channel}'
+        channel_fmt = f"{channel.mention}\n" if channel else 'all channels - '
+        await ctx.send(f'📋 **|** Blocked users in {channel_fmt}'
                        f'Showing: `{len(fetched_blocks)}/{count}` - '
                        f'Showing Page: `{page}/{max_pages}`\n'
                        f'```\n{blocks}\n```' + extra)

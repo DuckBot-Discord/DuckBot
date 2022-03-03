@@ -7,9 +7,12 @@ from typing import (
     Callable,
     Awaitable,
     Union,
-    Any, Optional
+    Any, 
+    Optional,
+    Tuple
 )
 
+import discord
 from discord.ext import commands
 
 from .context import DuckContext
@@ -26,6 +29,13 @@ T = TypeVar('T')
 P = ParamSpec('P')
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
 
+__all__: Tuple[str, ...] = (
+    'col',
+    'mdr',
+    'safe_reason',
+    'add_logging',
+    'can_execute_action',
+)
 
 def col(color=None, /, *, fmt=0, bg=False) -> str:
     """
@@ -114,10 +124,10 @@ def add_logging(func: Callable[P, Union[Awaitable[T], T]]) -> Callable[P, Union[
 
 
 async def can_execute_action(
-        ctx: DuckContext,
-        target: Union[discord.Member, discord.User],
-        *,
-        fail_if_not_upgrade: bool = True,
+    ctx: DuckContext,
+    target: Union[discord.Member, discord.User],
+    *,
+    fail_if_not_upgrade: bool = True,
 ) -> Optional[bool]:
     """|coro|
 

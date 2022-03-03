@@ -27,7 +27,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
-    async def kick(self, ctx: DuckContext, member: TargetVerifier[discord.Member], *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
+    async def kick(self, ctx: DuckContext, member: TargetVerifier(discord.Member), *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
         """|coro|
         
         Kick a member from the server.
@@ -52,7 +52,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(ban_members=True)
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
-    async def ban(self, ctx: DuckContext, user: TargetVerifier[discord.User], *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
+    async def ban(self, ctx: DuckContext, user: TargetVerifier(discord.User), *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
         """|coro|
 
         Ban a member from the server.
@@ -107,7 +107,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(manage_nicknames=True)
     @commands.has_guild_permissions(manage_nicknames=True)
     @commands.guild_only()
-    async def nick(self, ctx: DuckContext, member: TargetVerifier[discord.Member], *, nickname: str = None):
+    async def nick(self, ctx: DuckContext, member: TargetVerifier(discord.Member), *, nickname: Optional[str] = None): # type: ignore
         """|coro|
 
         Change a member's nickname.

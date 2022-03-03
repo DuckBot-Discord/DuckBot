@@ -10,11 +10,18 @@ import discord
 
 log = logging.getLogger('Duckbot.utils.errors')
 
-# NOTE: Add me back later when all exceptions have been made
-#__all__: Tuple[str, ...] = (
-#    'DuckBotException',
-#    'DuckBotNotStarted',
-#)
+__all__: Tuple[str, ...] = (
+    'DuckBotException',
+    'DuckBotNotStarted',
+    'HierarchyException',
+    'ActionNotExecutable',
+    'TimerError',
+    'TimerNotFound',
+    'MuteException',
+    'MemberNotMuted',
+    'MemberAlreadyMuted',
+    'SilentCommandError'
+)
 
 
 class DuckBotException(discord.ClientException):

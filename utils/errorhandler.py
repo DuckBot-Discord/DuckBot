@@ -3,18 +3,28 @@ from __future__ import annotations
 import asyncio
 import datetime
 import traceback
-import typing
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from types import TracebackType
-from typing import Tuple, Optional, Dict, List, Generator, Any, TYPE_CHECKING
+from typing import (
+    Tuple,
+    Optional, 
+    Dict,
+    List,
+    Generator,
+    Any,
+    TYPE_CHECKING,
+    Type
+)
 
 import discord
 
-if TYPE_CHECKING:
-    from bot import DuckBot
 from utils.context import DuckContext
 from utils.errors import DuckBotException, SilentCommandError, log
 from utils.types.exception import DuckTraceback, _DuckTracebackOptional
+
+if TYPE_CHECKING:
+    from bot import DuckBot
+
 
 __all__: Tuple[str, ...] = (
     'DuckExceptionManager',
@@ -260,7 +270,7 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
 
     __slots__ = ('destination', 'message')
 
-    def __init__(self, destination: discord.abc.Messageable, *, title: str = None):
+    def __init__(self, destination: discord.abc.Messageable, *, title: Optional[str] = None):
         self.destination = destination
         self.message = title
 
@@ -271,16 +281,16 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
         pass
 
     def __exit__(
-            self,
-            exc_type: typing.Optional[typing.Type[BaseException]],
-            exc_val: typing.Optional[BaseException],
-            exc_tb: typing.Optional[TracebackType]
+        self,
+        exc_type: Optional[Type[BaseException]] = None,
+        exc_val: Optional[BaseException] = None,
+        exc_tb: Optional[TracebackType] = None
     ) -> bool:
         log.warning('Context manager HandleHTTPException was used with `with` statement.'
                     '\nThis can be somewhat unreliable as it uses create_task, '
                     'please use `async with` syntax instead.')
-        if exc_val is not None and isinstance(exc_val, discord.HTTPException):
-
+        
+        if exc_val is not None and isinstance(exc_val, discord.HTTPException) and exc_type is not None:
             embed = discord.Embed(
                 title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
@@ -292,16 +302,19 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
         return False
 
     async def __aexit__(
-            self,
-            exc_type: typing.Optional[typing.Type[BaseException]],
-            exc_val: typing.Optional[BaseException],
-            exc_tb: typing.Optional[TracebackType]
+        self,
+        exc_type: Optional[Type[BaseException]] = None,
+        exc_val: Optional[BaseException] = None,
+        exc_tb: Optional[TracebackType] = None,
     ) -> bool:
-        if exc_val is not None and isinstance(exc_val, discord.HTTPException):
+        if exc_val is not None and isinstance(exc_val, discord.HTTPException) and exc_type:
+            
             embed = discord.Embed(
                 title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
                 colour=discord.Colour.red())
+            
             await self.destination.send(embed=embed)
             raise SilentCommandError
+        
         return False
