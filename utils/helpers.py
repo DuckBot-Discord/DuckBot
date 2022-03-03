@@ -164,20 +164,19 @@ async def can_execute_action(
         upgraded = await ctx.bot.get_or_fetch_member(guild, target)
         if upgraded is None:
             if fail_if_not_upgrade:
-                return
+                raise ActionNotExecutable('That user is not a member of this server.')
         else:
             target = upgraded
-
-    if isinstance(target, discord.Member):
-        if guild.me.top_role <= target.top_role:
-            raise HierarchyException(target)
-        if ctx.author.top_role <= target.top_role:
-            raise HierarchyException(target, author_error=True)
 
     if ctx.author == target:
         raise ActionNotExecutable('You cannot execute this action on yourself!')
     if guild.owner == target:
         raise ActionNotExecutable('I cannot execute any action on the server owner!')
-    if guild.owner == ctx.author:
-        return
 
+    if isinstance(target, discord.Member):
+        if guild.me.top_role <= target.top_role:
+            raise HierarchyException(target)
+        if guild.owner == ctx.author:
+            return
+        if ctx.author.top_role <= target.top_role:
+            raise HierarchyException(target, author_error=True)

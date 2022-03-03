@@ -14,7 +14,7 @@ from utils import (
     BanEntryConverter,
     DuckCog,
     safe_reason,
-
+    mdr,
 )
 
 
@@ -123,12 +123,15 @@ class StandardModeration(DuckCog):
         if guild is None:
             return
 
+        if nickname is None and not member.nick:
+            return await ctx.send(f'**{mdr(member)}** has no nickname to remove.')
+
         if nickname is not None and len(nickname) > 32:
             return await ctx.send(f'Nickname is too long! ({len(nickname)}/32)')
 
-        async with HandleHTTPException(ctx, title=f'Failed to set nickname for {member}'):
+        async with HandleHTTPException(ctx, title=f'Failed to set nickname for {member}.'):
             await member.edit(nick=nickname)
 
-        message = 'Changed nickname of **{user}** to **{nick}**' \
-            if nickname else 'Removed nickname of **{user}**'
-        return await ctx.send(message.format(user=member, nick=nickname))
+        message = 'Changed nickname of **{user}** to **{nick}**.' \
+            if nickname else 'Removed nickname of **{user}**.'
+        return await ctx.send(message.format(user=mdr(member), nick=mdr(nickname)))
