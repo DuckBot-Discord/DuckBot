@@ -554,7 +554,8 @@ class DuckBot(commands.Bot, DuckHelper):
 
         await super().start(token, reconnect=reconnect)
 
-    async def get_or_fetch_member(self, guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:
+    @staticmethod
+    async def get_or_fetch_member(guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:
         """|coro|
         
         Used to get a member from a guild. If the member was not found, the function
@@ -575,5 +576,26 @@ class DuckBot(commands.Bot, DuckHelper):
         id = user.id if isinstance(user, discord.User) else user
         try:
             return guild.get_member(id) or await guild.fetch_member(id)
+        except discord.HTTPException:
+            return None
+
+    async def get_or_fetch_user(self, user_id: int) -> Optional[discord.User]:
+        """|coro|
+
+        Used to get a member from a guild. If the member was not found, the function
+        will return nothing.
+
+        Parameters
+        ----------
+        user_id: :class:`int`
+            The user ID to fetch
+
+        Returns
+        -------
+        Optional[:class:`~discord.User`]
+            The member that was requested.
+        """
+        try:
+            return self.get_user(user_id) or await self.fetch_user(user_id)
         except discord.HTTPException:
             return None
