@@ -85,11 +85,11 @@ class StandardModeration(DuckCog):
         
         Unbans a user from this server. You can search for this by:
  
-        +------------------+--------------------------+--------------------------+----------------------------------------+
-        |     User ID      |        Name#0000         |           Name           |                  Name                  |
-        +------------------+--------------------------+--------------------------+----------------------------------------+
-        | Literal - Number | Literal - case sensitive | Literal - case sensitive | close matches - will prompt to confirm |
-        +------------------+--------------------------+--------------------------+----------------------------------------+
+        +------------------+--------------------------+----------------------------+
+        |     User ID      |        Name#0000         |            Name            |
+        +------------------+--------------------------+----------------------------+
+        | Literal - Number | Literal - case sensitive | Literal - case insensitive |
+        +------------------+--------------------------+----------------------------+
 
         Parameters
         ----------
@@ -106,3 +106,32 @@ class StandardModeration(DuckCog):
         extra = f"Previously banned for: {user.reason}" if user.reason else ''
         return await ctx.send(f"Unbanned **{user}**\n{extra}")
 
+    @commands.command(name='nick')
+    @commands.bot_has_guild_permissions(manage_nicknames=True)
+    @commands.has_guild_permissions(manage_nicknames=True)
+    @commands.guild_only()
+    async def nick(self, ctx: DuckContext, member: TargetVerifier[discord.Member], *, nickname: str = None):
+        """|coro|
+
+        Change a member's nickname.
+
+        Parameters
+        ---------
+        member: :class:`discord.Member`
+            The member to change the nickname of.
+        nickname: Optional[:class:`str`]
+            The nickname to set. If no nickname is provided, the nickname will be removed.
+        """
+        guild = ctx.guild
+        if guild is None:
+            return
+
+        if nickname is not None and len(nickname) > 32:
+            return await ctx.send(f'Nickname is too long! ({len(nickname)}/32)')
+
+        async with HandleHTTPException(ctx, title=f'Failed to set nickname for {member}'):
+            await member.edit(nick=nickname)
+
+        message = 'Changed nickname of **{user}** to **{nick}**' \
+            if nickname else 'Removed nickname of **{user}**'
+        return await ctx.send(message.format(user=member, nick=nickname))

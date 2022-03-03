@@ -1,8 +1,12 @@
+import typing
 from typing import Tuple
 
 __all__: Tuple[str, ...] = (
     'col',
 )
+
+import discord.utils
+
 
 def col(color=None, /, *, fmt=0, bg=False) -> str:
     """
@@ -24,3 +28,18 @@ def col(color=None, /, *, fmt=0, bg=False) -> str:
         else:
             base += "3{color}m"
     return base.format(fmt=fmt, color=color)
+
+def mdr(entity: typing.Any) -> str:
+    """Returns the string of an object with discord markdown removed.
+
+    Parameters
+    ----------
+    entity: Any
+        The object to remove markdown from.
+
+    Returns
+    -------
+    str
+        The string of the object with markdown removed.
+    """
+    return discord.utils.remove_markdown(str(entity))
