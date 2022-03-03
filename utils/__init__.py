@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from .helpers import (
     can_execute_action,
     safe_reason,
@@ -6,10 +8,16 @@ from .helpers import (
     mdr,
 )
 
-from .converters import (
-    TargetVerifier,
-    BanEntryConverter
-)
+from .converters import BanEntryConverter
+
+if TYPE_CHECKING:
+    from typing import Union as TargetVerifier
+
+    # I do this so my IDE doesn't complain about the
+    # TargetVerifier converter. but idk tho it's bad.
+    # CHAI find a better way to do this please.
+else:
+    from .converters import TargetVerifier
 
 from .time import (
     Time,

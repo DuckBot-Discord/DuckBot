@@ -21,11 +21,6 @@ from utils import (
 class StandardModeration(DuckCog):
     """A cog dedicated to holding standard
     moderation commands. Such as ban or kick.
-    
-    Attributes
-    ----------
-    bot: :class:`DuckBot`
-        The main bot instance.
     """
 
     @commands.command(name='kick', aliases=['boot'])
