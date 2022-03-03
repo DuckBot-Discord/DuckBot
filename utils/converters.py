@@ -40,6 +40,25 @@ class TargetVerifierMeta(type):
     
     
 class TargetVerifier(metaclass=TargetVerifierMeta):
+    """Used to verify a traget is permitted to perform
+    an action upon another target.
+    
+    In this use case, the target is being checked by 
+    :attr:`DuckBot.author` for an operation.
+    
+    .. code-block:: python3
+    
+        @commands.command()
+        async def ban(self, ctx: DuckContext, member: TargetVerifier[discord.Member, discord.User], *, reason: str = '...'):
+            await member.ban(reason=reason)
+    
+    Attributes
+    ----------
+    fail_if_not_upgrade: :class:`bool`
+        If ``True``, the command will fail if the target cannot be upgraded from
+        a :class:`~discord.User` to a :class:`~discord.Member`. For more information,
+        check out :meth:`can_execute_action`.
+    """
     __slots__: Tuple[str, ...] = (
         '_targets',
         'fail_if_not_upgrade',
@@ -61,12 +80,30 @@ class TargetVerifier(metaclass=TargetVerifierMeta):
         
     @discord.utils.cached_slot_property('_cs_converter_mapping')
     def converter_mapping(self) -> Dict[Type[Union[discord.Member, discord.User]], Type[commands.Converter]]:
+        """Dict[Type[Union[:class:`~discord.Member`, :class:`~discord.User`]], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
         return {
             discord.Member: commands.MemberConverter,
             discord.User: commands.UserConverter
         }
             
     async def convert(self, ctx: DuckContext, argument: str) -> Union[discord.Member, discord.User]:
+        """|coro|
+        
+        The main convert method of the converter. This will use the types given to transform the argument
+        to the given type, then verify that the target is permitted to perform the action.
+        
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context of the command.
+        argument: :class:`str`
+            The argument to convert.
+            
+        Returns
+        -------
+        Union[discord.Member, discord.User]
+            The converted target as specifying when defining the converter.
+        """
         # We need to determine what we're trying to upgrade to.
         # To do that, let's check the targets attribute.
         target = None
@@ -97,10 +134,40 @@ class TargetVerifier(metaclass=TargetVerifierMeta):
     
 # Including `commands.Converter` is faster on discord backend iirc
 class BanEntryConverter(discord.guild.BanEntry):
-    """A converter for :class:`BanEntry`."""
+    """
+    A converter for :class:`BanEntry`.
+    
+    .. container:: operations
+
+        .. describe:: repr(x)
+
+            Returns the string representation of the converter.
+        
+        .. describe:: str(x)
+
+            Returns a formatted string of the converter showing the
+            user who was banned and their ID. Formatted as ``'{0.user} ({0.user.id})'.format(self)``
+    """
     
     @classmethod
     async def convert(cls: Type[BanEntryConverter], ctx: DuckContext, argument: str) -> discord.guild.BanEntry:
+        """|coro|
+        
+        The main convert method of the converter. This will use the types given to transform the argument
+        to a :class:`~disord.guild.BanEntry`.
+        
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context of the command.
+        argument: :class:`str`
+            The argument to convert.
+            
+        Returns
+        -------
+        :class:`~discord.guild.BanEntry`
+            The converted target as specifying when defining the converter.
+        """
         await ctx.trigger_typing()
         
         guild = ctx.guild
