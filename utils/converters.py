@@ -12,7 +12,9 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from . import can_execute_action, DuckContext, HandleHTTPException
+from .helpers import can_execute_action
+from .context import DuckContext
+from .errorhandler import HandleHTTPException
 
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
 

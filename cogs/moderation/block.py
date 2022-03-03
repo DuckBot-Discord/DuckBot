@@ -6,14 +6,16 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from utils.context import DuckContext
-from utils.errors import TimerNotFound
-from utils.time import FutureTime
 from utils.timer import Timer
-from utils.helpers import mdr
-from utils.errorhandler import HandleHTTPException
-from utils import DuckCog
-from utils.converters import TargetVerifier
+from utils.errors import TimerNotFound
+from utils import (
+    DuckContext,
+    DuckCog,
+    HandleHTTPException,
+    TargetVerifier,
+    mdr,
+    FutureTime
+)
 
 log = logging.getLogger('DuckBot.moderation.block')
 

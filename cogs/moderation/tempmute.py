@@ -12,14 +12,19 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from utils import DuckCog
-from utils.context import DuckContext
-from utils.time import UserFriendlyTime, human_timedelta
+from utils import (
+    DuckCog,
+    DuckContext,
+    UserFriendlyTime,
+    human_timedelta
+)
+
 from utils.errors import (
     HierarchyException, 
     MemberNotMuted,
     MemberAlreadyMuted, 
 )
+
 from utils.timer import Timer
 
 if TYPE_CHECKING:
