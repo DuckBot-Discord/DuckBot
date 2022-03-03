@@ -25,6 +25,7 @@ class JumpView(discord.ui.View):
 
 
 class Reminders(DuckCog):
+    """Used to create and manage reminders."""
 
     @commands.command(name='remindme', aliases=['remind'])
     async def remindme(
