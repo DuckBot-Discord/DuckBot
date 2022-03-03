@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import typing
 from typing import (
-    TYPE_CHECKING,
     Type,
     Union,
     Tuple,
     Dict,
-    TypeVar
+    TypeVar, overload
 )
 
 import discord
@@ -18,6 +18,12 @@ from .errorhandler import HandleHTTPException
 
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
 T = TypeVar('T')
+
+__all__: Tuple[str, ...] = (
+    'TargetVerifier',
+    'BanEntryConverter',
+    'ChannelVerifier',
+)
     
 
 class TargetVerifier(commands.Converter[T]):
@@ -151,7 +157,7 @@ class BanEntryConverter(discord.guild.BanEntry):
                 except discord.NotFound:
                     raise commands.BadArgument('This member has not been banned before.') from None
                 else:
-                    return cls(user=entry.user, reason=entry.reason) 
+                    return cls(user=entry.user, reason=entry.reason)  # type: ignore
             
             _find_entitiy = lambda u: str(u.user.lower()) == argument.lower() or str(u.user.name).lower() == argument.lower()
             
@@ -162,10 +168,134 @@ class BanEntryConverter(discord.guild.BanEntry):
             if entity is None:
                 raise commands.BadArgument('This member has not been banned before.')
             
-            return cls(user=entity.user, reason=entity.reason) 
+            return cls(user=entity.user, reason=entity.reason)  # type: ignore  # CHAI STOP REMOVING THIS >:(
 
     def __repr__(self) -> str:
         return '<BanEntryConverter user={0.user} ({0.user.id}) reason={0.reason}>'
     
     def __str__(self) -> str:
         return '{0.user} ({0.user.id})'.format(self)
+
+
+# Lel so bad :weary:
+class VerifyChannelMeta(type):
+
+    @overload
+    def __getitem__(cls, item: Type[discord.abc.GuildChannel]) -> TargetVerifier:
+        ...
+
+    @overload
+    def __getitem__(cls, item: Type[Tuple[discord.abc.GuildChannel, ...]]) -> TargetVerifier:
+        ...
+
+    def __getitem__(cls, item) -> TargetVerifier:
+        return cls(item)
+
+
+class ChannelVerifier(metaclass=VerifyChannelMeta):
+    """Used to verify if a channel is accessible.
+
+    .. code-block:: python3
+
+        @commands.command()
+        async def send(self, ctx: DuckContext, channel: AccessibleChannel[discord.TextChannel, discord.VoiceChannel], *, text: str = '...'):
+            await channel.send(text)
+    """
+    __slots__: Tuple[str, ...] = (
+        '_targets',
+        '_cs_converter_mapping',
+    )
+
+    def __init__(
+            self,
+            targets: Type[
+                Union[
+                    Union[discord.Member, discord.User],
+                    Tuple[Union[discord.Member, discord.User], ...]
+                ]
+            ],
+    ) -> None:
+        self._targets = targets
+
+    @discord.utils.cached_slot_property('_cs_converter_mapping')
+    def converter_mapping(self) -> Dict[Type[discord.abc.GuildChannel], Type[commands.Converter]]:
+        """Dict[Type[:class:`~discord.abc.GuildChannel`], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
+        return {
+            discord.abc.GuildChannel: commands.GuildChannelConverter,
+            discord.TextChannel: commands.TextChannelConverter,
+            discord.VoiceChannel: commands.VoiceChannelConverter,
+            discord.CategoryChannel: commands.CategoryChannelConverter,
+            discord.StageChannel: commands.StageChannelConverter,
+            discord.Thread: commands.ThreadConverter,
+            discord.StoreChannel: commands.StoreChannelConverter,
+        }
+
+    async def convert(self, ctx: DuckContext, argument: str) -> typing.Optional[discord.abc.GuildChannel]:
+        """|coro|
+
+        The main convert method of the converter. This will use the types given to transform the argument
+        to the given type, then verify that the target is permitted to perform the action.
+
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context of the command.
+        argument: :class:`str`
+            The argument to convert.
+
+        Returns
+        -------
+        Union[discord.Member, discord.User]
+            The converted target as specifying when defining the converter.
+        """
+        try:
+            if issubclass(self._targets, discord.abc.GuildChannel):
+                # We upgrade to a member or user based upon the guild in this case.
+                converter = self.converter_mapping[self._targets]
+            else:
+                # Something goofed here
+                raise RuntimeError(f'Invalid target type {self._targets} ({type(self._targets)})')
+        except TypeError:
+            # it's multiple arguments, we must manually convert and check.
+            target = await commands.GuildChannelConverter().convert(ctx, argument)
+            if not isinstance(target, self._targets):
+                if self._targets[-1] is discord.Thread:
+                    error = commands.ThreadNotFound
+                else:
+                    error = commands.ChannelNotFound
+                raise error(argument)
+        else:
+            target = await converter().convert(ctx, argument)
+
+        # Then check if the operation is legal
+        verified = await discord.utils.maybe_coroutine(self.verify_target, ctx, target)
+        if verified is True:
+            return target
+        elif verified is None:
+            return None
+        raise commands.BadArgument(f'You are missing the required permissions do that in #{target}')
+
+    def verify_target(self, ctx: DuckContext, target: discord.abc.GuildChannel) -> bool:
+        """
+        Verify that the target is permitted to perform the action.
+        This function must return a :class:`bool`, `None`, or raise
+        an error. (It is recommended that this error be a subclass of
+        :class:`commands.BadArgument` or :class:`commands.CommandError`)
+
+        This function can be a coroutine.
+
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context of the command.
+        target: :class:`discord.abc.GuildChannel`
+            The target to verify.
+
+        Returns
+        -------
+        Optional[:class:`bool`]
+            If this method returns True, the object will be returned.
+            If this method returns None, it will return None.
+            If this method returns False, it will raise an error.
+        """
+        raise NotImplementedError('Derived classes need to implement this.')

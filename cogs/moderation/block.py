@@ -4,25 +4,23 @@ import asyncio
 import contextlib
 import logging
 import math
-import typing
 from typing import (
-    Optional, 
+    Optional,
 )
 
 import discord
 from discord.ext import commands
 
-from utils.timer import Timer
-from utils.errors import TimerNotFound
 from utils import (
     DuckContext,
     DuckCog,
     HandleHTTPException,
     mdr,
     FutureTime,
-    TargetVerifier
+    TargetVerifier,
 )
-
+from utils.errors import TimerNotFound
+from utils.timer import Timer
 
 log = logging.getLogger('DuckBot.moderation.block')
 
@@ -115,7 +113,7 @@ class Block(DuckCog):
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def block(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)): # type: ignore
+    async def block(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)):  # type: ignore
         """|coro|
 
         Blocks a user from your channel.
@@ -153,7 +151,8 @@ class Block(DuckCog):
 
         reason = f'Tempblock by {ctx.author} (ID: {ctx.author.id}) until {time.dt}'
 
-        await self.bot.create_timer(time.dt, 'tempblock', guild.id, ctx.channel.id, member.id, ctx.author.id, precise=False) # type: ignore
+        await self.bot.create_timer(time.dt, 'tempblock', guild.id, ctx.channel.id, member.id, ctx.author.id,
+                                    precise=False)  # type: ignore
 
         async with HandleHTTPException(ctx):
             await self.toggle_block(ctx.channel, member, blocked=True, reason=reason)
@@ -204,8 +203,8 @@ class Block(DuckCog):
         await ctx.send(f'✅ **|** Unblocked **{mdr(member)}**')
 
     @commands.command(aliases=['blocks'])
-    @commands.has_permissions(manage_messages=True)
-    async def blocked(self, ctx: DuckContext, page: int = 1, *, channel: Optional[discord.TextChannel ] = None):
+    @commands.has_permissions(manage_guild=True)
+    async def blocked(self, ctx: DuckContext, page: int = 1, *, channel: Optional[discord.TextChannel] = None):
         """|coro|
         Gets a list of all blocked users in a channel.
         If no channel is specified, it will show the
