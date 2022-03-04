@@ -71,8 +71,7 @@ def mdr(entity: Any) -> str:
     str
         The string of the object with markdown removed.
     """
-    return discord.utils.remove_markdown(str(entity))
-
+    return discord.utils.remove_markdown(discord.utils.escape_mentions(str(entity)))
 
 def safe_reason(author: Union[discord.Member, discord.User], reason: str, *, length: int = 512) -> str:
     base = f'Action by {author} ({author.id}) for: '
