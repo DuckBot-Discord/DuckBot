@@ -46,6 +46,9 @@ class PrefixChanges(DuckCog):
         if not guild:  # Safety net for type checker
             return
 
+        if not ctx.author.guild_permissions.manage_guild:
+            raise commands.MissingPermissions(['manage_guild'])
+
         async with self.bot.safe_connection() as conn:
             data = await conn.fetchrow('SELECT prefixes FROM guilds WHERE guild_id = $1', guild.id)
 
@@ -80,6 +83,7 @@ class PrefixChanges(DuckCog):
 
     @prefix.command(name='clear', aliases=['wipe', 'whipe'])
     @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
     async def prefix_clear(self, ctx: DuckContext) -> Optional[discord.Message]:
         """
         Clears all prefixes from this server, restting them to default.
@@ -112,11 +116,13 @@ class PrefixChanges(DuckCog):
     @discord.utils.copy_doc(prefix)
     @prefix.command(name='add', aliases=['append'])
     @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
     async def prefix_add(self, ctx: DuckContext, *, prefix: str) -> Optional[discord.Message]:
         return await ctx.invoke(self.prefix, prefix=prefix)
 
     @prefix.command(name='remove', aliases=['delete', 'del', 'rm'])
     @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
     async def prefix_remove(self, ctx: DuckContext, *, prefix: str) -> Optional[discord.Message]:
         """
         Removes a prefix from the bots prefixes.
