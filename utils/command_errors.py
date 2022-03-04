@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import logging
 from typing import (
     TYPE_CHECKING,
     Tuple
 )
 
+import discord
 from discord.ext import commands
 
 from utils import errors
@@ -31,19 +33,20 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
         The error that was raised.
     """
     error = getattr(error, 'original', error)
-    
+
     ignored = (
         commands.CommandNotFound,
         commands.CheckFailure,
         errors.SilentCommandError,
+        errors.EntityBlacklisted,
     )
 
     if isinstance(error, ignored):
         return
-    # Did pycharm give you shit about this? It's fine lmfao
-    elif isinstance(error, (commands.UserInputError,errors.DuckBotException)):
+    elif isinstance(error, (commands.UserInputError, errors.DuckBotException)):
         await ctx.send(error)
     elif isinstance(error, commands.CommandInvokeError):
+        logging.error('what')
         return await on_command_error(ctx, error.original)
     else:
         await ctx.bot.exceptions.add_error(error=error, ctx=ctx)

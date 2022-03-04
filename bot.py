@@ -33,12 +33,15 @@ from typing import (
 
 from discord.ext import commands
 
-from utils import constants
-from utils.context import DuckContext
-from utils.errorhandler import DuckExceptionManager
-from utils.helpers import col
-from utils.time import human_timedelta
-from utils.timer import TimerManager
+from utils import (
+    constants,
+    DuckContext,
+    DuckExceptionManager,
+    col,
+    human_timedelta,
+    TimerManager,
+    DuckBlacklistManager,
+)
 from utils.errors import *
 
 try:
@@ -47,7 +50,8 @@ except ImportError:
     from typing_extensions import ParamSpec
 
 if TYPE_CHECKING:
-    from asyncpg import Pool, Transaction, Connection
+    from asyncpg import Pool, Connection
+    from asyncpg.transaction import Transaction  # NO TOUCHY!
     from aiohttp import ClientSession
     
 DBT = TypeVar('DBT', bound='DuckBot')
@@ -67,6 +71,7 @@ initial_extensions: Tuple[str, ...] = (
     'cogs.guild_config',
     'cogs.meta',
     'cogs.moderation',
+    'cogs.owner',
 )
 
 
@@ -80,7 +85,7 @@ def _wrap_extension(func: Callable[P, T]) -> Callable[P, Optional[T]]:
             result = func(*args, **kwargs)
         except Exception as exc:
             log.warning(f'Failed to load extension in {time.time() - start:.2f} seconds {fmt_args}')
-            bot: DuckBot = args[0] # type: ignore
+            bot: DuckBot = args[0]  # type: ignore
             bot.create_task(bot.exceptions.add_error(error=exc))
             return
         
@@ -182,12 +187,12 @@ class DbContextManager(Generic[DBT]):
             await self._pool.release(self._conn)
 
 
-
 class DuckHelper(TimerManager):
     def __init__(self, *, bot: DuckBot) -> None:
         super().__init__(bot=bot)
 
-    def chunker(self, item: str, *, size: int = 2000) -> Generator[str, None, None]:
+    @staticmethod
+    def chunker(item: str, *, size: int = 2000) -> Generator[str, None, None]:
         """Split a string into chunks of a given size.
         
         Parameters
@@ -214,7 +219,7 @@ class DuckBot(commands.Bot, DuckHelper):
         intents.typing = False  # noqa
         
         super().__init__(
-            command_prefix={'dbb.',},
+            command_prefix={'dbb.', },
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions.none(),
             intents=intents,
@@ -229,16 +234,17 @@ class DuckBot(commands.Bot, DuckHelper):
         self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
-        self.create_task(self.populate_cache())
-        
         self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
+        self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
         self._context_cls: Type[commands.Context] = commands.Context
-        
+
+        self.create_task(self.populate_cache())
         for extension in initial_extensions:
             self.load_extension(extension)
 
         self.constants = constants
+        self.start_time = None  # noqa
 
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -251,7 +257,7 @@ class DuckBot(commands.Bot, DuckHelper):
             The URI to connect to the database with.
         """
         return DbTempContextManager(cls, uri)
-        
+
     @classmethod
     async def setup_pool(cls: Type[DBT], *, uri: str, **kwargs) -> asyncpg.Pool:
         """:meth: `asyncpg.create_pool` with some extra functionality.
@@ -264,9 +270,11 @@ class DuckBot(commands.Bot, DuckHelper):
             Extra keyword arguments to pass to :meth:`asyncpg.create_pool`.
         """  # copy_doc for create_pool maybe?
         def _encode_jsonb(value):
+            # noinspection PyProtectedMember
             return discord.utils._to_json(value) 
 
         def _decode_jsonb(value):
+            # noinspection PyProtectedMember
             return discord.utils._from_json(value)
         
         old_init = kwargs.pop('init', None)
@@ -289,6 +297,7 @@ class DuckBot(commands.Bot, DuckHelper):
             data = await conn.fetch('SELECT guild_id, prefixes FROM guilds')
             for guild_id, prefixes in data:
                 self.prefix_cache[guild_id] = set(prefixes)
+            await self.blacklist.build_cache(conn)
 
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
@@ -401,7 +410,7 @@ class DuckBot(commands.Bot, DuckHelper):
         meth = commands.when_mentioned_or if raw is False else lambda *pres: lambda _, __: list(pres)
         base = self.command_prefix.copy()
         
-        cached_prefixes = self.prefix_cache.get((message.guild and message.guild.id), None) # type: ignore
+        cached_prefixes = self.prefix_cache.get((message.guild and message.guild.id), None)  # type: ignore
         if cached_prefixes is not None:
             base.update(cached_prefixes)
         
@@ -441,10 +450,10 @@ class DuckBot(commands.Bot, DuckHelper):
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         """|coro|
-        
+
         Called every time a message is received by the bot. Used to check if the message
         has mentioned the bot, and if it has return a simple response.
-        
+
         Returns
         -------
         Optional[:class:`~discord.Message`]
@@ -455,9 +464,9 @@ class DuckBot(commands.Bot, DuckHelper):
             return await message.reply(
                 f"My prefixes here are `{'`, `'.join(prefixes[0:10])}`\n"
                 f"For a list of commands do`{prefixes[0]}help` 💞"[0:2000])
-            
+
         await self.process_commands(message)
-    
+
     async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
         

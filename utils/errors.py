@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import logging
+import typing
 from typing import (
     Tuple,
 )
 
 import discord
-
+from discord.ext.commands import CommandError, CheckFailure
 
 log = logging.getLogger('Duckbot.utils.errors')
 
 __all__: Tuple[str, ...] = (
     'DuckBotException',
+    'DuckBotCommandError',
     'DuckBotNotStarted',
     'HierarchyException',
     'ActionNotExecutable',
@@ -20,12 +22,18 @@ __all__: Tuple[str, ...] = (
     'MuteException',
     'MemberNotMuted',
     'MemberAlreadyMuted',
-    'SilentCommandError'
+    'SilentCommandError',
+    'EntityBlacklisted'
 )
 
 
 class DuckBotException(discord.ClientException):
     """The base exception for DuckBot. All other exceptions should inherit from this."""
+    __slots__: Tuple[str, ...] = ()
+
+
+class DuckBotCommandError(CommandError, DuckBotException):
+    """The base exception for DuckBot command errors."""
     __slots__: Tuple[str, ...] = ()
 
 
@@ -36,7 +44,7 @@ class DuckBotNotStarted(DuckBotException):
     __slots__: Tuple[str, ...] = ()
     
     
-class HierarchyException(DuckBotException):
+class HierarchyException(DuckBotCommandError):
     """Raised when DuckBot is requested to perform an operation on a member
     that is higher than them in the guild hierarchy.
     """
@@ -54,7 +62,7 @@ class HierarchyException(DuckBotException):
             super().__init__(f'**{member}**\'s top role is higher than your top role. You can\'t do that!')
 
 
-class ActionNotExecutable(DuckBotException):
+class ActionNotExecutable(DuckBotCommandError):
     def __init__(self, message):
         super().__init__(f'{message}')
 
@@ -77,7 +85,7 @@ class TimerNotFound(TimerError):
         super().__init__(f'Timer with ID {id} not found.')
     
     
-class MuteException(DuckBotException):
+class MuteException(DuckBotCommandError):
     """Raised whenever an operation related to a mute fails."""
     pass
 
@@ -104,9 +112,27 @@ class MemberAlreadyMuted(MuteException):
         super().__init__(f'{member} is already muted.')
 
 
-class SilentCommandError(DuckBotException):
+class SilentCommandError(DuckBotCommandError):
     """This exception will be purposely ignored by the error handler
     and will not be logged. Handy for stopping something that can't
     be stopped with a simple ``return`` statement.
     """
     __slots__: Tuple[str, ...] = ()
+
+
+class EntityBlacklisted(CheckFailure, DuckBotCommandError):
+    """Raised when an entity is blacklisted."""
+    __slots__: Tuple[str, ...] = (
+        'entity',
+    )
+
+    def __init__(
+            self,
+            entity: typing.Union[
+                discord.User,
+                discord.Member,
+                discord.Guild,
+                discord.abc.GuildChannel,
+            ]) -> None:
+        self.entity = entity
+        super().__init__(f'{entity} is blacklisted.')

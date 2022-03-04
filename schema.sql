@@ -26,4 +26,16 @@ CREATE TABLE IF NOT EXISTS blocks (
     channel_id BIGINT,
     user_id BIGINT,
     PRIMARY KEY (guild_id, channel_id, user_id)
-)
+);
+
+-- Can't have IF NOT EXISTS here D:
+CREATE TYPE blacklist_type AS ENUM (
+    'guild', 'channel', 'user');
+
+CREATE TABLE IF NOT EXISTS blacklist (
+    blacklist_type blacklist_type,
+    entity_id bigint,
+    guild_id bigint NOT NULL default 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (blacklist_type, entity_id, guild_id)
+);
