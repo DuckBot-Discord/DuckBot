@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from .helpers import *
 from .base_cog import *
 from .command_errors import *
@@ -11,9 +9,10 @@ from .errors import *
 from .help import *
 from .time import *
 from .timer import *
+from .blacklist import *
 
 
-# Past leo moment - Chai:
+# Past leo moment - Chai:   # SMH chai >:( - Leo
 # So the linter doesn't suggest random crap!
 # Don't * import please :pleadCry: thx.
 
