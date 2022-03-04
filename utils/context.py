@@ -34,12 +34,12 @@ def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
     """
     lookup = {
         True: '\N{WHITE HEAVY CHECK MARK}',
-        False: '❌',
-        None: '❔',
+        False: '\N{CROSS MARK}',
+        None: '\N{BLACK QUESTION MARK ORNAMENT}'
     }
-    emoji = lookup.get(opt, '❌')
+    emoji = lookup.get(opt, '\N{CROSS MARK}')
     if label is not None:
-        return f'{emoji}: {label}'
+        return f'{emoji} {label}'
 
     return emoji
 
