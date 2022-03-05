@@ -96,7 +96,7 @@ class DuckBlacklistManager:
         )
 
         if add_check:
-            self.bot.add_check(self.check_context)
+            self.bot.add_check(self.check_context, call_once=True)
 
         # Caches
         self._blacklisted_guilds: Set[int] = set()
@@ -109,7 +109,7 @@ class DuckBlacklistManager:
             self._temp_blacklist_end_event,
             'on_blacklist_timer_complete'
         )
-        self.bot.remove_check(self.check_context)
+        self.bot.remove_check(self.check_context, call_once=True)
 
     async def build_cache(self, conn: asyncpg.Connection) -> None:
         """|coro|
