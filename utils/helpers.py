@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time as time_lib
+from datetime import datetime
 from typing import (
     TypeVar,
     Callable,
@@ -34,6 +35,7 @@ __all__: Tuple[str, ...] = (
     'mdr',
     'safe_reason',
     'add_logging',
+    'format_date',
     'can_execute_action',
 )
 
@@ -81,6 +83,22 @@ def safe_reason(author: Union[discord.Member, discord.User], reason: str, *, len
         reason = reason[:length_limit - 3] + '...'
 
     return base + reason
+
+
+def format_date(date: datetime) -> str:
+    """Formats a date to a string in the preferred way.
+
+    Parameters
+    ----------
+    date: datetime.datetime
+        The date to format.
+
+    Returns
+    -------
+    str
+        The formatted date.
+    """
+    return date.strftime("%b %d, %Y %H:%M %Z")
 
 
 def add_logging(func: Callable[P, Union[Awaitable[T], T]]) -> Callable[P, Union[Awaitable[T], T]]:
@@ -139,7 +157,7 @@ async def can_execute_action(
     target: Union[:class:`discord.Member`, :class:`discord.User`]
         The target of the action.
     fail_if_not_upgrade: :class:`bool`
-        Whether to fail if the user is not an upgrade.
+        Whether to fail if the user can't be upgraded to a Member.
 
     Returns
     -------
