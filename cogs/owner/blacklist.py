@@ -5,9 +5,16 @@ import typing
 import asyncpg
 import discord
 
-from utils import DuckCog, DuckContext, ShortTime
 from discord.ext import commands
-from utils import mdr
+
+from utils import (
+    DuckCog,
+    DuckContext,
+    ShortTime,
+    mdr,
+    format_date,
+    human_timedelta,
+)
 
 
 class BlackListManagement(DuckCog):
@@ -31,7 +38,7 @@ class BlackListManagement(DuckCog):
         created: datetime.datetime = entry['created_at']
         # No tuple unpacking.
 
-        time = created.strftime("%d %b %Y %H:%M")
+        time = format_date(created)
 
         guild = f"{self.bot.get_guild(guild_id) or 'Unknown Guild'} ({guild_id})" if guild_id else 'Global'
 
@@ -69,16 +76,22 @@ class BlackListManagement(DuckCog):
         when: :class:`utils.ShortTime`
             the time to block the entity. Must be a short time.
         """
-        dt = when.dt if when else None
+        args = [entity]
+        if when:
+            args.append(f" for {human_timedelta(when.dt)}")
+            dt = when.dt
+        else:
+            args.append('')
+            dt = None
         blacklisted: bool = False
         if isinstance(entity, discord.Guild):
-            blacklisted = await self.bot.blacklist.add_guild(entity, dt)
+            blacklisted = await self.bot.blacklist.add_guild(entity, end_time=dt)
         elif isinstance(entity, discord.User):
-            blacklisted = await self.bot.blacklist.add_user(entity, dt)
+            blacklisted = await self.bot.blacklist.add_user(entity, end_time=dt)
         elif isinstance(entity, discord.abc.GuildChannel):
-            blacklisted = await self.bot.blacklist.add_channel(entity, dt)
+            blacklisted = await self.bot.blacklist.add_channel(entity, end_time=dt)
         etype = str(type(entity).__name__).split('.')[-1]
-        await ctx.send(ctx.tick(blacklisted, ('added {}.' if blacklisted else '{} already blacklisted.').format(etype)))
+        await ctx.send(ctx.tick(blacklisted, ('added {}{}.' if blacklisted else '{} already blacklisted{}.').format(*args)))
 
     @blacklist.command(name='remove', aliases=['rm'])
     async def blacklist_remove(self,
