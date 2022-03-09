@@ -275,10 +275,10 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
         self.message = title
 
     def __enter__(self):
-        pass
+        return self
 
     async def __aenter__(self):
-        pass
+        return self
 
     def __exit__(
         self,

@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import re
 import datetime
+
+import discord.utils
 from dateutil.relativedelta import relativedelta
 import parsedatetime as pdt
 from typing import (
@@ -153,12 +155,12 @@ class UserFriendlyTime(commands.Converter):
         default: Optional[str] = None
     ) -> None:
         if isinstance(converter, type) and issubclass(converter, commands.Converter):
-            converter = converter() # type: ignore
+            converter = converter()  # type: ignore
 
         if converter is not None and not isinstance(converter, commands.Converter):
             raise TypeError('commands.Converter subclass necessary.')
 
-        self.converter = converter # type: Optional[Union[Callable[[DuckContext, str], Any], Type[commands.Converter], commands.Converter]] # Fuck you im commenting it
+        self.converter = converter  # type: Optional[Union[Callable[[DuckContext, str], Any], Type[commands.Converter], commands.Converter]] # Fuck you im commenting it
         self.default: Optional[str] = default
 
     async def check_constraints(self, ctx: DuckContext, now: datetime.datetime, remaining: Union[str, datetime.datetime]) -> UserFriendlyTime: 
@@ -191,7 +193,7 @@ class UserFriendlyTime(commands.Converter):
         try:
             calendar = HumanTime.calendar
             regex = ShortTime.compiled
-            now = ctx.message.created_at
+            now = ctx.message.created_at if ctx.message else discord.utils.utcnow()
 
             match = regex.match(argument)
             if match is not None and match.group(0):
@@ -209,6 +211,9 @@ class UserFriendlyTime(commands.Converter):
                 # starts with "me to", "me in", or "me at "
                 if argument[0:6] in ('me to ', 'me in ', 'me at '):
                     argument = argument[6:]
+
+            if argument[0:3] == 'for ':
+                argument = argument[4:]
 
             elements = calendar.nlp(argument, sourceTime=now)
             if elements is None or len(elements) == 0:

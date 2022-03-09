@@ -6,7 +6,6 @@ from typing import (
     Tuple
 )
 
-import discord
 from discord.ext import commands
 
 from utils import errors
@@ -15,10 +14,7 @@ if TYPE_CHECKING:
     from .context import DuckContext
     from bot import DuckBot
     
-__all__: Tuple[str, ...] = (
-    'on_command_error',
-    'setup',
-)
+__all__: Tuple[str, ...] = ()
 
 async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     """|coro|
