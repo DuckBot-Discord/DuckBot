@@ -10,6 +10,8 @@ from .help import *
 from .time import *
 from .timer import *
 from .blacklist import *
+from .cache import *
+from . import interactions
 
 
 # Past leo moment - Chai:   # SMH chai >:( - Leo
