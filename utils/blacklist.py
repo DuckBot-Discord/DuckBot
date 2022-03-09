@@ -238,7 +238,7 @@ class DuckBlacklistManager:
             # Lastly we add the user to the blacklist.
             return await self.try_query("""
                 INSERT INTO blacklist (blacklist_type, entity_id, guild_id) VALUES ('user', $1, $2)
-                ON CONFLICT (blacklist_type, entity_id) DO UPDATE SET created_at = NOW()
+                ON CONFLICT (blacklist_type, entity_id, guild_id) DO UPDATE SET created_at = NOW()
             """, user.id, guild.id if guild else 0)
 
         else:  # If the block is not temporary, we just add the user to the blacklist.
@@ -358,7 +358,7 @@ class DuckBlacklistManager:
             # Lastly we add the channel to the blacklist.
             return await self.try_query("""
                 INSERT INTO blacklist (blacklist_type, entity_id, guild_id) VALUES ('channel', $1, $2)
-                ON CONFLICT (blacklist_type, entity_id) DO UPDATE SET created_at = NOW()
+                ON CONFLICT (blacklist_type, entity_id, guild_id) DO UPDATE SET created_at = NOW()
             """, channel.id, channel.guild.id)
 
         else:  # If the block is not temporary, we just add the guild to the blacklist.
@@ -465,7 +465,7 @@ class DuckBlacklistManager:
             # Lastly we add the guild to the blacklist.
             return await self.try_query("""
                 INSERT INTO blacklist (blacklist_type, entity_id) VALUES ('guild', $1)
-                ON CONFLICT (blacklist_type, entity_id) DO UPDATE SET created_at = NOW()
+                ON CONFLICT (blacklist_type, entity_id, guild_id) DO UPDATE SET created_at = NOW()
             """, guild.id)
 
         else:  # If the block is not temporary, we just add the guild to the blacklist.
