@@ -3,9 +3,10 @@ from .news import News
 from bot import DuckBot
 from utils.errors import DuckBotNotStarted
 from .reminders import Reminders
+from .app_commands import ApplicationMeta
 
 
-class Meta(News, Reminders, emoji="\N{INFORMATION SOURCE}"):
+class Meta(News, Reminders, ApplicationMeta, emoji="\N{INFORMATION SOURCE}"):
     """All commands about the bot itself."""
 
     @discord.utils.cached_property
