@@ -177,7 +177,7 @@ class TempMute(DuckCog):
             days_out = time.dt - discord.utils.utcnow()
             if days_out <= datetime.timedelta(days=28):
                 try:
-                    await member.edit(communication_disabled_until=time.dt)
+                    await member.edit(timed_out_until=time.dt)
                 except discord.HTTPException as exc:
                     embed = discord.Embed(
                         title='Thats not good!',
@@ -265,8 +265,8 @@ class TempMute(DuckCog):
             if not mutes or member.id not in mutes:
                 raise MemberNotMuted(member)
             
-            if member.communication_disabled_until:
-                await member.edit(communication_disabled_until=None)
+            if member.timed_out_until:
+                await member.edit(timed_out_until=None)
             else:
                 # Let's find the timer(s)
                 timer = await conn.fetch("""
@@ -324,7 +324,7 @@ class TempMute(DuckCog):
         after: :class:`discord.Member`
             The member after the update.
         """
-        if after.communication_disabled_until:
+        if after.timed_out_until:
             return
         
         async with self.bot.safe_connection() as conn:
