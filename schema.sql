@@ -28,9 +28,14 @@ CREATE TABLE IF NOT EXISTS blocks (
     PRIMARY KEY (guild_id, channel_id, user_id)
 );
 
--- Can't have IF NOT EXISTS here D:
-CREATE TYPE blacklist_type AS ENUM (
-    'guild', 'channel', 'user');
+-- Thanks chai :)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'blacklist_type ') THEN
+        CREATE TYPE blacklist_type AS ENUM ('guild', 'channel', 'user');
+    END IF;
+END$$;
+
 
 CREATE TABLE IF NOT EXISTS blacklist (
     blacklist_type blacklist_type,
@@ -38,4 +43,18 @@ CREATE TABLE IF NOT EXISTS blacklist (
     guild_id bigint NOT NULL default 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (blacklist_type, entity_id, guild_id)
+);
+
+-- not as important as roles. But still.
+CREATE TABLE IF NOT EXISTS disabled_entities (
+    guild_id BIGINT,
+    entity_id BIGINT,
+    PRIMARY KEY (guild_id, entity_id)
+);
+
+CREATE TABLE IF NOT EXISTS disabled_commands (
+    guild_id BIGINT,
+    entity_id BIGINT,
+    command_name TEXT,
+    PRIMARY KEY (guild_id, entity_id, command_name)
 );
