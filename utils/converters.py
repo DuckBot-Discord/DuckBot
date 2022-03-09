@@ -159,7 +159,7 @@ class BanEntryConverter(discord.guild.BanEntry):
                 else:
                     return cls(user=entry.user, reason=entry.reason)  # type: ignore
             
-            _find_entitiy = lambda u: str(u.user.lower()) == argument.lower() or str(u.user.name).lower() == argument.lower()
+            _find_entitiy = lambda u: str(u.user).lower() == argument.lower() or str(u.user.name).lower() == argument.lower()
             
             # we search by username now.
             ban_list = await guild.bans()
