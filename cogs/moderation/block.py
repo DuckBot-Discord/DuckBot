@@ -21,63 +21,12 @@ from utils import (
 )
 from utils.errors import TimerNotFound
 from utils.timer import Timer
+from ._block_cog import BlockCog
 
 log = logging.getLogger('DuckBot.moderation.block')
 
 
-class Block(DuckCog):
-
-    async def toggle_block(
-        self,
-        channel: discord.abc.Messageable,
-        member: TargetVerifier(discord.Member),  # type: ignore
-        blocked: bool = True,
-        update_db: bool = True,
-        reason: Optional[str] = None
-    ) -> None:
-        """|coro|
-        
-        Toggle the block status of a member in a channel.
-        
-        Parameters
-        ----------
-        channel : `discord.abc.Messageable`
-            The channel to block/unblock the member in.
-        member : `discord.Member`
-            The member to block/unblock.
-        blocked : `bool`, optional
-            Whether to block or unblock the member. Defaults to ``True``, which means block.
-        update_db : `bool`, optional
-            Whether to update the database with the new block status.
-        """
-        # The prereq here is that channel is not a DM channel
-        # and the channel has a guild attr.
-        if isinstance(channel, discord.Thread):
-            channel = channel.parent  # type: ignore
-            if not channel:
-                return None
-
-        val = False if blocked else None
-        await channel.set_permissions(  # type: ignore
-            member, reason=reason,
-            overwrite=discord.PermissionOverwrite(
-                send_messages=val,
-                add_reactions=val,
-                create_public_threads=val,
-                create_private_threads=val,
-                send_messages_in_threads=val
-            )
-        )
-
-        if update_db:
-            if blocked:
-                query = 'INSERT INTO blocks (guild_id, channel_id, user_id) VALUES ($1, $2, $3) ' \
-                        'ON CONFLICT (guild_id, channel_id, user_id) DO NOTHING'
-            else:
-                query = "DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3"
-
-            async with self.bot.safe_connection() as conn:
-                await conn.execute(query, channel.guild.id, channel.id, member.id)  # type: ignore
+class Block(BlockCog):
 
     async def format_block(self, guild: discord.Guild, user_id: int, channel_id: Optional[int] = None):
         """|coro|
@@ -195,7 +144,7 @@ class Block(DuckCog):
                 await self.bot.delete_timer(timer['id'])
 
         # then the actual unblock
-        reason = f'Block by {ctx.author} (ID: {ctx.author.id})'
+        reason = f'Unblock by {ctx.author} (ID: {ctx.author.id})'
 
         async with HandleHTTPException(ctx):
             await self.toggle_block(ctx.channel, member, blocked=False, reason=reason)
