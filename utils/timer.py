@@ -125,6 +125,18 @@ class Timer:
         """:class:`str`: Returns the timer's event name."""
         return f'{self.event}_timer_complete'
 
+    async def delete(self, bot: DuckBot):
+        """|coro|
+
+        Deletes this timer.
+
+        Parameters
+        ----------
+        bot: :class:`DuckBot`
+            The bot instance.
+        """
+        await bot.delete_timer(self.id)
+
 
 class TimerManager:
     """A class used to create and manage timers.
@@ -261,7 +273,8 @@ class TimerManager:
             # We don't want to call a
             # timer that was deleted.
             return
-        
+
+        log.debug('Dispatching timer %s with event %s', timer.id, timer.event)
         if timer.precise:
             self.bot.dispatch(timer.event_name, *timer.args, **timer.kwargs)
         else:
@@ -325,6 +338,7 @@ class TimerManager:
             A dictionary of keyword arguments to be passed to :class:`Timer.kwargs`. Please note each element
             in this dictionary must be JSON serializable.
         """
+        log.debug('Creating %s timer for %s', event, when)
         
         # Remove timezone information since the database does not deal with it
         when = when.astimezone(datetime.timezone.utc).replace(tzinfo=None)
