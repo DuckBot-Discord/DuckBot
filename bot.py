@@ -31,7 +31,9 @@ from typing import (
     Union,
 )
 
+from discord import app_commands
 from discord.ext import commands
+from discord.utils import MISSING  # noqa F401
 
 from utils import (
     constants,
@@ -66,6 +68,7 @@ initial_extensions: Tuple[str, ...] = (
     'utils.jishaku',
     'utils.context',
     'utils.command_errors',
+    'utils.interactions.command_errors',
     
     # Cogs
     'cogs.guild_config',
@@ -204,7 +207,45 @@ class DuckHelper(TimerManager):
         """
         for i in range(0, len(item), size):
             yield item[i:i + size]
-        
+
+
+class DuckTree(app_commands.CommandTree[DBT]):
+    """DuckBot's command tree. This will manage
+    all Application Commands and extensions.
+    """
+
+    def __init__(self, bot: DBT) -> None:
+        super().__init__(bot)
+
+    @staticmethod
+    def _command_to_type(
+            command: Union[app_commands.Command, app_commands.ContextMenu, app_commands.Group]
+    ) -> Union[discord.AppCommandType, discord.AppCommandOptionType]:
+        parent = getattr(command, 'parent', MISSING)
+        if parent is MISSING:
+            return command.type  # type: ignore # The only type this can be is ContextMenu
+
+        def _get_or(name):
+            return discord.AppCommandType.chat_input if not parent \
+                else discord.enums.try_enum(discord.AppCommandOptionType, name)
+
+        if isinstance(command, app_commands.Group):
+            return _get_or('subcommand_group')
+
+        return _get_or('subcommand')
+
+    async def on_error(
+        self,
+        interaction: discord.Interaction,
+        command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
+        error: app_commands.AppCommandError,
+    ) -> None:
+        if command and command.on_error:
+            return
+        if self.client.extra_events.get('on_app_command_error'):
+            return self.client.dispatch('app_command_error', interaction, command, error)
+        raise error
+
 
 class DuckBot(commands.Bot, DuckHelper):
     if TYPE_CHECKING:
@@ -228,6 +269,7 @@ class DuckBot(commands.Bot, DuckHelper):
             chunk_guilds_at_startup=False
         )
         super(DuckHelper, self).__init__(bot=self)
+        self.tree: DuckTree[DBT] = DuckTree(self)
         
         self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
         self.session: ClientSession = session
@@ -446,7 +488,8 @@ class DuckBot(commands.Bot, DuckHelper):
         connected to the gateway.
         """
         log.info(f'{col(2)}All guilds are chunked and ready to go!')
-        self.start_time = discord.utils.utcnow()
+        if not self.start_time:
+            self.start_time = discord.utils.utcnow()
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         """|coro|
@@ -561,7 +604,14 @@ class DuckBot(commands.Bot, DuckHelper):
             _cl_log = logging.getLogger('discord.client')
             _cl_log.disabled = True
 
-        await super().start(token, reconnect=reconnect)
+            _ht_log = logging.getLogger('discord.http')
+            _ht_log.disabled = True
+
+            _ds_log = logging.getLogger('discord.state')
+            _ds_log.disabled = True
+
+        await self.login(token)
+        await self.connect(reconnect=reconnect)
 
     @staticmethod
     async def get_or_fetch_member(guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:
@@ -608,3 +658,44 @@ class DuckBot(commands.Bot, DuckHelper):
             return self.get_user(user_id) or await self.fetch_user(user_id)
         except discord.HTTPException:
             return None
+
+    # NOTE: It's best to seperate the override into two params. One for cog and one for app commands
+    def add_cog(self, cog: commands.Cog, *, override: bool = False) -> commands.Cog:
+        super().add_cog(cog, override=override)
+
+        _app_commands = []
+
+        for name in dir(cog):
+            item = getattr(cog, name, None)
+            if not item:
+                continue
+
+            if isinstance(item, app_commands.ContextMenu):
+                raise TypeError('Cannot use context menu commands in a cog. Remove it.')
+
+            if isinstance(item, app_commands.Command):
+                item.binding = cog  # type: ignore
+                _app_commands.append(item)
+                self.tree.add_command(item, guild=discord.Object(id=774561547930304536), override=override)
+
+        setattr(cog, '_app_commands', _app_commands)
+        return cog
+
+    def remove_cog(self, name: str, /) -> Optional[commands.Cog]:
+        result = super().remove_cog(name)
+        if not result or not (commands := getattr(result, '_app_commands', None)):
+            return
+
+        for command in commands:
+            # Danny no add Command.type yet
+            command_type = self.tree._command_to_type(command)
+            if not isinstance(command_type, discord.AppCommandType):
+                raise RuntimeError(
+                    f'Attempting to remove an app command that does not have the correct type. {command} {command_type}')
+
+            self.tree.remove_command(
+                command.name,
+                guild=discord.Object(id=774561547930304536),
+                type=command_type
+            )
+
