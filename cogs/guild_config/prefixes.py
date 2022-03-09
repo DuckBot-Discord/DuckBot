@@ -23,7 +23,8 @@ class PrefixChanges(DuckCog):
     @commands.group(name='prefix', aliases=['prefixes'], invoke_without_command=True)
     @commands.guild_only()
     async def prefix(self, ctx: DuckContext, *, prefix: Optional[str] = None) -> Optional[discord.Message]:
-        """
+        """|coro|
+
         Adds a prefix for this server (you can have up to 25 prefixes).
 
         Parameters
@@ -85,7 +86,8 @@ class PrefixChanges(DuckCog):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def prefix_clear(self, ctx: DuckContext) -> Optional[discord.Message]:
-        """
+        """|coro|
+
         Clears all prefixes from this server, restting them to default.
         """
         guild = ctx.guild
@@ -124,7 +126,8 @@ class PrefixChanges(DuckCog):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def prefix_remove(self, ctx: DuckContext, *, prefix: str) -> Optional[discord.Message]:
-        """
+        """|coro|
+
         Removes a prefix from the bots prefixes.
 
         Parameters
@@ -138,7 +141,7 @@ class PrefixChanges(DuckCog):
 
         prefixes = await self.bot.get_prefix(ctx.message, raw=True)
         if prefix not in prefixes:
-            # NOTE: Add fuzzy matching here to suggest a prefix that might be the one they want
+            # TODO: Add fuzzy matching here to suggest a prefix that might be the one they want
             embed = discord.Embed(
                 title='Oh no!',
                 description='This prefix is not in the list of prefixes. Are you sure you spelt it correct?'
