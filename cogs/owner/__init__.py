@@ -1,6 +1,8 @@
+import discord
+
 from .blacklist import BlackListManagement
-from utils import DuckContext
-from discord.ext.commands import NotOwner
+from utils import DuckContext, HandleHTTPException
+from discord.ext.commands import NotOwner, command
 
 
 class Owner(BlackListManagement,
@@ -14,6 +16,14 @@ class Owner(BlackListManagement,
         if await ctx.bot.is_owner(ctx.author):
             return True
         raise NotOwner
+
+    @command()
+    async def sync(self, ctx: DuckContext):
+        """ Syncs commands. """
+        msg = await ctx.send('Syncing...')
+        cmds = await ctx.bot.tree.sync(guild=ctx.guild)
+        async with HandleHTTPException(ctx):
+            await msg.edit(content=f'✅ Synced {len(cmds)} commands.')
 
 
 def setup(bot):
