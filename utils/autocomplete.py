@@ -6,9 +6,6 @@ from discord.ext import commands
 from typing import Callable, Optional, TypeVar, Dict, Generic, List, NamedTuple, Tuple
 
 
-AC = TypeVar("AC", bound="AutoComplete")
-
-
 class Dropdown(discord.ui.Select):
 	def __init__(self, options: List[discord.SelectOption]):
 		options = options
@@ -34,7 +31,7 @@ class DropdownView(discord.ui.View):
 
 	async def on_timeout(self) -> None:
 		self.value = None
-class AutoComplete(Generic[AC]):
+class AutoComplete:
 	"""
     Represents an autocompletion of an argument.
 
