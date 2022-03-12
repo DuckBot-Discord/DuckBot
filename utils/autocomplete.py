@@ -12,7 +12,7 @@ class Dropdown(discord.ui.Select):
 	def __init__(self, options: List[discord.SelectOption], view: discord.ui.View):
 		options = options
 		self.__view = view
-		super().__init__(placeholder="Choose your favourite colour...", min_values=1, max_values=1, options=options)
+		super().__init__(placeholder="Choose an option...", min_values=1, max_values=1, options=options)
 		
 	async def callback(self, interaction: discord.Interaction):
 		self.__view.value = self.values[0]
