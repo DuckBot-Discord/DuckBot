@@ -43,8 +43,8 @@ class DuckCommand(commands.Command, Generic[DC]):
 		super().__init__(func, **kwargs)
 		self.autocompletes: Dict[str, AutoComplete] = {}
 
-	async def __call__(self, context: commands.Context, *args, **kwargs):
-		return await self.invoke(context)
+	#async def __call__(self, context: commands.Context, *args, **kwargs):
+		#return await self.invoke(context)
 		
 	async def invoke(self, ctx: commands.Context) -> None:
 		await self.prepare(ctx)
@@ -52,7 +52,6 @@ class DuckCommand(commands.Command, Generic[DC]):
 		ctx.invoked_subcommand = None
 		ctx.subcommand_passed = None
 		injected = hooked_wrapped_callback(self, ctx, self.callback)
-		print(self.autocompletes, ctx.kwargs)
 		for autocomplete, ac in self.autocompletes:
 			for name in ctx.kwargs.keys():
 				if autocomplete == name:
