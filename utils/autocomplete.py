@@ -9,12 +9,13 @@ AC = TypeVar("AC", bound="AutoComplete")
 
 
 class Dropdown(discord.ui.Select):
-	def __init__(self, options: List[discord.SelectOption]):
+	def __init__(self, options: List[discord.SelectOption], view: discord.ui.View):
 		options = options
+		self.__view = view
 		super().__init__(placeholder="Choose your favourite colour...", min_values=1, max_values=1, options=options)
 		
 	async def callback(self, interaction: discord.Interaction):
-		self.value = self.values[0]
+		self.__view.value = self.values[0]
 		await interaction.response.send_message(f"You chose {self.values[0]}.", ephemeral=True)
 
 
@@ -23,6 +24,7 @@ class DropdownView(discord.ui.View):
 		super().__init__(timeout=timeout)
 		self.add_item(Dropdown(options))
 		self.context = context
+		self.value = None
 
 	async def interaction_check(self, interaction: discord.Interaction) -> bool:
 		if self.context.author.id in self.context.bot.owner_ids or self.context.author.id == interaction.user.id:
