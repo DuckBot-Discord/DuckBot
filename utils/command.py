@@ -58,13 +58,6 @@ class DuckCommand(commands.Command, Generic[DC]):
 		
 	def autocomplete(self, argument: str):
 		def decorator(func: typing.Callable):
-			func_parameters = ((inspect.signature(func))._parameters).keys()
-			if not func_parameters:
-				raise ValueError("No function parameters provided.")
-			if func_parameters[0] != "ctx":
-				raise TypeError('First parameter is not "ctx"')
-			if not asyncio.iscoroutinefunction(func):
-				raise Exception(f"The `{func.__name__}` method is not a coroutine.")
 			self.autocompletes[argument] = AutoComplete(func=func)
 				
 		return decorator
