@@ -5,7 +5,6 @@ from discord.ext import commands
 
 from typing import Callable, Optional, TypeVar, Dict, Generic, List, NamedTuple, Tuple
 
-
 AC = TypeVar("AC", bound="AutoComplete")
 
 
