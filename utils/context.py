@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional, List, Any
 
 import discord
 from discord.ext import commands
@@ -103,6 +103,18 @@ class DuckContext(commands.Context):
             kwargs['embeds'] = embeds
 
         return await super().send(*args, **kwargs)
+
+    async def prompt_autocomplete(self, text: Optional[str] = "Choose an option...", choices: List[discord.SelectOption] = []):
+        """|coro|
+        
+        Prompts an autocomplete select menu that users can select choices.
+
+        Returns
+        -------
+        :class: `~str`
+            The value the user chose.
+        """
+        ...
 
 
 def setup(bot: DuckBot) -> None:
