@@ -52,8 +52,9 @@ class DuckCommand(commands.Command, Generic[DC]):
 		ctx.invoked_subcommand = None
 		ctx.subcommand_passed = None
 		injected = hooked_wrapped_callback(self, ctx, self.callback)
+		await ctx.send(self.autocompletes)
 		for autocomplete, ac in self.autocompletes:
-			for name in ctx.kwargs.keys():
+			for name in ctx.args:
 				if autocomplete == name:
 					ctx.kwargs[name] = (await ac.callback(ctx, ctx.kwargs[name]))
 					ctx.command.timeout = ac._timeout
