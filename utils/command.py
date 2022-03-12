@@ -7,21 +7,11 @@ from typing import Callable, Dict, TypeVar, List, Any, Generic, Optional
 import discord
 
 from discord.ext import commands
+from discord.ext.commands import hooked_wrapped_callback
 
-from .autocomplete import AutoComplete, Option
+from utils.autocomplete import AutoComplete
 
 DC = TypeVar("DC", bound="DuckCommand")
-
-"""
-@cmd.autocomplete('param', timeout=25)
-async def param_auto(ctx, user_input) -> Optional[str]:
-    valid_choices: List[str] = ...
-    value = await ctx.prompt_autocomplete(
-        text = "Sorry, that's not one of the valid params! Select one of these:",
-         choices = valid_choices,
-    )
-    return value # Could be None if the user didn't select
-"""
 
 @discord.utils.copy_doc(commands.Command)
 class DuckCommand(commands.Command, Generic[DC]):
@@ -35,7 +25,7 @@ class DuckCommand(commands.Command, Generic[DC]):
 		
 		ctx.invoked_subcommand = None
 		ctx.subcommand_passed = None
-		injected = commands.hooked_wrapped_callback(self, ctx, self.callback)
+		injected = hooked_wrapped_callback(self, ctx, self.callback)
 		for autocomplete, ac in self.autocompletes:
 			for name in ctx.kwargs.keys():
 				if autocomplete == name:
@@ -43,7 +33,7 @@ class DuckCommand(commands.Command, Generic[DC]):
 					ctx.command.timeout = ac._timeout
 		await injected(*ctx.args, **ctx.kwargs)
 		
-	def autocomplete(self, argument: str, timeout: Optional[int] = 30):
+	def autocomplete(self, argument: str):
 		def decorator(func: typing.Callable):
 			func_parameters = ((inspect.signature(func))._parameters).keys()
 			if not func_parameters:

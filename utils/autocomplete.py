@@ -1,3 +1,4 @@
+from logging.config import valid_ident
 import discord
 
 from discord.ext import commands
@@ -9,23 +10,30 @@ AC = TypeVar("AC", bound="AutoComplete")
 
 
 class Dropdown(discord.ui.Select):
-    def __init__(self):
-        options = [
-            discord.SelectOption(label="Red", description="Your favourite colour is red", emoji="🟥"),
-            discord.SelectOption(label="Green", description="Your favourite colour is green", emoji="🟩"),
-            discord.SelectOption(label="Blue", description="Your favourite colour is blue", emoji="🟦"),
-        ]
-        super().__init__(placeholder="Choose your favourite colour...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f"Your favourite colour is {self.values[0]}")
+	def __init__(self, options: List[discord.SelectOption]):
+		options = options
+		super().__init__(placeholder="Choose your favourite colour...", min_values=1, max_values=1, options=options)
+		
+	async def callback(self, interaction: discord.Interaction):
+		self.value = self.values[0]
+		await interaction.response.send_message(f"You chose {self.values[0]}.", ephemeral=True)
 
 
 class DropdownView(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        self.add_item(Dropdown())
-	
+	def __init__(self, context: commands.Context, options: List[discord.SelectOption], timeout: Optional[int] = 30):
+		super().__init__(timeout=timeout)
+		self.add_item(Dropdown(options))
+		self.context = context
+
+	async def interaction_check(self, interaction: discord.Interaction) -> bool:
+		if self.context.author.id in self.context.bot.owner_ids or self.context.author.id == interaction.user.id:
+			return True
+
+		await interaction.response.send_message("You did not invoke the interaction, please invoke your own command.", ephemeral=True)
+		return False
+
+	async def on_timeout(self) -> None:
+		self.value = None
 class AutoComplete(Generic[AC]):
 	"""
     Represents an autocompletion of an argument.
@@ -34,6 +42,18 @@ class AutoComplete(Generic[AC]):
     ----------
     choices: List[:class:`Option`]
       An array of options.
+
+	Example
+	-------
+	@cmd.autocomplete('param')
+	async def param_auto(ctx, user_input) -> Optional[str]:
+		valid_choces: List[str] = ...
+		value = await ctx.prompt_autocomplete(
+			text="Sorry, that's not one of the valid params! Select one of these:",
+			choices=valid_choices,
+			timeout=25,
+		)
+		return value
     """
 
 	__slots__: Tuple[str, ...] = ("choices", "timeout", "_timeout",)

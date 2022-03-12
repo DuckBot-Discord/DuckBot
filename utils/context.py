@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from discord.message import Message
     from bot import DuckBot
 
+from utils.autocomplete import Dropdown, DropdownView
+
 __all__: Tuple[str, ...] = (
     'DuckContext',
     'tick',
@@ -104,7 +106,7 @@ class DuckContext(commands.Context):
 
         return await super().send(*args, **kwargs)
 
-    async def prompt_autocomplete(self, text: Optional[str] = "Choose an option...", choices: List[discord.SelectOption] = []):
+    async def prompt_autocomplete(self, text: Optional[str] = "Choose an option...", choices: List[discord.SelectOption] = [], timeout: Optional[int] = 30):
         """|coro|
         
         Prompts an autocomplete select menu that users can select choices.
@@ -114,7 +116,9 @@ class DuckContext(commands.Context):
         :class: `~str`
             The value the user chose.
         """
-        ...
+        view = DropdownView(self, choices, timeout=timeout)
+        await view.wait()
+        return view.value
 
 
 def setup(bot: DuckBot) -> None:
