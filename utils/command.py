@@ -42,6 +42,9 @@ class DuckCommand(commands.Command, Generic[DC]):
 	def __init__(self, func, **kwargs):
 		super().__init__(func, **kwargs)
 		self.autocompletes: Dict[str, AutoComplete] = {}
+
+	async def __call__(self, context: commands.Context, *args, **kwargs):
+		return await self.invoke(context)
 		
 	async def invoke(self, ctx: commands.Context) -> None:
 		await self.prepare(ctx)
