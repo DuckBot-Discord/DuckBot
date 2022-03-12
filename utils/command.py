@@ -52,13 +52,13 @@ class DuckCommand(commands.Command, Generic[DC]):
 		ctx.invoked_subcommand = None
 		ctx.subcommand_passed = None
 		injected = hooked_wrapped_callback(self, ctx, self.callback)
-		for autocomplete, ac in self.autocompletes:
-			for name in ctx.kwargs.items():
+		for autocomplete, ac in self.autocompletes.items():
+			for name in ctx.kwargs.keys():
 				if autocomplete == name:
 					ctx.kwargs[name] = (await ac.callback(ctx, ctx.kwargs[name]))
 					ctx.command.timeout = ac._timeout
 		await injected(*ctx.args, **ctx.kwargs)
-		
+
 	def autocomplete(self, argument: str):
 		def decorator(func: typing.Callable):
 			self.autocompletes[argument] = AutoComplete(func=func)
