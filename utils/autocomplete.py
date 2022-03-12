@@ -17,7 +17,7 @@ class Dropdown(discord.ui.Select):
 	async def callback(self, interaction: discord.Interaction):
 		self.__view.value = self.values[0]
 		await interaction.response.send_message(f"You chose {self.values[0]}.", ephemeral=True)
-
+		self.__view.stop()
 
 class DropdownView(discord.ui.View):
 	def __init__(self, context: commands.Context, options: List[discord.SelectOption], timeout: Optional[int] = 30):
