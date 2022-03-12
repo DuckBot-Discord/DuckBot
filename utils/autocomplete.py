@@ -22,7 +22,7 @@ class Dropdown(discord.ui.Select):
 class DropdownView(discord.ui.View):
 	def __init__(self, context: commands.Context, options: List[discord.SelectOption], timeout: Optional[int] = 30):
 		super().__init__(timeout=timeout)
-		self.add_item(Dropdown(options))
+		self.add_item(Dropdown(options, self))
 		self.context = context
 		self.value = None
 
