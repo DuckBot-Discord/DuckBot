@@ -117,6 +117,7 @@ class DuckContext(commands.Context):
             The value the user chose.
         """
         view = DropdownView(self, choices, timeout=timeout)
+        await self.reply(text, view=view)
         await view.wait()
         return view.value
 
