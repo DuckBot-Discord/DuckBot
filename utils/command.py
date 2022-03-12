@@ -49,6 +49,7 @@ class DuckCommand(commands.Command, Generic[DC]):
 		ctx.invoked_subcommand = None
 		ctx.subcommand_passed = None
 		injected = hooked_wrapped_callback(self, ctx, self.callback)
+		print(self.autocompletes, ctx.kwargs)
 		for autocomplete, ac in self.autocompletes:
 			for name in ctx.kwargs.keys():
 				if autocomplete == name:
