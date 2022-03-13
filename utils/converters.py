@@ -6,15 +6,25 @@ from typing import (
     Union,
     Tuple,
     Dict,
-    TypeVar, overload
+    TypeVar,
+    overload,
+    TYPE_CHECKING,
+    Optional,
 )
 
 import discord
 from discord.ext import commands
+from discord.utils import MISSING
+from discord.ext.commands.view import StringView
 
 from .helpers import can_execute_action
 from .context import DuckContext
 from .errorhandler import HandleHTTPException
+from .errors import DuckBotCommandError
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
 
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
 T = TypeVar('T')
@@ -23,6 +33,9 @@ __all__: Tuple[str, ...] = (
     'TargetVerifier',
     'BanEntryConverter',
     'ChannelVerifier',
+    'MissingArguments',
+    'DuplicateArgument',
+    'UnorderedArguments',
 )
     
 
@@ -299,3 +312,85 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
             If this method returns False, it will raise an error.
         """
         raise NotImplementedError('Derived classes need to implement this.')
+
+
+# Converter made by Stella#2000 (591135329117798400) from the d.py server :D
+# I was going to make my own but this is actually good so why not use it? lol
+
+class Argument:
+    def __init__(self, *, name: str, type: Type[type]) -> None:
+        self.name = name
+        self.type = type
+
+
+class DuplicateArgument(DuckBotCommandError):
+    pass
+
+
+class MissingArguments(DuckBotCommandError):
+    def __init__(self, arguments) -> None:
+        *every, last = map(lambda v: v.name, arguments)
+        if every:
+            message = f"{', '.join(every)} and {last}"
+        else:
+            message = last
+        super().__init__(f"The following arguments are missing: {message}")
+
+
+class _UnorderedArg(type):
+    __commands_args__ = typing.ClassVar[typing.Dict[str, Argument]]
+
+    def __new__(mcs, name, bases, attrs) -> Self:
+        arguments = attrs.get("__annotations__", {})
+        for key, anno in arguments.items():
+            arguments[key] = Argument(name=key, type=anno)
+
+        mcs.__commands_args__ = arguments
+        return super().__new__(mcs, name, bases, attrs)
+
+
+class UnorderedArguments(metaclass=_UnorderedArg):
+    @staticmethod
+    async def try_convert(cls: UnorderedArguments, ctx: DuckContext, argument: Argument, value: str) -> None:
+        converted = await commands.run_converters(ctx, argument.type, value, ctx.current_parameter)
+        name = argument.name
+        if getattr(cls, name, MISSING) is not MISSING:
+            raise DuplicateArgument(f'Conflicting values at {name!r}.')
+
+        setattr(cls, name, converted)
+
+    @classmethod
+    async def convert(cls, ctx: DuckContext, argument: str) -> Self:
+        view = StringView(argument)
+        unordered = cls.__new__(cls)
+        converters = cls.__commands_args__.copy()
+        values = list(converters.values())
+
+        while not view.eof:
+            view.skip_ws()
+            argument = view.get_quoted_word()
+            to_remove = MISSING
+            for converter in values:
+                try:
+                    await cls.try_convert(unordered, ctx, converter, argument)
+                except DuplicateArgument as e:
+                    raise e from None
+                except commands.CommandError:
+                    pass  # ignored
+                else:
+                    to_remove = converter
+                    break
+
+            if to_remove is MISSING:
+                raise MissingArguments(values)
+
+            values.remove(to_remove)
+
+            if values and view.eof:
+                raise MissingArguments(values)
+
+            if not values and not view.eof:
+                break
+
+        return unordered
+
