@@ -56,5 +56,6 @@ CREATE TABLE IF NOT EXISTS disabled_commands (
     guild_id BIGINT,
     entity_id BIGINT,
     command_name TEXT,
+    whitelist BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (guild_id, entity_id, command_name)
 );

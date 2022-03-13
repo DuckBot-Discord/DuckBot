@@ -190,6 +190,19 @@ class DbContextManager(Generic[DBT]):
             await self._pool.release(self._conn)
 
 
+async def tree_eh(
+    self: app_commands.CommandTree,
+    interaction: discord.Interaction,
+    command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
+    error: app_commands.AppCommandError,
+) -> None:
+    if command and command.on_error:
+        return
+    if self.client.extra_events.get('on_app_command_error'):
+        return self.client.dispatch('app_command_error', interaction, command, error)
+    raise error
+
+
 class DuckHelper(TimerManager):
     def __init__(self, *, bot: DuckBot) -> None:
         super().__init__(bot=bot)
@@ -209,56 +222,18 @@ class DuckHelper(TimerManager):
             yield item[i:i + size]
 
 
-class DuckTree(app_commands.CommandTree[DBT]):
-    """DuckBot's command tree. This will manage
-    all Application Commands and extensions.
-    """
-
-    def __init__(self, bot: DBT) -> None:
-        super().__init__(bot)
-
-    @staticmethod
-    def _command_to_type(
-            command: Union[app_commands.Command, app_commands.ContextMenu, app_commands.Group]
-    ) -> Union[discord.AppCommandType, discord.AppCommandOptionType]:
-        parent = getattr(command, 'parent', MISSING)
-        if parent is MISSING:
-            return command.type  # type: ignore # The only type this can be is ContextMenu
-
-        def _get_or(name):
-            return discord.AppCommandType.chat_input if not parent \
-                else discord.enums.try_enum(discord.AppCommandOptionType, name)
-
-        if isinstance(command, app_commands.Group):
-            return _get_or('subcommand_group')
-
-        return _get_or('subcommand')
-
-    async def on_error(
-        self,
-        interaction: discord.Interaction,
-        command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
-        error: app_commands.AppCommandError,
-    ) -> None:
-        if command and command.on_error:
-            return
-        if self.client.extra_events.get('on_app_command_error'):
-            return self.client.dispatch('app_command_error', interaction, command, error)
-        raise error
-
-
 class DuckBot(commands.Bot, DuckHelper):
     if TYPE_CHECKING:
-        # We do this to make sure we dont get annoying 
-        # type checker errors. Most of the time user isnt going to be 
+        # We do this to make sure we dont get annoying
+        # type checker errors. Most of the time user isnt going to be
         # None, so this is just a convenience thing.
         user: discord.ClientUser
         start_time: datetime.datetime
-        
+
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
         intents = discord.Intents.all()
         intents.typing = False  # noqa
-        
+
         super().__init__(
             command_prefix={'dbb.', },
             case_insensitive=True,
@@ -268,12 +243,11 @@ class DuckBot(commands.Bot, DuckHelper):
             strip_after_prefix=True,
             chunk_guilds_at_startup=False
         )
+        self.pool: Pool = pool
         super(DuckHelper, self).__init__(bot=self)
-        self.tree: DuckTree[DBT] = DuckTree(self)
-        
+
         self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
         self.session: ClientSession = session
-        self.pool: Pool = pool
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
         self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
@@ -287,6 +261,8 @@ class DuckBot(commands.Bot, DuckHelper):
 
         self.constants = constants
         self.start_time = None  # noqa
+        self.tree.on_error = tree_eh
+
 
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -658,44 +634,3 @@ class DuckBot(commands.Bot, DuckHelper):
             return self.get_user(user_id) or await self.fetch_user(user_id)
         except discord.HTTPException:
             return None
-
-    # NOTE: It's best to seperate the override into two params. One for cog and one for app commands
-    def add_cog(self, cog: commands.Cog, *, override: bool = False) -> commands.Cog:
-        super().add_cog(cog, override=override)
-
-        _app_commands = []
-
-        for name in dir(cog):
-            item = getattr(cog, name, None)
-            if not item:
-                continue
-
-            if isinstance(item, app_commands.ContextMenu):
-                raise TypeError('Cannot use context menu commands in a cog. Remove it.')
-
-            if isinstance(item, app_commands.Command):
-                item.binding = cog  # type: ignore
-                _app_commands.append(item)
-                self.tree.add_command(item, guild=discord.Object(id=774561547930304536), override=override)
-
-        setattr(cog, '_app_commands', _app_commands)
-        return cog
-
-    def remove_cog(self, name: str, /) -> Optional[commands.Cog]:
-        result = super().remove_cog(name)
-        if not result or not (commands := getattr(result, '_app_commands', None)):
-            return
-
-        for command in commands:
-            # Danny no add Command.type yet
-            command_type = self.tree._command_to_type(command)
-            if not isinstance(command_type, discord.AppCommandType):
-                raise RuntimeError(
-                    f'Attempting to remove an app command that does not have the correct type. {command} {command_type}')
-
-            self.tree.remove_command(
-                command.name,
-                guild=discord.Object(id=774561547930304536),
-                type=command_type
-            )
-
