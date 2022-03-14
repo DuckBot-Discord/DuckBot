@@ -426,12 +426,13 @@ class DuckBot(commands.Bot, DuckHelper):
             Whether to return the raw prefixes or not.
         """
         meth = commands.when_mentioned_or if raw is False else lambda *pres: lambda _, __: list(pres)
-        base = self.command_prefix.copy()
-        
+
         cached_prefixes = self.prefix_cache.get((message.guild and message.guild.id), None)  # type: ignore
         if cached_prefixes is not None:
-            base.update(cached_prefixes)
-        
+            base = set(cached_prefixes)
+        else:
+            base = self.command_prefix
+
         return meth(*base)(self, message)
 
     async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
