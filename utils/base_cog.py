@@ -177,7 +177,7 @@ class DuckCog(commands.Cog):
         emoji: Optional[str]
         brief: Optional[str]
 
-    __metaclass__: DuckCogMeta = DuckCogMeta
+    #__metaclass__: DuckCogMeta = DuckCogMeta
 
     __slots__: Tuple[str, ...] = (
         'bot',

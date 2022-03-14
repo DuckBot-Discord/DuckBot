@@ -4,12 +4,12 @@ import logging
 import os
 import aiohttp
 import asyncio
-from dotenv import load_dotenv
 
 from bot import DuckBot
 from utils.helpers import col
+from utils.env import load_env
 
-load_dotenv()
+asyncio.run(load_env())
 
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'true'
 os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'true'

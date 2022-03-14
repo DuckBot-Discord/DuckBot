@@ -4,6 +4,7 @@ import asyncio
 import functools
 
 from typing import Callable, Dict, TypeVar, List, Any, Generic, Optional
+from typing_extensions import Self
 
 import discord
 
@@ -81,8 +82,37 @@ class DuckCommand(commands.Command, Generic[DC]):
 				
 		return decorator
 
-def command(*args, **kwargs):
+def command(*args, **kwargs) -> DuckCommand:
 	def decorator(func: Callable):
 		return commands.command(cls=DuckCommand, *args, **kwargs)(func)
 
 	return decorator
+
+@discord.utils.copy_doc(commands.Group)
+class DuckGroup(commands.Group):
+	def __init__(self, *args: Any, **attrs: Any) -> None:
+		super().__init__(*args, **attrs)
+
+	def command(self, *args, **kwargs) -> DuckCommand:
+		def deco(func: Callable):
+			return command(parent=self, *args, **kwargs)(func)
+		
+		return deco
+
+	def group(self, *args, **kwargs) -> Self:
+		def deco(func: typing.Callable):
+			return super().group(cls=self.__class__, *args, **kwargs)(func)
+
+		return deco
+
+def group(*args, **kwargs) -> DuckGroup:
+	def deco(func):
+		return commands.group(cls=DuckGroup, *args, **kwargs)(func)
+	
+	return deco
+
+def add_cog_autocomplete(param: str):
+	def deco(func: DuckCommand):
+		func.autocompletes[param] = AutoComplete(func=func)
+
+	return deco

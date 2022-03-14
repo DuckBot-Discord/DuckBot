@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import (
     Optional,
+    TYPE_CHECKING
 )
 
 import discord
@@ -10,9 +11,16 @@ from discord.ext import commands
 from utils import DuckCog
 from utils.context import DuckContext
 from utils.time import human_join
+from utils.command import group, add_cog_autocomplete
+
+if TYPE_CHECKING:
+    from bot import DuckBot
 
 
 class PrefixChanges(DuckCog):
+    def __init__(self, bot: DuckBot) -> None:
+        super().__init__(bot)
+        #self.prefix_remove.add_autocomplete("prefix", self.prefix_remove_autocomplete)
 
     # NOTE: Delete me later
     @commands.command(hidden=True)
@@ -20,7 +28,7 @@ class PrefixChanges(DuckCog):
     async def __give_error(self, ctx: DuckContext):
         raise discord.DiscordException('This is an error.')
 
-    @commands.group(name='prefix', aliases=['prefixes'], invoke_without_command=True)
+    @group(name='prefix', aliases=['prefixes'], invoke_without_command=True)
     @commands.guild_only()
     async def prefix(self, ctx: DuckContext, *, prefix: Optional[str] = None) -> Optional[discord.Message]:
         """|coro|
@@ -141,7 +149,6 @@ class PrefixChanges(DuckCog):
 
         prefixes = await self.bot.get_prefix(ctx.message, raw=True)
         if prefix not in prefixes:
-            # TODO: Add fuzzy matching here to suggest a prefix that might be the one they want
             embed = discord.Embed(
                 title='Oh no!',
                 description='This prefix is not in the list of prefixes. Are you sure you spelt it correct?'
@@ -170,3 +177,16 @@ class PrefixChanges(DuckCog):
         )
         embed.add_field(name='Current Prefixes', value=human_join(prefixes, final='and'))
         return await ctx.send(embed=embed)
+
+    @add_cog_autocomplete("prefix")
+    async def prefix_remove_autocomplete(
+            self,
+            ctx: DuckContext,
+            user_input: str
+    ) -> str:
+        valid = list(await ctx.bot.get_prefix(ctx.message, raw=True))
+        thing = await ctx.prompt_autocomplete(
+            text='Thats not a valid prefix!',
+            choices=[discord.SelectOption(label=p) for p in valid],
+        )
+        return thing
