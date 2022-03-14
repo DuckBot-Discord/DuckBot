@@ -24,5 +24,6 @@ class Moderation(
     """ Moderation commands. """
 
 
-def setup(bot: DuckBot):
-    bot.add_cog(Moderation(bot))
+async def setup(bot: DuckBot):
+    await bot.add_cog(Moderation(bot))
+

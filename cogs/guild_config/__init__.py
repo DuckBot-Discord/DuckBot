@@ -15,5 +15,5 @@ class GuildConfig(
 ):
     pass
 
-def setup(bot: DuckBot):
-    bot.add_cog(GuildConfig(bot))
+async def setup(bot: DuckBot):
+    await bot.add_cog(GuildConfig(bot))

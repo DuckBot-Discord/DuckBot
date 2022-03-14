@@ -84,5 +84,5 @@ async def on_app_command_error(
             await interaction.followup.send(msg, embed=embed, ephemeral=True)
 
 
-def setup(bot: DuckBot) -> None:
+async def setup(bot: DuckBot) -> None:
     bot.add_listener(on_app_command_error)

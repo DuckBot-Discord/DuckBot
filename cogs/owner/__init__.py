@@ -29,5 +29,5 @@ class Owner(BlackListManagement, TestingShit,
             await msg.edit(content=f'✅ Synced {len(cmds)} commands.')
 
 
-def setup(bot):
-    bot.add_cog(Owner(bot))
+async def setup(bot):
+    await bot.add_cog(Owner(bot))

@@ -260,5 +260,5 @@ class DuckBotJishaku(*features, *OPTIONAL_FEATURES):
             scope.clear_intersection(arg_dict)
 
 
-def setup(bot: DuckBot) -> None:
-    return bot.add_cog(DuckBotJishaku(bot=bot))
+async def setup(bot: DuckBot) -> None:
+    return await bot.add_cog(DuckBotJishaku(bot=bot))

@@ -223,16 +223,10 @@ class DuckHelper(TimerManager):
 
 
 class DuckBot(commands.Bot, DuckHelper):
-    if TYPE_CHECKING:
-        # We do this to make sure we dont get annoying
-        # type checker errors. Most of the time user isnt going to be
-        # None, so this is just a convenience thing.
-        user: discord.ClientUser
-        start_time: datetime.datetime
-
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
         intents = discord.Intents.all()
-        intents.typing = False  # noqa
+        intents.typing = False
+        intents.reactions = False
 
         super().__init__(
             command_prefix={'dbb.', },
@@ -244,25 +238,24 @@ class DuckBot(commands.Bot, DuckHelper):
             chunk_guilds_at_startup=False
         )
         self.pool: Pool = pool
-        super(DuckHelper, self).__init__(bot=self)
-
-        self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
         self.session: ClientSession = session
-        self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
-
-        self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
-        self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
-        self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
         self._context_cls: Type[commands.Context] = commands.Context
+        self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
+        self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
 
-        self.create_task(self.populate_cache())
-        for extension in initial_extensions:
-            self.load_extension(extension)
+        self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
+        self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
+        self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
         self.constants = constants
         self.start_time = None  # noqa
         self.tree.on_error = tree_eh
 
+    async def setup_hook(self) -> None:
+        for extension in initial_extensions:
+            await self.load_extension(extension)
+        await self.populate_cache()
+        super(DuckHelper, self).__init__(bot=self)
 
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -303,6 +296,7 @@ class DuckBot(commands.Bot, DuckHelper):
                 await old_init(con)
                 
         pool = await asyncpg.create_pool(uri, init=init, **kwargs)
+        log.info(f"{col(2)}Successfully created connection pool.")
         return pool
 
     async def populate_cache(self) -> None:

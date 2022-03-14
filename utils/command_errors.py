@@ -48,7 +48,7 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
         await ctx.bot.exceptions.add_error(error=error, ctx=ctx)
 
 
-def setup(bot: DuckBot):
+async def setup(bot: DuckBot):
     """adds the event to the bot
 
     Parameters

@@ -15,5 +15,5 @@ class Meta(News, Reminders, ApplicationMeta, emoji="\N{INFORMATION SOURCE}"):
             raise DuckBotNotStarted('Somehow, the bot has not logged in yet')
         return f"Commands related to {self.bot.user.name}"
 
-def setup(bot: DuckBot):
-    bot.add_cog(Meta(bot))
+async def setup(bot: DuckBot):
+    await bot.add_cog(Meta(bot))

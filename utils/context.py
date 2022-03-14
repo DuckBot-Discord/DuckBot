@@ -64,7 +64,8 @@ class DuckContext(commands.Context):
     @discord.utils.cached_property
     def color(self) -> discord.Color:
         """:class:`~discord.Color`: Returns DuckBot's color, or the author's color. Falls back to blurple """
-        check = lambda color: color not in {discord.Color.default(), discord.Embed.Empty, None}
+        def check(color):
+            return color not in {discord.Color.default(), None}
         checks = (
             me_color if check(me_color := self.me.color) else None,
             you_color if check(you_color := self.author.color) else None,
@@ -97,7 +98,7 @@ class DuckContext(commands.Context):
             embeds.remove(None)
         if embeds:
             for embed in embeds:
-                if embed.color is discord.Embed.Empty:
+                if embed.color is None:
                     # Made this the bot's vanity colour, although we'll
                     # be keeping self.color for other stuff like userinfo
                     embed.color = self.bot.color
@@ -122,7 +123,7 @@ class DuckContext(commands.Context):
         return view.value
 
 
-def setup(bot: DuckBot) -> None:
+async def setup(bot: DuckBot) -> None:
     """Sets up the DuckContext class.
 
     Parameters
