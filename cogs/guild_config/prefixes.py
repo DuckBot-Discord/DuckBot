@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class PrefixChanges(DuckCog):
     def __init__(self, bot: DuckBot) -> None:
         super().__init__(bot)
-        #self.prefix_remove.add_autocomplete("prefix", self.prefix_remove_autocomplete)
+        self.prefix_remove.add_autocomplete("prefix", self.prefix_remove_autocomplete)
 
     # NOTE: Delete me later
     @commands.command(hidden=True)
@@ -178,7 +178,6 @@ class PrefixChanges(DuckCog):
         embed.add_field(name='Current Prefixes', value=human_join(prefixes, final='and'))
         return await ctx.send(embed=embed)
 
-    @add_cog_autocomplete("prefix")
     async def prefix_remove_autocomplete(
             self,
             ctx: DuckContext,
