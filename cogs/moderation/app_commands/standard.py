@@ -30,6 +30,7 @@ __all__: Tuple[str, ...] = (
 
 class ApplicationStandard(DuckCog):
 
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='ban')
     @app_commands.describe(
         user='The user to ban. (can be a user ID)',
@@ -89,6 +90,7 @@ class ApplicationStandard(DuckCog):
             text = f"Banned **{mdr(user)}** permanently for: {reason}"
         await followup.send(text, wait=True)
 
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='kick')
     @app_commands.describe(
         member='The member to kick. (can be an ID)',

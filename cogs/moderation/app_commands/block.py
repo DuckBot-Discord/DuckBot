@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 from typing import (
     Optional,
@@ -28,6 +30,11 @@ from bot import DuckBot
 
 
 class BlockCommand(app_commands.Group, name='block'):
+    def __init__(self, cog: ApplicationBlock):
+        super().__init__()
+        self.cog = cog
+
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='user')
     @app_commands.describe(
         user='The user you wish to block.'
@@ -42,15 +49,16 @@ class BlockCommand(app_commands.Group, name='block'):
         await bot_has_permissions(interaction, ban_members=True)
         await can_execute_action(interaction, user)
 
-        await interaction.response.defer
+        await interaction.response.defer()
         followup: discord.Webhook = interaction.followup  # type: ignore
         reason = f'Block by {interaction.user} (ID: {interaction.user.id})'
 
         async with HandleHTTPException(followup):
-            await self.toggle_block(interaction.channel, user, blocked=True, reason=reason)  # type: ignore
+            await self.cog.toggle_block(interaction.channel, user, blocked=True, reason=reason)  # type: ignore
 
         await followup.send(f'✅ **|** Blocked **{mdr(user)}**')
 
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='revoke')
     @app_commands.describe(
         user='The user you wish to block.'
@@ -65,7 +73,7 @@ class BlockCommand(app_commands.Group, name='block'):
         await bot_has_permissions(interaction, ban_members=True)
         await can_execute_action(interaction, user)
 
-        await interaction.response.defer
+        await interaction.response.defer()
         followup: discord.Webhook = interaction.followup  # type: ignore
         bot: DuckBot = interaction.client  # type: ignore
 
@@ -83,7 +91,7 @@ class BlockCommand(app_commands.Group, name='block'):
         reason = f'Unblock by {interaction.user} (ID: {interaction.user.id})'
 
         async with HandleHTTPException(followup):
-            await self.toggle_block(interaction.channel, user, blocked=False, reason=reason)  # type: ignore
+            await self.cog.toggle_block(interaction.channel, user, blocked=False, reason=reason)  # type: ignore
 
         await followup.send(f'✅ **|** Unblocked **{mdr(user)}**')
 
@@ -91,7 +99,7 @@ class BlockCommand(app_commands.Group, name='block'):
 class ApplicationBlock(BlockCog):
     def __init__(self, bot: DuckBot):
         super().__init__(bot)
-        self.bot.tree.add_command(BlockCommand(), guild=discord.Object(id=774561547930304536))
+        self.bot.tree.add_command(BlockCommand(self), guild=discord.Object(id=774561547930304536))
 
     def cog_unload(self) -> None:
         self.bot.tree.remove_command('block', guild=discord.Object(id=774561547930304536))

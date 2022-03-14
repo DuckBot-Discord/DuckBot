@@ -30,6 +30,8 @@ class BlockCog(DuckCog):
             Whether to block or unblock the member. Defaults to ``True``, which means block.
         update_db : `bool`, optional
             Whether to update the database with the new block status.
+        reason : `str`, optional
+            The reason for the block/unblock.
         """
         if isinstance(channel, discord.abc.PrivateChannel):
             raise commands.NoPrivateMessage()
@@ -41,18 +43,18 @@ class BlockCog(DuckCog):
 
         val = False if blocked else None
         overwrites = channel.overwrites_for(member)
+
+        overwrites.update(
+            send_messages=val,
+            add_reactions=val,
+            create_public_threads=val,
+            create_private_threads=val,
+            send_messages_in_threads=val
+        )
         try:
             await channel.set_permissions(
                 member, reason=reason,
-                overwrite=overwrites.update(
-                    send_messages=val,
-                    add_reactions=val,
-                    create_public_threads=val,
-                    create_private_threads=val,
-                    send_messages_in_threads=val
-                )
-            )
-
+                overwrite=overwrites)
         finally:
             if update_db:
                 if blocked:
