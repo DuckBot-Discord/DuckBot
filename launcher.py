@@ -48,7 +48,7 @@ async def run_bot() -> None:
         async with aiohttp.ClientSession() as session:
             duck = DuckBot(session=session, pool=pool, error_webhook_url=ERROR_WEBHOOK_URL)
             
-            await duck.start(TOKEN, reconnect=True, verbose=True)
+            await duck.start(TOKEN, reconnect=True, verbose=False)
     except Exception as e:
         return log.error('Failed to start bot', exc_info=e)
     finally:

@@ -69,7 +69,51 @@ __all__: Tuple[str, ...] = (
     'DONE',
     'COMMON_DISCRIMINATORS',
     'COMMON_WORDS',
+    'NITRO',
+    'BOT',
 )
+
+GET_SOME_HELP = '<a:stopit:895395218763968562>'
+BLOB_STOP_SIGN = '<:blobstop:895395252284850186>'
+REPLY_BUTTON = '<:reply:895394899728408597>'
+UPVOTE = '<:upvote:893588750242832424>'
+DOWNVOTE = '<:downvote:893588792164892692>'
+REDDIT_UPVOTE = '<:upvote:895395361634541628>'
+TOP_GG = '<:topgg:895395399043543091>'
+BOTS_GG = '<:botsgg:895395445608697967>'
+SERVERS_ICON = '<:servers:895395501934006292>'
+INVITE = '<:invite:895395547651907607>'
+MINECRAFT_LOGO = '<:minecraft:895395622272782356>'
+GITHUB = '<:github:895395664383598633>'
+WEBSITE = '<:open_site:895395700249075813>'
+TYPING_INDICATOR = '<a:typing:895397923687399517>'
+POSTGRE_LOGO = '<:psql:895405698278649876>'
+SHUT_SEAGULL = '<:shut:895406986227761193>'
+EDIT_NICKNAME = '<:nickname:895407885339738123>'
+ROO_SLEEP = '<:RooSleep:895407927681253436>'
+INFORMATION_SOURCE = '<:info:895407958035431434>'
+STORE_TAG = '<:store_tag:895407986850271262>'
+JOINED_SERVER = '<:joined:895408141305540648>'
+MOVED_CHANNELS = '<:moved:895408170011332608>'
+LEFT_SERVER = '<:left:897315201156792371>'
+ROLES_ICON = '<:role:895408243076128819>'
+BOOST = '<:booster4:895413288219861032>'
+OWNER_CROWN = '<:owner_crown:895414001364762686>'
+RICH_PRESENCE = '<:rich_presence:895414264016306196>'
+VOICE_CHANNEL = '<:voice:895414328818274315>'
+TEXT_CHANNEL = '<:view_channel:895414354588082186>'
+CATEGORY_CHANNEL = '<:category:895414388528406549>'
+STAGE_CHANNEL = '<:stagechannel:895414409445380096>'
+TEXT_CHANNEL_WITH_THREAD = '<:threadnew:895414437916332062>'
+EMOJI_GHOST = '<:emoji_ghost:895414463354785853>'
+SPOTIFY = '<:spotify:897661396022607913>'
+YOUTUBE_LOGO = '<:youtube:898052487989309460>'
+ARROW = ARROWFWD = '<:arrow:909672287849041940>'
+ARROWBACK = '<:arrow:909889493782376540>'
+ARROWZ = ARROWFWDZ = '<:arrow:909897129198231662>'
+ARROWBACKZ = '<:arrow:909897233833529345>'
+NITRO = '<:nitro:895392323519799306>'
+BOT = '<:bot:952905056657752155>'
 
 CUSTOM_TICKS = {
     True: '<:greenTick:895390596599017493>',
@@ -131,19 +175,22 @@ COINS_STRING = ['<:heads:895391679044005949> Heads!',
                 '<:tails:895391716356522057> Tails!']
 
 USER_FLAGS = {
-    'staff': '<:staff:895391901778346045> Discord Staff',
-    'partner': '<:partnernew:895391927271309412> Partnered Server Owner',
-    'hypesquad': '<:hypesquad:895391957638070282> HypeSquad Events',
+    'bot_http_interactions': f'{WEBSITE} Interaction-only Bot',
     'bug_hunter': '<:bughunter:895392105386631249> Discord Bug Hunter',
+    'bug_hunter_level_2': '<:bughunter_gold:895392270369579078> Discord Bug Hunter',
+    'discord_certified_moderator': '<:certified_moderator:895393984308981930> Certified Moderator',
+    'early_supporter': '<:supporter:895392239356903465> Early Supporter',
+    'hypesquad': '<:hypesquad:895391957638070282> HypeSquad Events',
+    'hypesquad_balance': '<:balance:895392209564733492> HypeSquad Balance',
     'hypesquad_bravery': '<:bravery:895392137225584651> HypeSquad Bravery',
     'hypesquad_brilliance': '<:brilliance:895392183950131200> HypeSquad Brilliance',
-    'hypesquad_balance': '<:balance:895392209564733492> HypeSquad Balance',
-    'early_supporter': '<:supporter:895392239356903465> Early Supporter',
-    'bug_hunter_level_2': '<:bughunter_gold:895392270369579078> Discord Bug Hunter',
-    'verified_bot_developer': '<:earlybotdev:895392298895032364> Early Verified Bot Developer',
+    'partner': '<:partnernew:895391927271309412> Partnered Server Owner',
+    'spammer': '\N{WARNING SIGN} Potential Spammer',
+    'staff': '<:staff:895391901778346045> Discord Staff',
+    'system': '\N{INFORMATION SOURCE} System',
+    'team_user': '\N{INFORMATION SOURCE} Team User',
     'verified_bot': '<:verified_bot:897876151219912754> Verified Bot',
-    'discord_certified_moderator': '<:certified_moderator:895393984308981930> Certified Moderator',
-    'premium_since': '<:booster4:895413288219861032>'
+    'verified_bot_developer': '<:earlybotdev:895392298895032364> Early Verified Bot Developer',
 }
 
 CONTENT_FILTER = {
@@ -179,46 +226,6 @@ GUILD_BOOST_LEVEL_EMOJI = {
     '2': '<:Level2_guild:895394334164254780>',
     '3': '<:Level3_guild:895394362933006396>'
 }
-
-GET_SOME_HELP = '<a:stopit:895395218763968562>'
-BLOB_STOP_SIGN = '<:blobstop:895395252284850186>'
-REPLY_BUTTON = '<:reply:895394899728408597>'
-UPVOTE = '<:upvote:893588750242832424>'
-DOWNVOTE = '<:downvote:893588792164892692>'
-REDDIT_UPVOTE = '<:upvote:895395361634541628>'
-TOP_GG = '<:topgg:895395399043543091>'
-BOTS_GG = '<:botsgg:895395445608697967>'
-SERVERS_ICON = '<:servers:895395501934006292>'
-INVITE = '<:invite:895395547651907607>'
-MINECRAFT_LOGO = '<:minecraft:895395622272782356>'
-GITHUB = '<:github:895395664383598633>'
-WEBSITE = '<:open_site:895395700249075813>'
-TYPING_INDICATOR = '<a:typing:895397923687399517>'
-POSTGRE_LOGO = '<:psql:895405698278649876>'
-SHUT_SEAGULL = '<:shut:895406986227761193>'
-EDIT_NICKNAME = '<:nickname:895407885339738123>'
-ROO_SLEEP = '<:RooSleep:895407927681253436>'
-INFORMATION_SOURCE = '<:info:895407958035431434>'
-STORE_TAG = '<:store_tag:895407986850271262>'
-JOINED_SERVER = '<:joined:895408141305540648>'
-MOVED_CHANNELS = '<:moved:895408170011332608>'
-LEFT_SERVER = '<:left:897315201156792371>'
-ROLES_ICON = '<:role:895408243076128819>'
-BOOST = '<:booster4:895413288219861032>'
-OWNER_CROWN = '<:owner_crown:895414001364762686>'
-RICH_PRESENCE = '<:rich_presence:895414264016306196>'
-VOICE_CHANNEL = '<:voice:895414328818274315>'
-TEXT_CHANNEL = '<:view_channel:895414354588082186>'
-CATEGORY_CHANNEL = '<:category:895414388528406549>'
-STAGE_CHANNEL = '<:stagechannel:895414409445380096>'
-TEXT_CHANNEL_WITH_THREAD = '<:threadnew:895414437916332062>'
-EMOJI_GHOST = '<:emoji_ghost:895414463354785853>'
-SPOTIFY = '<:spotify:897661396022607913>'
-YOUTUBE_LOGO = '<:youtube:898052487989309460>'
-ARROW = ARROWFWD = '<:arrow:909672287849041940>'
-ARROWBACK = '<:arrow:909889493782376540>'
-ARROWZ = ARROWFWDZ = '<:arrow:909897129198231662>'
-ARROWBACKZ = '<:arrow:909897233833529345>'
 
 st_nt = namedtuple('statuses', ['ONLINE', 'IDLE', 'DND', 'OFFLINE',
                                 'ONLINE_WEB', 'IDLE_WEB', 'DND_WEB', 'OFFLINE_WEB',
@@ -264,7 +271,6 @@ DONE = [
     '<a:done:912192596305129522>',
     '<a:done:912192718212583464>',
 ]
-
 
 COMMON_DISCRIMINATORS = ['0001', '0002', '0003', '0004', '0005', '0006', '0007', '0008', '0009',
                          '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999',

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS news (
     author_id BIGINT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS timers(
+CREATE TABLE IF NOT EXISTS timers (
     id BIGSERIAL PRIMARY KEY,
     precise BOOLEAN DEFAULT TRUE,
     event TEXT,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS blocks (
 -- Thanks chai :)
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'blacklist_type ') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'blacklist_type') THEN
         CREATE TYPE blacklist_type AS ENUM ('guild', 'channel', 'user');
     END IF;
 END$$;
@@ -58,4 +58,16 @@ CREATE TABLE IF NOT EXISTS disabled_commands (
     command_name TEXT,
     whitelist BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (guild_id, entity_id, command_name)
+);
+
+CREATE TABLE IF NOT EXISTS badges (
+    badge_id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    emoji TEXT NOT NULL
+);
+
+CREATE TABLE acknowledgements (
+    user_id BIGINT,
+    badge_id BIGINT REFERENCES badges(badge_id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, badge_id)
 );

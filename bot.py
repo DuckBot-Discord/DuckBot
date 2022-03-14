@@ -75,6 +75,7 @@ initial_extensions: Tuple[str, ...] = (
     'cogs.meta',
     'cogs.moderation',
     'cogs.owner',
+    'cogs.information',
 )
 
 
@@ -191,15 +192,14 @@ class DbContextManager(Generic[DBT]):
 
 
 async def tree_eh(
-    self: app_commands.CommandTree,
     interaction: discord.Interaction,
     command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
     error: app_commands.AppCommandError,
 ) -> None:
     if command and command.on_error:
         return
-    if self.client.extra_events.get('on_app_command_error'):
-        return self.client.dispatch('app_command_error', interaction, command, error)
+    if interaction.client.extra_events.get('on_app_command_error'):  # noqa
+        return interaction.client.dispatch('app_command_error', interaction, command, error)
     raise error
 
 
