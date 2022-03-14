@@ -70,6 +70,7 @@ class clean_c(clean_content):
 class AppRemind(app_commands.Group, name='reminder'):
     """ Reminds the user of something """
 
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='add')
     @app_commands.describe(
         when='When and what to remind you of. Example: "in 10 days do this", "next monday do that."'
@@ -100,6 +101,7 @@ class AppRemind(app_commands.Group, name='reminder'):
         )
         await interaction.followup.send(f"Alright, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='delete')
     @app_commands.describe(id='The ID of the reminder you want to delete.')
     async def remind_delete(self, interaction: discord.Interaction, id: int) -> None:
@@ -117,6 +119,7 @@ class AppRemind(app_commands.Group, name='reminder'):
         except TimerNotFound as error:
             await interaction.followup.send(f"I couldn't find a reminder with ID {error.id}.")
 
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='list')
     async def list(self, interaction: discord.Interaction) -> None:
         """Lists all of your reminders."""
@@ -146,7 +149,7 @@ class AppRemind(app_commands.Group, name='reminder'):
                 relative = discord.utils.format_dt(expires, 'R')
             except Exception as e:
                 relative = 'in a long time...'
-                logging.error(f'Failed to format relative time: {expires} {repr(expires)}', exc_info=e)
+                logging.debug(f'Failed to format relative time: {expires} {repr(expires)}', exc_info=e)
 
             name = f"{r_id}: {relative}"
             value = reason if len(reason) < 1024 else reason[:1021] + '...'

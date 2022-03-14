@@ -136,7 +136,7 @@ class NewsViewer(discord.ui.View):
         """
         val = interaction.user == self.author
         if not val:
-            return await interaction.response.send_message(content='Hey! You can\'t do that!')
+            return await interaction.response.send_message(content='Hey! You can\'t do that!', ephemeral=True)
 
         return val
 

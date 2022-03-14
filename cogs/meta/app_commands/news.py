@@ -7,6 +7,7 @@ from .._news_viewer import NewsViewer
 
 class ApplicationNews(DuckCog):
 
+    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='news')
     async def app_news(self, interaction: discord.Interaction):
         """ See what's new on DuckBot! """
