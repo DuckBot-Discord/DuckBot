@@ -1,33 +1,61 @@
-# std
-import typing
-import os
+from __future__ import annotations
 
-# 3rd party
-import aiofiles
+import os
+from typing import (
+	Dict,
+	Any,
+	Generic,
+	Tuple,
+	TypeVar
+)
+
+import aiofile
+
+_KT = TypeVar('_KT')
+_VT = TypeVar('_VT')
+
+__all__: Tuple[str, ...] = (
+	'Environment',
+	'load_env',
+)
+
 
 class Environment(object):
-	def __init__(self, values: typing.Dict[str, typing.Any]) -> None:
-		for k, v in values.items():
-			setattr(self, k, v)
+	"""A base class that implements an "Attribute Dictionary" for storing
+	env values.
+	"""
+	# Was this really that hard ?
+	def __init__(self, **kwargs) -> None:
+		self.__dict__= kwargs 
 
-async def load_env(file_name: str = ".env"):
-	"""Loads a file to load the environment values from.
+
+async def load_env(file_name: str = ".env") -> Environment:
+	"""|coro|
+ 
+ 	Loads a file to load the environment values from.
 
 	Parameters
 	----------
-		file_name (`~str`): The filename to load the env values from. Defaults to ".env".
+	file_name: :class:`str`
+		The filename to load the env values from. Defaults to ".env".
 
 	Returns
 	-------
-		`~Environment`: Represents the environment the `~load_env` function returns.
+	:class:`Environment`
+ 		Represents the environment the `~load_env` function returns.
 	"""
-	async with aiofiles.open(file_name, "r") as file:
-		content = await file.readlines()
-	values: typing.Dict[str, typing.Any] = {}
+	async with aiofile.async_open(file_name) as f:
+		content = await f.read()
+  
+	values: Dict[str, Any] = {}
 	for line in content:
-		contents = line.split("=")
-		values[contents[0]] = contents[1]
-	for name, value in values.items():
-		os.environ[name] = value
-	env = Environment(values)
+		try:
+			key, value = line.split('=')
+		except ValueError: # Not enough to unpack
+			raise RuntimeError(f"Invalid line in {file_name}: {line}")
+      
+		values[key] = value
+		os.environ[key] = value
+  
+	env = Environment(**values)
 	return env
