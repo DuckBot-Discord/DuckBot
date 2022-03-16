@@ -4,15 +4,10 @@ import os
 from typing import (
 	Dict,
 	Any,
-	Generic,
 	Tuple,
-	TypeVar
 )
 
 import aiofile
-
-_KT = TypeVar('_KT')
-_VT = TypeVar('_VT')
 
 __all__: Tuple[str, ...] = (
 	'Environment',
