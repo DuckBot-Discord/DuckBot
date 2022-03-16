@@ -44,18 +44,19 @@ async def load_env(file_name: str = ".env") -> Environment:
 	:class:`Environment`
  		Represents the environment the `~load_env` function returns.
 	"""
-	async with aiofile.async_open(file_name) as f:
-		content = await f.read()
-  
 	values: Dict[str, Any] = {}
-	for line in content:
-		try:
-			key, value = line.split('=')
-		except ValueError: # Not enough to unpack
-			raise RuntimeError(f"Invalid line in {file_name}: {line}")
+	async with aiofile.async_open(file_name) as reader:
+		async for line in reader:
+			if not isinstance(line, str):
+				line = line.decode('utf-8')
       
-		values[key] = value
-		os.environ[key] = value
-  
+			try:
+				key, value = line.split('=')
+			except ValueError: # Not enough to unpack
+				raise RuntimeError(f"Invalid line in {file_name}: {line}")
+		
+			values[key] = value
+			os.environ[key] = value
+	
 	env = Environment(**values)
 	return env
