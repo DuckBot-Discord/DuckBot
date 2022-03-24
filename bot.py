@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import datetime
 import random
 import re
 import logging
 import typing
 
-import discord
+import inspect
 import asyncpg
 import functools
 import asyncio
@@ -29,8 +28,10 @@ from typing import (
     Coroutine,
     Any,
     Union,
+    Coroutine
 )
 
+import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.utils import MISSING  # noqa F401
@@ -53,8 +54,9 @@ except ImportError:
 
 if TYPE_CHECKING:
     from asyncpg import Pool, Connection
-    from asyncpg.transaction import Transaction  # NO TOUCHY!
+    from asyncpg.transaction import Transaction  # NO TOUCHY!.. BRUH
     from aiohttp import ClientSession
+    import datetime
     
 DBT = TypeVar('DBT', bound='DuckBot')
 DCT = TypeVar('DCT', bound='DuckContext')
@@ -79,21 +81,21 @@ initial_extensions: Tuple[str, ...] = (
 )
 
 
-def _wrap_extension(func: Callable[P, T]) -> Callable[P, Optional[T]]:
+def _wrap_extension(func: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, Optional[T]]]:
     
-    def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
+    async def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
         fmt_args = 'on ext "{}"{}'.format(args[1], f' with kwargs {kwargs}' if kwargs else '')
-        start = time.time()
+        start = time.perf_counter()
         
         try:
-            result = func(*args, **kwargs)
+            result = await func(*args, **kwargs)
         except Exception as exc:
-            log.warning(f'Failed to load extension in {time.time() - start:.2f} seconds {fmt_args}')
+            log.warning(f'Failed to load extension in {time.perf_counter() - start:.2f} seconds {fmt_args}')
             bot: DuckBot = args[0]  # type: ignore
             bot.create_task(bot.exceptions.add_error(error=exc))
             return
         
-        fmt = f'{col(5)}{func.__name__}{col()} took {time.time() - start:.2f} seconds {fmt_args}'
+        fmt = f'{func.__name__} took {time.perf_counter() - start:.2f} seconds {fmt_args}'
         log.info(fmt)
         
         return result
@@ -191,18 +193,6 @@ class DbContextManager(Generic[DBT]):
             await self._pool.release(self._conn)
 
 
-async def tree_eh(
-    interaction: discord.Interaction,
-    command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
-    error: app_commands.AppCommandError,
-) -> None:
-    if command and command.on_error:
-        return
-    if interaction.client.extra_events.get('on_app_command_error'):  # noqa
-        return interaction.client.dispatch('app_command_error', interaction, command, error)
-    raise error
-
-
 class DuckHelper(TimerManager):
     def __init__(self, *, bot: DuckBot) -> None:
         super().__init__(bot=bot)
@@ -223,6 +213,9 @@ class DuckHelper(TimerManager):
 
 
 class DuckBot(commands.Bot, DuckHelper):
+    if TYPE_CHECKING:
+        user: discord.ClientUser
+    
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
         intents = discord.Intents.all()
         intents.typing = False
@@ -242,18 +235,20 @@ class DuckBot(commands.Bot, DuckHelper):
         self._context_cls: Type[commands.Context] = commands.Context
         self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
         self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
+        self._start_time: Optional[datetime.datetime] = None
 
         self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
-        self.constants = constants
-        self.start_time = None  # noqa
-        self.tree.on_error = tree_eh
+        self.constants = constants 
+        self.tree.error(self.on_tree_error)
 
+        
     async def setup_hook(self) -> None:
         for extension in initial_extensions:
             await self.load_extension(extension)
+            
         await self.populate_cache()
         super(DuckHelper, self).__init__(bot=self)
 
@@ -310,6 +305,15 @@ class DuckBot(commands.Bot, DuckHelper):
             for guild_id, prefixes in data:
                 self.prefix_cache[guild_id] = set(prefixes)
             await self.blacklist.build_cache(conn)
+            
+    @property
+    def start_time(self) -> datetime.datetime:
+        """:class:`datetime.datetime`: The time the bot was started."""
+        result = self._start_time
+        if not result:
+            raise DuckBotNotStarted('The bot has not hit on-ready yet.')
+        
+        return result
 
     @discord.utils.cached_property
     def mention_regex(self) -> re.Pattern:
@@ -345,9 +349,6 @@ class DuckBot(commands.Bot, DuckHelper):
         DuckBotNotStarted
             The bot has not hit on-ready yet.
         """
-        if not self.is_ready():
-            raise DuckBotNotStarted('The bot has not hit on-ready yet.')
-        
         return discord.utils.format_dt(self.start_time)
 
     @discord.utils.cached_property
@@ -369,9 +370,6 @@ class DuckBot(commands.Bot, DuckHelper):
         DuckBotNotStarted
             The bot has not hit on-ready yet.
         """
-        if not self.is_ready():
-            raise DuckBotNotStarted('The bot has not hit on-ready yet.')
-        
         return human_timedelta(self.start_time)
 
     @property
@@ -381,18 +379,18 @@ class DuckBot(commands.Bot, DuckHelper):
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.load_extension)
-    def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return super().load_extension(name, package=package)
+    async def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        return await super().load_extension(name, package=package)
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.unload_extension)
-    def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return super().unload_extension(name, package=package)
+    async def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        return await super().unload_extension(name, package=package)
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.reload_extension)
-    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return super().reload_extension(name, package=package)
+    async def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        return await super().reload_extension(name, package=package)
         
     def safe_connection(self, *, timeout: float = 10.0) -> DbContextManager:
         """A context manager that will acquire a connection from the bot's pool.
@@ -426,8 +424,12 @@ class DuckBot(commands.Bot, DuckHelper):
             base = set(cached_prefixes)
         else:
             base = self.command_prefix
-
-        return meth(*base)(self, message)
+        
+        # Note you have a type error here because of `self.command_prefix`.
+        # This is becuase command_prefix is typehinted internally as both an iterable
+        # of strings and a coroutine. The coroutine aspect is affecting L-430. I can fix it
+        # but its not the neatest thing, it's up to you :P
+        return meth(*base)(self, message) 
 
     async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
         """|coro|
@@ -459,8 +461,8 @@ class DuckBot(commands.Bot, DuckHelper):
         connected to the gateway.
         """
         log.info(f'{col(2)}All guilds are chunked and ready to go!')
-        if not self.start_time:
-            self.start_time = discord.utils.utcnow()
+        if not self._start_time:
+            self._start_time = discord.utils.utcnow()
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         """|coro|
@@ -501,6 +503,20 @@ class DuckBot(commands.Bot, DuckHelper):
         
         await self.exceptions.add_error(error=error)  # type: ignore
         return await super().on_error(event, *args, **kwargs)
+
+    async def on_tree_error(
+        self,
+        interaction: discord.Interaction,
+        command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
+        error: app_commands.AppCommandError,
+    ) -> None:
+        if command and getattr(command, 'on_error', None):
+            return
+        
+        if self.extra_events.get('on_app_command_error'):
+            return interaction.client.dispatch('app_command_error', interaction, command, error)
+        
+        raise error from None
 
     def wrap(self, func: Callable[..., T], *args, **kwargs) -> Awaitable[T]:
         """Wrap a blocking function to be not blocking.
