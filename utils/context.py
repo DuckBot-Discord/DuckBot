@@ -50,6 +50,7 @@ class DuckContext(commands.Context):
     """The subclassed Context to allow some extra functionality."""
     if TYPE_CHECKING:
         bot: DuckBot
+        guild: discord.Guild
 
     __slots__: Tuple[str, ...] = ()
 
