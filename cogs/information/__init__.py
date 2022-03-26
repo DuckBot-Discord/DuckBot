@@ -1,6 +1,7 @@
 from .user_info import UserInfo
+from .perms import PermsViewer
 
-class Info(UserInfo):
+class Info(UserInfo, PermsViewer, emoji='📜'):
     """ Information commands. """
     ...
 

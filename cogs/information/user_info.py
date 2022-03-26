@@ -1,12 +1,16 @@
+import datetime
 import logging
 import typing
 
+import asyncio
 import discord
 from discord.ext import commands
 from discord.utils import format_dt
 
 from bot import DuckBot
-from utils import DuckContext, DuckCog, constants
+from utils import DuckContext, DuckCog, constants, human_join
+
+from .perms import PermsEmbed
 
 pronoun_mapping = {
     "unspecified": "Unspecified __[(set one)](https://pronoundb.org/)__",
@@ -122,6 +126,151 @@ async def get_user_badges(user: typing.Union[discord.Member, discord.User], bot:
     return '\n'.join(user_flags) if user_flags else None
 
 
+class BaseEmbed(discord.Embed):
+    def __init__(self, **kwargs):
+        user = kwargs.pop('user')
+        super().__init__(**kwargs)
+        self.set_thumbnail(url=user.display_avatar.url)
+        self.set_author(name=str(user), icon_url=(user.avatar or user.display_avatar).url)
+
+
+class UserInfoViewer(discord.ui.View):
+    def __init__(self, user: typing.Union[discord.Member, discord.User], /, *, bot: DuckBot, author: discord.User,
+                 color: discord.Colour = None):
+        super().__init__()
+        self.user = user
+        self.bot = bot
+        self.author = author
+        self.color = color or bot.color
+        self.message: typing.Optional[discord.Message] = None
+        self.fetched: typing.Optional[discord.User] = None
+        self._main_embed: typing.Optional[typing.List[discord.Embed]] = None
+        self._perms_embed: typing.Optional[typing.List[discord.Embed]] = None
+
+    async def make_main_embed(self) -> typing.List[discord.Embed]:
+        if self._main_embed is not None:
+            return self._main_embed
+
+        user = self.user
+        embed = BaseEmbed(title='\N{SCROLL} User Info Main Page', color=self.color, user=user)
+        is_member = isinstance(user, discord.Member)
+        is_avatar_animated = user.avatar.is_animated() if user.avatar else False or user.display_avatar.is_animated()
+
+        if not user.bot and self.fetched is None:
+            try:
+                self.fetched = await self.bot.fetch_user(user.id)
+            except discord.HTTPException:
+                self.fetched = None
+        else:
+            self.fetched = False
+
+        general = [
+            f"**ID:** {user.id}",
+            f"**Username:** {user.name}"
+        ]
+
+        if is_member and user.nick:
+            general.append(f"╰ **Nick:** {user.nick}")
+
+        try:
+            _pr_resp = await self.bot.session.get('https://pronoundb.org/api/v1/lookup', timeout=1.5,
+                                                  params=dict(platform='discord', id=user.id))
+            _prs = await _pr_resp.json()
+            pronouns = pronoun_mapping.get(_prs.get('pronouns', 'unspecified'), 'Unknown...')
+            general.append(f'**Pronouns:** {pronouns}')
+        except asyncio.TimeoutError:
+            pass
+        except Exception as e:
+            logging.debug(f'Failed to get pronouns for {user}, ignoring', exc_info=e)
+
+        if is_member:
+            top_role = user.top_role if not user.top_role.is_default() else None
+            if top_role:
+                general.append(f"**Top Role:** {top_role.mention}")
+
+        embed.add_field(name=f'{constants.INFORMATION_SOURCE} General', value='\n'.join(general), inline=True)
+
+        embed.add_field(name=f'{constants.STORE_TAG} Badges / DuckBadges',
+                        value=await get_user_badges(user, self.bot, self.fetched))
+
+        embed.add_field(name=f"{constants.INVITE} Created At", inline=False,
+                        value=f"╰ {format_dt(user.created_at)} ({format_dt(user.created_at, 'R')})")
+
+        if is_member:
+            text = f"╰ {format_dt(user.joined_at)} ({format_dt(user.joined_at, 'R')})"
+        else:
+            text = "╰ This user is not a member of this server."
+        embed.add_field(name=f"{constants.JOINED_SERVER} Joined At", value=text, inline=False)
+
+        if is_member and user.premium_since:
+            embed.add_field(name=f"{constants.BOOST} Boosting since", inline=False,
+                            value=f"╰ {format_dt(user.premium_since)} ({format_dt(user.premium_since, 'R')})")
+
+        if is_member:
+            now = discord.utils.utcnow()
+            custom_st = discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), user.activities)
+            if custom_st:
+                emoji = f"{custom_st.emoji} " if custom_st.emoji.is_unicode_emoji() else ''
+                extra = f"\n**Custom Status:**\n{emoji}`{discord.utils.remove_markdown(custom_st.name)}`"
+            else:
+                extra = ''
+            embed.add_field(name=f"{constants.STORE_TAG} Status:", value=f"{generate_user_statuses(user)}{extra}")
+
+            spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), user.activities)
+            if spotify:
+                embed.add_field(name=f"{constants.FULL_SPOTIFY}\u200b",
+                                value=f"**[{spotify.title}]({spotify.track_url})**"
+                                      f"\n**By** {spotify.artist}"
+                                      f"\n**On** {spotify.album}"
+                                      f"\n**Time:** {deltaconv((now - spotify.start).total_seconds())}/"
+                                      f"{deltaconv(spotify.duration.total_seconds())}")
+
+        embeds = [embed]
+        self._main_embed = embeds
+        return embeds
+
+    async def make_perm_embeds(self) -> typing.List[discord.Embed]:
+        if self._perms_embed:
+            return self._perms_embed
+        user = self.user
+        embed = PermsEmbed(entity=user, permissions=user.guild_permissions)
+        embed.colour = self.color
+        embed.title = '\N{SCROLL} Server Permissions Page'
+        embed.set_thumbnail(url=user.display_avatar.url)
+        embed.set_author(name=str(user), icon_url=(user.avatar or user.display_avatar).url)
+        embeds = [embed]
+        self._perms_embed = embeds
+        return embeds
+
+    @discord.ui.select(options=[
+        discord.SelectOption(label='Main Page', value='main', emoji='\N{BUSTS IN SILHOUETTE}',
+                             description='Basic info, join dates, badges, status, etc.'),
+        discord.SelectOption(label='Permissions', value='perms', emoji='\N{INFORMATION SOURCE}',
+                             description='Global permissions for this user.'),
+        discord.SelectOption(label='Assets', value='assets', emoji='🎨',
+                             description="The user's assets, such as their profile picture, banner, etc."),
+        discord.SelectOption(label='Roles', value='roles', emoji=constants.ROLES_ICON,
+                             description="All information about this user's roles.")
+    ])
+    async def select(self, select: discord.ui.Select, interaction: discord.Interaction):
+        value = select.values[0]
+        if value == 'main':
+            embeds = await self.make_main_embed()
+            await interaction.response.edit_message(embeds=embeds)
+        elif value == 'perms':
+            embeds = await self.make_perm_embeds()
+            await interaction.response.edit_message(embeds=embeds)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user == self.author
+
+    async def start(self, ctx):
+        self.message = await ctx.send(embeds=await self.make_main_embed(), view=self)
+    
+    async def on_timeout(self) -> None:
+        if self.message:
+            await self.message.delete()
+
 class UserInfo(DuckCog):
 
     @commands.command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
@@ -136,57 +285,13 @@ class UserInfo(DuckCog):
             The user or member you want to get info about.
             If None is passed, it will get info about you.
         """
-        ctx.bot.create_task(ctx.trigger_typing())
         user = user or ctx.author
-        embed = discord.Embed(title='User Info', color=ctx.color)
-        embed.set_thumbnail(url=user.display_avatar.url)
-        embed.set_author(name=str(user), icon_url=(user.avatar or user.display_avatar).url)
+        ctx.bot.create_task(ctx.trigger_typing())
+        await UserInfoViewer(user, bot=ctx.bot, author=ctx.author, color=ctx.color).start(ctx)
 
-        is_member = isinstance(user, discord.Member)
 
-        is_avatar_animated = user.avatar.is_animated() if user.avatar else False or user.display_avatar.is_animated()
-        if not user.bot and not is_avatar_animated:
-            fetched = await ctx.bot.fetch_user(user.id)
-        else:
-            fetched = None
 
-        general = [f"**ID:** {user.id}",
-                   f"**Username:** {user.name}"]
-        if is_member and user.nick:
-            general.append(f"╰ **Nick:** {user.nick}")
-        try:
-            _pr_resp = await self.bot.session.get('https://pronoundb.org/api/v1/lookup',
-                                                  params=dict(platform='discord', id=user.id))
-            _prs = await _pr_resp.json()
-            pronouns = pronoun_mapping.get(_prs.get('pronouns', 'unspecified'), 'Unknown...')
-            general.append(f'**Pronouns:** {pronouns}')
-        except Exception as e:
-            logging.debug(f'Failed to get pronouns for {user}, ignoring', exc_info=e)
-
-        embed.add_field(name=f'{constants.INFORMATION_SOURCE} General', value='\n'.join(general), inline=True)
-
-        embed.add_field(name=f'{constants.STORE_TAG} Badges / DuckBadges',
-                        value=await get_user_badges(user, ctx.bot, fetched))
-
-        embed.add_field(name=f"{constants.INVITE} Created At", inline=False,
-                        value=f"╰ {format_dt(user.created_at)} ({format_dt(user.created_at, 'R')})")
-
-        if is_member:
-            text = f"╰ {format_dt(user.joined_at)} ({format_dt(user.joined_at, 'R')})"
-            try:
-                pos = sorted(user.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow()).index(user) + 1
-                text += f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** {pos}"
-            except ValueError:
-                pass
-        else:
-            text = "╰ This user is not a member of this server."
-        embed.add_field(name=f"{constants.JOINED_SERVER} Joined At", value=text, inline=False)
-
-        if is_member and user.premium_since:
-            embed.add_field(name=f"{constants.BOOST} Boosting since", inline=False,
-                            value=f"╰ {format_dt(user.premium_since)} ({format_dt(user.premium_since, 'R')})")
-
-        if is_member:
+"""
             spotify = None
             index = 0
             formatted_activities = []
@@ -226,18 +331,4 @@ class UserInfo(DuckCog):
 
             embed.add_field(name=f"{constants.STORE_TAG} Activities",
                             value='\n'.join(formatted_activities))
-
-            if spotify:
-                embed.add_field(name=f"{constants.SPOTIFY} Spotify:",
-                                value=f"**[{spotify.title}]({spotify.track_url})**"
-                                      f"\n**By** {spotify.artist}"
-                                      f"\n**On** {spotify.album}"
-                                      f"\n**Time:** {deltaconv((ctx.message.created_at - spotify.start).total_seconds())}/"
-                                      f"{deltaconv(spotify.duration.total_seconds())}")
-
-            perms = get_perms(user.guild_permissions)
-            if perms:
-                embed.add_field(name=f"{constants.STORE_TAG} Staff Perms:",
-                                value=f"`{'` `'.join(perms)}`", inline=False)
-
-        await ctx.send(embed=embed)
+"""
