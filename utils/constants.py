@@ -71,6 +71,7 @@ __all__: Tuple[str, ...] = (
     'COMMON_WORDS',
     'NITRO',
     'BOT',
+    'FULL_SPOTIFY',
 )
 
 GET_SOME_HELP = '<a:stopit:895395218763968562>'
@@ -114,6 +115,11 @@ ARROWZ = ARROWFWDZ = '<:arrow:909897129198231662>'
 ARROWBACKZ = '<:arrow:909897233833529345>'
 NITRO = '<:nitro:895392323519799306>'
 BOT = '<:bot:952905056657752155>'
+FULL_SPOTIFY = "<:spotify:897661396022607913>" \
+               "<:spotify1:953665420987072583>" \
+               "<:spotify2:953665449210544188>" \
+               "<:spotify3:953665460916850708>" \
+               "<:spotify4:953665475517231194>"
 
 CUSTOM_TICKS = {
     True: '<:greenTick:895390596599017493>',

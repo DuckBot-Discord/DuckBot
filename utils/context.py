@@ -134,7 +134,7 @@ async def setup(bot: DuckBot) -> None:
     bot._context_cls = DuckContext
 
 
-def teardown(bot: DuckBot) -> None:
+async def teardown(bot: DuckBot) -> None:
     """Tears down the DuckContext class.
 
     Parameters

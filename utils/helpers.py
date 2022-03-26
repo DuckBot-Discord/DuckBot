@@ -8,7 +8,7 @@ from typing import (
     Callable,
     Awaitable,
     Union,
-    Any, 
+    Any,
     Optional,
     Tuple
 )
@@ -37,6 +37,7 @@ __all__: Tuple[str, ...] = (
     'add_logging',
     'format_date',
     'can_execute_action',
+    'DeleteButton',
 )
 
 def col(color=None, /, *, fmt=0, bg=False) -> str:
@@ -197,3 +198,68 @@ async def can_execute_action(
             return
         if ctx.author.top_role <= target.top_role:
             raise HierarchyException(target, author_error=True)
+
+
+class DeleteButtonCallback(discord.ui.Button['DeleteButton']):
+    """ Internal. """
+    async def callback(self, interaction: discord.Interaction) -> Any:
+        try:
+            await interaction.message.delete()
+        finally:
+            self.view.stop()
+
+class DeleteButton(discord.ui.View):
+    """
+    A button that deletes the message.
+
+    Parameters
+    ----------
+    message: :class:`discord.Message`
+        The message to delete.
+    author: :class:`discord.Member`
+        The person who can interact with the button.
+    style: :class:`discord.ButtonStyle`
+        The style of the button. Defaults to red.
+    label: :class:`str`
+        The label of the button. Defaults to 'Delete'.
+    emoji: :class:`str`
+        The emoji of the button. Defaults to None.
+    """
+    def __init__(self, *args, **kwargs):
+        self.message = kwargs.pop('message')
+        self.author = kwargs.pop('author')
+        super().__init__(timeout=kwargs.pop('timeout', 180))
+        self.add_item(DeleteButtonCallback(
+            style=kwargs.pop('style', discord.ButtonStyle.red),
+            label=kwargs.pop('label', 'Delete'),
+            emoji=kwargs.pop('emoji', None),
+        ))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """ Checks if the user is the right one. """
+        return interaction.user == self.author
+
+    async def on_timeout(self) -> None:
+        """ Deletes the message on timeout. """
+        await self.message.delete()
+
+    @classmethod
+    async def to_destination(
+            cls,
+            destination: discord.abc.Messageable,
+            *args,
+            **kwargs
+    ) -> 'DeleteButton':
+        if kwargs.get('view', None):
+            raise TypeError('Cannot pass a view to to_destination')
+        view = cls(
+            style=kwargs.pop('style', discord.ButtonStyle.red),
+            label=kwargs.pop('label', 'Delete'),
+            emoji=kwargs.pop('emoji', None),
+            author=kwargs.pop('author'),
+            timeout=kwargs.pop('timeout', 180),
+            message=None,
+        )
+        message = await destination.send(*args, **kwargs, view=view)
+        view.message = message
+        return view

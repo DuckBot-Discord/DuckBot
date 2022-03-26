@@ -251,5 +251,5 @@ class PermsViewer(DuckCog):
                 perms = entity.guild_permissions
 
             embed = PermsEmbed(entity=entity, permissions=perms)
-            await DeleteButton.to_ctx(ctx, embed=embed)
+            await DeleteButton.to_destination(ctx, embed=embed)
 
