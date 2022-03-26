@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import random
 import re
 import logging
@@ -236,6 +237,7 @@ class DuckBot(commands.Bot, DuckHelper):
         self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
         self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
         self._start_time: Optional[datetime.datetime] = None
+        self.listener_connection: Optional[asyncpg.Connection] = None
 
         self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
@@ -244,12 +246,12 @@ class DuckBot(commands.Bot, DuckHelper):
         self.constants = constants 
         self.tree.error(self.on_tree_error)
 
-        
     async def setup_hook(self) -> None:
         for extension in initial_extensions:
             await self.load_extension(extension)
             
         await self.populate_cache()
+        await self.create_db_listeners()
         super(DuckHelper, self).__init__(bot=self)
 
     @classmethod
@@ -305,7 +307,26 @@ class DuckBot(commands.Bot, DuckHelper):
             for guild_id, prefixes in data:
                 self.prefix_cache[guild_id] = set(prefixes)
             await self.blacklist.build_cache(conn)
-            
+
+    async def create_db_listeners(self) -> None:
+        """|coro|
+
+        Registers listeners for database events.
+        """
+        self.listener_connection: asyncpg.Connection = await self.pool.acquire()  # type: ignore
+
+        async def _delete_prefixes_event(conn, pid, channel, payload):
+            payload = discord.utils._from_json(payload)  # noqa
+            with contextlib.suppress(Exception):
+                del self.prefix_cache[payload['guild_id']]
+
+        async def _create_or_update_event(conn, pid, channel, payload):
+            payload = discord.utils._from_json(payload)  # noqa
+            self.prefix_cache[payload['guild_id']] = set(payload['prefixes'])
+
+        await self.listener_connection.add_listener('delete_prefixes', _delete_prefixes_event)
+        await self.listener_connection.add_listener('update_prefixes', _create_or_update_event)
+
     @property
     def start_time(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The time the bot was started."""
@@ -349,6 +370,9 @@ class DuckBot(commands.Bot, DuckHelper):
         DuckBotNotStarted
             The bot has not hit on-ready yet.
         """
+        if not self.is_ready():
+            raise DuckBotNotStarted('The bot has not hit on-ready yet.')
+        
         return discord.utils.format_dt(self.start_time)
 
     @discord.utils.cached_property
@@ -424,12 +448,12 @@ class DuckBot(commands.Bot, DuckHelper):
             base = set(cached_prefixes)
         else:
             base = self.command_prefix
-        
+
         # Note you have a type error here because of `self.command_prefix`.
         # This is becuase command_prefix is typehinted internally as both an iterable
         # of strings and a coroutine. The coroutine aspect is affecting L-430. I can fix it
         # but its not the neatest thing, it's up to you :P
-        return meth(*base)(self, message) 
+        return meth(*base)(self, message)
 
     async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
         """|coro|
@@ -512,10 +536,10 @@ class DuckBot(commands.Bot, DuckHelper):
     ) -> None:
         if command and getattr(command, 'on_error', None):
             return
-        
+
         if self.extra_events.get('on_app_command_error'):
             return interaction.client.dispatch('app_command_error', interaction, command, error)
-        
+
         raise error from None
 
     def wrap(self, func: Callable[..., T], *args, **kwargs) -> Awaitable[T]:
@@ -599,6 +623,31 @@ class DuckBot(commands.Bot, DuckHelper):
 
         await self.login(token)
         await self.connect(reconnect=reconnect)
+
+    async def close(self) -> None:
+        """|coro|
+
+        Closes the websocket connection and stops the event loop.
+
+        """
+        try:
+            try:
+                log.info('Closing listener connection...')
+                await self.listener_connection.close()
+            except Exception as e:
+                logging.error(f'Failed to close listener connection', exc_info=e)
+            try:
+                log.info('Closing client session...')
+                await self.session.close()
+            except Exception as e:
+                log.error(f'Failed to close client session', exc_info=e)
+            try:
+                log.info('Closing database pool...')
+                await self.pool.close()
+            except Exception as e:
+                log.error(f'Failed to close db pool', exc_info=e)
+        finally:
+            await super().close()
 
     @staticmethod
     async def get_or_fetch_member(guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:

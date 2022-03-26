@@ -71,3 +71,28 @@ CREATE TABLE acknowledgements (
     badge_id BIGINT REFERENCES badges(badge_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, badge_id)
 );
+
+-- Functions that are dispatched to a listener
+-- that updates the prefix cache automatically
+CREATE OR REPLACE FUNCTION update_prefixes_cache()
+  RETURNS TRIGGER AS $$
+  BEGIN
+    IF TG_OP = 'DELETE' THEN
+      PERFORM pg_notify('delete_prefixes', NEW.guild_id::TEXT);
+    ELSE
+      PERFORM pg_notify('update_prefixes',
+        JSON_BUILD_OBJECT(
+              'guild_id', NEW.guild_id,
+              'prefixes', NEW.prefixes
+            )::TEXT
+          );
+    END IF;
+    RETURN NEW;
+  END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_prefixes_cache_trigger
+  AFTER INSERT OR UPDATE OR DELETE
+  ON guilds
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_prefixes_cache();

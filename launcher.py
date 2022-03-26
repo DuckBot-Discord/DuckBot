@@ -19,7 +19,7 @@ os.environ['JISHAKU_RETAIN'] = 'true'
 def _get_or_fail(env_var: str) -> str:
     val = os.environ.get(env_var)
     if not val:
-        raise RuntimeError(f'{env_var} not set in .env file. Set it.')
+        raise RuntimeError(f'{env_var!r} not set in .env file. Set it.')
     return val
 
 
