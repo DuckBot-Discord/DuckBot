@@ -25,7 +25,7 @@ def _get_or_fail(env_var: str) -> str:
 
 TOKEN = _get_or_fail('TOKEN')
 URI = _get_or_fail('POSTGRES')
-ERROR_WEBHOOK_URL = _get_or_fail('ERROR_WEBHOOK_URL')
+ERROR_WH = _get_or_fail('ERROR_WEBHOOK_URL')
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,19 +35,10 @@ logging.basicConfig(
 log = logging.getLogger('DuckBot.launcher')
 
 async def run_bot() -> None:
-    pool = await DuckBot.setup_pool(uri=URI)
-    duck = None
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with DuckBot(session=session, pool=pool, error_webhook_url=ERROR_WEBHOOK_URL) as duck:
-                await duck.start(TOKEN, reconnect=True, verbose=False)
-    except Exception as e:
-        return log.error('Failed to start bot', exc_info=e)
-    finally:
-        if duck and not duck.is_closed():
-            log.info('Closing the bot')
-            await duck.close()
-        
+    async with aiohttp.ClientSession() as session, \
+            DuckBot.temporary_pool(uri=URI) as pool, \
+            DuckBot(session=session, pool=pool, error_wh=ERROR_WH) as duck:
+        await duck.start(TOKEN, reconnect=True, verbose=False)
     
 if __name__ == '__main__':
     asyncio.run(run_bot())
