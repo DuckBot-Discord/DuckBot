@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import io
+import logging
+import os
+import re
 import time as time_lib
 from datetime import datetime
 from typing import (
+    TYPE_CHECKING,
     TypeVar,
     Callable,
     Awaitable,
@@ -13,6 +18,7 @@ from typing import (
     Tuple
 )
 
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -30,6 +36,10 @@ T = TypeVar('T')
 P = ParamSpec('P')
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
 
+CDN_REGEX = re.compile(r'(https?://)?(media|cdn)\.discord(app)?\.(com|net)/attachments/'
+                       r'(?P<channel_id>[0-9]+)/(?P<message_id>[0-9]+)/(?P<filename>[\S]+)')
+URL_REGEX = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|%[0-9a-fA-F][0-9a-fA-F])+')
+
 __all__: Tuple[str, ...] = (
     'col',
     'mdr',
@@ -38,6 +48,7 @@ __all__: Tuple[str, ...] = (
     'format_date',
     'can_execute_action',
     'DeleteButton',
+    'URLObject',
 )
 
 def col(color=None, /, *, fmt=0, bg=False) -> str:
@@ -226,14 +237,20 @@ class DeleteButton(discord.ui.View):
         The emoji of the button. Defaults to None.
     """
     def __init__(self, *args, **kwargs):
-        self.message = kwargs.pop('message')
+        self.bot: Optional[commands.Bot] = None
+        self._message = kwargs.pop('message', None)
         self.author = kwargs.pop('author')
+        self.delete_on_timeout = kwargs.pop('delete_on_timeout', True)
+
         super().__init__(timeout=kwargs.pop('timeout', 180))
+
         self.add_item(DeleteButtonCallback(
             style=kwargs.pop('style', discord.ButtonStyle.red),
             label=kwargs.pop('label', 'Delete'),
             emoji=kwargs.pop('emoji', None),
         ))
+        if isinstance(self.bot, commands.Bot):
+            self.bot.views.add(self)  # type: ignore
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """ Checks if the user is the right one. """
@@ -241,25 +258,197 @@ class DeleteButton(discord.ui.View):
 
     async def on_timeout(self) -> None:
         """ Deletes the message on timeout. """
-        await self.message.delete()
+        if self.message:
+            try:
+                if self.delete_on_timeout:
+                    await self.message.delete()
+                else:
+                    await self.message.edit(view=None)
+            except discord.HTTPException:
+                pass
+        try:
+            self.bot.views.remove(self)  # type: ignore
+        except (AttributeError, ValueError):
+            pass
+
+    def stop(self) -> None:
+        """ Stops the view. """
+        try:
+            self.bot.views.remove(self)  # type: ignore
+        except (AttributeError, ValueError):
+            pass
+        finally:
+            super().stop()
+
+    @property
+    def message(self) -> Optional[discord.Message]:
+        """ The message to delete. """
+        return self._message
+
+    @message.setter
+    def message(self, message: discord.Message) -> None:
+        self._message = message
+        try:
+            # noinspection PyProtectedMember
+            self.bot = message._state._get_client()
+        except Exception as e:
+            logging.error(f'Failed to get client from message %s: %s', message, exc_info=e)
 
     @classmethod
     async def to_destination(
             cls,
-            destination: discord.abc.Messageable,
+            destination: discord.abc.Messageable | discord.Webhook,
             *args,
             **kwargs
     ) -> 'DeleteButton':
         if kwargs.get('view', None):
             raise TypeError('Cannot pass a view to to_destination')
+
         view = cls(
             style=kwargs.pop('style', discord.ButtonStyle.red),
             label=kwargs.pop('label', 'Delete'),
             emoji=kwargs.pop('emoji', None),
             author=kwargs.pop('author'),
             timeout=kwargs.pop('timeout', 180),
-            message=None,
+            delete_on_timeout=kwargs.pop('delete_on_timeout', True)
         )
         message = await destination.send(*args, **kwargs, view=view)
         view.message = message
+
+        if isinstance(view.bot, commands.Bot):
+            try:
+                view.bot.views.add(view)  # type: ignore
+            except (AttributeError, ValueError):
+                pass
+
         return view
+
+
+class URLObject:
+    """ A class to represent a URL.
+
+    Attributes
+    ----------
+    url: :class:`str`
+        The URL.
+    name: :class:`str`
+        the filename of the URL.
+    channel_id: :class:`int`
+        The ID of the channel the URL is in.
+    message_id: :class:`int`
+        The ID of the message the URL is in.
+    """
+    if TYPE_CHECKING:
+        url: str
+        name: str
+        channel_id: Optional[int]
+        message_id: Optional[int]
+
+    __slots__: Tuple[str, ...] = ('url', 'name', 'channel_id', 'message_id')
+
+    def __init__(self, url: str, *, is_discord_url: bool = True):
+        if is_discord_url is True:
+            match = CDN_REGEX.fullmatch(url)
+            self.channel_id = int(match.group('channel_id'))
+            self.message_id = int(match.group('message_id'))
+            self.name = match.group('filename')
+            self.url = url
+
+        else:
+            match = URL_REGEX.fullmatch(url)
+            self.url = url
+            self.name = url.split("/")[-1]
+            self.channel_id = None
+            self.message_id = None
+
+    async def read(
+            self,
+            *,
+            session: Optional[aiohttp.ClientSession] = None
+    ) -> bytes:
+        """|coro|
+
+        Retrieves the contents of the URL.
+
+        Parameters
+        ----------
+        session : Optional[aiohttp.ClientSession]
+            The session to use to retrieve the URL.
+            If none is passed, it will a new one, then
+            close it when done.
+        """
+        _session = session or aiohttp.ClientSession()
+        try:
+            async with _session.get(self.url) as resp:
+                if resp.status == 200:
+                    return await resp.read()
+                elif resp.status == 404:
+                    raise discord.NotFound(resp, 'asset not found')
+                elif resp.status == 403:
+                    raise discord.Forbidden(resp, 'cannot retrieve asset')
+                else:
+                    raise discord.HTTPException(resp, 'failed to get asset')
+        finally:
+            if not session:
+                await _session.close()
+
+    async def save(
+        self,
+        fp: Union[io.BufferedIOBase, os.PathLike[Any]],
+        *,
+        seek_begin: bool = True,
+        session: Optional[aiohttp.ClientSession] = None
+    ) -> int:
+        """|coro|
+
+        Saves the contents of the URL to a file-like
+         object, or a buffer-like object.
+
+        Parameters
+        ----------
+        fp : Union[io.BufferedIOBase, os.PathLike[Any]]
+            The file-like object to save the contents to.
+        seek_begin : bool
+            Whether to seek to the beginning of the file
+            after saving.
+        session : Optional[aiohttp.ClientSession]
+            The session to use to retrieve the URL.
+            If none is passed, it will a new one, then
+            close it when done.
+
+        Returns
+        -------
+        int
+            The number of bytes written.
+        """
+        data = await self.read(session=session)
+        if isinstance(fp, io.BufferedIOBase):
+            written = fp.write(data)
+            if seek_begin:
+                fp.seek(0)
+            return written
+        else:
+            with open(fp, 'wb') as f:
+                return f.write(data)
+
+    @property
+    def spoiler(self):
+        """ Weather this file is a discord spoiler """
+        return self.name.startswith("SPOILER_")
+
+    async def to_file(self, *, session: aiohttp.ClientSession = None):
+        """|coro|
+
+        Returns a discord.File object from the URL.
+
+        Parameters
+        ----------
+        session : Optional[aiohttp.ClientSession]
+            The session to use to retrieve the URL.
+
+        Returns
+        -------
+        discord.File
+            The file object.
+        """
+        return discord.File(io.BytesIO(await self.read(session=session)), self.name, spoiler=False)
