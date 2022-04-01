@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import os
 import traceback
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from types import TracebackType
@@ -208,7 +209,9 @@ class DuckExceptionManager:
             }
             packet.update(addons)  # type: ignore
 
-        traceback_string = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
+        traceback_string = ''.join(traceback.format_exception(
+            type(error), error, error.__traceback__)
+        ).replace(os.getcwd(), 'CWD')
         current = self.errors.get(traceback_string)
 
         if current:

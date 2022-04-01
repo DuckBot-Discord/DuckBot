@@ -28,6 +28,9 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     error: :class:`commands.CommandError`
         The error that was raised.
     """
+    if ctx.is_error_handled is True:
+        return
+
     error = getattr(error, 'original', error)
 
     ignored = (
@@ -42,7 +45,6 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
     elif isinstance(error, (commands.UserInputError, errors.DuckBotException)):
         await ctx.send(error)
     elif isinstance(error, commands.CommandInvokeError):
-        logging.error('what')
         return await on_command_error(ctx, error.original)
     else:
         await ctx.bot.exceptions.add_error(error=error, ctx=ctx)

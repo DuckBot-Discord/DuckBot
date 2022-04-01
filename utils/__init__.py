@@ -12,9 +12,4 @@ from .timer import *
 from .blacklist import *
 from .cache import *
 from . import interactions
-
-
-# Past leo moment - Chai:   # SMH chai >:( - Leo
-# So the linter doesn't suggest random crap!
-# Don't * import please :pleadCry: thx.
-
+from .paginators import *

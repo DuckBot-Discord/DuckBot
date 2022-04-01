@@ -16,7 +16,6 @@ async def on_app_command_error(
         command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
         error: app_commands.AppCommandError,
 ) -> None:
-    print('triggering')
     response: discord.InteractionResponse = interaction.response  # type: ignore
     bot: DuckBot = interaction.client  # type: ignore
 
@@ -42,28 +41,22 @@ async def on_app_command_error(
                 await webhook.send(content=str(error), ephemeral=True)
     elif isinstance(error, app_commands.CommandSignatureMismatch):
         if not response._responded:  # noqa
+            await bot.exceptions.add_error(error=error)
+            try:
+                await response.send_message(f"**\N{WARNING SIGN} This command's signature is out of date!**\n"
+                                            f"i've warned the developers about this and it will "
+                                            f"be fixed as soon as possible", ephemeral=True)
+            except discord.HTTPException:
+                pass
 
-            await response.send_message(f"**\N{WARNING SIGN} This command's signature is out of date!**\n"
-                                        f"_Re-syncing command... This may take a minute._", ephemeral=True)
-
-            fetched_commands = await bot.tree.fetch_commands(guild=interaction.guild)
-
-            await bot.http.edit_guild_command(
-                application_id=bot.application_id,
-                guild_id=interaction.guild.id,
-
-                command_id=discord.utils.get(
-                    fetched_commands,
-                    name=error.command.name,
-                    type=bot.tree._command_to_type(  # noqa
-                        # Wow this _command_to_type is some real jank.
-                        error.command
-                    ),
-
-                ).id,
-
-                payload=error.command.to_dict(),
-            )
+        else:
+            webhook: discord.Webhook = interaction.followup  # noqa
+            try:
+                await webhook.send(content=f"**\N{WARNING SIGN} This command's signature is out of date!**\n"
+                                           f"i've warned the developers about this and it will "
+                                           f"be fixed as soon as possible", ephemeral=True)
+            except discord.HTTPException:
+                pass
 
     else:
         await bot.exceptions.add_error(error=error)

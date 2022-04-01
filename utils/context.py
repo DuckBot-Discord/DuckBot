@@ -56,6 +56,7 @@ class DuckContext(commands.Context):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.is_error_handled = False
 
     @staticmethod
     @discord.utils.copy_doc(tick)

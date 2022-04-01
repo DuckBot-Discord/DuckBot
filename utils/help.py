@@ -36,7 +36,7 @@ __all__: Tuple[str, ...] = (
 
 async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction) -> Optional[bool]:
     # NOTE: Implement this in a bit
-    #if not getattr(view, 'author', None) == interaction.user:
+    # if not getattr(view, 'author', None) == interaction.user:
     #    return await interaction.response.send_message('Hey! This isn\'t yours!', ephemeral=True)
     
     return True
@@ -95,7 +95,7 @@ class HelpHome(discord.ui.Button):
             parent = getattr(parent, 'parent')
         
         # At this point we should have found the root parent instance
-        self.parent: HelpView = parent # type: ignore
+        self.parent: HelpView = parent  # type: ignore
         if not isinstance(self.parent, HelpView):
             raise RuntimeError(f'Parent {self.parent} has no parent attribute')
     
@@ -135,8 +135,7 @@ class AboutHelpView(discord.ui.View):
     @discord.utils.cached_slot_property('_cs_embed')
     def embed(self) -> discord.Embed:
         raise NotImplementedError
-    
-        
+
 
 class HelpCog(discord.ui.View):
     """Represents a Cog's help command within the help menu.
@@ -161,11 +160,12 @@ class HelpCog(discord.ui.View):
         '_cs_embed',
     )
     
-    def __init__(self, bot: DuckBot, cog: DuckCog,parent: Optional[HelpView] = None) -> None:
+    def __init__(self, bot: DuckBot, cog: DuckCog, parent: Optional[HelpView] = None) -> None:
+        super().__init__()
         self.bot: DuckBot = bot
         self.cog: DuckCog = cog
         self.parent: HelpView = parent or HelpView(bot)
-        self.interaction_check: InteractionCheck = partial(_interaction_check, self) # type: ignore
+        self.interaction_check: InteractionCheck = partial(_interaction_check, self)  # type: ignore
     
     @discord.utils.cached_slot_property('_cs_embed')
     def embed(self) -> discord.Embed:
@@ -192,9 +192,10 @@ class HelpCommand(discord.ui.View):
     )
     
     def __init__(self, bot: DuckBot, command: commands.Command) -> None:
+        super().__init__()
         self.bot: DuckBot = bot
         self.command: commands.Command = command
-        self.interaction_check: InteractionCheck = partial(_interaction_check, self) # type: ignore
+        self.interaction_check: InteractionCheck = partial(_interaction_check, self)  # type: ignore
     
     @discord.utils.cached_slot_property('_cs_embed')
     def embed(self) -> discord.Embed:
@@ -222,9 +223,9 @@ class HelpView(discord.ui.View):
     def __init__(self, bot: DuckBot) -> None:
         super().__init__()
         self.bot: DuckBot = bot
-        self.add_item(HelpSelect(self, list(bot.cogs.values()))) # type: ignore
+        self.add_item(HelpSelect(self, list(bot.cogs.values())))  # type: ignore
         
-        self.interaction_check: InteractionCheck = partial(_interaction_check, self) # type: ignore
+        self.interaction_check: InteractionCheck = partial(_interaction_check, self)  # type: ignore
     
     @discord.utils.cached_slot_property('_cs_embed')
     def embed(self) -> discord.Embed:
