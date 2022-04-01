@@ -106,7 +106,6 @@ async def get_user_badges(user: typing.Union[discord.Member, discord.User], bot:
         user_flags.append(f'{constants.NITRO} Nitro [guess: Boosting]')
 
     elif user.discriminator in constants.COMMON_DISCRIMINATORS:
-        print('this triggered')
         user_flags.append(f'{constants.NITRO} Nitro [guess: Rare #tag]')
 
     if isinstance(user, discord.Member):
@@ -210,7 +209,7 @@ class UserInfoViewer(discord.ui.View):
             now = discord.utils.utcnow()
             custom_st = discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), user.activities)
             if custom_st:
-                emoji = f"{custom_st.emoji} " if custom_st.emoji.is_unicode_emoji() else ''
+                emoji = f"{custom_st.emoji} " if custom_st.emoji and custom_st.emoji.is_unicode_emoji() else ''
                 extra = f"\n**Custom Status:**\n{emoji}`{discord.utils.remove_markdown(custom_st.name)}`"
             else:
                 extra = ''
@@ -252,7 +251,7 @@ class UserInfoViewer(discord.ui.View):
         discord.SelectOption(label='Roles', value='roles', emoji=constants.ROLES_ICON,
                              description="All information about this user's roles.")
     ])
-    async def select(self, select: discord.ui.Select, interaction: discord.Interaction):
+    async def select(self, interaction: discord.Interaction, select: discord.ui.Select):
         value = select.values[0]
         if value == 'main':
             embeds = await self.make_main_embed()
@@ -266,10 +265,16 @@ class UserInfoViewer(discord.ui.View):
 
     async def start(self, ctx):
         self.message = await ctx.send(embeds=await self.make_main_embed(), view=self)
+        ctx.bot.views.add(self)
     
     async def on_timeout(self) -> None:
+        self.bot.views.discard(self)
         if self.message:
             await self.message.delete()
+
+    def stop(self) -> None:
+        self.bot.views.discard(self)
+        super().stop()
 
 class UserInfo(DuckCog):
 

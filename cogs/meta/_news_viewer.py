@@ -161,7 +161,7 @@ class NewsViewer(discord.ui.View):
         return format_date(date)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, label='\u226a')
-    async def previous(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def previous(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         """|coro|
 
         Used to go back to the previous page.
@@ -179,7 +179,7 @@ class NewsViewer(discord.ui.View):
         return await interaction.response.edit_message(embed=self.get_embed(page), view=self)
 
     @discord.ui.button(style=discord.ButtonStyle.red)
-    async def current(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def current(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         """|coro|
 
         Used to stop the news viewer.
@@ -199,7 +199,7 @@ class NewsViewer(discord.ui.View):
                 await self.ctx.message.add_reaction(self.bot.done_emoji)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, label='\u226b')
-    async def next(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         """|coro|
 
         Used to go to the next page.
@@ -247,14 +247,25 @@ class NewsViewer(discord.ui.View):
         new: NewsViewer = cls(ctx, news)
         new.update_labels()
         new.message = await ctx.send(embed=new.get_embed(new.news.current), view=new)
+        new.bot.views.add(new)
         await new.wait()
         return new
 
     @classmethod
     async def from_interaction(cls: Type[T], interaction: discord.Interaction, news: List[Dict[str, Any]]) -> T:
-        new = cls(interaction, news)
+        new: NewsViewer = cls(interaction, news)
         new.update_labels()
         await interaction.response.send_message(embed=new.get_embed(new.news.current), view=new)
         new.message = await interaction.original_message()
+        new.bot.views.add(new)
         await new.wait()
         return new
+
+    async def on_timeout(self) -> None:
+        self.bot.views.discard(self)
+        if self.message:
+            await self.message.edit(view=None)
+
+    def stop(self) -> None:
+        self.bot.views.discard(self)
+        super().stop()

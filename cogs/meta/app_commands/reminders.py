@@ -70,7 +70,6 @@ class clean_c(clean_content):
 class AppRemind(app_commands.Group, name='reminder'):
     """ Reminds the user of something """
 
-    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='add')
     @app_commands.describe(
         when='When and what to remind you of. Example: "in 10 days do this", "next monday do that."'
@@ -101,7 +100,6 @@ class AppRemind(app_commands.Group, name='reminder'):
         )
         await interaction.followup.send(f"Alright, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
-    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='delete')
     @app_commands.describe(id='The ID of the reminder you want to delete.')
     async def remind_delete(self, interaction: discord.Interaction, id: int) -> None:
@@ -119,7 +117,6 @@ class AppRemind(app_commands.Group, name='reminder'):
         except TimerNotFound as error:
             await interaction.followup.send(f"I couldn't find a reminder with ID {error.id}.")
 
-    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='list')
     async def list(self, interaction: discord.Interaction) -> None:
         """Lists all of your reminders."""
@@ -168,7 +165,7 @@ class AppRemind(app_commands.Group, name='reminder'):
 class ApplicationReminders(DuckCog):
     def __init__(self, bot: DuckBot):
         super().__init__(bot)
-        self.bot.tree.add_command(AppRemind(), guild=discord.Object(id=774561547930304536))
+        self.bot.tree.add_command(AppRemind())
 
     def cog_unload(self) -> None:
-        self.bot.tree.remove_command('reminder', guild=discord.Object(id=774561547930304536))
+        self.bot.tree.remove_command('reminder')

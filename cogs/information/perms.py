@@ -142,7 +142,7 @@ class GuildPermsViewer(discord.ui.View):
         ]
 
     @discord.ui.select()
-    async def select_role(self, select: discord.ui.Select, interaction: discord.Interaction):
+    async def select_role(self, interaction: discord.Interaction, select: discord.ui.Select):
         role_id: int = int(select.values[0])
         role = discord.utils.get(self.chunks[self.current_page], id=role_id)
         if not role:
@@ -153,19 +153,19 @@ class GuildPermsViewer(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='<')
-    async def previous_page(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.current_page = max(0, self.current_page - 1)
         self.update_components()
         await interaction.response.edit_message(view=self)
 
     @discord.ui.button(label='>')
-    async def next_page(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.current_page = min(self.max_pages, self.current_page + 1)
         self.update_components()
         await interaction.response.edit_message(view=self)
 
     @discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
-    async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.stop()
         await interaction.message.delete()
         with contextlib.suppress(discord.HTTPException):
@@ -193,6 +193,7 @@ class GuildPermsViewer(discord.ui.View):
         new = cls(ctx, message, chunks)
         new.update_components()
         await message.edit(content=None, view=new)
+        new.ctx.bot.views.add(new)
 
     @classmethod
     async def from_overwrites(
@@ -216,14 +217,20 @@ class GuildPermsViewer(discord.ui.View):
         new = cls(ctx, message, chunks)
         new.update_components()
         await message.edit(content=None, view=new)
+        new.ctx.bot.views.add(new)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user == self.ctx.author
 
     async def on_timeout(self) -> None:
+        self.ctx.bot.views.discard(self)
         for item in self.children:
             item.disabled = True
         await self.message.edit(view=self)
+
+    def stop(self) -> None:
+        self.ctx.bot.views.discard(self)
+        super().stop()
 
 class PermsViewer(DuckCog):
 
@@ -251,5 +258,5 @@ class PermsViewer(DuckCog):
                 perms = entity.guild_permissions
 
             embed = PermsEmbed(entity=entity, permissions=perms)
-            await DeleteButton.to_destination(ctx, embed=embed)
+            await DeleteButton.to_destination(ctx, embed=embed, author=ctx.author)
 

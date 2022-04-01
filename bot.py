@@ -1,18 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import contextlib
+import functools
+import logging
 import random
 import re
-import logging
-import typing
-
-import inspect
-import asyncpg
-import functools
-import asyncio
-import time
 import sys
-import concurrent.futures
+import time
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
@@ -26,12 +22,13 @@ from typing import (
     Tuple,
     Callable,
     Awaitable,
-    Coroutine,
     Any,
     Union,
-    Coroutine
+    Coroutine,
+    DefaultDict
 )
 
+import asyncpg
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -83,26 +80,26 @@ initial_extensions: Tuple[str, ...] = (
 
 
 def _wrap_extension(func: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, Optional[T]]]:
-    
+
     async def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
         fmt_args = 'on ext "{}"{}'.format(args[1], f' with kwargs {kwargs}' if kwargs else '')
-        start = time.perf_counter()
+        start = time.monotonic()
         
         try:
             result = await func(*args, **kwargs)
         except Exception as exc:
-            log.warning(f'Failed to load extension in {time.perf_counter() - start:.2f} seconds {fmt_args}')
+            log.warning(f'Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}')
             bot: DuckBot = args[0]  # type: ignore
             bot.create_task(bot.exceptions.add_error(error=exc))
             return
         
-        fmt = f'{func.__name__} took {time.perf_counter() - start:.2f} seconds {fmt_args}'
+        fmt = f'{func.__name__} took {(time.monotonic() - start)*1000:.2f}ms {fmt_args}'
         log.info(fmt)
         
         return result
-    
+
     return wrapped
-    
+
 
 class DbTempContextManager(Generic[DBT]):
     """A class to handle a short term pool connection.
@@ -138,7 +135,7 @@ class DbTempContextManager(Generic[DBT]):
     async def __aexit__(self, *args) -> None:
         if self._pool:
             await self._pool.close()
-            
+
             
 class DbContextManager(Generic[DBT]):
     """A simple context manager used to manage database connections.
@@ -220,7 +217,6 @@ class DuckBot(commands.Bot, DuckHelper):
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
         intents = discord.Intents.all()
         intents.typing = False
-        intents.reactions = False
 
         super().__init__(
             command_prefix={'dbb.', },
@@ -234,8 +230,8 @@ class DuckBot(commands.Bot, DuckHelper):
         self.pool: Pool = pool
         self.session: ClientSession = session
         self._context_cls: Type[commands.Context] = commands.Context
-        self.prefix_cache: typing.DefaultDict[int, Set[str]] = defaultdict(set)
-        self.error_webhook_url: Optional[str] = kwargs.get('error_webhook_url')
+        self.prefix_cache: DefaultDict[int, Set[str]] = defaultdict(set)
+        self.error_webhook_url: Optional[str] = kwargs.get('error_wh')
         self._start_time: Optional[datetime.datetime] = None
         self.listener_connection: Optional[asyncpg.Connection] = None
 
@@ -246,9 +242,15 @@ class DuckBot(commands.Bot, DuckHelper):
         self.constants = constants 
         self.tree.error(self.on_tree_error)
 
+        self.views: Set[discord.ui.View] = set()
+        self._auto_spam_count: DefaultDict[int, int] = defaultdict(int)
+        self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
+
     async def setup_hook(self) -> None:
         for extension in initial_extensions:
             await self.load_extension(extension)
+
+        self.tree.copy_global_to(guild=discord.Object(id=774561547930304536))
             
         await self.populate_cache()
         await self.create_db_listeners()
@@ -387,7 +389,7 @@ class DuckBot(commands.Bot, DuckHelper):
 
     @property
     def human_uptime(self) -> str:
-        """:class:`str`: The uptime of the bot in a human-eadable format.
+        """:class:`str`: The uptime of the bot in a human-readable format.
         
         Raises
         ------
@@ -450,9 +452,9 @@ class DuckBot(commands.Bot, DuckHelper):
             base = self.command_prefix
 
         # Note you have a type error here because of `self.command_prefix`.
-        # This is becuase command_prefix is typehinted internally as both an iterable
-        # of strings and a coroutine. The coroutine aspect is affecting L-430. I can fix it
-        # but its not the neatest thing, it's up to you :P
+        # This is because command_prefix is type hinted internally as both an iterable
+        # of strings and a coroutine. The coroutine aspect is affecting L-430. I can fix it,
+        # but it's not the neatest thing, it's up to you :P
         return meth(*base)(self, message)
 
     async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
@@ -510,7 +512,7 @@ class DuckBot(commands.Bot, DuckHelper):
     async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
         
-        Called when an error is raised and it's not from a command.
+        Called when an error is raised, and it's not from a command.
         
         Parameters
         ----------
@@ -521,7 +523,7 @@ class DuckBot(commands.Bot, DuckHelper):
         kwargs: :class:`Any`
             The keyword arguments for the event that raised the exception.
         """
-        type, error, traceback_obj = sys.exc_info()
+        etype, error, traceback_obj = sys.exc_info()
         if not error:
             raise
         
@@ -578,11 +580,11 @@ class DuckBot(commands.Bot, DuckHelper):
         """
         return self.loop.create_task(coro, name=name)
 
-    # This is overridden so we dont get so many annoying type errors when passing
+    # This is overridden, so we don't get so many annoying type errors when passing
     # a Member into is_owner  ## Nah chai it's your shitty type checker smh!
     @discord.utils.copy_doc(commands.Bot.is_owner)
     async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
-        return await super().is_owner(user) # type: ignore
+        return await super().is_owner(user)  # type: ignore
 
     async def start(self, token: str, *, reconnect: bool = True, verbose: bool = True) -> None:
         """|coro|
@@ -612,17 +614,13 @@ class DuckBot(commands.Bot, DuckHelper):
             _cl_log = logging.getLogger('discord.client')
             _cl_log.disabled = True
 
-            _cl_log = logging.getLogger('discord.client')
-            _cl_log.disabled = True
-
             _ht_log = logging.getLogger('discord.http')
             _ht_log.disabled = True
 
             _ds_log = logging.getLogger('discord.state')
             _ds_log.disabled = True
 
-        await self.login(token)
-        await self.connect(reconnect=reconnect)
+        await super().start(token, reconnect=reconnect)
 
     async def close(self) -> None:
         """|coro|
@@ -632,22 +630,22 @@ class DuckBot(commands.Bot, DuckHelper):
         """
         try:
             try:
+                await self.cleanup_views()
+            except Exception as e:
+                log.error('Could not wait for view cleanups', exc_info=e)
+            try:
                 log.info('Closing listener connection...')
-                await self.listener_connection.close()
+                await self.listener_connection.close(timeout=3)
             except Exception as e:
-                logging.error(f'Failed to close listener connection', exc_info=e)
-            try:
-                log.info('Closing client session...')
-                await self.session.close()
-            except Exception as e:
-                log.error(f'Failed to close client session', exc_info=e)
-            try:
-                log.info('Closing database pool...')
-                await self.pool.close()
-            except Exception as e:
-                log.error(f'Failed to close db pool', exc_info=e)
+                log.error(f'Failed to close listener connection', exc_info=e)
         finally:
             await super().close()
+
+    async def cleanup_views(self, *, timeout: float = 5.0) -> None:
+        future = await asyncio.gather(*[v.on_timeout() for v in self.views], return_exceptions=True)
+        for item in future:
+            if isinstance(item, Exception):
+                log.debug('A view failed to clean up', exc_info=item)
 
     @staticmethod
     async def get_or_fetch_member(guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:
@@ -668,9 +666,9 @@ class DuckBot(commands.Bot, DuckHelper):
         Optional[:class:`~discord.Member`]
             The member that was requested.
         """
-        id = user.id if isinstance(user, discord.User) else user
+        uid = user.id if isinstance(user, discord.User) else user
         try:
-            return guild.get_member(id) or await guild.fetch_member(id)
+            return guild.get_member(uid) or await guild.fetch_member(uid)
         except discord.HTTPException:
             return None
 
@@ -694,3 +692,94 @@ class DuckBot(commands.Bot, DuckHelper):
             return self.get_user(user_id) or await self.fetch_user(user_id)
         except discord.HTTPException:
             return None
+
+    async def on_command(self, ctx: DuckContext):
+        """|coro|
+
+        Called when a command is invoked.
+        Handles automatic blacklisting of users that are abusing the bot.
+
+        Parameters
+        ----------
+        ctx: DuckContext
+            The context of the command.
+        """
+        try:
+            bucket = self.global_mapping.get_bucket(ctx.message)
+            current = ctx.message.created_at.timestamp()
+            retry_after = bucket.update_rate_limit(current)
+            author_id = ctx.author.id
+            if retry_after and not await self.is_owner(ctx.author):
+                self._auto_spam_count[author_id] += 1
+                if self._auto_spam_count[author_id] >= 5:
+                    await self._auto_blacklist_add(ctx.author)
+                    del self._auto_spam_count[author_id]
+                    await self._log_rl_excess(ctx, ctx.message, retry_after, auto_block=True)
+                else:
+                    await self._log_rl_excess(ctx, ctx.message, retry_after)
+                return
+            else:
+                self._auto_spam_count.pop(author_id, None)
+        finally:
+            await self.pool.execute(
+                "INSERT INTO commands (guild_id, user_id, command, timestamp) VALUES ($1, $2, $3, $4)",
+                getattr(ctx.guild, 'id', None), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
+
+    async def _log_rl_excess(self, ctx, message, retry_after, *, auto_block=False):
+        """|coro|
+
+        Logs a rate limit excess
+
+        Parameters
+        ----------
+        ctx: DuckContext
+            The context of the command.
+        message: discord.Message
+            The message that triggered the rate limit.
+        retry_after: float
+            The amount of time the user had to wait.
+        auto_block: bool
+            Whether the user was automatically blocked.
+        """
+        guild_name = getattr(ctx.guild, 'name', 'No Guild (DMs)')
+        guild_id = getattr(ctx.guild, 'id', None)
+        fmt = 'User %s (ID %s) in guild %r (ID %s) spamming, retry_after: %.2fs'
+        logging.warning(fmt, message.author, message.author.id, guild_name, guild_id, retry_after)
+        if not auto_block:
+            return
+
+        await self.bot.wait_until_ready()
+        embed = discord.Embed(title='Auto-blocked Member', colour=0xDDA453)
+        embed.add_field(name='Member', value=f'{message.author} (ID: {message.author.id})', inline=False)
+        embed.add_field(name='Guild Info', value=f'{guild_name} (ID: {guild_id})', inline=False)
+        embed.add_field(name='Channel Info', value=f'{message.channel} (ID: {message.channel.id}', inline=False)
+        embed.timestamp = discord.utils.utcnow()
+        channel = self.bot.get_channel(904797860841812050)
+        try:
+            await channel.send(embed=embed)
+        except discord.HTTPException:
+            pass
+        except AttributeError as e:
+            await self.exceptions.add_error(error=e)
+
+    async def _auto_blacklist_add(self, user: discord.User):
+        """|coro|
+
+        Adds a user to the auto-blacklist.
+
+        Parameters
+        ----------
+        user: :class:`discord.User`
+            The user to add to the blacklist.
+        """
+
+        query = """
+            INSERT INTO commands (user_id, command) VALUES ($1, $2)
+            RETURNING (SELECT COUNT(*) FROM commands WHERE user_id = $1 AND command = $2)
+        """
+        amount = await self.pool.fetchval(query, user.id, f'AUTO-BOT-BAN')
+        if amount >= 5:
+            await self.blacklist.add_user(
+                user, end_time=discord.utils.utcnow() + datetime.timedelta(minutes=1*amount))
+        else:
+            await self.blacklist.add_user(user)

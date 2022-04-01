@@ -34,7 +34,6 @@ class BlockCommand(app_commands.Group, name='block'):
         super().__init__()
         self.cog = cog
 
-    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='user')
     @app_commands.describe(
         user='The user you wish to block.'
@@ -58,7 +57,6 @@ class BlockCommand(app_commands.Group, name='block'):
 
         await followup.send(f'✅ **|** Blocked **{mdr(user)}**')
 
-    @app_commands.guilds(774561547930304536)
     @app_commands.command(name='revoke')
     @app_commands.describe(
         user='The user you wish to block.'
@@ -99,8 +97,8 @@ class BlockCommand(app_commands.Group, name='block'):
 class ApplicationBlock(BlockCog):
     def __init__(self, bot: DuckBot):
         super().__init__(bot)
-        self.bot.tree.add_command(BlockCommand(self), guild=discord.Object(id=774561547930304536))
+        self.bot.tree.add_command(BlockCommand(self))
 
     def cog_unload(self) -> None:
-        self.bot.tree.remove_command('block', guild=discord.Object(id=774561547930304536))
+        self.bot.tree.remove_command('block')
 
