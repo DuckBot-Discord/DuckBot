@@ -137,3 +137,8 @@ CREATE TABLE commands (
     timestamp TIMESTAMP WITH TIME ZONE
         NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE auto_sync (
+    guild_id BIGINT,
+    payload JSONB
+)

@@ -25,7 +25,8 @@ from typing import (
     Any,
     Union,
     Coroutine,
-    DefaultDict
+    DefaultDict,
+    NamedTuple
 )
 
 import asyncpg
@@ -77,6 +78,11 @@ initial_extensions: Tuple[str, ...] = (
     'cogs.owner',
     'cogs.information',
 )
+
+
+class SyncResult(NamedTuple):
+    synced: bool
+    commands: List[app_commands.AppCommand]
 
 
 def _wrap_extension(func: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, Optional[T]]]:
@@ -251,10 +257,26 @@ class DuckBot(commands.Bot, DuckHelper):
             await self.load_extension(extension)
 
         self.tree.copy_global_to(guild=discord.Object(id=774561547930304536))
-            
+
         await self.populate_cache()
         await self.create_db_listeners()
+
         super(DuckHelper, self).__init__(bot=self)
+
+        async def sync_with_logging():
+            log.info(f'%sSyncing commands to discord...', col(6))
+            guild = discord.Object(id=774561547930304536)
+            try:
+                result = await self.try_syncing(guild=guild)
+            except Exception as e:
+                log.error('%sFailed to sync commands with guild %s', col(6), guild.id, exc_info=e)
+            else:
+                if result.synced is True:
+                    log.info('%sSuccessfully synced %s commands to guild %s', col(6), len(result.commands), guild.id)
+                else:
+                    log.info('%sCommands for guild %s were already synced', col(6), guild.id)
+
+        self.create_task(sync_with_logging())
 
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -783,3 +805,52 @@ class DuckBot(commands.Bot, DuckHelper):
                 user, end_time=discord.utils.utcnow() + datetime.timedelta(minutes=1*amount))
         else:
             await self.blacklist.add_user(user)
+
+    async def sync_tree(self, *, guild: discord.abc.Snowflake | None = None) -> List[app_commands.AppCommand]:
+        """|coro|
+
+        Syncs the guild and updates the database.
+
+        Parameters
+        ----------
+        guild: discord.abc.Snowflake | None
+            The guild to sync the command tree for.
+        """
+        guild_id = guild.id if guild else 0
+        synced = await self.bot.tree.sync(guild=guild)
+
+        payloads = [(guild_id, cmd.to_dict()) for cmd in synced]
+
+        await self.pool.execute("DELETE FROM auto_sync WHERE guild_id = $1", guild_id)
+        await self.pool.executemany("INSERT INTO auto_sync (guild_id, payload) VALUES ($1, $2)", payloads)
+
+        return synced
+
+    async def try_syncing(self, *, guild: discord.abc.Snowflake | None = None) -> SyncResult:
+        """|coro|
+
+        Tries to sync the command tree.
+
+        Parameters
+        ----------
+        guild: discord.abc.Snowflake | None
+            The guild to sync the command tree for.
+        """
+        # safeguard. Need the app id.
+        await self.wait_until_ready()
+
+        guild_id = guild.id if guild else 0
+        all_cmds = self.bot.tree._get_all_commands(guild=guild)  # noqa F401  # private method kekw.
+        payloads = [(guild_id, cmd.to_dict()) for cmd in all_cmds]
+
+        databased = await self.pool.fetch("SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id)
+        saved_payloads = [d['payload'] for d in databased]
+
+        not_synced = [p for g, p in payloads if p not in saved_payloads]
+
+        if not_synced:
+            synced = await self.sync_tree(guild=guild)
+            return SyncResult(commands=synced, synced=True)
+
+        else:
+            return SyncResult(commands=[], synced=False)
