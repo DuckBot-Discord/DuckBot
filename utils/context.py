@@ -70,13 +70,13 @@ class ConfirmationView(discord.ui.View):
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.value = True
         self.stop()
-        await interaction.delete_original_message()
+        await interaction.message.delete()
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.value = False
         self.stop()
-        await interaction.delete_original_message()
+        await interaction.message.delete()
 
 
 class DuckContext(commands.Context):
@@ -162,17 +162,19 @@ class DuckContext(commands.Context):
         await view.wait()
         return view.value
 
-    async def confirm(self, content: str | discord.Embed, /, timeout: Optional[int] = 30) -> bool:
+    async def confirm(self, content=None, /, *, timeout: int = 30, **kwargs) -> bool | None:
         """|coro|
 
         Prompts a confirmation message that users can confirm or deny.
 
         Parameters
         ----------
-        content: :class:`~str` | :class:`~discord.Embed`
+        content: str | None
             The content of the message. Can be an embed.
-        timeout: Optional[:class:`int`]
+        timeout: int | None
             The timeout for the confirmation.
+        kwargs:
+            Additional keyword arguments to pass to `self.send`.
 
         Returns
         -------
@@ -182,11 +184,12 @@ class DuckContext(commands.Context):
         """
         view = ConfirmationView(self, timeout=timeout)
         try:
-            view.message = await self.send(content, view=view)
+            view.message = await self.channel.send(content, **kwargs, view=view)
+            await view.wait()
+            return view.value
         except discord.HTTPException:
             view.stop()
-        await view.wait()
-        return view.value
+            return None
 
 
 async def setup(bot: DuckBot) -> None:
