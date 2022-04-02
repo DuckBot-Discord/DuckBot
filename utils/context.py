@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Optional, List, Any
+from typing import TYPE_CHECKING, Tuple, Optional, List
 
 import discord
 from discord.ext import commands
@@ -9,13 +9,11 @@ if TYPE_CHECKING:
     from discord.message import Message
     from bot import DuckBot
 
-from utils.autocomplete import Dropdown, DropdownView
+from utils.autocomplete import DropdownView
 
 __all__: Tuple[str, ...] = (
     'DuckContext',
     'tick',
-    'setup',
-    'teardown'
 )
 
 
@@ -44,6 +42,41 @@ def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
         return f'{emoji} {label}'
 
     return emoji
+
+
+class ConfirmationView(discord.ui.View):
+    def __init__(self, ctx: DuckContext, *, timeout: int = 60) -> None:
+        super().__init__(timeout=timeout)
+        self.ctx = ctx
+        self.value = None
+        self.message: discord.Message | None = None
+        self.ctx.bot.views.add(self)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user == self.ctx.author
+
+    async def on_timeout(self) -> None:
+        self.ctx.bot.views.discard(self)
+        if self.message:
+            for item in self.children:
+                item.disabled = True
+            await self.message.edit(content=f'Timed out waiting for a button press from {self.ctx.author}.', view=self)
+
+    def stop(self) -> None:
+        self.ctx.bot.views.discard(self)
+        super().stop()
+
+    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.primary)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.value = True
+        self.stop()
+        await interaction.delete_original_message()
+
+    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.value = False
+        self.stop()
+        await interaction.delete_original_message()
 
 
 class DuckContext(commands.Context):
@@ -109,7 +142,11 @@ class DuckContext(commands.Context):
 
         return await super().send(*args, **kwargs)
 
-    async def prompt_autocomplete(self, text: Optional[str] = "Choose an option...", choices: List[discord.SelectOption] = [], timeout: Optional[int] = 30):
+    async def prompt_autocomplete(
+            self,
+            text: Optional[str] = "Choose an option...",
+            choices: List[discord.SelectOption] = None,
+            timeout: Optional[int] = 30):
         """|coro|
         
         Prompts an autocomplete select menu that users can select choices.
@@ -119,8 +156,35 @@ class DuckContext(commands.Context):
         :class: `~str`
             The value the user chose.
         """
+        choices = choices or []
         view = DropdownView(self, choices, timeout=timeout)
         await self.reply(text, view=view)
+        await view.wait()
+        return view.value
+
+    async def confirm(self, content: str | discord.Embed, /, timeout: Optional[int] = 30) -> bool:
+        """|coro|
+
+        Prompts a confirmation message that users can confirm or deny.
+
+        Parameters
+        ----------
+        content: :class:`~str` | :class:`~discord.Embed`
+            The content of the message. Can be an embed.
+        timeout: Optional[:class:`int`]
+            The timeout for the confirmation.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether the user confirmed or not.
+            None if the view timed out.
+        """
+        view = ConfirmationView(self, timeout=timeout)
+        try:
+            view.message = await self.send(content, view=view)
+        except discord.HTTPException:
+            view.stop()
         await view.wait()
         return view.value
 

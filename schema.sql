@@ -1,3 +1,7 @@
+-- noinspection SpellCheckingInspectionForFile
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE TABLE IF NOT EXISTS guilds (
     guild_id BIGINT PRIMARY KEY,
     prefixes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
@@ -96,3 +100,40 @@ CREATE TRIGGER update_prefixes_cache_trigger
   ON guilds
   FOR EACH ROW
   EXECUTE PROCEDURE update_prefixes_cache();
+
+-- For tags.
+CREATE TABLE IF NOT EXISTS tags (
+    id BIGSERIAL,
+    name VARCHAR(200),
+    content VARCHAR(2000),
+    owner_id BIGINT,
+    guild_id BIGINT,
+    uses INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE
+        NOT NULL DEFAULT NOW(),
+    points_to BIGINT
+        REFERENCES tags(id)
+            ON DELETE CASCADE,
+    embed JSONB,
+    PRIMARY KEY (id),
+    UNIQUE (name, guild_id),
+    CONSTRAINT tags_mutually_excl_cnt_p_to CHECK (
+            ((content IS NOT NULL OR embed IS NOT NULL) and points_to IS NULL)
+            OR (points_to IS NOT NULL and (content IS NULL AND embed IS NULL))
+        )
+);
+
+CREATE INDEX IF NOT EXISTS tags_name_ind ON tags (name);
+CREATE INDEX IF NOT EXISTS tags_location_id_ind ON tags (guild_id);
+-- noinspection SqlResolve
+CREATE INDEX IF NOT EXISTS tags_name_trgm_ind ON tags USING GIN (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS tags_name_lower_ind ON tags (LOWER(name));
+CREATE UNIQUE INDEX IF NOT EXISTS tags_uniq_ind ON tags (LOWER(name), guild_id);
+
+CREATE TABLE commands (
+    user_id BIGINT NOT NULL,
+    guild_id  BIGINT,
+    command   TEXT NOT NULL ,
+    timestamp TIMESTAMP WITH TIME ZONE
+        NOT NULL DEFAULT NOW()
+);

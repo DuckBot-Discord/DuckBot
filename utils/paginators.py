@@ -153,7 +153,6 @@ class ViewMenuPages(discord.ui.View):
         super().stop()
 
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        super().on_error()
         if interaction.response.is_done():
             await interaction.followup.send('An unknown error occurred, sorry', ephemeral=True)
         else:
