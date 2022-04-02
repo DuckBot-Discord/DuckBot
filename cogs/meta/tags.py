@@ -511,7 +511,10 @@ class Tags(DuckCog):
             The tag to show
         """
         tag = await self.get_tag(name, guild.id if guild else None, find_global=True)
-        await ctx.send(tag.content, embed=tag.embed)
+        if tag.embed and ctx.channel.permissions_for(ctx.me).embed_links:
+            await ctx.channel.send(tag.content, embed=tag.embed)
+        else:
+            await ctx.channel.send(tag.content)
         await tag.use(self.bot.pool)
 
     @commands.group(name='tag', invoke_without_command=True)
@@ -564,13 +567,13 @@ class Tags(DuckCog):
             cmd = f"{ctx.clean_prefix}{ctx.command.qualified_name}"
             raise commands.BadArgument(f"{e} Please use {cmd!r} to try again.")
 
-        args = (name, guild.id if guild else None)
+        args = (name, guild.id if guild else 0)
         with self.reserve_tag(*args):
             query = """
                 SELECT EXISTS(
                     SELECT * FROM tags
                     WHERE name = $1
-                    AND guild_id = $2
+                    AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
                 )
             """
             check = await self.bot.pool.fetchval(query, *args)
@@ -632,18 +635,18 @@ class Tags(DuckCog):
         async with self.bot.safe_connection() as conn:
             tag = await self.get_tag(tag, guild.id if guild else None, connection=conn, find_global=guild is None)
             if tag.owner_id != ctx.author.id:
-                raise commands.BadArgument("Could not edit tag. Are you sure you own it?")
+                raise commands.BadArgument("Could not edit tag. Are you sure it exists and you own it?")
             await tag.edit(conn, content)
-        await ctx.send(f'Tag {tag.name!r} successfully edited!')
+        await ctx.send(f'Successfully edited tag!')
 
     @tag.command(name='edit')
     @copy_doc(__tag_edit)
-    async def tag_edit(self, ctx: DuckContext, *, tag: TagName, content: commands.clean_content):
+    async def tag_edit(self, ctx: DuckContext, tag: TagName, *, content: commands.clean_content):
         await self.__tag_edit(ctx, tag, content, ctx.guild)
 
     @tag_global.command(name='edit')
     @copy_doc(__tag_edit)
-    async def tag_global_edit(self, ctx: DuckContext, *, tag: TagName, content: commands.clean_content):
+    async def tag_global_edit(self, ctx: DuckContext, tag: TagName, *, content: commands.clean_content):
         await self.__tag_edit(ctx, tag, content, ctx.guild)
 
     async def __tag_append(self, ctx: DuckContext, tag: TagName, content: commands.clean_content,
@@ -666,26 +669,26 @@ class Tags(DuckCog):
                     UPDATE tags
                     SET content = content || E'\n' || $1
                     WHERE name = $2
-                    AND guild_id = $3
+                    AND CASE WHEN ( $3 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $3 ) END
                     AND owner_id = $4
                     RETURNING *
                 )
                 SELECT EXISTS ( SELECT * FROM edited )
             """
-            confirm = await conn.fetchval(query, content, tag, guild.id if guild else None, ctx.author.id)
+            confirm = await conn.fetchval(query, content, tag, guild.id if guild else 0, ctx.author.id)
             if confirm:
-                await ctx.send(f'Successfully edited tag!')
+                await ctx.send(f'Succesfully edited tag!')
             else:
-                await ctx.send('Could not edit tag. Are you sure you own it?')
+                await ctx.send('Could not edit tag. Are you sure it exists and you own it?')
 
     @tag.command(name='append')
     @copy_doc(__tag_append)
-    async def tag_append(self, ctx: DuckContext, *, tag: TagName, content: commands.clean_content):
+    async def tag_append(self, ctx: DuckContext, tag: TagName, *, content: commands.clean_content):
         await self.__tag_append(ctx, tag, content, ctx.guild)
 
     @tag_global.command(name='append')
     @copy_doc(__tag_append)
-    async def tag_global_append(self, ctx: DuckContext, *, tag: TagName, content: commands.clean_content):
+    async def tag_global_append(self, ctx: DuckContext, tag: TagName, *, content: commands.clean_content):
         await self.__tag_append(ctx, tag, content, ctx.guild)
 
     async def __tag_delete(self, ctx: DuckContext, tag: TagName, guild: discord.Guild | None):
@@ -703,7 +706,7 @@ class Tags(DuckCog):
                 WITH deleted AS (
                     DELETE FROM tags
                         WHERE LOWER(name) = LOWER($1::TEXT)
-                        AND guild_id = $2
+                        AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
                         AND (owner_id = $3 OR $4::BOOL = TRUE)
                             -- $4 will be true for moderators.
                         RETURNING name, points_to
@@ -721,10 +724,10 @@ class Tags(DuckCog):
             if guild:
                 is_mod = is_mod or ctx.author.guild_permissions.manage_messages
 
-            tag_p = await conn.fetchrow(query, tag, guild.id if guild else None, ctx.author.id, is_mod)
+            tag_p = await conn.fetchrow(query, tag, guild.id if guild else 0, ctx.author.id, is_mod)
 
             if tag_p is None:
-                await ctx.send(f"Could not delete tag. Are you sure you own it?")
+                await ctx.send(f"Could not delete tag. Are you sure it exists{'' if is_mod else '  and you own it'}?")
             elif tag_p['parent'] is not None:
                 await ctx.send(f"Tag {tag_p['name']!r} that points to {tag_p['parent']!r} deleted!")
             else:
@@ -756,7 +759,7 @@ class Tags(DuckCog):
                 WITH deleted AS (
                     DELETE FROM tags
                         WHERE id = $1
-                        AND guild_id = $2
+                        AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
                         AND (owner_id = $3 OR $4::BOOL = TRUE)
                             -- $4 will be true for moderators.
                         RETURNING name, points_to
@@ -774,10 +777,10 @@ class Tags(DuckCog):
             if guild:
                 is_mod = is_mod or ctx.author.guild_permissions.manage_messages
 
-            tag_p = await conn.fetchrow(query, tag_id, guild.id if guild else None, ctx.author.id, is_mod)
+            tag_p = await conn.fetchrow(query, tag_id, guild.id if guild else 0, ctx.author.id, is_mod)
 
             if tag_p is None:
-                await ctx.send(f"Could not delete tag. Are you sure you own it?")
+                await ctx.send(f"Could not delete tag. Are you sure it exists{'' if is_mod else '  and you own it'}?")
             elif tag_p['parent'] is not None:
                 await ctx.send(f"Tag {tag_p['name']!r} that points to {tag_p['parent']!r} deleted!")
             else:
@@ -814,9 +817,11 @@ class Tags(DuckCog):
             return
 
         query = """
-            SELECT COUNT(*) FROM tags WHERE guild_id = $1 AND owner_id = $2
+            SELECT COUNT(*) FROM tags 
+            WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
+            AND owner_id = $2
         """
-        args = (guild.id if guild else None, member.id)
+        args = (guild.id if guild else 0, member.id)
 
         amount: int | None = self.bot.pool.fetchval(query, *args)  # type: ignore
 
@@ -834,21 +839,21 @@ class Tags(DuckCog):
             await ctx.send("Aborted!")
             return
 
-        if not ctx.author.guild_permissions.manage_messages:
+        if not (ctx.guild.get_member(ctx.author.id) or ctx.author).guild_permissions.manage_messages:
             await ctx.send('You no longer have the required permissions to purge tags!')
 
         async with self.bot.safe_connection() as conn:
             query = """
                 WITH deleted AS (
                     DELETE FROM tags
-                        WHERE guild_id = $1
+                        WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
                         AND owner_id = $2
                         RETURNING name, points_to
                 )
                 SELECT COUNT(*) FROM deleted
             """
 
-            tag_p = await conn.fetchval(query)
+            tag_p = await conn.fetchval(query, guild.id if guild else 0, member.id)
 
             await ctx.send(f"Deleted all of {member}'s tags ({tag_p} tags deleted)!")
 
@@ -913,7 +918,7 @@ class Tags(DuckCog):
             WITH original_tag AS (
                 SELECT * FROM tags
                 WHERE LOWER(name) = LOWER($1::TEXT)
-                AND guild_id = $2
+                AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
             )
 
             SELECT 
@@ -927,7 +932,7 @@ class Tags(DuckCog):
                 SELECT COUNT(*) FROM tags WHERE tags.points_to = original_tag.id ) END ) AS aliases
             FROM original_tag
         """
-        args = (query, tag, guild.id if guild else None)
+        args = (query, tag, guild.id if guild else 0)
         name, owner_id, created_at, is_alias, parent, uses, aliases_amount = await self.bot.pool.fetchrow(*args)
         owner = await self.bot.get_or_fetch_user(owner_id) or UnknownUser(owner_id)
 
@@ -965,11 +970,13 @@ class Tags(DuckCog):
         """
         query = """
             SELECT name, id FROM tags
-            WHERE guild_id = $1
-            AND ( owner_id = $2 OR $2 = 0 )
+            WHERE CASE WHEN ( $1 = 0 ) 
+                        THEN ( guild_id IS NULL ) 
+                        ELSE ( guild_id = $1 ) END
+            AND ( owner_id = $2 OR $2::BIGINT = 0 )
             ORDER BY name
         """
-        args = (guild.id if guild else None, member.id if member else 0 )
+        args = (guild.id if guild else 0, member.id if member else 0)
         tags = await self.bot.pool.fetch(query, *args)
 
         if not tags:
@@ -1003,12 +1010,12 @@ class Tags(DuckCog):
         """
         db_query = """
             SELECT name, id FROM tags
-            WHERE guild_id = $1
+            WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
             AND similarity(name, $2) > 0
             ORDER BY similarity(name, $2) DESC
             LIMIT 200
         """
-        args = (guild.id if guild else None, query)
+        args = (guild.id if guild else 0, query)
         tags = await self.bot.pool.fetch(db_query, *args)
         if not tags:
             return await ctx.send("No tags found with that query...")
@@ -1067,7 +1074,7 @@ class Tags(DuckCog):
             The base embed.
         """
 
-        guild_id = guild.id if guild else None
+        guild_id = guild.id if guild else 0
 
         # Top tags
 
@@ -1076,7 +1083,7 @@ class Tags(DuckCog):
             COUNT(*) OVER () AS total_tags,
             SUM(uses) OVER () AS total_uses
             FROM tags
-            WHERE guild_id = $1
+            WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
             ORDER BY uses DESC
             LIMIT 5;
             """
@@ -1089,13 +1096,13 @@ class Tags(DuckCog):
         top_tags = [f"{AWARD_EMOJI[index]} {name} (used {uses} times)"
                     for index, (name, uses, _, _) in enumerate(data)]
 
-        embed.add_field(name='Top Tags', value='\n'.join(top_tags), inline=False)
+        embed.add_field(name='Top Tags', value='\n'.join(top_tags) or '\u200b', inline=False)
 
         # Top creators
 
         query = """
             SELECT COUNT(*) as tag_amount, owner_id
-            FROM tags WHERE guild_id = $1
+            FROM tags WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
             GROUP BY owner_id
             ORDER BY tag_amount DESC
             LIMIT 5;
@@ -1106,14 +1113,14 @@ class Tags(DuckCog):
         top_creators = [f"{AWARD_EMOJI[index]} <@{owner_id}> (owns {tag_amount} tags)"
                         for index, (tag_amount, owner_id) in enumerate(data)]
 
-        embed.add_field(name='Top Tag Creators', value='\n'.join(top_creators), inline=False)
+        embed.add_field(name='Top Tag Creators', value='\n'.join(top_creators) or '\u200b', inline=False)
 
         # Top users
 
         query = """
             SELECT COUNT(*) as tag_amount, user_id
-            FROM commands WHERE guild_id = $1
-            AND command = 'tag'
+            FROM commands WHERE CASE WHEN ( $1 = 0 ) THEN ( TRUE ) ELSE ( guild_id = $1 ) END
+            AND CASE WHEN ( $1 = 0 ) THEN ( command = 'tag global' ) ELSE ( command = 'tag' ) END
             GROUP BY user_id
             ORDER BY tag_amount DESC
             LIMIT 5;
@@ -1124,11 +1131,12 @@ class Tags(DuckCog):
         top_users = [f"{AWARD_EMOJI[index]} <@{user_id}> ({tag_amount} tags used)"
                      for index, (tag_amount, user_id) in enumerate(data)]
 
-        embed.add_field(name='Top Tag Users', value='\n'.join(top_users), inline=False)
+        embed.add_field(name='Top Tag Users', value='\n'.join(top_users) or '\u200b', inline=False)
 
         await ctx.send(embed=embed)
 
-    async def user_tag_stats(self, ctx: DuckContext, member: discord.Member):
+    async def user_tag_stats(self, ctx: DuckContext, member: discord.Member | discord.User,
+                             guild: discord.Guild | None):
         """|coro|
 
         Gets the tag stats of a member.
@@ -1139,11 +1147,14 @@ class Tags(DuckCog):
             The context to get the number of tags in.
         member: discord.Member
             The member to get the stats for.
+        guild: discord.Guild
+            The guild to get the stats for.
+            If ``None``, gets the global tag stats.
         """
 
         embed = discord.Embed()
         embed.set_author(name=f"{member.name} Tag Stats", icon_url=member.display_avatar.url)
-        args = (member.id, ctx.guild.id if ctx.guild else None)
+        args = (member.id, guild.id if guild else 0)
 
         # tags created
 
@@ -1151,7 +1162,7 @@ class Tags(DuckCog):
             SELECT COUNT(*) as tag_amount,
             SUM(uses) as total_uses
             FROM tags WHERE owner_id = $1
-            AND guild_id = $2;
+            AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
             """
         data = await self.bot.pool.fetchrow(query, *args)
 
@@ -1170,7 +1181,8 @@ class Tags(DuckCog):
         query = """
             SELECT COUNT(*) as tag_amount
             FROM commands WHERE user_id = $1
-            AND guild_id = $2 AND command = 'tag';
+            AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
+            AND command = 'tag';
             """
 
         data = await self.bot.pool.fetchrow(query, *args)
@@ -1180,7 +1192,7 @@ class Tags(DuckCog):
         query = """
             SELECT name, uses
             FROM tags WHERE owner_id = $1
-            AND guild_id = $2
+            AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
             ORDER BY uses DESC
             LIMIT 5;
             """
@@ -1190,7 +1202,7 @@ class Tags(DuckCog):
         top_tags = [f"{AWARD_EMOJI[index]} {name} (used {uses} times)"
                     for index, (name, uses) in enumerate(data)]
 
-        embed.add_field(name='Top Tags', value='\n'.join(top_tags), inline=False)
+        embed.add_field(name='Top Tags', value='\n'.join(top_tags) or '\u200b', inline=False)
 
         await ctx.send(embed=embed)
 
@@ -1213,18 +1225,73 @@ class Tags(DuckCog):
                              icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
             await self.get_guild_or_global_stats(ctx, guild=ctx.guild, embed=embed)
         else:
-            await self.user_tag_stats(ctx, member)
+            await self.user_tag_stats(ctx, member, ctx.guild)
 
     @tag_global.command(name='stats')
-    async def tag_global_stats(self, ctx: DuckContext):
+    async def tag_global_stats(self, ctx: DuckContext, user: discord.User = None):
         """|coro|
 
-        Gets the global tag stats.
+        Gets the tag stats of a user or global.
+
+        Parameters
+        ----------
+        user: discord.User
+            The user to get the stats for.
+            If not specified, the global
+            stats will be shown.
         """
-        embed = discord.Embed()
-        embed.set_author(name=f"Global Tag Stats",
-                         icon_url=ctx.me.display_avatar.url)
-        await self.get_guild_or_global_stats(ctx, guild=ctx.guild, embed=embed)
+        if user is None:
+            embed = discord.Embed()
+            embed.set_author(name=f"Global Tag Stats",
+                             icon_url=ctx.me.display_avatar.url)
+            await self.get_guild_or_global_stats(ctx, guild=None, embed=embed)
+        else:
+            await self.user_tag_stats(ctx, user, None)
+
+    async def __tag_remove_embed(self, ctx: DuckContext, tag: TagName, guild: discord.Guild | None = None):
+        """|coro|
+
+        Removes an embed from a tag. To add an embed, use the ``embed``. Example:
+         ``[prefix] embed <flags> --save <tag name>`` where flags are the embed flags.
+         See ``[prefix]embed --help`` for more information about the flags.
+
+        Parameters
+        ----------
+        tag: TagName
+            The name of the tag to remove the embed from.
+        """
+        query = """
+            WITH updated AS (
+                UPDATE tags SET embed = NULL
+                WHERE name = $1 
+                AND CASE WHEN ( $2::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
+                AND (owner_id = $3 or $4::bool = TRUE )
+                    -- $4 will be true for moderators.
+                RETURNING *
+            )
+            SELECT EXISTS ( SELECT * FROM updated )
+        """
+        is_mod = await self.bot.is_owner(ctx.author)
+
+        if guild:
+            is_mod = is_mod or ctx.author.guild_permissions.manage_messages
+
+        args = (tag, guild.id if guild else 0, ctx.author.id, is_mod)
+        exists = await self.bot.pool.fetchval(query, *args)
+
+        if not exists:
+            return await ctx.send(f"Could not edit tag. Are you sure it exists{'' if is_mod else '  and you own it'}?")
+        await ctx.send(f"Successfully edited tag!")
+
+    @tag.command(name='remove-embed')
+    @copy_doc(__tag_remove_embed)
+    async def tag_remove_embed(self, ctx: DuckContext, *, tag: TagName):
+        await self.__tag_remove_embed(ctx, tag, ctx.guild)
+
+    @tag_global.command(name='remove-embed')
+    @copy_doc(__tag_remove_embed)
+    async def tag_global_remove_embed(self, ctx: DuckContext, *, tag: TagName):
+        await self.__tag_remove_embed(ctx, tag, None)
 
     @app_commands.command(name='tag')
     @app_commands.describe(
