@@ -117,3 +117,6 @@ dmypy.json
 .idea
 /.idea
 .idea/
+
+# Ignored
+./utils/ignored/
