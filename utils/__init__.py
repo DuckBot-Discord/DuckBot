@@ -6,7 +6,6 @@ from .context import *
 from .converters import *
 from .errorhandler import *
 from .errors import *
-from .help import *
 from .time import *
 from .timer import *
 from .blacklist import *

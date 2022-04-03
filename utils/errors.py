@@ -13,6 +13,7 @@ log = logging.getLogger('Duckbot.utils.errors')
 
 __all__: Tuple[str, ...] = (
     'DuckBotException',
+    'DuckNotFound', 
     'DuckBotCommandError',
     'DuckBotNotStarted',
     'HierarchyException',
@@ -29,6 +30,11 @@ __all__: Tuple[str, ...] = (
 
 class DuckBotException(discord.ClientException):
     """The base exception for DuckBot. All other exceptions should inherit from this."""
+    __slots__: Tuple[str, ...] = ()
+    
+    
+class DuckNotFound(DuckBotException):
+    """An Exception raised when DuckBot couuld not be found."""
     __slots__: Tuple[str, ...] = ()
 
 

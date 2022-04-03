@@ -46,6 +46,8 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
         await ctx.send(error)
     elif isinstance(error, commands.CommandInvokeError):
         return await on_command_error(ctx, error.original)
+    elif isinstance(error, errors.DuckBotNotStarted):
+        await ctx.send('Oop! Duckbot has not started yet, try again soon.')
     else:
         await ctx.bot.exceptions.add_error(error=error, ctx=ctx)
 
