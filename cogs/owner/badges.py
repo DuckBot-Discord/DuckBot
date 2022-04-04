@@ -1,12 +1,13 @@
 import asyncpg
 import discord
 
-from utils import DuckCog
+from utils import DuckCog, group
 from discord.ext import commands
+
 
 class BadgeManagement(DuckCog):
 
-    @commands.group(name='badges', aliases=['badge'], invoke_without_command=True)
+    @group(name='badges', aliases=['badge'], invoke_without_command=True)
     async def badges(self, ctx):
         """|coro|
 
