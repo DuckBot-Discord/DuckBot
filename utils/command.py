@@ -38,8 +38,10 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 P = ParamSpec('P')
 RestrictedType = Union[Iterable[Any], Callable[[DuckContext], Union[Iterable[Any], Awaitable[Iterable[Any]]]]]
+AutocompleteCallbackType = Callable[[DuckContext, str], Union[Iterable[Any], Awaitable[Iterable[Any]]]]
 
 NUMPY_ITEM_REGEX = re.compile(r'(?P<type>\:[a-z]{1,}\:)\`(?P<name>[a-z\.]{1,})\`', flags=re.IGNORECASE)
+DOC_HEADER_REGEX = re.compile(r'\|[a-z]{1,}\|', flags=re.IGNORECASE)
 
 def _subber(match: re.Match) -> str:
     _, name = match.groups()
@@ -47,8 +49,16 @@ def _subber(match: re.Match) -> str:
 
 
 @discord.utils.copy_doc(commands.Command)
-class DuckCommand(commands.Command, Generic[P, T]):
-
+class DuckCommand(commands.Command, Generic[CogT, P, T]):
+    """Implements the front end DuckCommand functionality. This subclasses
+    :class:`~commands.Command` to add some fun utility functions.
+    
+    Attributes
+    ----------
+    autocompletes: Dict[:class:`str`, :class:`AutoComplete`]
+        A mapping of parameter name to autocomplete objects. This is so
+        autocomplete can be added to the command.
+    """
     def __init__(
 		self,
 		func: Union[
@@ -62,14 +72,23 @@ class DuckCommand(commands.Command, Generic[P, T]):
         self.autocompletes: Dict[str, AutoComplete] = {}
         
     @property
-    def help_mapping(self) -> Mapping[str, List[str]]:
+    def help_mapping(self) -> Mapping[str, str]:
+        """Parses the :class:`DuckCommand`'s help text into a mapping
+        that can be used to generate a help embed or give the user more
+        inforamtion about the command.
+        
+        Returns
+        -------
+            Mapping[:class:`str`, :class:`str`]
+        """
         mapping = {}
         
-        help_doc = command.help
+        help_doc = self.help
         if not help_doc:
             return mapping
         
-        NUMPY_ITEM_REGEX.sub(_subber, help_doc)
+        help_doc = NUMPY_ITEM_REGEX.sub(_subber, help_doc)
+        help_doc = DOC_HEADER_REGEX.sub('', help_doc).lstrip()
         
         processed = process_doc(help_doc)
         for name, value in processed._parsed_data.items():
@@ -79,9 +98,9 @@ class DuckCommand(commands.Command, Generic[P, T]):
             if isinstance(value, list) and isinstance(value[0], Parameter):
                 fmt = []
                 for item in value:
-                    fmt.append('`{0}`: {1}'.format(item.name, ' '.join(item.desc)))
+                    fmt.append('- `{0}`: {1}'.format(item.name, ' '.join(item.desc)))
                 
-                value = '\n\n'.join(fmt)
+                value = '\n'.join(fmt)
             elif isinstance(value, list):            
                 value = ' '.join(value)
             
@@ -91,19 +110,19 @@ class DuckCommand(commands.Command, Generic[P, T]):
     
     @property
     def help_embed(self) -> discord.Embed:
-        embed = discord.Embed(
-            title=group.qualified_name,
-            description=group.help,
-        )
+        """:class:`discord.Embed`: Creates a help embed for the command. """
+        embed = discord.Embed(title=self.qualified_name,)
         
         for key, value in self.help_mapping.items():
-            embed.add_field(name=key.title(), value=value)
+            embed.add_field(name=key.title(), value=value, inline=False)
         
         embed.add_field(name='How to use', value=f'`db.{self.qualified_name} {self.signature}'.strip() + '`')
         
         if (commands := getattr(self, 'commands', None)):
             embed.add_field(name='Subcommands', value=human_join([f'`{c.name}`' for c in commands], final='and'), inline=False)
-        embed.set_footer(text=f'Select a subcommand to get more information about it.')
+            
+        if isinstance(self, DuckGroup):
+            embed.set_footer(text=f'Select a subcommand to get more information about it.')
         
         return embed
         
@@ -114,26 +133,78 @@ class DuckCommand(commands.Command, Generic[P, T]):
 
     def add_autocomplete(
 		self,
-		func: Callable[..., Any],
-		param_name: str,
+        /,
+        *,
+		callback: AutocompleteCallbackType,
+		param: str,
     ) -> AutoComplete:
-        if param_name in self.autocompletes:
-            raise ValueError(f'{param_name} is already autocompleted')
-        if param_name not in self.clean_params:
-            raise ValueError(f'{param_name} is not a valid parameter')
+        """Adds an autocomplete callback to the command for a given parameter.
+        
+        Parameters
+        ----------
+        callback: Callable
+            The callback to be used for the parameter. This should take
+            only two parameters, `ctx` and `value`.
+        param: :class:`str`
+            The name of the parameter to add the autocomplete to.
+            
+        Returns
+        -------
+        :class:`AutoComplete`
+            The autocomplete object that was created.
+            
+        Raises
+        ------
+        ValueError
+            The parameter is already assigned an autocomplete, or
+            the parameter is not in the list of parameters registered to the
+            command.
+        """
+        if param in self.autocompletes:
+            raise ValueError(f'{param} is already autocompleted')
+        if param not in self.clean_params:
+            raise ValueError(f'{param} is not a valid parameter')
 
-        new = AutoComplete(func, param_name)
-        self.autocompletes[param_name] = new
+        new = AutoComplete(callback, param)
+        self.autocompletes[param] = new
         return new
 
-    def autocomplete(self, param_name: str):
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-            self.add_autocomplete(func, param_name)
-            return func
+    def autocomplete(self, param: str) -> Callable[[AutocompleteCallbackType], AutocompleteCallbackType]:
+        """A decorator to register a callback as an autocomplete for a parameter.
+        
+        .. code-block:: python3
+
+            @commands.command()
+            async def foo(self, ctx: DuckContext[DuckBot], argument: str) -> None:
+                return await ctx.send(f'You selected {argument!}')
+                
+            @foo.autocomplete('argument')
+            async def foo_autocomplete(ctx: DuckContext[DuckBot], value: str) -> Iterable[str]:
+                data: Tuple[str, ...] = await self.bot.get_some_data(ctx.guild.id)
+                return data
+                
+        Parameters
+        ----------
+        param: :class:`str`
+            The name of the parameter to add the autocomplete to.
+        """
+        def decorator(callback: AutocompleteCallbackType) -> AutocompleteCallbackType:
+            self.add_autocomplete(callback=callback, param=param)
+            return callback
 
         return decorator
 
     async def invoke(self, ctx: DuckContext[DuckBot], /) -> None:
+        """|coro|
+        
+        An internal helper used to invoke the command under a given context. This should
+        not be called by the user, but can be used if needed.
+        
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context to invoke the command under.
+        """
         await self.prepare(ctx)
 
         original_args = ctx.args[:2 if self.cog else 1:]
@@ -146,8 +217,10 @@ class DuckCommand(commands.Command, Generic[P, T]):
         for index, (name, parameter) in enumerate(parameters.items()):
             if not (autocomplete := self.autocompletes.get(name)):
                 continue
-
-            # type: ignore # fuck you pyright
+            
+            empty = parameter.empty
+            is_optional = (parameter.default is not empty) or (parameter.annotation is not empty)
+            
             constricted = await discord.utils.maybe_coroutine(autocomplete.callback, *constricted_args)
 
             # Let's find the current value based upon the parameter
@@ -186,13 +259,51 @@ class DuckCommand(commands.Command, Generic[P, T]):
         await injected(*ctx.args, **ctx.kwargs)  # type: ignore
 
 
+# Due to autocomplete, we can't directly inherit from `commands.Group`
+# because calling super().invoke won't go to the correct method. 
+# I'm going to patch it like this for now and search for better
+# optimizations later.
 @discord.utils.copy_doc(commands.Group)
-class DuckGroup(commands.GroupMixin, DuckCommand): # NOTE: some typehints are lost here, eventually add them back
+class DuckGroup(commands.GroupMixin[CogT], DuckCommand[CogT, P, T]):
+    """The front end implementation of a group command.
+    
+    This intherits both :class:`DuckCommand` and :class:`~commands.GroupMixin` to add
+    functionality of command management.
+    """
     def __init__(self, *args: Any, **attrs: Any) -> None:
         self.invoke_without_command: bool = attrs.pop('invoke_without_command', False)
         super().__init__(*args, **attrs)
+        
+    def copy(self) -> Self:
+        """Creates a copy of this :class:`Group`.
+
+        Returns
+        --------
+        :class:`Group`
+            A new instance of this group.
+        """
+        ret = super().copy()
+        for cmd in self.commands:
+            ret.add_command(cmd.copy())
+        return ret
     
-    def command(self, *args, **kwargs) -> Callable[..., DuckCommand]:
+    def command(self, *args: Any, **kwargs: Any) -> Callable[..., DuckCommand]:
+        """
+        Register a function as a :class:`DuckCommand`.
+        
+        Parameters
+        ----------
+        name: Optional[:class:`str`]
+            The name of the command, or ``None`` to use the function's name.
+        description: Optional[:class:`str`]
+            The description of the command, or ``None`` to use the function's docstring.
+        brief: Optional[:class:`str`]
+            The brief description of the command, or ``None`` to use the first line of the function's docstring.
+        aliases: Optional[Iterable[:class:`str`]]
+            The aliases of the command, or ``None`` to use the function's name.
+        **attrs: Any
+            The keyword arguments to pass to the :class:`DuckCommand`.
+        """
         def wrapped(func) -> DuckCommand:
             kwargs.setdefault('parent', self)
             result = command(*args, **kwargs)(func)
@@ -201,7 +312,23 @@ class DuckGroup(commands.GroupMixin, DuckCommand): # NOTE: some typehints are lo
 
         return wrapped
 
-    def group(self, *args, **kwargs) -> Callable[..., DuckGroup]:
+    def group(self, *args: Any, **kwargs: Any) -> Callable[..., DuckGroup]:
+        """
+        Register a function as a :class:`DuckGroup`.
+        
+        Parameters
+        ----------
+        name: Optional[:class:`str`]
+            The name of the command, or ``None`` to use the function's name.
+        description: Optional[:class:`str`]
+            The description of the command, or ``None`` to use the function's docstring.
+        brief: Optional[:class:`str`]
+            The brief description of the command, or ``None`` to use the first line of the function's docstring.
+        aliases: Optional[Iterable[:class:`str`]]
+            The aliases of the command, or ``None`` to use the function's name.
+        **attrs: Any
+            The keyword arguments to pass to the :class:`DuckGroup`.
+        """
         def wrapped(func) -> DuckGroup:
             kwargs.setdefault('parent', self)
             result = group(*args, **kwargs)(func)
@@ -210,6 +337,79 @@ class DuckGroup(commands.GroupMixin, DuckCommand): # NOTE: some typehints are lo
 
         return wrapped
 
+    @discord.utils.copy_doc(DuckCommand.invoke)
+    async def invoke(self, ctx: DuckContext[DuckBot], /) -> None:
+        ctx.invoked_subcommand = None
+        ctx.subcommand_passed = None
+        early_invoke = not self.invoke_without_command
+        if early_invoke:
+            await self.prepare(ctx)
+
+        view = ctx.view
+        previous = view.index
+        view.skip_ws()
+        trigger = view.get_word()
+
+        if trigger:
+            ctx.subcommand_passed = trigger
+            ctx.invoked_subcommand = self.all_commands.get(trigger, None)
+
+        if early_invoke:
+            injected = hooked_wrapped_callback(self, ctx, self.callback)
+            await injected(*ctx.args, **ctx.kwargs)  # type: ignore
+
+        ctx.invoked_parents.append(ctx.invoked_with)  # type: ignore
+
+        if trigger and ctx.invoked_subcommand:
+            ctx.invoked_with = trigger
+            await ctx.invoked_subcommand.invoke(ctx)
+        elif not early_invoke:
+            # undo the trigger parsing
+            view.index = previous
+            view.previous = previous
+            await super().invoke(ctx)
+           
+    @discord.utils.copy_doc(DuckCommand.reinvoke) 
+    async def reinvoke(self, ctx: DuckContext[DuckBot], /, *, call_hooks: bool = False) -> None:
+        ctx.invoked_subcommand = None
+        early_invoke = not self.invoke_without_command
+        if early_invoke:
+            ctx.command = self
+            await self._parse_arguments(ctx)
+
+            if call_hooks:
+                await self.call_before_hooks(ctx)
+
+        view = ctx.view
+        previous = view.index
+        view.skip_ws()
+        trigger = view.get_word()
+
+        if trigger:
+            ctx.subcommand_passed = trigger
+            ctx.invoked_subcommand = self.all_commands.get(trigger, None)
+
+        if early_invoke:
+            try:
+                await self.callback(*ctx.args, **ctx.kwargs)  # type: ignore
+            except:
+                ctx.command_failed = True
+                raise
+            finally:
+                if call_hooks:
+                    await self.call_after_hooks(ctx)
+
+        ctx.invoked_parents.append(ctx.invoked_with)  # type: ignore
+
+        if trigger and ctx.invoked_subcommand:
+            ctx.invoked_with = trigger
+            await ctx.invoked_subcommand.reinvoke(ctx, call_hooks=call_hooks)
+        elif not early_invoke:
+            # undo the trigger parsing
+            view.index = previous
+            view.previous = previous
+            await super().reinvoke(ctx, call_hooks=call_hooks)
+    
 
 def command(
 	name: str = MISSING,
@@ -218,6 +418,22 @@ def command(
 	aliases: Iterable[str] = MISSING,
 	**attrs: Any
 ) -> Callable[..., DuckCommand]:
+    """
+    Register a function as a :class:`DuckCommand`.
+    
+    Parameters
+    ----------
+    name: Optional[:class:`str`]
+        The name of the command, or ``None`` to use the function's name.
+    description: Optional[:class:`str`]
+        The description of the command, or ``None`` to use the function's docstring.
+    brief: Optional[:class:`str`]
+        The brief description of the command, or ``None`` to use the first line of the function's docstring.
+    aliases: Optional[Iterable[:class:`str`]]
+        The aliases of the command, or ``None`` to use the function's name.
+    **attrs: Any
+        The keyword arguments to pass to the :class:`DuckCommand`.
+    """
     cls = DuckCommand
 
     def decorator(func) -> DuckCommand:
@@ -247,6 +463,22 @@ def group(
 	aliases: Iterable[str] = MISSING,
 	**attrs: Any
 ) -> Callable[..., DuckGroup]:
+    """
+    Register a function as a :class:`DuckGroup`.
+    
+    Parameters
+    ----------
+    name: Optional[:class:`str`]
+        The name of the command, or ``None`` to use the function's name.
+    description: Optional[:class:`str`]
+        The description of the command, or ``None`` to use the function's docstring.
+    brief: Optional[:class:`str`]
+        The brief description of the command, or ``None`` to use the first line of the function's docstring.
+    aliases: Optional[Iterable[:class:`str`]]
+        The aliases of the command, or ``None`` to use the function's name.
+    **attrs: Any
+        The keyword arguments to pass to the :class:`DuckCommand`.
+    """
     cls = DuckGroup
 
     def decorator(func) -> DuckGroup:
