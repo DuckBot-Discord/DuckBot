@@ -1,68 +1,108 @@
-from typing import Callable, Optional, TypeVar, Generic, List
+from __future__ import annotations
+
+import inspect
+from re import S
+from fuzzywuzzy import process
+from typing import (
+	TYPE_CHECKING,
+	Any,
+	Callable,
+	Iterable,
+	List,
+	Optional,
+	Tuple,
+	Union,
+	Awaitable
+)
 
 import discord
 from discord.ext import commands
 
-AC = TypeVar("AC", bound="AutoComplete")
+from .context import DuckContext
+
+if TYPE_CHECKING:
+	from bot import DuckBot
+	
+RestrictedType = Union[Iterable[Any], Callable[[DuckContext], Union[Iterable[Any], Awaitable[Iterable[Any]]]]]
 
 
-class Dropdown(discord.ui.Select['DropdownView']):
-    def __init__(self, options: List[discord.SelectOption]):
-        options = options
-        super().__init__(placeholder="Choose an option...", min_values=1, max_values=1, options=options)
+class PromptSelect(discord.ui.Select):
+	def __init__(self, parent: PromptView, matches: List[Tuple[int, str]]) -> None:
+		super().__init__(
+			placeholder='Select an option below...',
+			options=[
+				discord.SelectOption(
+					label=str(match),
+					description=f'{probability}% chance.'
+				)
+				for match, probability in matches
+			]
+		)
+		self.parent: PromptView = parent
+	
+	async def callback(self, interaction: discord.Interaction) -> None:
+		assert interaction.message is not None
+     
+		await interaction.response.defer(thinking=True)
+		selected = self.values
+		if not selected:
+			return
 
-    async def callback(self, interaction: discord.Interaction):
-        self.view.value = self.values[0]
-        self.view.stop()
-        try:
-            await interaction.message.delete()
-        except Exception as e:
-            return e
-
-class DropdownView(discord.ui.View):
-    def __init__(self, context: commands.Context, options: List[discord.SelectOption], timeout: Optional[int] = 30):
-        super().__init__(timeout=timeout)
-        self.add_item(Dropdown(options))
-        self.context = context
-        self.value = None
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if self.context.author.id in self.context.bot.owner_ids or self.context.author.id == interaction.user.id:
-            return True
-
-        await interaction.response.defer()
-        return False
-
-    async def on_timeout(self) -> None:
-        self.value = None
+		self.parent.item = selected[0]
+		await interaction.delete_original_message()
+		await interaction.message.delete()
+  
+		self.parent.stop()
 
 
-class AutoComplete(Generic[AC]):
-    """
-    Represents an autocompletion of an argument.
+class PromptView(discord.ui.View):
+	def __init__(
+		self, 
+		*,	
+		ctx: DuckContext[DuckBot], 
+		matches: List[Tuple[int, str]],
+		param: inspect.Parameter,
+		value: str,
+	) -> None:
+		super().__init__()
+		self.ctx: DuckContext[DuckBot] = ctx
+		self.matches: List[Tuple[int, str]] = matches
+		self.param: inspect.Parameter = param
+		self.value: str = value
+		self.item: Optional[str] = None
+  
+		self.add_item(PromptSelect(self, matches))
+		
+	async def interaction_check(self, interaction: discord.Interaction) -> bool:
+		return interaction.user == self.ctx.author
 
-    Parameters
-    ----------
-    choices: List[:class:`Option`]
-      An array of options.
+	@property
+	def embed(self) -> discord.Embed:
+		# NOTE: Leo add more here
+		embed = discord.Embed(
+			title='That\'s not quite right!',
+			description=f'`{self.value}` is not a valid response to the option named `{self.param.name}`, you need to select one of the following options below.',
+		)
+		return embed
 
-    Example
-    -------
-    @cmd.autocomplete('param')
-    async def param_auto(ctx, user_input) -> Optional[str]:
-        valid_choces: List[str] = ...
-        value = await ctx.prompt_autocomplete(
-            text="Sorry, that's not one of the valid params! Select one of these:",
-            choices=valid_choices,
-            timeout=25,
-        )
-        return value
-    """
 
-    def __init__(self, func: Callable, timeout: Optional[int] = None) -> None:
-        self.callback: Callable = func
-        self._timeout = timeout
+class AutoComplete:
+	def __init__(self, func: Callable[..., Any], param_name: str) -> None:
+		self.callback: Callable[..., Any] = func
+		self.param_name: str = param_name
+	
+	async def prompt_correct_input(self, ctx: DuckContext[DuckBot], param: inspect.Parameter, /, *, value: str, constricted: Iterable[Any]) -> str:
+		assert ctx.command is not None
+  
+		# The user did not enter a correct value
+		# Find a suggestion
+		result = await ctx.bot.wrap(process.extract, value, constricted)
+		view = PromptView(ctx=ctx, matches=result, param=param, value=value)
+		await ctx.send(embed=view.embed, view=view)
+		await view.wait()
+  
+		if view.item is None:
+			raise commands.CommandError('You took too long, you need to redo this command.')
 
-    @property
-    def timeout(self):
-        return self._timeout
+		return view.item
+
