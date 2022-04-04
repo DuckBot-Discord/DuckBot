@@ -284,6 +284,7 @@ class CommandSelecter(discord.ui.Select):
             options=[
                 discord.SelectOption(
                     label=command.qualified_name,
+                    description=(command.brief and command.brief[:100]) or '',
                     value=command.qualified_name
                 )
                 for command in commands
@@ -466,14 +467,7 @@ class HelpCog(discord.ui.View):
         self.bot: DuckBot = _find_bot(parent)
         self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self) # type: ignore
         
-        # Want to show all subcommands as well, so it's a bit easier for the user
-        # to select what they want.
-        cog_commands = cog.get_commands()
-        for command in cog_commands:
-            if isinstance(command, DuckGroup):
-                cog_commands.extend(command.commands)
-        
-        for item in self.bot.chunker(cog_commands, size=20):
+        for item in self.bot.chunker(cog.get_commands(), size=20):
             self.add_item(CommandSelecter(parent=self, commands=list(item))) # type: ignore
         
         self.add_item(GoHome(self))
