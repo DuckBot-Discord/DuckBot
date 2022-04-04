@@ -12,3 +12,4 @@ from .blacklist import *
 from .cache import *
 from . import interactions
 from .paginators import *
+from .command import *
