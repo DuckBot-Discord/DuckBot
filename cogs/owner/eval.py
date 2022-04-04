@@ -12,7 +12,7 @@ import discord
 from discord.ext import commands
 from import_expression import exec as e_exec
 
-from utils import DuckCog, DuckContext, DeleteButton
+from utils import DuckCog, DuckContext, DeleteButton, command
 from bot import DuckBot
 
 CODEBLOCK_REGEX = re.compile(r'`{3}(python\n|py\n|\n)?(?P<code>[^`]*)\n?`{3}')
@@ -159,7 +159,7 @@ class Eval(DuckCog):
                 else:
                     return f"```py\n{to_send}\n```"
 
-    @commands.command(name='eval')
+    @command(name='eval')
     async def eval_command(self, ctx: DuckContext, *, body: str):
         """Evaluates arbitrary python code"""
         env = {
