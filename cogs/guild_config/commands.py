@@ -9,7 +9,6 @@ from utils import (
 )
 
 from typing import (
-    Optional,
     Union,
 )
 
@@ -17,8 +16,6 @@ class CommandConfig(DuckCog):
     """
     handles configuration of commands and channels.
     """
-    def __init__(self, bot: DuckBot):
-        super().__init__(bot)
 
     async def bot_check_once(self, ctx: DuckContext) -> bool:
         if await ctx.bot.is_owner(ctx.author):
