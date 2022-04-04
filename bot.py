@@ -70,6 +70,7 @@ initial_extensions: Tuple[str, ...] = (
     'utils.context',
     'utils.command_errors',
     'utils.interactions.command_errors',
+    'utils.help',
     
     # Cogs
     'cogs.guild_config',
