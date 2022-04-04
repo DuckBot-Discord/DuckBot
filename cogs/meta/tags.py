@@ -13,7 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, menus
 
-from utils import DuckCog, DuckContext, ViewMenuPages
+from utils import DuckCog, DuckContext, ViewMenuPages, group
 
 T = TypeVar('T')
 CO_T = TypeVar("CO_T", bound='Union[Type[commands.Converter], commands.Converter]')
@@ -517,7 +517,7 @@ class Tags(DuckCog):
             await ctx.channel.send(tag.content)
         await tag.use(self.bot.pool)
 
-    @commands.group(name='tag', invoke_without_command=True)
+    @group(name='tag', invoke_without_command=True)
     @copy_doc(__tag)
     async def tag(self, ctx: DuckContext, *, name: TagName):
         await self.__tag(ctx, name, guild=ctx.guild)
