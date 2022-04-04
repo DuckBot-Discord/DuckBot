@@ -26,7 +26,6 @@ from jishaku.paginators import use_file_check, PaginatorInterface, WrappedPagina
 
 from ..context import DuckContext
 from .. import add_logging
-from ..base_cog import DuckCog
 
 try:
     import psutil
@@ -145,13 +144,10 @@ class OverwrittenRootCommand(RootCommand):
 features = list(STANDARD_FEATURES)
 features.remove(RootCommand)
 features.append(OverwrittenRootCommand)
-features.append(DuckCog)
 
 class DuckBotJishaku(
     *features,  # type: ignore
     *OPTIONAL_FEATURES, 
-    brief='Jishaku front end class.',
-    emoji='\N{CONSTRUCTION WORKER}'
 ):
     """
     The main frontend class for JIshaku.
@@ -163,6 +159,13 @@ class DuckBotJishaku(
     bot: :class:`DuckBot`
         The bot instance this frontend is attached to.
     """
+    # NOTE: Mro gets fucked when inheriting DuckCog
+    brief: str = 'Jishaku front end class.'
+    emoji: str = '\N{CONSTRUCTION WORKER}'
+    id: int = 1949238479234872 # Random id
+    
+    def __init__(self, bot: DuckBot) -> None:
+        super().__init__(bot=bot)
 
     async def jsk_python_result_handling(
             self,
