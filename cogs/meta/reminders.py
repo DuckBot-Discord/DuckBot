@@ -9,7 +9,7 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from utils import DuckCog
+from utils import DuckCog, group
 from utils.context import DuckContext
 from utils.time import UserFriendlyTime
 from utils.timer import Timer, TimerNotFound
@@ -26,7 +26,7 @@ class JumpView(discord.ui.View):
 class Reminders(DuckCog):
     """Used to create and manage reminders."""
 
-    @commands.group(name='remind', aliases=['remindme', 'reminder'], invoke_without_command=True)
+    @group(name='remind', aliases=['remindme', 'reminder'], invoke_without_command=True)
     async def remindme(
         self,
         ctx: DuckContext,
