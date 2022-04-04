@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import datetime
 import math
-import typing
-
 import asyncpg
 import discord
+from typing import (
+    List,
+    Optional,
+    Union
+)
 
-from discord.ext import commands
 
 from utils import (
     DuckCog,
@@ -20,7 +24,7 @@ from utils import (
 
 class BlackListManagement(DuckCog):
 
-    async def format_entry(self, entry: asyncpg.Record) -> str:
+    async def format_entry(self, entry: asyncpg.Record) -> Optional[str]:
         """Formats an entry from the blacklist.
 
         Parameters
@@ -59,11 +63,12 @@ class BlackListManagement(DuckCog):
             return f"[{time} | CHANNEL] {chan}" + (f" in guild: {guild}" if guild else '')
 
     @group(name='blacklist', aliases=['bl'], invoke_without_command=True)
-    async def blacklist(self,
-                        ctx: DuckContext,
-                        entity: typing.Union[discord.Guild, discord.User, discord.abc.GuildChannel],
-                        when: ShortTime = None
-                        ) -> None:
+    async def blacklist(
+        self,
+        ctx: DuckContext,
+        entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel],
+        when: Optional[ShortTime] = None
+    ) -> None:
         """|coro|
 
         Base command for blacklist management.
@@ -76,7 +81,7 @@ class BlackListManagement(DuckCog):
         when: :class:`utils.ShortTime`
             the time to block the entity. Must be a short time.
         """
-        args = [entity]
+        args: List[Union[str, discord.Guild, discord.User, discord.abc.GuildChannel]] = [entity]
         if when:
             args.append(f" for {human_timedelta(when.dt)}")
             dt = when.dt
@@ -94,10 +99,11 @@ class BlackListManagement(DuckCog):
         await ctx.send(ctx.tick(blacklisted, ('added {}{}.' if blacklisted else '{} already blacklisted{}.').format(*args)))
 
     @blacklist.command(name='remove', aliases=['rm'])
-    async def blacklist_remove(self,
-                               ctx: DuckContext,
-                               entity: typing.Union[discord.Guild, discord.User, discord.abc.GuildChannel]
-                               ) -> None:
+    async def blacklist_remove(
+        self,
+        ctx: DuckContext,
+        entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel]
+    ) -> None:
         """|coro|
 
         Removes an entity from the global blacklist.
@@ -118,11 +124,13 @@ class BlackListManagement(DuckCog):
         await ctx.send(ctx.tick(removed, '{} removed' if removed else '{} not blacklisted').format(etype))
 
     @blacklist.command(name='local')
-    async def blacklist_local(self,
-                              ctx: DuckContext,
-                              guild: typing.Optional[discord.Guild],
-                              user: typing.Union[discord.Member, discord.User],
-                              when: ShortTime = None) -> None:
+    async def blacklist_local(
+        self,
+        ctx: DuckContext,
+        guild: Optional[discord.Guild],
+        user: Union[discord.Member, discord.User],
+        when: Optional[ShortTime] = None
+    ) -> None:
         """|coro|
 
         Adds an entity to the local blacklist.
@@ -148,7 +156,7 @@ class BlackListManagement(DuckCog):
         await ctx.send(ctx.tick(success, 'Added {} for guild {}.' if success else '{} already blacklisted in {}.').format(etype, mdr(guild)))
 
     @blacklist.command(name='list', aliases=['ls'])
-    async def blacklist_list(self, ctx: DuckContext, page: typing.Optional[int] = 1) -> None:
+    async def blacklist_list(self, ctx: DuckContext, page: int = 1) -> None:
         """|coro|
         Gets a list of all blocked users in a channel.
         If no channel is specified, it will show the
@@ -170,13 +178,13 @@ class BlackListManagement(DuckCog):
                                            "FROM blacklist ORDER BY created_at DESC OFFSET $1", (page - 1) * 10)
         count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM blacklist")
 
-        rows = [await self.format_entry(row) for row in result]
+        rows: List[Optional[str]] = [await self.format_entry(row) for row in result]
 
         if not rows:
             await ctx.send(ctx.tick(False, 'no entries'))
             return
 
-        formatted = '```\n' + '\n'.join(rows) + '\n```'
+        formatted = '```\n' + '\n'.join(rows) + '\n```' # type: ignore
         pages = math.ceil(count / 10)
 
         message = f"📋 **|** Blacklisted entities - Showing `{len(result)}/{count}` entries - Page `{page}/{pages}`:\n{formatted}"
