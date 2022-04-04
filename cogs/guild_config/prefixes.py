@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import (
+    List,
     Optional,
     TYPE_CHECKING
 )
@@ -10,7 +11,6 @@ from discord.ext import commands
 
 from utils import DuckCog, SilentCommandError
 from utils.context import DuckContext
-from utils.time import human_join
 from utils.command import group
 
 if TYPE_CHECKING:
@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 class PrefixChanges(DuckCog):
     def __init__(self, bot: DuckBot) -> None:
         super().__init__(bot)
-        self.prefix_remove.add_autocomplete("prefix", self.prefix_remove_autocomplete)
 
     @group(name='prefix', aliases=['prefixes'], invoke_without_command=True)
     @commands.guild_only()
@@ -97,17 +96,7 @@ class PrefixChanges(DuckCog):
             prefix, ctx.guild.id)
         return await ctx.send(f'✅ Removed prefix {prefix}')
 
-    async def prefix_remove_autocomplete(
-            self,
-            ctx: DuckContext,
-            user_input: str
-    ) -> str:
-        valid = list(await ctx.bot.get_prefix(ctx.message, raw=True))
-        if user_input in valid:
-            return user_input
-        thing = await ctx.prompt_autocomplete(
-            text='Thats not a valid prefix!',
-            choices=[discord.SelectOption(label=p) for p in valid])
-        if thing is not None:
-            return thing
-        raise SilentCommandError
+    @prefix_remove.autocomplete('prefix')
+    async def prefix_remove_autocomplete(self, ctx: DuckContext) -> List[str]:
+        return list(await ctx.bot.get_prefix(ctx.message, raw=True))
+        
