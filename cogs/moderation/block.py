@@ -18,6 +18,7 @@ from utils import (
     mdr,
     FutureTime,
     TargetVerifier,
+    command
 )
 from utils.errors import TimerNotFound
 from utils.timer import Timer
@@ -59,7 +60,7 @@ class Block(BlockCog):
 
         return f"{channel}@{user} ({user_id})"
 
-    @commands.command()
+    @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
     async def block(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)):  # type: ignore
@@ -79,7 +80,7 @@ class Block(BlockCog):
 
         await ctx.send(f'✅ **|** Blocked **{mdr(member)}** from **{ctx.channel}**')
 
-    @commands.command()
+    @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
     async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: TargetVerifier(discord.Member)):  # type: ignore
@@ -108,7 +109,7 @@ class Block(BlockCog):
 
         await ctx.send(f'✅ **|** Blocked **{mdr(member)}** until {discord.utils.format_dt(time.dt, "R")}')
 
-    @commands.command()
+    @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def unblock(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)):  # type: ignore
@@ -151,7 +152,7 @@ class Block(BlockCog):
 
         await ctx.send(f'✅ **|** Unblocked **{mdr(member)}**')
 
-    @commands.command(aliases=['blocks'])
+    @command(aliases=['blocks'])
     @commands.has_permissions(manage_guild=True)
     async def blocked(self, ctx: DuckContext, page: int = 1, *, channel: Optional[discord.TextChannel] = None):
         """|coro|

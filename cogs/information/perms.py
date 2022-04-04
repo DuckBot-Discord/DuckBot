@@ -6,7 +6,7 @@ import discord
 from discord import Permissions, PermissionOverwrite, Member, Role
 from discord.ext import commands
 
-from utils import DuckContext, DuckCog, constants, DeleteButton
+from utils import DuckContext, DuckCog, constants, DeleteButton, command
 from discord.utils import as_chunks
 
 # These are just for making it look nicer,
@@ -234,7 +234,7 @@ class GuildPermsViewer(discord.ui.View):
 
 class PermsViewer(DuckCog):
 
-    @commands.command()
+    @command()
     async def perms(
             self,
             ctx: DuckContext,

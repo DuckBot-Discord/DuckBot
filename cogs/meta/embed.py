@@ -3,7 +3,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from utils import DuckContext, DuckCog
+from utils import DuckContext, DuckCog, command
 from .tags import TagName
 try:
     from utils.ignored import HORRIBLE_HELP_EMBED
@@ -68,7 +68,7 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
 
 class EmbedMaker(DuckCog):
 
-    @commands.command(brief='Sends an embed using flags')
+    @command(brief='Sends an embed using flags')
     async def embed(self, ctx: DuckContext, *, flags: typing.Union[typing.Literal['--help'], EmbedFlags]):
         """|coro|
 

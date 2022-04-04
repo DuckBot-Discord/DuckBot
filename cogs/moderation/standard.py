@@ -15,6 +15,7 @@ from utils import (
     DuckCog,
     safe_reason,
     mdr,
+    command
 )
 
 
@@ -23,7 +24,7 @@ class StandardModeration(DuckCog):
     moderation commands. Such as ban or kick.
     """
 
-    @commands.command(name='kick', aliases=['boot'])
+    @command(name='kick', aliases=['boot'])
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
@@ -48,7 +49,7 @@ class StandardModeration(DuckCog):
 
         return await ctx.send(f'Kicked **{member}** for: {reason}')
 
-    @commands.command(name='ban')
+    @command(name='ban')
     @commands.bot_has_guild_permissions(ban_members=True)
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
@@ -73,7 +74,7 @@ class StandardModeration(DuckCog):
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
 
-    @commands.command()
+    @command()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, ban_members=True)
     @commands.cooldown(1, 3.0, commands.BucketType.user)
@@ -103,7 +104,7 @@ class StandardModeration(DuckCog):
         extra = f"Previously banned for: {user.reason}" if user.reason else ''
         return await ctx.send(f"Unbanned **{user}**\n{extra}")
 
-    @commands.command(name='nick')
+    @command(name='nick')
     @commands.bot_has_guild_permissions(manage_nicknames=True)
     @commands.has_guild_permissions(manage_nicknames=True)
     @commands.guild_only()

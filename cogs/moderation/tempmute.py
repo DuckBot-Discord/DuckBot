@@ -16,7 +16,8 @@ from utils import (
     DuckCog,
     DuckContext,
     UserFriendlyTime,
-    human_timedelta
+    human_timedelta,
+    command
 )
 
 from utils.errors import (
@@ -292,7 +293,7 @@ class TempMute(DuckCog):
         embed.set_footer(text=f'Member ID: {member.id}')
         return await ctx.send(embed=embed)
     
-    @commands.command(name='unmute')
+    @command(name='unmute')
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
     @commands.guild_only()
