@@ -15,6 +15,7 @@ from typing import (
     Generator,
     List,
     Optional,
+    Sequence,
     Set,
     TypeVar,
     Type,
@@ -33,7 +34,6 @@ import asyncpg
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.utils import MISSING  # noqa F401
 
 from utils import (
     constants,
@@ -202,7 +202,7 @@ class DuckHelper(TimerManager):
         super().__init__(bot=bot)
 
     @staticmethod
-    def chunker(item: str, *, size: int = 2000) -> Generator[str, None, None]:
+    def chunker(item: Union[str, Sequence[T]], *, size: int = 2000) -> Generator[Union[str, Sequence[T]], None, None]:
         """Split a string into chunks of a given size.
         
         Parameters
@@ -726,6 +726,8 @@ class DuckBot(commands.Bot, DuckHelper):
         ctx: DuckContext
             The context of the command.
         """
+        assert ctx.command is not None
+        
         try:
             bucket = self.global_mapping.get_bucket(ctx.message)
             current = ctx.message.created_at.timestamp()
@@ -745,7 +747,7 @@ class DuckBot(commands.Bot, DuckHelper):
         finally:
             await self.pool.execute(
                 "INSERT INTO commands (guild_id, user_id, command, timestamp) VALUES ($1, $2, $3, $4)",
-                getattr(ctx.guild, 'id', None), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
+                (ctx.guild and ctx.guild.id), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
 
     async def _log_rl_excess(self, ctx, message, retry_after, *, auto_block=False):
         """|coro|
@@ -776,7 +778,8 @@ class DuckBot(commands.Bot, DuckHelper):
         embed.add_field(name='Guild Info', value=f'{guild_name} (ID: {guild_id})', inline=False)
         embed.add_field(name='Channel Info', value=f'{message.channel} (ID: {message.channel.id}', inline=False)
         embed.timestamp = discord.utils.utcnow()
-        channel = self.bot.get_channel(904797860841812050)
+        channel: discord.abc.Messageable = self.bot.get_channel(904797860841812050) # type: ignore
+        
         try:
             await channel.send(embed=embed)
         except discord.HTTPException:
@@ -784,7 +787,7 @@ class DuckBot(commands.Bot, DuckHelper):
         except AttributeError as e:
             await self.exceptions.add_error(error=e)
 
-    async def _auto_blacklist_add(self, user: discord.User):
+    async def _auto_blacklist_add(self, user: Union[discord.User, discord.Member]):
         """|coro|
 
         Adds a user to the auto-blacklist.
