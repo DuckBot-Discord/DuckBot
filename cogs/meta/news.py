@@ -8,7 +8,7 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from utils import DuckCog
+from utils import DuckCog, group
 from ._news_viewer import NewsViewer
 from utils.context import DuckContext
 
@@ -22,7 +22,7 @@ class News(DuckCog):
     News cog
     """
 
-    @commands.group(invoke_without_command=True)
+    @group(invoke_without_command=True)
     async def news(self, ctx: DuckContext):
         """|coro|
         
