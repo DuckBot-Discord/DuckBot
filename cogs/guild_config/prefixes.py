@@ -97,6 +97,6 @@ class PrefixChanges(DuckCog):
         return await ctx.send(f'✅ Removed prefix {prefix}')
 
     @prefix_remove.autocomplete('prefix')
-    async def prefix_remove_autocomplete(self, ctx: DuckContext) -> List[str]:
+    async def prefix_remove_autocomplete(self, ctx: DuckContext, value: str) -> List[str]:
         return list(await ctx.bot.get_prefix(ctx.message, raw=True))
         
