@@ -22,21 +22,22 @@ from utils import (
     human_timedelta,
     Timer,
     format_date,
+    command
 )
 
 log = logging.getLogger('DuckBot.moderation.temporary')
 
 class TemporaryCommands(DuckCog):
 
-    @commands.command(name='tempban', aliases=['tban'])
+    @command(name='tempban', aliases=['tban'])
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     async def tempban(
-            self,
-            ctx: DuckContext,
-            member: TargetVerifier(discord.Member, discord.User, fail_if_not_upgrade=False),
-            *,
-            when: UserFriendlyTime(commands.clean_content, default='...')
+        self,
+        ctx: DuckContext,
+        member: TargetVerifier(discord.Member, discord.User, fail_if_not_upgrade=False), # type: ignore
+        *,
+        when: UserFriendlyTime(commands.clean_content, default='...') # type: ignore
     ) -> None:
         """|coro|
 
