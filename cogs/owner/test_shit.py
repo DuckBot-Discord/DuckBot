@@ -11,14 +11,14 @@ async def _constrict_input(ctx):
 class TestingShit(DuckCog):
     
     @group(name='cock', invoke_without_command=True)
-    async def cock(self, ctx, foo_bar: str = None, one: str = 'COCK') -> None: # type: ignore
+    async def cock(self, ctx, foo_bar: Optional[int] = None, one: str = 'COCK') -> None: # type: ignore
         if ctx.invoked_subcommand:
             return
         
-        return await ctx.send(f'HII {one}')
+        return await ctx.send(f'{foo_bar} {one}')
     
-    @cock.autocomplete('one')
-    async def cock_autocomplete(self, ctx):
+    @cock.autocomplete('foo_bar')
+    async def cock_autocomplete(self, ctx, value):
         return ('one', 'two')
     
     @cock.command(name='foo')
