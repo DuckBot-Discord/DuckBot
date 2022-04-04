@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Optional, List
+from typing import (
+    TYPE_CHECKING,
+    Generic, 
+    Tuple, 
+    Optional,
+    List,
+    TypeVar
+)
 
 import discord
 from discord.ext import commands
@@ -9,13 +16,13 @@ if TYPE_CHECKING:
     from discord.message import Message
     from bot import DuckBot
 
-from utils.autocomplete import DropdownView
 
 __all__: Tuple[str, ...] = (
     'DuckContext',
     'tick',
 )
 
+BotT = TypeVar('BotT', bound='DuckBot')
 
 def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
     """A function to convert a boolean value with label to an emoji with label.
@@ -59,7 +66,8 @@ class ConfirmationView(discord.ui.View):
         self.ctx.bot.views.discard(self)
         if self.message:
             for item in self.children:
-                item.disabled = True
+                item.disabled = True # type: ignore
+                
             await self.message.edit(content=f'Timed out waiting for a button press from {self.ctx.author}.', view=self)
 
     def stop(self) -> None:
@@ -68,18 +76,22 @@ class ConfirmationView(discord.ui.View):
 
     @discord.ui.button(label='Confirm', style=discord.ButtonStyle.primary)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        assert interaction.message is not None
+        
         self.value = True
         self.stop()
         await interaction.message.delete()
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        assert interaction.message is not None
+        
         self.value = False
         self.stop()
         await interaction.message.delete()
 
 
-class DuckContext(commands.Context):
+class DuckContext(commands.Context, Generic[BotT]):
     """The subclassed Context to allow some extra functionality."""
     if TYPE_CHECKING:
         bot: DuckBot
@@ -141,26 +153,6 @@ class DuckContext(commands.Context):
             kwargs['embeds'] = embeds
 
         return await super().send(*args, **kwargs)
-
-    async def prompt_autocomplete(
-            self,
-            text: Optional[str] = "Choose an option...",
-            choices: List[discord.SelectOption] = None,
-            timeout: Optional[int] = 30):
-        """|coro|
-        
-        Prompts an autocomplete select menu that users can select choices.
-
-        Returns
-        -------
-        :class: `~str`
-            The value the user chose.
-        """
-        choices = choices or []
-        view = DropdownView(self, choices, timeout=timeout)
-        await self.reply(text, view=view)
-        await view.wait()
-        return view.value
 
     async def confirm(self, content=None, /, *, timeout: int = 30, **kwargs) -> bool | None:
         """|coro|
