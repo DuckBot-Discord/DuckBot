@@ -14,6 +14,7 @@ from utils import (
     mdr,
     format_date,
     human_timedelta,
+    group
 )
 
 
@@ -57,8 +58,7 @@ class BlackListManagement(DuckCog):
             chan = f"{meth(entity_id) or 'Unknown Channel'} ({entity_id})"  # type: ignore
             return f"[{time} | CHANNEL] {chan}" + (f" in guild: {guild}" if guild else '')
 
-    @commands.group(name='blacklist', aliases=['bl'],
-                    invoke_without_command=True)
+    @group(name='blacklist', aliases=['bl'], invoke_without_command=True)
     async def blacklist(self,
                         ctx: DuckContext,
                         entity: typing.Union[discord.Guild, discord.User, discord.abc.GuildChannel],
