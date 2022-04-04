@@ -37,8 +37,14 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 P = ParamSpec('P')
-RestrictedType = Union[Iterable[Any], Callable[[DuckContext], Union[Iterable[Any], Awaitable[Iterable[Any]]]]]
-AutocompleteCallbackType = Callable[[DuckContext, str], Union[Iterable[Any], Awaitable[Iterable[Any]]]]
+
+AutocompleteCallbackTypeReturn = Union[Iterable[Any], Awaitable[Iterable[Any]]]
+RestrictedType = Union[Iterable[Any], Callable[[DuckContext], AutocompleteCallbackTypeReturn]]
+
+AutocompleteCallbackType = Union[
+    Callable[[CogT, ContextT, str], AutocompleteCallbackTypeReturn],
+    Callable[[ContextT, str], AutocompleteCallbackTypeReturn],
+]
 
 NUMPY_ITEM_REGEX = re.compile(r'(?P<type>\:[a-z]{1,}\:)\`(?P<name>[a-z\.]{1,})\`', flags=re.IGNORECASE)
 DOC_HEADER_REGEX = re.compile(r'\|[a-z]{1,}\|', flags=re.IGNORECASE)
@@ -218,15 +224,13 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
             if not (autocomplete := self.autocompletes.get(name)):
                 continue
             
-            empty = parameter.empty
-            is_optional = (parameter.default is not empty) or (parameter.annotation is not empty)
-            
-            constricted = await discord.utils.maybe_coroutine(autocomplete.callback, *constricted_args)
-
             # Let's find the current value based upon the parameter
             if parameter.kind is parameter.POSITIONAL_OR_KEYWORD:
                 value = args[index]
-
+                
+                constricted_args.append(value)
+                constricted = await discord.utils.maybe_coroutine(autocomplete.callback, *constricted_args)
+                
                 if value not in constricted:
                     try:
                         new_value = await autocomplete.prompt_correct_input(ctx, parameter, value=value, constricted=constricted)
@@ -236,6 +240,9 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
                     args[index] = new_value
             elif parameter.kind is parameter.KEYWORD_ONLY:
                 value = kwargs[name]
+                
+                constricted_args.append(value)
+                constricted = await discord.utils.maybe_coroutine(autocomplete.callback, *constricted_args)
 
                 if value not in constricted:
                     try:
