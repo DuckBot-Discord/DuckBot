@@ -96,7 +96,11 @@ class AutoComplete:
   
 		# The user did not enter a correct value
 		# Find a suggestion
-		result = await ctx.bot.wrap(process.extract, value, constricted)
+		if isinstance(value, (str, bytes)):
+			result = await ctx.bot.wrap(process.extract, value, constricted)
+		else:
+			result = [(item, 0) for item in constricted]
+   
 		view = PromptView(ctx=ctx, matches=result, param=param, value=value)
 		await ctx.send(embed=view.embed, view=view)
 		await view.wait()
