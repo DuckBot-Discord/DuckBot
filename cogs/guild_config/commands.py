@@ -5,7 +5,8 @@ from utils import (
     DuckCog,
     DuckContext,
     cache,
-    Strategy
+    Strategy,
+    group
 )
 
 from typing import (
@@ -29,7 +30,7 @@ class CommandConfig(DuckCog):
     async def is_context_valid(self, ctx: DuckContext):
         ...  # TODO: implement
 
-    @commands.group(name='config')
+    @group(name='config')
     @commands.has_permissions(manage_guild=True)
     async def config(self, ctx: DuckContext):
         """|coro|

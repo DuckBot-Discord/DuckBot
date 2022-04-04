@@ -17,7 +17,8 @@ from utils import (
     DuckContext,
     UserFriendlyTime,
     human_timedelta,
-    command
+    command,
+    group
 )
 
 from utils.errors import (
@@ -129,7 +130,7 @@ class TempMute(DuckCog):
     
         return role
     
-    @commands.group(name='tempmute', aliases=['tm', 'mute'], invoke_without_command=True)
+    @group(name='tempmute', aliases=['tm', 'mute'], invoke_without_command=True)
     @commands.guild_only()
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
