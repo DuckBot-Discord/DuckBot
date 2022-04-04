@@ -79,10 +79,12 @@ class PromptView(discord.ui.View):
 	@property
 	def embed(self) -> discord.Embed:
 		# NOTE: Leo add more here
-		embed = discord.Embed(
-			title='That\'s not quite right!',
-			description=f'`{self.value}` is not a valid response to the option named `{self.param.name}`, you need to select one of the following options below.',
-		)
+		embed = discord.Embed(title='That\'s not quite right!')
+		if self.value is not None:
+			embed.description = f'`{self.value}` is not a valid response to the option named `{self.param.name}`, you need to select one of the following options below.'
+		else:
+			embed.description = f'You did not enter a value for the option named `{self.param.name}`, you need to select one of the following options below.'
+   
 		return embed
 
 
