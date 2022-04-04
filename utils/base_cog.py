@@ -20,7 +20,6 @@ __all__: Tuple[str, ...] = (
 )
 
 
-
 class DuckCog(commands.Cog):
     """The base class for all DuckBot cogs.
 
@@ -32,8 +31,6 @@ class DuckCog(commands.Cog):
     if TYPE_CHECKING:
         emoji: Optional[str]
         brief: Optional[str]
-
-    #__metaclass__: DuckCogMeta = DuckCogMeta
 
     __slots__: Tuple[str, ...] = (
         'bot',
@@ -49,9 +46,7 @@ class DuckCog(commands.Cog):
         cls.brief = kwargs.pop('brief', None)
         return super().__init_subclass__(**kwargs)
 
-    def __init__(self, bot: DuckBot, *args, **kwargs) -> None:
+    def __init__(self, bot: DuckBot) -> None:
         self.bot: DuckBot = bot
         self.id: int = int(str(int(uuid.uuid4()))[:20])
         
-        kwargs['bot'] = bot
-        super().__init__(*args, **kwargs) # type: ignore
