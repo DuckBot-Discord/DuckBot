@@ -8,7 +8,7 @@ from discord.ext import commands
 from discord.utils import format_dt
 
 from bot import DuckBot
-from utils import DuckContext, DuckCog, constants, human_join
+from utils import DuckContext, DuckCog, constants, command
 
 from .perms import PermsEmbed
 
@@ -278,7 +278,7 @@ class UserInfoViewer(discord.ui.View):
 
 class UserInfo(DuckCog):
 
-    @commands.command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
+    @command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
     async def user_info(self, ctx: DuckContext, *, user: typing.Union[discord.Member, discord.User] = None):
         """|coro|
 
