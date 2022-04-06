@@ -25,7 +25,7 @@ from jishaku.repl import AsyncCodeExecutor, get_var_dict_from_ctx
 from jishaku.paginators import use_file_check, PaginatorInterface, WrappedPaginator
 
 from ..context import DuckContext
-from .. import add_logging
+from .. import add_logging, DuckCog
 
 try:
     import psutil
@@ -146,6 +146,7 @@ features.remove(RootCommand)
 features.append(OverwrittenRootCommand)
 
 class DuckBotJishaku(
+    DuckCog,
     *features,  # type: ignore
     *OPTIONAL_FEATURES, 
 ):
