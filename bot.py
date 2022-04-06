@@ -5,6 +5,7 @@ import concurrent.futures
 import contextlib
 import functools
 import logging
+import pprint
 import random
 import re
 import sys
@@ -810,26 +811,6 @@ class DuckBot(commands.Bot, DuckHelper):
         else:
             await self.blacklist.add_user(user)
 
-    async def sync_tree(self, *, guild: discord.abc.Snowflake | None = None) -> List[app_commands.AppCommand]:
-        """|coro|
-
-        Syncs the guild and updates the database.
-
-        Parameters
-        ----------
-        guild: discord.abc.Snowflake | None
-            The guild to sync the command tree for.
-        """
-        guild_id = guild.id if guild else 0
-        synced = await self.bot.tree.sync(guild=guild)
-
-        payloads = [(guild_id, cmd.to_dict()) for cmd in synced]
-
-        await self.pool.execute("DELETE FROM auto_sync WHERE guild_id = $1", guild_id)
-        await self.pool.executemany("INSERT INTO auto_sync (guild_id, payload) VALUES ($1, $2)", payloads)
-
-        return synced
-
     async def try_syncing(self, *, guild: discord.abc.Snowflake | None = None) -> SyncResult:
         """|coro|
 
@@ -853,7 +834,11 @@ class DuckBot(commands.Bot, DuckHelper):
         not_synced = [p for g, p in payloads if p not in saved_payloads]
 
         if not_synced:
-            synced = await self.sync_tree(guild=guild)
+
+            await self.pool.execute("DELETE FROM auto_sync WHERE guild_id = $1", guild_id)
+            await self.pool.executemany("INSERT INTO auto_sync (guild_id, payload) VALUES ($1, $2)", payloads)
+
+            synced = await self.bot.tree.sync(guild=guild)
             return SyncResult(commands=synced, synced=True)
 
         else:
