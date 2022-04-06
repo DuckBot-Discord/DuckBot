@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     
 QUESTION_MARK = '\N{BLACK QUESTION MARK ORNAMENT}'
 HOME = '\N{HOUSE BUILDING}'
-NON_MARDKWON_INFORMATION_SOURCE = '\N{INFORMATION SOURCE}'
+NON_MARKDOWN_INFORMATION_SOURCE = '\N{INFORMATION SOURCE}'
 
 InteractionCheckCallback = Callable[[discord.ui.View, discord.Interaction], Awaitable[bool]]
 
@@ -609,7 +609,7 @@ class HelpView(discord.ui.View):
                         f'You can find my source code on {GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots/tree/rewrite).', inline=False)
         embed.add_field(name='Support DuckBot', value='If you like DuckBot, you can support by voting here:\n'
                         '⭐ https://top.gg/bot/788278464474120202 ⭐', inline=False)
-        embed.set_footer(text=f'{NON_MARDKWON_INFORMATION_SOURCE} For more info on a command press {QUESTION_MARK} help.')
+        embed.set_footer(text=f'{NON_MARKDOWN_INFORMATION_SOURCE} For more info on a command press {QUESTION_MARK} help.')
         return embed
     
     
