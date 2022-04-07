@@ -1,10 +1,9 @@
+import random
+
 import discord
 from discord import app_commands
 
-import random
-
 from utils import DuckCog
-
 class ApplicationApis(DuckCog):
 
     @app_commands.command(name="duck")
