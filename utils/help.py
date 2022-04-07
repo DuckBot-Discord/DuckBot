@@ -671,6 +671,7 @@ class DuckHelp(commands.HelpCommand):
         :class:`discord.Message`
             The message that was sent to the user.
         """
+        print(type(mapping))
         self.bot = self.context.bot
         mapping = await self._filter_mapping(mapping)
         view = HelpView(parent=self.bot, cogs=list(cog for cog in mapping if cog), author=self.context.author) 

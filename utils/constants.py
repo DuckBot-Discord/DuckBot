@@ -72,6 +72,7 @@ __all__: Tuple[str, ...] = (
     'NITRO',
     'BOT',
     'FULL_SPOTIFY',
+    'BOT_ANSI_ART',
 )
 
 GET_SOME_HELP = '<a:stopit:895395218763968562>'
@@ -597,3 +598,13 @@ COMMON_WORDS = ['abandon', 'ability', 'able', 'abortion', 'about', 'above', 'abr
                 'working', 'works', 'workshop', 'world', 'worried', 'worry', 'worth', 'would', 'wound', 'wrap', 'write',
                 'writer', 'writing', 'wrong', 'yard', 'yeah', 'year', 'yell', 'yellow', 'yes', 'yesterday', 'yet',
                 'yield', 'you', 'young', 'your', 'yours', 'yourself', 'youth', 'zone']
+
+BOT_ANSI_ART = """
+██████╗ ██╗   ██╗ ██████╗██╗  ██╗██████╗  ██████╗ ████████╗
+██╔══██╗██║   ██║██╔════╝██║ ██╔╝██╔══██╗██╔═══██╗╚══██╔══╝
+██║  ██║██║   ██║██║     █████╔╝ ██████╔╝██║   ██║   ██║   
+██║  ██║██║   ██║██║     ██╔═██╗ ██╔══██╗██║   ██║   ██║   
+██████╔╝╚██████╔╝╚██████╗██║  ██╗██████╔╝╚██████╔╝   ██║   
+╚═════╝  ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═════╝  ╚═════╝    ╚═╝   
+""".strip()
+

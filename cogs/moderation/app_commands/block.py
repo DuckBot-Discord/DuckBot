@@ -1,40 +1,26 @@
 from __future__ import annotations
 
-import typing
-from typing import (
-    Optional,
-    Tuple,
-)
-
 import discord
 from discord import app_commands
 
+from bot import DuckBot
 from utils import (
-    DuckCog,
-    ShortTime,
-    safe_reason,
-    format_date,
     mdr
 )
-
 from utils.interactions import (
     HandleHTTPException,
     can_execute_action,
     has_permissions,
     bot_has_permissions,
-    ActionNotExecutable,
 )
-
 from .._block_cog import BlockCog
-from bot import DuckBot
 
 
-class BlockCommand(app_commands.Group, name='block'):
-    def __init__(self, cog: ApplicationBlock):
-        super().__init__()
-        self.cog = cog
+class ApplicationBlock(BlockCog, name='block'):
 
-    @app_commands.command(name='user')
+    slash_block = app_commands.Group(name='block', description='Blocks users from channels')
+
+    @slash_block.command(name='user')
     @app_commands.describe(
         user='The user you wish to block.'
     )
@@ -53,11 +39,11 @@ class BlockCommand(app_commands.Group, name='block'):
         reason = f'Block by {interaction.user} (ID: {interaction.user.id})'
 
         async with HandleHTTPException(followup):
-            await self.cog.toggle_block(interaction.channel, user, blocked=True, reason=reason)  # type: ignore
+            await self.toggle_block(interaction.channel, user, blocked=True, reason=reason)  # type: ignore
 
         await followup.send(f'✅ **|** Blocked **{mdr(user)}**')
 
-    @app_commands.command(name='revoke')
+    @slash_block.command(name='revoke')
     @app_commands.describe(
         user='The user you wish to block.'
     )
@@ -89,16 +75,6 @@ class BlockCommand(app_commands.Group, name='block'):
         reason = f'Unblock by {interaction.user} (ID: {interaction.user.id})'
 
         async with HandleHTTPException(followup):
-            await self.cog.toggle_block(interaction.channel, user, blocked=False, reason=reason)  # type: ignore
+            await self.toggle_block(interaction.channel, user, blocked=False, reason=reason)  # type: ignore
 
         await followup.send(f'✅ **|** Unblocked **{mdr(user)}**')
-
-
-class ApplicationBlock(BlockCog):
-    def __init__(self, bot: DuckBot):
-        super().__init__(bot)
-        self.bot.tree.add_command(BlockCommand(self))
-
-    def cog_unload(self) -> None:
-        self.bot.tree.remove_command('block')
-

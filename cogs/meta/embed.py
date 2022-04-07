@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from utils import DuckContext, DuckCog, command
-from .tags import TagName
+from cogs.tags import TagName
 try:
     from utils.ignored import HORRIBLE_HELP_EMBED
 except ImportError:

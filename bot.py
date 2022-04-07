@@ -831,10 +831,10 @@ class DuckBot(commands.Bot, DuckHelper):
         databased = await self.pool.fetch("SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id)
         saved_payloads = [d['payload'] for d in databased]
 
-        not_synced = [p for g, p in payloads if p not in saved_payloads]
+        not_synced = [p for g, p in payloads if p not in saved_payloads] + \
+                     [p for p in saved_payloads if p not in [p for g, p in payloads]]
 
         if not_synced:
-
             await self.pool.execute("DELETE FROM auto_sync WHERE guild_id = $1", guild_id)
             await self.pool.executemany("INSERT INTO auto_sync (guild_id, payload) VALUES ($1, $2)", payloads)
 
