@@ -284,8 +284,8 @@ class CommandSelecter(discord.ui.Select):
             options=[
                 discord.SelectOption(
                     label=command.qualified_name,
-                    description=(command.brief and command.brief[:100]) or '',
-                    value=command.qualified_name
+                    description=command.brief[:100] if command.brief else '',
+                    value=command.qualified_name,
                 )
                 for command in cmds
             ]
@@ -357,7 +357,7 @@ class HelpGroup(discord.ui.View):
                 group_commands.extend(command.commands)
         
         for chunk in self.bot.chunker(group_commands, size=20):
-            self.add_item(CommandSelecter(parent=self, commands=chunk))  # type: ignore
+            self.add_item(CommandSelecter(parent=self, cmds=chunk))  # type: ignore
         
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
@@ -468,7 +468,7 @@ class HelpCog(discord.ui.View):
         self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
         
         for item in self.bot.chunker(cog.get_commands(), size=20):
-            self.add_item(CommandSelecter(parent=self, commands=list(item)))  # type: ignore
+            self.add_item(CommandSelecter(parent=self, cmds=list(item)))  # type: ignore
         
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
