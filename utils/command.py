@@ -9,7 +9,6 @@ from typing import (
     TYPE_CHECKING,
     Awaitable,
     Callable,
-    Concatenate,
     Dict,
     Iterable,
     List,
@@ -20,7 +19,7 @@ from typing import (
     TypeVar,
     Union,
 )
-from typing_extensions import ParamSpec, Self
+from typing_extensions import ParamSpec, Self, Concatenate
 
 import discord
 from discord.ext import commands

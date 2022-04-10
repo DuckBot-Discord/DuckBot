@@ -1,5 +1,7 @@
-import asyncio
+from asyncio import run
+
 from launcher import run_bot
 
+
 if __name__ == '__main__':
-    asyncio.run(run_bot())
+    run(run_bot())

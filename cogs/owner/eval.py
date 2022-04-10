@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import contextlib
 import io
+import pprint
+import random
 import re
+
+import aiohttp
 import textwrap
 import traceback
 import typing
@@ -93,19 +97,12 @@ async def eval_message(interaction: discord.Interaction, message: discord.Messag
 
     result = await eval_cog.eval(body, env)
 
-    if isinstance(result, discord.File):
-        await followup.send(file=result)
-        await DeleteButton.to_destination(destination=followup, file=result, wait=True,
+    if result:
+        await DeleteButton.to_destination(**result, destination=followup, wait=True,
                                           author=interaction.user, delete_on_timeout=False)
-
-    elif result and result.strip():
-        await DeleteButton.to_destination(destination=followup, content=result, wait=True,
-                                          author=interaction.user, delete_on_timeout=False)
-
     else:
-        await interaction.edit_original_message(content='Done! Code ran with no output...',
-                                                view=DeleteButton(message=None, author=interaction.user,
-                                                                  delete_on_timeout=False))
+        await DeleteButton.to_destination(content='Done! Code ran with no output...', destination=followup,
+                                          author=interaction.user, delete_on_timeout=False, wait=True)
 
 class Eval(DuckCog):
     def __init__(self, *args, **kwargs):
@@ -113,10 +110,72 @@ class Eval(DuckCog):
         self._last_result = None
         self._last_context_menu_input = None
 
+    async def cog_load(self) -> None:
+        self.bot.tree.add_command(eval_message)
+        self.bot._eval_cog = self
+
+    async def cog_unload(self) -> None:
+        self.bot.tree.remove_command(
+            eval_message.name, type=discord.AppCommandType.message
+        )
+        try:
+            del self.bot._eval_cog  # noqa
+        except AttributeError:
+            pass
+
+    @staticmethod
+    def handle_return(ret: typing.Any, stdout: str = None) -> dict | None:
+        kwargs = {}
+        if isinstance(ret, discord.File):
+            kwargs['files'] = [ret]
+        elif isinstance(ret, discord.Embed):
+            kwargs['embeds'] = ret
+        elif isinstance(ret, discord.Message):
+            kwargs['content'] = f"{repr(ret)}"
+        elif isinstance(ret, Exception):
+            kwargs['content'] = "".join(traceback.format_exception(type(ret), ret, ret.__traceback__))
+        elif ret is None:
+            pass
+        else:
+            kwargs['content'] = f"{ret}"
+
+        if stdout:
+            kwargs['content'] = f"{kwargs.get('content', '')}{stdout}"
+
+        if (content := kwargs.get('content')) and len(content) > 1990:
+            files = kwargs.get('files', [])
+            file = discord.File(io.BytesIO(content.encode()), filename='output.py')
+            files.append(file)
+            kwargs['files'] = files
+        elif content:
+            kwargs['content'] = f"```py\n{content}\n```"
+
+        return kwargs or None
+
+    @staticmethod
+    def clean_globals():
+        return {
+            '__name__': __name__,
+            '__package__': __package__,
+            '__file__': __file__,
+            '__builtins__': __builtins__,
+            'annotations': annotations,
+            'traceback': traceback,
+            'io': io,
+            'typing': typing,
+            'asyncio': asyncio,
+            'discord': discord,
+            'datetime': commands,
+            'aiohttp': aiohttp,
+            're': re,
+            'random': random,
+            'pprint': pprint,
+        }
+
     # noinspection PyBroadException
-    async def eval(self, body: str, env: typing.Dict[str, typing.Any]):
+    async def eval(self, body: str, env: typing.Dict[str, typing.Any]) -> dict | None:
         """ Evaluates arbitrary python code """
-        env.update(globals())
+        env.update(self.clean_globals())
 
         body = cleanup_code(body)
         stdout = io.StringIO()
@@ -127,10 +186,7 @@ class Eval(DuckCog):
         try:
             e_exec(to_compile, env)
         except Exception as e:
-            to_send = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-            if len(to_send) > 1990:
-                return discord.File(io.BytesIO(to_send.encode('utf-8')), filename='eval_error.txt')
-            return f"```py\n{to_send}\n```"
+            return self.handle_return(e)
 
         func = env['func']
         try:
@@ -138,26 +194,13 @@ class Eval(DuckCog):
                 ret = await func()
         except Exception:
             value = stdout.getvalue()
-            to_send = f'\n{value}{traceback.format_exc()}'
-            if len(to_send) > 1990:
-                return discord.File(io.BytesIO(to_send.encode('utf-8')), filename='output.py')
-            return f"```py\n{to_send}```"
+            return self.handle_return(to_send, stdout=value)
 
         else:
             value = stdout.getvalue()
-
-            if ret is None:
-                if value:
-                    to_send = f'{value}'
-            else:
+            if ret is not None:
                 self._last_result = ret
-                to_send = f'{value}{ret}'
-            if to_send:
-                to_send = to_send.replace(self.bot.http.token, '[token omitted]')
-                if len(to_send) > 1990:
-                    return discord.File(io.BytesIO(to_send.encode('utf-8')), filename='output.py')
-                else:
-                    return f"```py\n{to_send}\n```"
+            return self.handle_return(ret, stdout=value)
 
     @command(name='eval')
     async def eval_command(self, ctx: DuckContext, *, body: str):
@@ -195,30 +238,14 @@ class Eval(DuckCog):
         result = await self.eval(body, env)
         self.bot.create_task(cancel_task(task))
 
-        if isinstance(result, discord.File):
-            await DeleteButton.to_destination(destination=ctx, file=result, author=ctx.author, delete_on_timeout=False)
-
-        elif result and result.strip():
-            await DeleteButton.to_destination(destination=ctx, content=result, author=ctx.author, delete_on_timeout=False)
+        if result:
+            await DeleteButton.to_destination(**result, destination=ctx, author=ctx.author, delete_on_timeout=False)
 
         else:
             try:
                 await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
             except discord.HTTPException:
                 pass
-
-    async def cog_load(self) -> None:
-        self.bot.tree.add_command(eval_message)
-        self.bot._eval_cog = self
-
-    async def cog_unload(self) -> None:
-        self.bot.tree.remove_command(
-            eval_message.name, type=discord.AppCommandType.message
-        )
-        try:
-            del self.bot._eval_cog  # noqa
-        except AttributeError:
-            pass
 
     @discord.app_commands.command(name='eval')
     @discord.app_commands.describe(body='The body to evaluate')
@@ -269,17 +296,12 @@ class Eval(DuckCog):
 
         result = await self.eval(body, env)
 
-        if isinstance(result, discord.File):
-            await DeleteButton.to_destination(destination=followup, file=result, wait=True,
+        if result:
+            await DeleteButton.to_destination(**result, destination=followup, wait=True,
                                               author=interaction.user, delete_on_timeout=False)
-
-        elif result and result.strip():
-            await DeleteButton.to_destination(destination=followup, content=result, wait=True,
-                                              author=interaction.user, delete_on_timeout=False)
-
         else:
             if timed_out is None:
-                await followup.send(content='Done! Code ran with no output...', ephemeral=True,
-                                    view=DeleteButton(author=interaction.user, delete_on_timeout=False))
+                await DeleteButton.to_destination(content='Done! Code ran with no output...', destination=followup,
+                                                  author=interaction.user, delete_on_timeout=False, wait=True)
             else:
                 await followup.send(content='Done! Code ran with no output...', ephemeral=True)

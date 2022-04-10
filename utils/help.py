@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import logging
 from fuzzywuzzy import process
 from functools import partial
@@ -42,7 +41,7 @@ if TYPE_CHECKING:
     
 QUESTION_MARK = '\N{BLACK QUESTION MARK ORNAMENT}'
 HOME = '\N{HOUSE BUILDING}'
-NON_MARDKWON_INFORMATION_SOURCE = '\N{INFORMATION SOURCE}'
+NON_MARKDOWN_INFORMATION_SOURCE = '\N{INFORMATION SOURCE}'
 
 InteractionCheckCallback = Callable[[discord.ui.View, discord.Interaction], Awaitable[bool]]
 
@@ -82,7 +81,7 @@ def _find_bot(parentable: ParentType) -> DuckBot:
         if (db := getattr(parentable, 'bot', None)):
             return db
         
-        parentable = parentable.parent # type: ignore # Can not use isinstance for DuckBot so we have to ignore this
+        parentable = parentable.parent  # type: ignore # Can not use isinstance for DuckBot so we have to ignore this
 
     raise DuckNotFound(f'Could not find DuckBot from base parentable {base}, {repr(base)}.')
 
@@ -121,7 +120,7 @@ def _find_author_from_parent(parentable: ParentType) -> Optional[Union[discord.M
 async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction) -> Optional[bool]:
     """An internal helper used to check if the interaction is valid."""
     # Let's find the original author of the help command
-    author = _find_author_from_parent(view) # type: ignore
+    author = _find_author_from_parent(view)  # type: ignore
     if not author:
         raise ValueError('Could not find author from parentable.')
     
@@ -158,11 +157,11 @@ class Stop(discord.ui.Button):
         
         Parameters
         ----------
-        intraction: :class:`discord.Interaction`
+        interaction: :class:`discord.Interaction`
             The interaction that was created by interacting with the button.
         """
         for child in self.parent.children:
-            child.disabled = True # type: ignore
+            child.disabled = True  # type: ignore
         
         self.parent.stop()
         return await interaction.response.edit_message(view=self.parent)
@@ -191,17 +190,18 @@ class GoHome(discord.ui.Button):
             label='Go Home',
             emoji=HOME,
         )
-    
+
+    # noinspection PyProtectedMember
     async def _get_help_from_parent(self) -> HelpView:
-        main_parent: Optional[DuckHelp] = discord.utils.find(lambda p: isinstance(p, DuckHelp), _walk_through_parents(self.parent)) # type: ignore
+        main_parent: Optional[DuckHelp] = discord.utils.find(lambda p: isinstance(p, DuckHelp), _walk_through_parents(self.parent))  # type: ignore
         if main_parent:
-            clean_mapping = await main_parent._filter_mapping({ # type: ignore # We're gonna pretend we're using TS today
+            clean_mapping = await main_parent._filter_mapping({  # type: ignore # We're gonna pretend we're using TS today
                 cog: cog.get_commands() for cog in self.bot.cogs.values()
             }) 
         else:
             clean_mapping = {cog: None for cog in self.bot.cogs.values()}
         
-        return HelpView(parent=self.parent, cogs=clean_mapping.keys(), author=_find_author_from_parent(self.parent)) # type: ignore
+        return HelpView(parent=self.parent, cogs=clean_mapping.keys(), author=_find_author_from_parent(self.parent))  # type: ignore
         
     async def callback(self, interaction: discord.Interaction) -> None:
         """|coro|
@@ -258,7 +258,7 @@ class GoBack(discord.ui.Button):
         interaction: :class:`discord.Interaction`
             The interaction that was created by interacting with the button.
         """
-        return await interaction.response.edit_message(embed=self.parent.embed, view=self.parent) # type: ignore
+        return await interaction.response.edit_message(embed=self.parent.embed, view=self.parent)  # type: ignore
 
 
 class CommandSelecter(discord.ui.Select):
@@ -275,19 +275,19 @@ class CommandSelecter(discord.ui.Select):
         '_command_mapping',
     )
     
-    def __init__(self, *, parent: ParentType, commands: List[DuckCommand]) -> None:
+    def __init__(self, *, parent: ParentType, cmds: List[DuckCommand]) -> None:
         self.parent: ParentType = parent
         
-        self._command_mapping: Mapping[str, DuckCommand] = {c.qualified_name: c for c in commands}
+        self._command_mapping: Mapping[str, DuckCommand] = {c.qualified_name: c for c in cmds}
         super().__init__(
             placeholder='Select a command...',
             options=[
                 discord.SelectOption(
                     label=command.qualified_name,
-                    description=(command.brief and command.brief[:100]) or '',
-                    value=command.qualified_name
+                    description=command.brief[:100] if command.brief else '',
+                    value=command.qualified_name,
                 )
-                for command in commands
+                for command in cmds
             ]
         )
         
@@ -310,7 +310,7 @@ class CommandSelecter(discord.ui.Select):
         if isinstance(command, DuckGroup):
             view = HelpGroup(parent=self.parent, group=command)
         else:
-            view = HelpCommand(parent=self.parent, command=command) # type: ignore
+            view = HelpCommand(parent=self.parent, command=command)  # type: ignore
         
         return await interaction.response.edit_message(embed=view.embed, view=view)
 
@@ -349,7 +349,7 @@ class HelpGroup(discord.ui.View):
         self.author: Optional[Union[discord.Member, discord.User]] = author
         
         self.bot: DuckBot = _find_bot(parent)
-        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self) # type: ignore
+        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
         
         group_commands = list(group.commands)
         for command in group_commands:
@@ -357,7 +357,7 @@ class HelpGroup(discord.ui.View):
                 group_commands.extend(command.commands)
         
         for chunk in self.bot.chunker(group_commands, size=20):
-            self.add_item(CommandSelecter(parent=self, commands=chunk)) # type: ignore
+            self.add_item(CommandSelecter(parent=self, cmds=chunk))  # type: ignore
         
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
@@ -410,7 +410,7 @@ class HelpCommand(discord.ui.View):
         self.command: DuckCommand = command
         self.author: Optional[Union[discord.Member, discord.User]] = author
         
-        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self) # type: ignore
+        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
         self.bot: DuckBot = _find_bot(parent)
         
         self.add_item(GoHome(self))
@@ -465,10 +465,10 @@ class HelpCog(discord.ui.View):
         self.author: Optional[Union[discord.Member, discord.User]] = author
         
         self.bot: DuckBot = _find_bot(parent)
-        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self) # type: ignore
+        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
         
         for item in self.bot.chunker(cog.get_commands(), size=20):
-            self.add_item(CommandSelecter(parent=self, commands=list(item))) # type: ignore
+            self.add_item(CommandSelecter(parent=self, cmds=list(item)))  # type: ignore
         
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
@@ -486,7 +486,7 @@ class HelpCog(discord.ui.View):
         )
         embed.add_field(
             name='Commands',
-            value=human_join([f'`{command.qualified_name}`' for command in cog.get_commands()], final='and')
+            value=human_join([f'`{command.qualified_name}`' for command in cog.get_commands()], final='and') or "No commands...",
         )
         embed.set_footer(text='Use the dropdown to get more info on a command.')
         return embed
@@ -572,7 +572,7 @@ class HelpView(discord.ui.View):
         self.parent: ParentType = parent
         self.bot: DuckBot = _find_bot(parent)
         self.author: Optional[Union[discord.Member, discord.User]] = author
-        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self) # type: ignore
+        self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
         
         self.add_item(HelpSelect(parent=self, cogs=cogs))
         if isinstance(self.parent, discord.ui.View):
@@ -609,7 +609,7 @@ class HelpView(discord.ui.View):
                         f'You can find my source code on {GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots/tree/rewrite).', inline=False)
         embed.add_field(name='Support DuckBot', value='If you like DuckBot, you can support by voting here:\n'
                         '⭐ https://top.gg/bot/788278464474120202 ⭐', inline=False)
-        embed.set_footer(text=f'{NON_MARDKWON_INFORMATION_SOURCE} For more info on a command press {QUESTION_MARK} help.')
+        embed.set_footer(text=f'{NON_MARKDOWN_INFORMATION_SOURCE} For more info on a command press {QUESTION_MARK} help.')
         return embed
     
     
@@ -622,8 +622,8 @@ class DuckHelp(commands.HelpCommand):
     if TYPE_CHECKING:
         context: DuckContext[DuckBot]
     
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs, verify_checks=True)
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs, verify_checks=False)
         
     @property
     def bot(self) -> DuckBot:
@@ -637,13 +637,14 @@ class DuckHelp(commands.HelpCommand):
     def bot(self, new: DuckBot) -> None:
         self._bot = new
         
-    async def _filter_mapping(self, mapping: Mapping[Optional[DuckCog], List[DuckCommand]]) -> Mapping[Optional[DuckCog], List[DuckCommand]]:
+    async def _filter_mapping(self, mapping: Mapping[Optional[DuckCog], List[DuckCommand]]) -> \
+            Mapping[Optional[DuckCog], List[DuckCommand]]:
         """An internal helper method to filter all commands."""
-        commands = sum(mapping.values(), [])
-        await self.filter_commands(commands)
+        cmds = sum(mapping.values(), [])
+        await self.filter_commands(cmds)
         
         cogs = {}
-        for command in commands:
+        for command in cmds:
             if not command.cog:
                 continue
             
@@ -653,7 +654,7 @@ class DuckHelp(commands.HelpCommand):
             else:
                 cogs[key].append(command)
         
-        return cogs
+        return cogs  # type: ignore
     
     async def send_bot_help(self, mapping: Mapping[Optional[DuckCog], List[DuckCommand]]) -> discord.Message:
         """|coro|
@@ -670,6 +671,7 @@ class DuckHelp(commands.HelpCommand):
         :class:`discord.Message`
             The message that was sent to the user.
         """
+        print(type(mapping))
         self.bot = self.context.bot
         mapping = await self._filter_mapping(mapping)
         view = HelpView(parent=self.bot, cogs=list(cog for cog in mapping if cog), author=self.context.author) 
@@ -690,15 +692,7 @@ class DuckHelp(commands.HelpCommand):
         :class:`discord.Message`
             The message that was sent to the user.
         """
-        
-        # We need to filter the command ourselves. To do this, let's
-        # make a copy of the cog and fuck it a bit.
-        keep_commands = [c for c in cog.__cog_commands__ if c.parent]
-        filtered = await self.filter_commands(cog.get_commands(), sort=True)
-        
-        new_cog = copy.copy(cog)
-        new_cog.__cog_commands__ = keep_commands + filtered
-        view = HelpCog(parent=self.context.bot, cog=new_cog, author=self.context.author)
+        view = HelpCog(parent=self.context.bot, cog=cog, author=self.context.author)
         return await self.context.send(embed=view.embed, view=view)
 
     async def send_group_help(self, group: DuckGroup[Any, ..., Any], /) -> discord.Message:
@@ -708,7 +702,7 @@ class DuckHelp(commands.HelpCommand):
         
         Parameters
         ----------
-        cog: :class:`DuckGroup`
+        group: :class:`DuckGroup`
             The group to display help for.
             
         Returns
@@ -726,7 +720,7 @@ class DuckHelp(commands.HelpCommand):
         
         Parameters
         ----------
-        cog: :class:`DuckCommand`
+        command: :class:`DuckCommand`
             The group to display help for.
             
         Returns

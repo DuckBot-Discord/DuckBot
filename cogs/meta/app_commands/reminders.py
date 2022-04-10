@@ -1,15 +1,15 @@
-import datetime
 import logging
 import re
 
 import discord
+from discord import app_commands
 from discord.ext.commands import clean_content
 
-from utils import DuckCog, UserFriendlyTime, TimerNotFound
 from bot import DuckBot
-from discord import app_commands
+from utils import DuckCog, UserFriendlyTime, TimerNotFound
 
 
+# TODO: make good, and a transformer. And move into /utils/interactions/transformers.py
 class clean_c(clean_content):
     async def convert(self, interaction: discord.Interaction, argument: str) -> str:
         msg = interaction.message
@@ -67,14 +67,16 @@ class clean_c(clean_content):
         return discord.utils.escape_mentions(result)
 
 
-class AppRemind(app_commands.Group, name='reminder'):
+class ApplicationReminders(DuckCog):
     """ Reminds the user of something """
 
-    @app_commands.command(name='add')
+    slash_reminder = app_commands.Group(name='reminder', description='Reminds the user of something')
+
+    @slash_reminder.command(name='add')
     @app_commands.describe(
         when='When and what to remind you of. Example: "in 10 days do this", "next monday do that."'
     )
-    async def remind_add(
+    async def slash_remind_add(
             self,
             interaction: discord.Interaction,
             when: str,
@@ -100,9 +102,9 @@ class AppRemind(app_commands.Group, name='reminder'):
         )
         await interaction.followup.send(f"Alright, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
-    @app_commands.command(name='delete')
+    @slash_reminder.command(name='delete')
     @app_commands.describe(id='The ID of the reminder you want to delete.')
-    async def remind_delete(self, interaction: discord.Interaction, id: int) -> None:
+    async def slash_remind_delete(self, interaction: discord.Interaction, id: int) -> None:
         """Deletes one fo your reminders."""
         await interaction.response.defer(ephemeral=True)
         bot: DuckBot = interaction.client  # type: ignore
@@ -117,8 +119,8 @@ class AppRemind(app_commands.Group, name='reminder'):
         except TimerNotFound as error:
             await interaction.followup.send(f"I couldn't find a reminder with ID {error.id}.")
 
-    @app_commands.command(name='list')
-    async def list(self, interaction: discord.Interaction) -> None:
+    @slash_reminder.command(name='list')
+    async def slash_remind_list(self, interaction: discord.Interaction) -> None:
         """Lists all of your reminders."""
         bot: DuckBot = interaction.client  # type: ignore
 
@@ -160,12 +162,3 @@ class AppRemind(app_commands.Group, name='reminder'):
             embed.set_footer(text=f"(Showing all {len(timers)} reminders)")
 
         await interaction.followup.send(embed=embed)
-
-
-class ApplicationReminders(DuckCog):
-    def __init__(self, bot: DuckBot):
-        super().__init__(bot)
-        self.bot.tree.add_command(AppRemind())
-
-    def cog_unload(self) -> None:
-        self.bot.tree.remove_command('reminder')
