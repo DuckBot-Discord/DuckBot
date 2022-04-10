@@ -1351,3 +1351,6 @@ class Tags(DuckCog):
         if tags:
             return [app_commands.Choice(name=f"{tag['name']}"[0:100], value=tag['name']) for tag in tags]
         return [app_commands.Choice(name='No tags found matching your query...', value='list')]
+
+async def setup(bot):
+    await bot.add_cog(Tags(bot))

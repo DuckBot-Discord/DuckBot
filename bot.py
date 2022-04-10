@@ -79,6 +79,7 @@ initial_extensions: Tuple[str, ...] = (
     'cogs.moderation',
     'cogs.owner',
     'cogs.information',
+    'cogs.tags',
 )
 
 
