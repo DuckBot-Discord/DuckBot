@@ -146,6 +146,7 @@ features.remove(RootCommand)
 features.append(OverwrittenRootCommand)
 
 class DuckBotJishaku(
+    DuckCog,
     *features,  # type: ignore
     *OPTIONAL_FEATURES, 
     brief='Jishaku front end class.',
