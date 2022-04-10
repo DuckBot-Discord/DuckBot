@@ -149,6 +149,8 @@ class DuckBotJishaku(
     DuckCog,
     *features,  # type: ignore
     *OPTIONAL_FEATURES, 
+    brief='Jishaku front end class.',
+    emoji='\N{CONSTRUCTION WORKER}'
 ):
     """
     The main frontend class for JIshaku.
@@ -160,14 +162,8 @@ class DuckBotJishaku(
     bot: :class:`DuckBot`
         The bot instance this frontend is attached to.
     """
-    # NOTE: Mro gets fucked when inheriting DuckCog
-    brief: str = 'Jishaku front end class.'
-    emoji: str = '\N{CONSTRUCTION WORKER}'
-    id: int = 1949238479234872 # Random id
+    __is_jishaku__: bool = True
     
-    def __init__(self, bot: DuckBot) -> None:
-        super().__init__(bot=bot)
-
     async def jsk_python_result_handling(
             self,
             ctx: DuckContext,

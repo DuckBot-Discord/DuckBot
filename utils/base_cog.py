@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import (
     TYPE_CHECKING,
+    Any,
     Optional,
     Type,
     Tuple,
@@ -46,7 +47,12 @@ class DuckCog(commands.Cog):
         cls.brief = kwargs.pop('brief', None)
         return super().__init_subclass__(**kwargs)
 
-    def __init__(self, bot: DuckBot) -> None:
+    def __init__(self, bot: DuckBot, *args: Any, **kwargs: Any) -> None:
         self.bot: DuckBot = bot
         self.id: int = int(str(int(uuid.uuid4()))[:20])
         
+        next_in_mro = next(iter(self.__class__.__mro__))
+        if hasattr(next_in_mro, '__is_jishaku__') or isinstance(next_in_mro, self.__class__):
+            kwargs['bot'] = bot
+        
+        super().__init__(*args, **kwargs)
