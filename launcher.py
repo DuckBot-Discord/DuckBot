@@ -38,6 +38,7 @@ async def run_bot() -> None:
     async with aiohttp.ClientSession() as session, \
             DuckBot.temporary_pool(uri=URI) as pool, \
             DuckBot(session=session, pool=pool, error_wh=ERROR_WH) as duck:
+        await duck.dump_translations('translations.sql')
         await duck.start(TOKEN, reconnect=True, verbose=False)
     
 if __name__ == '__main__':

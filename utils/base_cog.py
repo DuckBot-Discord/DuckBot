@@ -37,7 +37,7 @@ class DuckCog(commands.Cog):
         'bot',
     )
 
-    def __init_subclass__(cls: Type[DuckCog], **kwargs) -> None:
+    def __init_subclass__(cls: Type[DuckCog], **kwargs: Any) -> None:
         """
         This is called when a subclass is created.
         Its purpose is to add parameters to the cog

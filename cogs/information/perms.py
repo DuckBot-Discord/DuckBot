@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import contextlib
 import typing
 from typing import Union
 
 import discord
 from discord import Permissions, PermissionOverwrite, Member, Role
-from discord.ext import commands
 
 from utils import DuckContext, DuckCog, constants, DeleteButton, command
 from discord.utils import as_chunks
@@ -71,7 +72,7 @@ def get_type(entity: typing.Any) -> type:
 class PermsEmbed(discord.Embed):
     def __init__(
             self,
-            entity: Union[Member, Role],
+            entity: Union[Member, Role, SimpleOverwrite],
             permissions: Union[Permissions, PermissionOverwrite],
     ):
         sym = '@' if isinstance(entity, (discord.Role, discord.abc.User)) else '#'
@@ -121,7 +122,7 @@ class GuildPermsViewer(discord.ui.View):
     A view that shows the permissions for an object.
     """
     def __init__(self, ctx: DuckContext, message: discord.Message,
-                 chunks: typing.List[typing.List[typing.Union[discord.Role, SimpleOverwrite]]]):
+                 chunks: typing.List[typing.List[SimpleOverwrite]] | typing.List[typing.List[discord.Role]],):
         super().__init__()
         self.ctx = ctx
         self.guild = ctx.guild
@@ -129,7 +130,7 @@ class GuildPermsViewer(discord.ui.View):
         self.current_page = 0
         self.chunks = chunks
         self.max_pages = len(chunks) - 1
-        self.current_role: typing.Optional[discord.Role, SimpleOverwrite] = None
+        self.current_role: typing.Optional[typing.Union[discord.Role, SimpleOverwrite]] = None
 
     def get_options_from_chunk(self, index: int):
         roles = self.chunks[index]
@@ -167,7 +168,7 @@ class GuildPermsViewer(discord.ui.View):
     @discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
     async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.stop()
-        await interaction.message.delete()
+        (await interaction.message.delete()) if interaction.message else None
         with contextlib.suppress(discord.HTTPException):
             await self.ctx.message.add_reaction(self.ctx.bot.done_emoji)
 
@@ -225,7 +226,7 @@ class GuildPermsViewer(discord.ui.View):
     async def on_timeout(self) -> None:
         self.ctx.bot.views.discard(self)
         for item in self.children:
-            item.disabled = True
+            item.disabled = True # type: ignore
         await self.message.edit(view=self)
 
     def stop(self) -> None:
@@ -239,7 +240,7 @@ class PermsViewer(DuckCog):
             self,
             ctx: DuckContext,
             *,
-            entity: typing.Union[discord.abc.GuildChannel, discord.Role, discord.Member] = None
+            entity: discord.abc.GuildChannel | discord.Role | discord.Member | None = None
     ) -> None:
         """|coro|
 
@@ -260,3 +261,4 @@ class PermsViewer(DuckCog):
             embed = PermsEmbed(entity=entity, permissions=perms)
             await DeleteButton.to_destination(ctx, embed=embed, author=ctx.author)
 
+    

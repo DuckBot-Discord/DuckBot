@@ -15,13 +15,14 @@ from typing import (
 
 from collections import defaultdict
 from datetime import datetime
-from discord.ext.commands import Context
+
 
 if TYPE_CHECKING:
     from bot import DuckBot
+    from utils.context import DuckContext
 else:
-    # I don't know why mad, chai pls fix
     from discord.ext.commands import Bot as DuckBot
+    from utils.context import DuckContext
 
 from utils import EntityBlacklisted
 
@@ -163,7 +164,7 @@ class DuckBlacklistManager:
         elif blacklist_type == 'channel':
             await self.remove_channel(FakeChannel(id=entity_id, guild_id=guild_id))  # type: ignore
 
-    async def check_context(self, ctx: Context) -> bool:
+    async def check_context(self, ctx: DuckContext) -> bool:
         """Checks if this context is valid and nothing is blacklisted.
 
         Returns
@@ -182,7 +183,7 @@ class DuckBlacklistManager:
 
         # Check each of the blacklists
         self.check_user(ctx.author, should_raise=True)
-        self.check_channel(ctx.channel, should_raise=True)
+        self.check_channel(ctx.channel, should_raise=True)  # type: ignore
         self.check_guild(ctx.guild, should_raise=True)
         return True
 

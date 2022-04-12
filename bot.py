@@ -48,7 +48,7 @@ from utils import (
 from utils.errors import *
 
 try:
-    from typing import ParamSpec
+    from typing import ParamSpec  # type: ignore
 except ImportError:
     from typing_extensions import ParamSpec
 
@@ -321,6 +321,7 @@ class DuckBot(commands.Bot, DuckHelper):
                 
         pool = await asyncpg.create_pool(uri, init=init, **kwargs)
         log.info(f"{col(2)}Successfully created connection pool.")
+        assert pool is not None, 'Pool is None'
         return pool
 
     async def populate_cache(self) -> None:

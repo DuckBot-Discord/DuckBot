@@ -1,10 +1,8 @@
-import datetime
 import logging
 import typing
 
 import asyncio
 import discord
-from discord.ext import commands
 from discord.utils import format_dt
 
 from bot import DuckBot
@@ -85,7 +83,7 @@ def deltaconv(s):
 
 
 async def get_user_badges(user: typing.Union[discord.Member, discord.User], bot: DuckBot,
-                          fetched_user: discord.User = None):
+                          fetched_user: discord.User | typing.Literal[False] | None = None):
     flags = dict(user.public_flags)
 
     user_flags = []
@@ -135,16 +133,16 @@ class BaseEmbed(discord.Embed):
 
 class UserInfoViewer(discord.ui.View):
     def __init__(self, user: typing.Union[discord.Member, discord.User], /, *, bot: DuckBot, author: discord.User,
-                 color: discord.Colour = None):
+                 color: discord.Colour | None = None):
         super().__init__()
         self.user = user
         self.bot = bot
         self.author = author
         self.color = color or bot.color
         self.message: typing.Optional[discord.Message] = None
-        self.fetched: typing.Optional[discord.User] = None
+        self.fetched: typing.Optional[discord.User | bool] = None
         self._main_embed: typing.Optional[typing.List[discord.Embed]] = None
-        self._perms_embed: typing.Optional[typing.List[discord.Embed]] = None
+        self._perms_embed: typing.Optional[typing.List[PermsEmbed]] = None
 
     async def make_main_embed(self) -> typing.List[discord.Embed]:
         if self._main_embed is not None:
@@ -195,7 +193,7 @@ class UserInfoViewer(discord.ui.View):
         embed.add_field(name=f"{constants.INVITE} Created At", inline=False,
                         value=f"╰ {format_dt(user.created_at)} ({format_dt(user.created_at, 'R')})")
 
-        if is_member:
+        if is_member and user.joined_at:
             text = f"╰ {format_dt(user.joined_at)} ({format_dt(user.joined_at, 'R')})"
         else:
             text = "╰ This user is not a member of this server."
@@ -208,15 +206,15 @@ class UserInfoViewer(discord.ui.View):
         if is_member:
             now = discord.utils.utcnow()
             custom_st = discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), user.activities)
-            if custom_st:
+            if custom_st and isinstance(custom_st, discord.CustomActivity):
                 emoji = f"{custom_st.emoji} " if custom_st.emoji and custom_st.emoji.is_unicode_emoji() else ''
-                extra = f"\n**Custom Status:**\n{emoji}`{discord.utils.remove_markdown(custom_st.name)}`"
+                extra = f"\n**Custom Status:**\n{emoji}`{discord.utils.remove_markdown(custom_st.name or '')}`"
             else:
                 extra = ''
             embed.add_field(name=f"{constants.STORE_TAG} Status:", value=f"{generate_user_statuses(user)}{extra}")
 
             spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), user.activities)
-            if spotify:
+            if isinstance(spotify, discord.Spotify):
                 embed.add_field(name=f"{constants.FULL_SPOTIFY}\u200b",
                                 value=f"**[{spotify.title}]({spotify.track_url})**"
                                       f"\n**By** {spotify.artist}"
@@ -228,18 +226,21 @@ class UserInfoViewer(discord.ui.View):
         self._main_embed = embeds
         return embeds
 
-    async def make_perm_embeds(self) -> typing.List[discord.Embed]:
+    async def make_perm_embeds(self) -> typing.List[PermsEmbed]:
         if self._perms_embed:
             return self._perms_embed
         user = self.user
-        embed = PermsEmbed(entity=user, permissions=user.guild_permissions)
-        embed.colour = self.color
-        embed.title = '\N{SCROLL} Server Permissions Page'
-        embed.set_thumbnail(url=user.display_avatar.url)
-        embed.set_author(name=str(user), icon_url=(user.avatar or user.display_avatar).url)
-        embeds = [embed]
-        self._perms_embed = embeds
-        return embeds
+        if isinstance(user, discord.Member):
+            embed = PermsEmbed(entity=user, permissions=user.guild_permissions )
+            embed.colour = self.color
+            embed.title = '\N{SCROLL} Server Permissions Page'
+            embed.set_thumbnail(url=user.display_avatar.url)
+            embed.set_author(name=str(user), icon_url=(user.avatar or user.display_avatar).url)
+            embeds = [embed]
+            self._perms_embed = embeds
+            return embeds
+        else:
+            return []
 
     @discord.ui.select(options=[
         discord.SelectOption(label='Main Page', value='main', emoji='\N{BUSTS IN SILHOUETTE}',

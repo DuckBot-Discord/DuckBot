@@ -11,11 +11,14 @@ from typing import (
     Optional,
     TypeVar,
 )
+import itertools
+import traceback
 
 from jishaku.modules import package_version
 from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
 from jishaku.features.python import PythonFeature
 from jishaku.features.root_command import RootCommand, natural_size
+from jishaku.features.management import ManagementFeature, ExtensionConverter
 from jishaku.codeblocks import codeblock_converter
 from jishaku.exception_handling import ReplResponseReactor
 from jishaku.features.baseclass import Feature
@@ -40,7 +43,7 @@ T = TypeVar('T')
 
 class OverwrittenRootCommand(RootCommand):
 
-    @Feature.Command(parent=None, name='jsk', aliases=['jishaku', 'jishacum'],
+    @Feature.Command(parent=None, name='jsk', aliases=['jishaku', 'jishacum'],    # type: ignore
                      invoke_without_command=True)
     async def jsk(self, ctx: DuckContext):
         """
@@ -124,7 +127,7 @@ class OverwrittenRootCommand(RootCommand):
 
             summary.append(f"{message_cache}, {presence_intent} and {members_intent}.")
         else:
-            guild_subscriptions = f"guild subscriptions are {'enabled' if self.bot._connection.guild_subscriptions else 'disabled'}"
+            guild_subscriptions = f"guild subscriptions are {'enabled' if self.bot._connection.guild_subscriptions else 'disabled'}"    # type: ignore
 
             summary.append(f"{message_cache} and {guild_subscriptions}.")
 
@@ -134,16 +137,55 @@ class OverwrittenRootCommand(RootCommand):
         summary.append(f"Average websocket latency: {round(self.bot.latency * 1000, 2)}ms")
 
         summ = "\n".join(summary)
-        if ctx.channel.permissions_for(ctx.me).embed_links:
+        if ctx.channel.permissions_for(ctx.me).embed_links:  # type: ignore
             embed = discord.Embed(description=summ, color=ctx.bot.colour)
             await ctx.send(embed=embed)
         else:
             await ctx.send(summ)
 
 
+class OverwrittenManagementFeature(ManagementFeature):
+
+    @Feature.Command(parent="jsk", name="load", aliases=["reload"])
+    async def jsk_load(self, ctx: DuckContext, *extensions: ExtensionConverter):
+        """
+        Loads or reloads the given extension names.
+
+        Reports any extensions that failed to load.
+        """
+        paginator = WrappedPaginator(prefix='', suffix='')
+
+        # 'jsk reload' on its own just reloads jishaku
+        if ctx.invoked_with == 'reload' and not extensions:
+            extensions = [['utils.jishaku']]    # type: ignore
+
+        for extension in itertools.chain(*extensions):    # type: ignore
+            method, icon = (
+                (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
+                if extension in self.bot.extensions else
+                (self.bot.load_extension, "\N{INBOX TRAY}")
+            )
+
+            try:
+                await discord.utils.maybe_coroutine(method, extension)
+            except Exception as exc:  # pylint: disable=broad-except
+                traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 1))
+
+                paginator.add_line(
+                    f"{icon}\N{WARNING SIGN} `{extension}`\n```py\n{traceback_data}\n```",
+                    empty=True
+                )
+            else:
+                paginator.add_line(f"{icon} `{extension}`", empty=True)
+
+        for page in paginator.pages:
+            await ctx.send(page)
+
 features = list(STANDARD_FEATURES)
 features.remove(RootCommand)
 features.append(OverwrittenRootCommand)
+features.remove(ManagementFeature)
+features.append(OverwrittenManagementFeature)
 
 class DuckBotJishaku(
     DuckCog,

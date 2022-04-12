@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import inspect
-from re import S
 from fuzzywuzzy import process
 from typing import (
 	TYPE_CHECKING,
