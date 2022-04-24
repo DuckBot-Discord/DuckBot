@@ -666,13 +666,15 @@ class DuckBot(commands.Bot, DuckHelper):
                 log.error('Could not wait for view cleanups', exc_info=e)
             try:
                 log.info('Closing listener connection...')
-                await self.listener_connection.close(timeout=3)
+                await self.listener_connection.close()
+                log.info('Listener connection closed...')
             except Exception as e:
                 log.error(f'Failed to close listener connection', exc_info=e)
         finally:
             await super().close()
 
     async def cleanup_views(self, *, timeout: float = 5.0) -> None:
+        """ Cleans up the views of the bot. """
         future = await asyncio.gather(*[v.on_timeout() for v in self.views], return_exceptions=True)
         for item in future:
             if isinstance(item, Exception):
