@@ -24,25 +24,32 @@ class StandardModeration(DuckCog):
     moderation commands. Such as ban or kick.
     """
 
-    @command(name='kick', aliases=['boot'])
+    @command(name='kick', aliases=['boot'], hybrid=True)
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
-    async def kick(self, ctx: DuckContext, member: TargetVerifier(discord.Member), *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
-        """|coro|
-        
+    async def kick(
+        self, 
+        ctx: DuckContext, 
+        member: TargetVerifier(discord.Member),  # type: ignore
+        *,   
+        reason: str = '...'
+        ) -> Optional[discord.Message]:
+        """        
         Kick a member from the server.
         
         Parameters
         ----------
         member: :class:`discord.Member`
-            The member to kick.
+            The member to kick. (can be an ID)
         reason: Optional[:class:`str`]
-            The reason for kicking the member. Defaults to 'being a jerk!'.
+            The reason for the kick.'.
         """
         guild = ctx.guild
         if guild is None:
             return
+        
+        await ctx.defer()
 
         async with HandleHTTPException(ctx, title=f'Failed to kick {member}'):
             await member.kick(reason=safe_reason(ctx.author, reason))

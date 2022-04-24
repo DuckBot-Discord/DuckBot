@@ -415,13 +415,34 @@ class DuckGroup(commands.GroupMixin[CogT], DuckCommand[CogT, P, T]):
             view.index = previous
             view.previous = previous
             await super().reinvoke(ctx, call_hooks=call_hooks)
-    
+
+
+@discord.utils.copy_doc(commands.HybridCommand)
+class DuckHybridCommand(commands.HybridCommand, DuckCommand):
+
+        def autocomplete(self, name: str, slash: bool = True, message: bool = False):
+            if slash is True:
+                return commands.HybridCommand.autocomplete(self, name)
+            elif message is True:
+                return DuckCommand.autocomplete(self, name)
+
+
+@discord.utils.copy_doc(commands.HybridGroup)
+class DuckHybridGroup(commands.HybridGroup, DuckGroup):
+
+        def autocomplete(self, name: str, slash: bool = True, message: bool = False):
+            if slash is True:
+                return commands.HybridGroup.autocomplete(self, name)
+            elif message is True:
+                return DuckGroup.autocomplete(self, name)
+
 
 def command(
 	name: str = MISSING,
 	description: str = MISSING,
 	brief: str = MISSING,
 	aliases: Iterable[str] = MISSING,
+    hybrid: bool = False,
 	**attrs: Any
 ) -> Callable[..., DuckCommand]:
     """
@@ -440,7 +461,7 @@ def command(
     **attrs: Any
         The keyword arguments to pass to the :class:`DuckCommand`.
     """
-    cls = DuckCommand
+    cls = DuckCommand if hybrid is False else DuckHybridCommand 
 
     def decorator(func) -> DuckCommand:
         if isinstance(func, DuckCommand):
@@ -467,6 +488,7 @@ def group(
 	description: str = MISSING,
 	brief: str = MISSING,
 	aliases: Iterable[str] = MISSING,
+    hybrid: bool = False,
 	**attrs: Any
 ) -> Callable[..., DuckGroup]:
     """
@@ -485,7 +507,7 @@ def group(
     **attrs: Any
         The keyword arguments to pass to the :class:`DuckCommand`.
     """
-    cls = DuckGroup
+    cls = DuckGroup if hybrid is False else DuckHybridGroup 
 
     def decorator(func) -> DuckGroup:
         if isinstance(func, DuckGroup):

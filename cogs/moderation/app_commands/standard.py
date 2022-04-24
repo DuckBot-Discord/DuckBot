@@ -89,26 +89,26 @@ class ApplicationStandard(DuckCog):
             text = f"Banned **{mdr(user)}** permanently for: {reason}"
         await followup.send(text, wait=True)
 
-    @app_commands.command(name='kick')
-    @app_commands.describe(
-        member='The member to kick. (can be an ID)',
-        reason='The reason for the ban.',
-    )
-    async def app_kick(
-            self,
-            interaction: discord.Interaction,
-            member: discord.Member,
-            reason: Optional[str] = '...',
-    ) -> None:
-        """ Kicks a member from this server """
-        await has_permissions(interaction, kick_members=True)
-        await bot_has_permissions(interaction, kick_members=True)
-        await can_execute_action(interaction, member)
+    # @app_commands.command(name='kick')
+    # @app_commands.describe(
+    #     member='The member to kick. (can be an ID)',
+    #     reason='The reason for the ban.',
+    # )
+    # async def app_kick(
+    #         self,
+    #         interaction: discord.Interaction,
+    #         member: discord.Member,
+    #         reason: Optional[str] = '...',
+    # ) -> None:
+    #     """ Kicks a member from this server """
+    #     await has_permissions(interaction, kick_members=True)
+    #     await bot_has_permissions(interaction, kick_members=True)
+    #     await can_execute_action(interaction, member)
 
-        await interaction.response.defer()
-        followup: discord.Webhook = interaction.followup  # type: ignore
+    #     await interaction.response.defer()
+    #     followup: discord.Webhook = interaction.followup  # type: ignore
 
-        with HandleHTTPException(followup):
-            await member.kick(reason=safe_reason(interaction.user, reason))
+    #     with HandleHTTPException(followup):
+    #         await member.kick(reason=safe_reason(interaction.user, reason))
 
-        await followup.send(f"Successfully kicked **{mdr(member)}** for: {reason[0:1000]}")
+    #     await followup.send(f"Successfully kicked **{mdr(member)}** for: {reason[0:1000]}")
