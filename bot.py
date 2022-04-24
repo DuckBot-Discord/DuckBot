@@ -5,6 +5,7 @@ import concurrent.futures
 import contextlib
 import functools
 import logging
+import os
 import pprint
 import random
 import re
@@ -242,7 +243,8 @@ class DuckBot(commands.Bot, DuckHelper):
         self.prefix_cache: DefaultDict[int, Set[str]] = defaultdict(set)
         self.error_webhook_url: Optional[str] = kwargs.get('error_wh')
         self._start_time: Optional[datetime.datetime] = None
-        self.listener_connection: Optional[asyncpg.Connection] = None
+        self.listener_connection: Optional[asyncpg.Connection] = None  # type: ignore
+        self.allowed_locales: Set[str] = {'en_us', 'es_es', 'it'}
 
         self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
@@ -354,6 +356,9 @@ class DuckBot(commands.Bot, DuckHelper):
 
         await self.listener_connection.add_listener('delete_prefixes', _delete_prefixes_event)
         await self.listener_connection.add_listener('update_prefixes', _create_or_update_event)
+
+    async def dump_translations(self, filename: str) -> None:
+        ...
 
     @property
     def start_time(self) -> datetime.datetime:
@@ -559,9 +564,9 @@ class DuckBot(commands.Bot, DuckHelper):
     async def on_tree_error(
         self,
         interaction: discord.Interaction,
-        command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
         error: app_commands.AppCommandError,
     ) -> None:
+        command = interaction.command
         if command and getattr(command, 'on_error', None):
             return
 

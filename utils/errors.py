@@ -24,7 +24,8 @@ __all__: Tuple[str, ...] = (
     'MemberNotMuted',
     'MemberAlreadyMuted',
     'SilentCommandError',
-    'EntityBlacklisted'
+    'EntityBlacklisted',
+    'StringTranslatedCommandError',
 )
 
 
@@ -142,3 +143,12 @@ class EntityBlacklisted(CheckFailure, DuckBotCommandError):
             ]) -> None:
         self.entity = entity
         super().__init__(f'{entity} is blacklisted.')
+
+class StringTranslatedCommandError(DuckBotCommandError):
+    """ Generic exception to raise, that will be translated in the error handler. """
+    __slots__: Tuple[str, ...] = ('translation_id', 'args')
+
+    def __init__(self, translation_id: int, *args: typing.Any) -> None:
+        self.translation_id: str = translation_id
+        self.args: typing.Any = args
+        super().__init__(f'<untranslated text with id: {translation_id}>')

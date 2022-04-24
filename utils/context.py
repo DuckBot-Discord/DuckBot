@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
+    Any,
     Generic, 
     Tuple, 
     Optional,
-    List,
     TypeVar
 )
 
@@ -125,7 +125,40 @@ class DuckContext(commands.Context, Generic[BotT]):
 
         return result
 
-    async def send(self, *args, **kwargs) -> Message:
+    async def translate(self, translation_id: int, /, *args: Any, locale: str | discord.Locale | None = None) -> str:
+        """|coro|
+        Handles translating a translation ID.
+
+        Parameters
+        ----------
+        translation_id: :class:`int`
+            The translation ID to translate.
+        args: :class:`Any`
+            The arguments to pass to the translation.
+        locale: Optional[:class:`str` | :class:`~discord.Locale`]
+            The locale to use for the translation.
+        """
+        locale = await self.bot.pool.fetchval(
+            'SELECT locale FROM user_settings WHERE user_id = $1', self.author.id
+        ) or locale
+
+        if locale is None:
+            locale = self.guild.preferred_locale if self.guild else 'en_us'
+
+        if isinstance(locale, discord.Locale):
+            locale = str(locale).replace('-', '_')
+
+        locale = locale.lower()
+        if locale not in self.bot.allowed_locales:
+            locale = 'en_us'
+
+        translations = await self.bot.pool.fetchrow('SELECT * FROM translations WHERE tr_id = $1', translation_id)
+        if not translations:
+            raise RuntimeError(f'Translation ID {translation_id} does not exist')
+        translation = translations[locale] or translations['en_us']
+        return translation.format(*args)
+
+    async def send(self, content: int | str | None = None, *args: Any, **kwargs: Any) -> Message:
         """|coro|
         
         Sends a message to the invoking context's channel.
@@ -140,9 +173,7 @@ class DuckContext(commands.Context, Generic[BotT]):
         if kwargs.get('embed') and kwargs.get('embeds'):
             raise ValueError('Cannot send both embed and embeds')
 
-        embeds = kwargs.pop('embeds', []) or [kwargs.pop('embed', None)]
-        if None in embeds:
-            embeds.remove(None)
+        embeds = kwargs.pop('embeds', []) or ([kwargs.pop('embed')] if kwargs.get('embed') else [])
         if embeds:
             for embed in embeds:
                 if embed.color is None:
@@ -151,8 +182,12 @@ class DuckContext(commands.Context, Generic[BotT]):
                     embed.color = self.bot.color
 
             kwargs['embeds'] = embeds
+        
+        if isinstance(content, int):
 
-        return await super().send(*args, **kwargs)
+            content = await self.translate(content, *args, locale=kwargs.pop('locale', None))
+
+        return await super().send(content, **kwargs)
 
     async def confirm(self, content=None, /, *, timeout: int = 30, **kwargs) -> bool | None:
         """|coro|

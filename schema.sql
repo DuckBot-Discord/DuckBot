@@ -148,4 +148,17 @@ CREATE TABLE commands (
 CREATE TABLE auto_sync (
     guild_id BIGINT,
     payload JSONB
+);
+
+CREATE TABLE translations (
+    tr_id BIGSERIAL PRIMARY KEY,
+    en_us TEXT,
+    es_es TEXT,
+    it TEXT,
+    note TEXT
+);
+
+CREATE TABLE user_settings (
+    user_id BIGINT PRIMARY KEY,
+    locale TEXT
 )
