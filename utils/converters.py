@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import typing
+import re
 from typing import (
+    TYPE_CHECKING,
     Type,
     Union,
     Tuple,
@@ -13,7 +15,7 @@ from typing import (
 
 import discord
 from discord.ext import commands
-from discord.ext.commands import Converter, FlagConverter
+from discord.ext.commands import FlagConverter
 
 from .helpers import can_execute_action
 from .context import DuckContext
@@ -21,6 +23,7 @@ from .errorhandler import HandleHTTPException
 
 
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
+FCT = TypeVar('FCT', bound='FlagConverter')
 T = TypeVar('T')
 
 __all__: Tuple[str, ...] = (
@@ -162,18 +165,18 @@ class BanEntryConverter(discord.guild.BanEntry):
                 except discord.NotFound:
                     raise commands.BadArgument('This member has not been banned before.') from None
                 else:
-                    return cls(user=entry.user, reason=entry.reason)  # type: ignore
+                    return cls(user=entry.user, reason=entry.reason)
             
             _find_entitiy = lambda u: str(u.user).lower() == argument.lower() or str(u.user.name).lower() == argument.lower()
             
             # we search by username now.
-            ban_list = await guild.bans()
+            ban_list = [b async for b in guild.bans(limit=None)]
             entity = discord.utils.find(_find_entitiy, ban_list)
             
             if entity is None:
                 raise commands.BadArgument('This member has not been banned before.')
             
-            return cls(user=entity.user, reason=entity.reason)  # type: ignore  # CHAI STOP REMOVING THIS >:(
+            return cls(user=entity.user, reason=entity.reason)
 
     def __repr__(self) -> str:
         return '<BanEntryConverter user={0.user} ({0.user.id}) reason={0.reason}>'
@@ -306,27 +309,90 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
         raise NotImplementedError('Derived classes need to implement this.')
 
 
-class UntilFlagActualC(Converter):
-    def __init__(self, flags: Type[FlagConverter]):
-        self.flags = flags()
-        self.prefix = flags.__commands_flag_prefix__
-        self.regex = flags.__commands_flag_regex__
+class UntilFlag(Generic[FCT]):
+    """ A converter that will convert until a flag is reached.
+
+    **Example**
+
+    .. code-block:: python3
+
+        from typing import Optional
+
+        from discord.ext import commands
+
+        class SendFlags(commands.FlagConverter, prefix='--', delimiter=' '):
+            channel: Optional[discord.TextChannel] = None
+            reply: Optional[discord.Message] = None
+
+        @commands.command()
+        async def send(self, ctx: DuckContext, *, text: UntilFlag[SendFlags]):
+            '''Send a message to a channel.'''
+            channel = text.flags.channel or ctx.channel
+            await channel.send(text.value)
     
-    async def convert(self, ctx: DuckContext, argument: str) -> UntilFlag:
-        first_arg = self.regex.split(argument, maxsplit=1)[0]
-        if not first_arg.strip() or first_arg.strip().startswith(self.prefix):
-            raise commands.BadArgument('No body has been specified before the flags.')
-        flags = await self.flags.convert(ctx, argument=argument[len(first_arg):])
-        return UntilFlag(body=first_arg, flags=flags)
-
-
-class UntilFlag(Generic[T]):
-    def __init__(self, body: str, flags: T):
-        self.body = body
+    Attributes
+    ----------
+    value: :class:`str`
+        The value of the converter.
+    flags: :class:`FlagConverter`
+        The resolved flags.
+    """
+    def __init__(self, value: str, flags: FCT) -> None:
+        self.value = value
         self.flags = flags
+        self._regex = self.flags.__commands_flag_regex__  # type: ignore
+        self._start = self.flags.__commands_flag_prefix__  # type: ignore
+        
+    def __class_getitem__(cls, item: Type[FlagConverter]) -> UntilFlag:
+        return cls(value='...', flags=item())
 
-    def __class_getitem__(cls, item: Type[FlagConverter]) -> UntilFlagActualC:
-        return UntilFlagActualC(item)
+    def validate_value(self, argument: str) -> bool:
+        """Used to validate the parsed value without flags.
+        Defaults to checking if the argument is a valid string.
 
+        If overridden, this method should return a boolean or raise an error.
+        Can be a coroutine
 
+        Parameters
+        ----------
+        argument: :class:`str`
+            The argument to validate.
 
+        Returns
+        -------
+        :class:`str`
+            Whether or not the argument is valid.       
+
+        Raises
+        ------
+        :class:`commands.BadArgument`
+            No value was given
+        """
+        stripped = argument.strip()
+        if not stripped or stripped.startswith(self._start):
+            raise commands.BadArgument(f'No body has been specified before the flags.')
+        return True
+
+    async def convert(self, ctx: DuckContext, argument: str) -> UntilFlag:
+        """|coro|
+        
+        The main convert method of the converter. This will take the given flag converter and
+        use it to delimit the flags from the value.
+
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context of the command.
+        argument: :class:`str`
+            The argument to convert.
+
+        Returns
+        -------
+        :class:`UntilFlag`
+            The converted argument.
+        """
+        value = self._regex.split(argument, maxsplit=1)[0]
+        if not await discord.utils.maybe_coroutine(self.validate_value, argument):
+            raise commands.BadArgument('Failed to validate argument preceding flags.')
+        flags = await self.flags.convert(ctx, argument=argument[len(value):])
+        return UntilFlag(value=value, flags=flags)

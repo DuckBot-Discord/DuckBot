@@ -49,13 +49,13 @@ class SQLCommands(DuckCog):
         query: str
             The query to execute.
         """
-        query.body = cleanup_code(query.body)
+        query.value = cleanup_code(query.value)
         try:
-            query.body = query.body.format(bot=ctx.bot, ctx=ctx, os=os)
+            query.value = query.value.format(bot=ctx.bot, ctx=ctx, os=os)
         except KeyError as e:
             return await ctx.send(f"Variable not found: {e}\nAvailable: `ctx`, `bot`, `os`")
 
-        is_multistatement = query.body.count(';') > 1
+        is_multistatement = query.value.count(';') > 1
         if is_multistatement:
             # fetch does not support multiple statements
             strategy = ctx.bot.pool.execute
@@ -64,7 +64,7 @@ class SQLCommands(DuckCog):
 
         try:
             start = time.perf_counter()
-            results = await strategy(query.body, *query.flags.args)
+            results = await strategy(query.value, *query.flags.args)
             dt = (time.perf_counter() - start) * 1000.0
         except Exception as e:
             return await ctx.send(f'{type(e).__name__}: {e}')
