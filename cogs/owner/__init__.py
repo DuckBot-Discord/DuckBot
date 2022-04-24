@@ -1,5 +1,3 @@
-import discord
-
 from utils import DuckContext, HandleHTTPException
 from discord.ext.commands import NotOwner, command
 
@@ -7,9 +5,12 @@ from .blacklist import BlackListManagement
 from .test_shit import TestingShit
 from .badges import BadgeManagement
 from .eval import Eval
+from .sql import SQLCommands
+from .translations import TranslationManager
 
 class Owner(BlackListManagement, TestingShit,
-            BadgeManagement, Eval,
+            BadgeManagement, Eval, TranslationManager,
+            SQLCommands,
             command_attrs=dict(hidden=True),
             emoji='<:blushycat:913554213555028069>',
             brief='Restricted! hah.'):

@@ -8,22 +8,16 @@ from typing import (
     Dict,
     TypeVar,
     overload,
-    TYPE_CHECKING,
-    Optional,
+    Generic,
 )
 
 import discord
 from discord.ext import commands
-from discord.utils import MISSING
-from discord.ext.commands.view import StringView
+from discord.ext.commands import Converter, FlagConverter
 
 from .helpers import can_execute_action
 from .context import DuckContext
 from .errorhandler import HandleHTTPException
-from .errors import DuckBotCommandError
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
@@ -33,9 +27,7 @@ __all__: Tuple[str, ...] = (
     'TargetVerifier',
     'BanEntryConverter',
     'ChannelVerifier',
-    'MissingArguments',
-    'DuplicateArgument',
-    'UnorderedArguments',
+    'UntilFlag',
 )
     
 
@@ -66,7 +58,7 @@ class TargetVerifier(commands.Converter[T]):
     )
     
     def __init__(self, *targets: Type[T], fail_if_not_upgrade: bool = True) -> None:
-        self._targets: Tuple[Type[T]] = targets
+        self._targets: Tuple[Type[T], ...] = targets
         self.fail_if_not_upgrade: bool = fail_if_not_upgrade
         
     @discord.utils.cached_slot_property('_cs_converter_mapping')
@@ -231,8 +223,8 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
         self._targets = targets
 
     @discord.utils.cached_slot_property('_cs_converter_mapping')
-    def converter_mapping(self) -> Dict[Type[discord.abc.GuildChannel], Type[commands.Converter]]:
-        """Dict[Type[:class:`~discord.abc.GuildChannel`], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
+    def converter_mapping(self) -> Dict[Type[discord.abc.GuildChannel | discord.Thread], Type[commands.Converter]]:
+        """Dict[Type[Union[:class:`~discord.abc.GuildChannel`, :class:`~discord.Thread`], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
         return {
             discord.abc.GuildChannel: commands.GuildChannelConverter,
             discord.TextChannel: commands.TextChannelConverter,
@@ -240,7 +232,6 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
             discord.CategoryChannel: commands.CategoryChannelConverter,
             discord.StageChannel: commands.StageChannelConverter,
             discord.Thread: commands.ThreadConverter,
-            discord.StoreChannel: commands.StoreChannelConverter,
         }
 
     async def convert(self, ctx: DuckContext, argument: str) -> typing.Optional[discord.abc.GuildChannel]:
@@ -273,6 +264,7 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
             target = await commands.GuildChannelConverter().convert(ctx, argument)
             if not isinstance(target, self._targets):
                 if self._targets[-1] is discord.Thread:
+
                     error = commands.ThreadNotFound
                 else:
                     error = commands.ChannelNotFound
@@ -314,83 +306,27 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
         raise NotImplementedError('Derived classes need to implement this.')
 
 
-# Converter made by Stella#2000 (591135329117798400) from the d.py server :D
-# I was going to make my own but this is actually good so why not use it? lol
-
-class Argument:
-    def __init__(self, *, name: str, type: Type[type]) -> None:
-        self.name = name
-        self.type = type
-
-
-class DuplicateArgument(DuckBotCommandError):
-    pass
-
-
-class MissingArguments(DuckBotCommandError):
-    def __init__(self, arguments) -> None:
-        *every, last = map(lambda v: v.name, arguments)
-        if every:
-            message = f"{', '.join(every)} and {last}"
-        else:
-            message = last
-        super().__init__(f"The following arguments are missing: {message}")
+class UntilFlagActualC(Converter):
+    def __init__(self, flags: Type[FlagConverter]):
+        self.flags = flags()
+        self.prefix = flags.__commands_flag_prefix__
+        self.regex = flags.__commands_flag_regex__
+    
+    async def convert(self, ctx: DuckContext, argument: str) -> UntilFlag:
+        first_arg = self.regex.split(argument, maxsplit=1)[0]
+        if not first_arg.strip() or first_arg.strip().startswith(self.prefix):
+            raise commands.BadArgument('No body has been specified before the flags.')
+        flags = await self.flags.convert(ctx, argument=argument[len(first_arg):])
+        return UntilFlag(body=first_arg, flags=flags)
 
 
-class _UnorderedArg(type):
-    __commands_args__ = typing.ClassVar[typing.Dict[str, Argument]]
+class UntilFlag(Generic[T]):
+    def __init__(self, body: str, flags: T):
+        self.body = body
+        self.flags = flags
 
-    def __new__(mcs, name, bases, attrs) -> Self:
-        arguments = attrs.get("__annotations__", {})
-        for key, anno in arguments.items():
-            arguments[key] = Argument(name=key, type=anno)
-
-        mcs.__commands_args__ = arguments
-        return super().__new__(mcs, name, bases, attrs)
+    def __class_getitem__(cls, item: Type[FlagConverter]) -> UntilFlagActualC:
+        return UntilFlagActualC(item)
 
 
-class UnorderedArguments(metaclass=_UnorderedArg):
-    @staticmethod
-    async def try_convert(cls: UnorderedArguments, ctx: DuckContext, argument: Argument, value: str) -> None:
-        converted = await commands.run_converters(ctx, argument.type, value, ctx.current_parameter)
-        name = argument.name
-        if getattr(cls, name, MISSING) is not MISSING:
-            raise DuplicateArgument(f'Conflicting values at {name!r}.')
-
-        setattr(cls, name, converted)
-
-    @classmethod
-    async def convert(cls, ctx: DuckContext, argument: str) -> Self:
-        view = StringView(argument)
-        unordered = cls.__new__(cls)
-        converters = cls.__commands_args__.copy()
-        values = list(converters.values())
-
-        while not view.eof:
-            view.skip_ws()
-            argument = view.get_quoted_word()
-            to_remove = MISSING
-            for converter in values:
-                try:
-                    await cls.try_convert(unordered, ctx, converter, argument)
-                except DuplicateArgument as e:
-                    raise e from None
-                except commands.CommandError:
-                    pass  # ignored
-                else:
-                    to_remove = converter
-                    break
-
-            if to_remove is MISSING:
-                raise MissingArguments(values)
-
-            values.remove(to_remove)
-
-            if values and view.eof:
-                raise MissingArguments(values)
-
-            if not values and not view.eof:
-                break
-
-        return unordered
 
