@@ -25,7 +25,7 @@ from discord.ext import commands
 from .context import DuckContext
 
 try:
-    from typing import ParamSpec
+    from typing import ParamSpec  # type: ignore
 except ImportError:
     from typing_extensions import ParamSpec
 
@@ -215,9 +215,11 @@ class DeleteButtonCallback(discord.ui.Button['DeleteButton']):
     """ Internal. """
     async def callback(self, interaction: discord.Interaction) -> Any:
         try:
-            await interaction.message.delete()
+            if interaction.message:
+                await interaction.message.delete()
         finally:
-            self.view.stop()
+            if self.view:
+                self.view.stop()
 
 class DeleteButton(discord.ui.View):
     """
@@ -250,7 +252,7 @@ class DeleteButton(discord.ui.View):
             emoji=kwargs.pop('emoji', None),
         ))
         if isinstance(self.bot, commands.Bot):
-            self.bot.views.add(self)  # type: ignore
+            self.bot.views.add(self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """ Checks if the user is the right one. """
@@ -349,6 +351,8 @@ class URLObject:
     def __init__(self, url: str, *, is_discord_url: bool = True):
         if is_discord_url is True:
             match = CDN_REGEX.fullmatch(url)
+            if not match:
+                return
             self.channel_id = int(match.group('channel_id'))
             self.message_id = int(match.group('message_id'))
             self.name = match.group('filename')
@@ -436,7 +440,7 @@ class URLObject:
         """ Weather this file is a discord spoiler """
         return self.name.startswith("SPOILER_")
 
-    async def to_file(self, *, session: aiohttp.ClientSession = None):
+    async def to_file(self, *, session: aiohttp.ClientSession):
         """|coro|
 
         Returns a discord.File object from the URL.

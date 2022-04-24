@@ -1,8 +1,6 @@
 import asyncpg
 import discord
-
 from utils import DuckCog, group
-from discord.ext import commands
 
 
 class BadgeManagement(DuckCog):

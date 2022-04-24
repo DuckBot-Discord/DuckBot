@@ -35,7 +35,7 @@ class EvalCtxMenu(discord.ui.Modal):
         self.interaction = interaction
         await interaction.response.defer()
 
-def cleanup_code(content):
+def cleanup_code(content: str):
     """Automatically removes code blocks from the code."""
     # remove ```py\n```
     if content.startswith('```') and content.endswith('```'):
