@@ -10,6 +10,8 @@ from typing import (
     Any,
     Optional,
     TypeVar,
+    Union,
+    Literal,
 )
 import itertools
 import traceback
@@ -26,6 +28,10 @@ from jishaku.flags import Flags
 from jishaku.functools import AsyncSender
 from jishaku.repl import AsyncCodeExecutor, get_var_dict_from_ctx
 from jishaku.paginators import use_file_check, PaginatorInterface, WrappedPaginator
+if TYPE_CHECKING:
+    from typing import List as Greedy
+else:
+    from discord.ext.commands import Greedy
 
 from ..context import DuckContext
 from .. import add_logging, DuckCog
@@ -181,6 +187,30 @@ class OverwrittenManagementFeature(ManagementFeature):
         for page in paginator.pages:
             await ctx.send(page)
 
+    @Feature.Command(parent="jsk", name="sync")
+    async def jsk_sync(self, ctx: DuckContext, sync_globally: Optional[bool], *guild_ids: int):
+        """
+        Sync global or guild application commands to Discord.
+        """
+        guild_ids = guild_ids or (() if sync_globally else ((ctx.guild.id, ) if ctx.guild else ()))
+
+        paginator = WrappedPaginator(prefix='', suffix='')
+
+        if not guild_ids:
+            synced = await self.bot.tree.sync()
+            paginator.add_line(f"\N{SATELLITE ANTENNA} Synced {len(synced)} global commands")
+        else:
+            for guild_id in guild_ids:
+                try:
+                    synced = await self.bot.tree.sync(guild=discord.Object(guild_id))
+                except discord.HTTPException as exc:
+                    paginator.add_line(f"\N{WARNING SIGN} `{guild_id}`: {exc.text}")
+                else:
+                    paginator.add_line(f"\N{SATELLITE ANTENNA} `{guild_id}` Synced {len(synced)} guild commands")
+
+        for page in paginator.pages:
+            await ctx.send(page)
+
 features = list(STANDARD_FEATURES)
 features.remove(RootCommand)
 features.append(OverwrittenRootCommand)
@@ -190,7 +220,7 @@ features.append(OverwrittenManagementFeature)
 class DuckBotJishaku(
     DuckCog,
     *features,  # type: ignore
-    *OPTIONAL_FEATURES, 
+    *OPTIONAL_FEATURES,  # type: ignore
     brief='Jishaku front end class.',
     emoji='\N{CONSTRUCTION WORKER}'
 ):
@@ -241,7 +271,7 @@ class DuckBotJishaku(
             if redirect_stdout:
                 result = f'{stripper.format(redirect_stdout)}\n{result}'
 
-            return await ctx.send(result.replace(self.bot.http.token, "[token omitted]"))
+            return await ctx.send(result.replace(self.bot.http.token or '', "[token omitted]"))
 
         if use_file_check(ctx, len(result)):  # File "full content" preview limit
             # Discord's desktop and web client now supports an interactive file content
