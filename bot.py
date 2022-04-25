@@ -4,9 +4,9 @@ import asyncio
 import concurrent.futures
 import contextlib
 import functools
+from json import dump, load
 import logging
-import os
-import pprint
+
 import random
 import re
 import sys
@@ -14,6 +14,7 @@ import time
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
+    Dict,
     Generator,
     List,
     Optional,
@@ -29,7 +30,7 @@ from typing import (
     Union,
     Coroutine,
     DefaultDict,
-    NamedTuple
+    NamedTuple,
 )
 
 import asyncpg
@@ -45,19 +46,21 @@ from utils import (
     human_timedelta,
     TimerManager,
     DuckBlacklistManager,
+    human_join,
 )
 from utils.errors import *
 
 try:
-    from typing import ParamSpec  # type: ignore
+    from typing import ParamSpec
 except ImportError:
     from typing_extensions import ParamSpec
 
 if TYPE_CHECKING:
     from asyncpg import Pool, Connection
-    from asyncpg.transaction import Transaction  # NO TOUCHY!.. BRUH
+    from asyncpg.transaction import Transaction
     from aiohttp import ClientSession
     import datetime
+    from cogs.owner.eval import Eval
     
 DBT = TypeVar('DBT', bound='DuckBot')
 DCT = TypeVar('DCT', bound='DuckContext')
@@ -219,10 +222,63 @@ class DuckHelper(TimerManager):
         for i in range(0, len(item), size):
             yield item[i:i + size]
 
+    def validate_locale(self, locale: str | discord.Locale | None, default: str = 'en_us') -> str:
+        """Validate a locale.
+        
+        Parameters
+        ----------
+        locale: :class:`str`
+            The locale to validate.
+        
+        Returns
+        -------
+        :class:`bool`
+            Whether or not the locale is valid.
+        """
+        locale = str(locale).lower().replace('-', '_')
+        if locale not in self.bot.allowed_locales:
+            locale = self.validate_locale(default)
+        return locale
+
+
+    async def translate(
+        self, 
+        translation_id: int, 
+        /, 
+        *args: Any, 
+        locale: str | discord.Locale | None,
+        db: asyncpg.Pool | Connection | None = None,
+        ) -> str:
+        """|coro|
+        Handles translating a translation ID.
+
+        Parameters
+        ----------
+        translation_id: :class:`int`
+            The translation ID to translate.
+        args: :class:`Any`
+            The arguments to pass to the translation.
+        locale: Optional[:class:`str` | :class:`~discord.Locale`]
+            The locale to use for the translation.
+        connection: Optional[:class:`~asyncpg.Connection` | :class:`~asyncpg.Pool`]
+            The connection to use for the transaction.
+        """
+        connection = db or self.bot.pool
+        locale = self.validate_locale(locale)
+        translations = await connection.fetchrow('SELECT * FROM translations WHERE tr_id = $1', translation_id)
+        if not translations:
+            raise RuntimeError(f'Translation ID {translation_id} does not exist')
+
+        translation = translations[locale] or translations['en_us']
+        return translation.format(*args)
+
+
 
 class DuckBot(commands.Bot, DuckHelper):
     if TYPE_CHECKING:
         user: discord.ClientUser
+        _eval_cog: Eval
+        command_prefix: Set[str]
     
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
         intents = discord.Intents.all()
@@ -343,7 +399,7 @@ class DuckBot(commands.Bot, DuckHelper):
 
         Registers listeners for database events.
         """
-        self.listener_connection: asyncpg.Connection = await self.pool.acquire()  # type: ignore
+        self.listener_connection: asyncpg.Connection = await self.pool.acquire()
 
         async def _delete_prefixes_event(conn, pid, channel, payload):
             payload = discord.utils._from_json(payload)  # noqa
@@ -358,7 +414,41 @@ class DuckBot(commands.Bot, DuckHelper):
         await self.listener_connection.add_listener('update_prefixes', _create_or_update_event)
 
     async def dump_translations(self, filename: str) -> None:
-        ...
+        log.info('%sDumping translations to %s', col(5), f"{filename!r}")
+        translations = await self.pool.fetch('SELECT * FROM translations')
+        log.info('%sDumping %s translations to locales %s%s', col(5), len(translations), col(3),
+            human_join(list(self.allowed_locales), final=f'{col(5)}and{col(3)}', delim=f'{col(5)}, {col(3)}'))
+        payload: Dict[str, Any] = dict(
+            locales = list(self.allowed_locales),
+            last_updated = discord.utils.utcnow().isoformat(),
+        )
+        for translation in translations:
+            data = dict(translation)
+            del data['tr_id']
+            payload[translation['tr_id']] = data
+        with open(filename, 'w+') as f:
+            dump(payload, f, indent=4)
+
+    async def load_translations(self, filename: str) -> None:
+        async with self.safe_connection() as conn:
+            log.info('%sLoading translations from %s', col(5), f"{filename!r}")
+            with open(filename, 'r') as f:
+                payload = load(f)
+            log.info('%sLoading %s translations from locales %s%s', col(5), len(payload) - 2, col(3),
+                human_join(payload['locales'], final=f'{col(5)}and{col(3)}', delim=f'{col(5)}, {col(3)}'))
+            for tr_id, data in payload.items():
+                if not tr_id.isdigit():
+                    continue
+                log.debug('%sLoading translation %s', col(3), tr_id)
+                for locale, translation in data.items():
+                    if locale not in self.allowed_locales and locale != 'note':
+                        raise RuntimeError(f"Invalid locale {locale!r}")
+                    await conn.execute(f'''
+                        INSERT INTO translations (tr_id, {locale}) VALUES ($1, $2) 
+                        ON CONFLICT (tr_id) DO UPDATE SET {locale} = $2
+                    ''', int(tr_id), translation)
+            log.info('%sSuccessfully loaded %s translations', col(5), len(payload) - 2)
+
 
     @property
     def start_time(self) -> datetime.datetime:
@@ -554,7 +644,7 @@ class DuckBot(commands.Bot, DuckHelper):
         kwargs: :class:`Any`
             The keyword arguments for the event that raised the exception.
         """
-        etype, error, traceback_obj = sys.exc_info()
+        _, error, _ = sys.exc_info()
         if not error:
             raise
         
@@ -615,7 +705,7 @@ class DuckBot(commands.Bot, DuckHelper):
     # a Member into is_owner  ## Nah chai it's your shitty type checker smh!
     @discord.utils.copy_doc(commands.Bot.is_owner)
     async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
-        return await super().is_owner(user)  # type: ignore
+        return await super().is_owner(user)
 
     async def start(self, token: str, *, reconnect: bool = True, verbose: bool = True) -> None:
         """|coro|
@@ -665,9 +755,9 @@ class DuckBot(commands.Bot, DuckHelper):
             except Exception as e:
                 log.error('Could not wait for view cleanups', exc_info=e)
             try:
-                log.info('Closing listener connection...')
-                await self.listener_connection.close()
-                log.info('Listener connection closed...')
+                if self.listener_connection:
+                    log.info('Closing listener connection...')
+                    await self.listener_connection.close()
             except Exception as e:
                 log.error(f'Failed to close listener connection', exc_info=e)
         finally:
@@ -840,8 +930,8 @@ class DuckBot(commands.Bot, DuckHelper):
         databased = await self.pool.fetch("SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id)
         saved_payloads = [d['payload'] for d in databased]
 
-        not_synced = [p for g, p in payloads if p not in saved_payloads] + \
-                     [p for p in saved_payloads if p not in [p for g, p in payloads]]
+        not_synced = [p for _, p in payloads if p not in saved_payloads] + \
+                     [p for p in saved_payloads if p not in [p for _, p in payloads]]
 
         if not_synced:
             await self.pool.execute("DELETE FROM auto_sync WHERE guild_id = $1", guild_id)

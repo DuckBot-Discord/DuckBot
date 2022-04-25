@@ -1,45 +1,18 @@
-from __future__ import annotations
-
-import logging
-import os
-import aiohttp
 import asyncio
+import click
 
-from bot import DuckBot
-from dotenv import load_dotenv
-from utils.helpers import col
-
-load_dotenv('utils/.env')
-
-os.environ['JISHAKU_NO_UNDERSCORE'] = 'true'
-os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'true'
-os.environ['JISHAKU_RETAIN'] = 'true'
+from utils.launcher import run_bot
 
 
-def _get_or_fail(env_var: str) -> str:
-    val = os.environ.get(env_var)
-    if not val:
-        raise RuntimeError(f'{env_var!r} not set in .env file. Set it.')
-    return val
-
-
-TOKEN = _get_or_fail('TOKEN')
-URI = _get_or_fail('POSTGRES')
-ERROR_WH = _get_or_fail('ERROR_WEBHOOK_URL')
-
-logging.basicConfig(
-    level=logging.INFO,
-    format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s'
-)
-
-log = logging.getLogger('DuckBot.launcher')
-
-async def run_bot() -> None:
-    async with aiohttp.ClientSession() as session, \
-            DuckBot.temporary_pool(uri=URI) as pool, \
-            DuckBot(session=session, pool=pool, error_wh=ERROR_WH) as duck:
-        await duck.dump_translations('translations.sql')
-        await duck.start(TOKEN, reconnect=True, verbose=False)
+@click.command()
+@click.option('--dump', default=None, help='Dump translations to file.')
+@click.option('--load', default=None, help='Load translations from file.')
+@click.option('--norun', is_flag=True, help='Add to not run the bot.')
+def run(dump, norun, load):
+    """Options to run the bot."""
+    asyncio.run(run_bot(to_dump=dump, to_load=load,
+    run=(not norun if (not dump or not load) else False)))
     
+
 if __name__ == '__main__':
-    asyncio.run(run_bot())
+    run()
