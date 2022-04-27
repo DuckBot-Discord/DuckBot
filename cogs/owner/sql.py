@@ -71,7 +71,8 @@ class SQLCommands(DuckCog):
 
         rows = len(results)
         if rows == 0 or isinstance(results, str):
-            f'`{results}`\n*Ran in {dt:.2f}ms*'
+            result = 'Query returned o rows\n' if rows == 0 else str(results)
+            await ctx.send(result+f'*Ran in {dt:.2f}ms*')
 
         else:
             table = tabulate(results, headers='keys', tablefmt='orgtbl')

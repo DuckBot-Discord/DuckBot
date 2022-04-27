@@ -16,20 +16,24 @@ import discord
 from discord.ext import commands
 from import_expression import exec as e_exec
 
-from utils import DuckCog, DuckContext, DeleteButton, command
+from utils import DuckCog, DuckContext, DeleteButton, command, TranslatedEmbed
 from bot import DuckBot
 
 CODEBLOCK_REGEX = re.compile(r'`{3}(python\n|py\n|\n)?(?P<code>[^`]*)\n?`{3}')
 
+class TextInput(discord.ui.TextInput):
+    if typing.TYPE_CHECKING:
+        value: str
+
 class EvalCtxMenu(discord.ui.Modal):
-    def __init__(self, last_code: str, *, timeout: int = 60*15, **kwargs):
+    def __init__(self, last_code: typing.Optional[str], *, timeout: int = 60*15, **kwargs):
         self.interaction: typing.Optional[discord.Interaction] = None
         self.body.default = last_code
         super().__init__(
             title='Evaluates Code',
         )
 
-    body = discord.ui.TextInput(label='Code', placeholder='Enter code here', style=discord.TextStyle.long)
+    body = TextInput(label='Code', placeholder='Enter code here', style=discord.TextStyle.long)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         self.interaction = interaction
@@ -119,16 +123,16 @@ class Eval(DuckCog):
             eval_message.name, type=discord.AppCommandType.message
         )
         try:
-            del self.bot._eval_cog  # noqa
+            del self.bot._eval_cog
         except AttributeError:
             pass
 
     @staticmethod
-    def handle_return(ret: typing.Any, stdout: str = None) -> dict | None:
+    def handle_return(ret: typing.Any, stdout: str | None = None) -> dict | None:
         kwargs = {}
         if isinstance(ret, discord.File):
             kwargs['files'] = [ret]
-        elif isinstance(ret, discord.Embed):
+        elif isinstance(ret, (discord.Embed, TranslatedEmbed)):
             kwargs['embeds'] = ret
         elif isinstance(ret, discord.Message):
             kwargs['content'] = f"{repr(ret)}"
@@ -224,19 +228,16 @@ class Eval(DuckCog):
         }
 
         async def react_with_play(msg: discord.Message):
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.5)
             try:
                 await msg.add_reaction(
                     '\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}')
             except discord.HTTPException:
                 pass
 
-        async def cancel_task(t: asyncio.Task):
-            t.cancel()
-
         task = self.bot.create_task(react_with_play(ctx.message))
         result = await self.eval(body, env)
-        self.bot.create_task(cancel_task(task))
+        task.cancel()
 
         if result:
             await DeleteButton.to_destination(**result, destination=ctx, author=ctx.author, delete_on_timeout=False)
@@ -249,7 +250,7 @@ class Eval(DuckCog):
 
     @discord.app_commands.command(name='eval')
     @discord.app_commands.describe(body='The body to evaluate')
-    async def slash_eval(self, interaction: discord.Interaction, body: str = None):
+    async def slash_eval(self, interaction: discord.Interaction, body: typing.Optional[str]):
         """Evaluates arbitrary python code"""
 
         bot: DuckBot = interaction.client  # type: ignore
