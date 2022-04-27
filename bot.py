@@ -415,7 +415,7 @@ class DuckBot(commands.Bot, DuckHelper):
 
     async def dump_translations(self, filename: str) -> None:
         log.info('%sDumping translations to %s', col(5), f"{filename!r}")
-        translations = await self.pool.fetch('SELECT * FROM translations')
+        translations = await self.pool.fetch('SELECT * FROM translations ORDER BY tr_id')
         log.info('%sDumping %s translations to locales %s%s', col(5), len(translations), col(3),
             human_join(list(self.allowed_locales), final=f'{col(5)}and{col(3)}', delim=f'{col(5)}, {col(3)}'))
         payload: Dict[str, Any] = dict(
