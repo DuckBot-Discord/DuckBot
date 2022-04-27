@@ -671,7 +671,6 @@ class DuckHelp(commands.HelpCommand):
         :class:`discord.Message`
             The message that was sent to the user.
         """
-        print(type(mapping))
         self.bot = self.context.bot
         mapping = await self._filter_mapping(mapping)
         view = HelpView(parent=self.bot, cogs=list(cog for cog in mapping if cog), author=self.context.author) 
@@ -799,7 +798,7 @@ class DuckHelp(commands.HelpCommand):
         if isinstance(error, DuckBotNotStarted):
             return await ctx.send(f'Oop! Duck bot is not started yet, give me a minute and try again.')
         
-        log.warning('New error in help command', exc_info=error)
+        await ctx.bot.exceptions.add_error(error=error, ctx=ctx)
         return await ctx.send('I ran into a new error! I apologize for the inconvenience.')
 
 
