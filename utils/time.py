@@ -29,8 +29,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Iterable,
     List,
     Optional,
+    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -281,7 +283,7 @@ class plural:
         return f'{v} {singular}'
 
 
-def human_join(seq: List[str], delim=', ', final='or', spaces: bool = True) -> str:
+def human_join(seq: Sequence[str], delim=', ', final='or', spaces: bool = True) -> str:
     size = len(seq)
     if size == 0:
         return ''

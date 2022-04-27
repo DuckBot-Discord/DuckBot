@@ -10,6 +10,7 @@ from .time import *
 from .timer import *
 from .blacklist import *
 from .cache import *
-from . import interactions
+from . import interactions  # type: ignore
 from .paginators import *
 from .command import *
+from .translation_helpers import *

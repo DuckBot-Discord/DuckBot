@@ -28,6 +28,8 @@ from jishaku.flags import Flags
 from jishaku.functools import AsyncSender
 from jishaku.repl import AsyncCodeExecutor, get_var_dict_from_ctx
 from jishaku.paginators import use_file_check, PaginatorInterface, WrappedPaginator
+
+from utils.translation_helpers import TranslatedEmbed
 if TYPE_CHECKING:
     from typing import List as Greedy
 else:
@@ -250,11 +252,11 @@ class DuckBotJishaku(
         elif isinstance(result, discord.File):
             return await ctx.send(file=result)
 
-        elif isinstance(result, discord.Embed):
+        elif isinstance(result, (discord.Embed, TranslatedEmbed)):
             return await ctx.send(embed=result)
 
         elif isinstance(result, PaginatorInterface):
-            return await result.send_to(ctx)
+            return await result.send_to(ctx)  # type: ignore
 
         if not isinstance(result, str):
             result = repr(result)

@@ -149,6 +149,6 @@ class StringTranslatedCommandError(DuckBotCommandError):
     __slots__: Tuple[str, ...] = ('translation_id', 'args')
 
     def __init__(self, translation_id: int, *args: typing.Any) -> None:
-        self.translation_id: str = translation_id
+        self.translation_id: int = translation_id
         self.args: typing.Any = args
-        super().__init__(f'<untranslated text with id: {translation_id}>')
+        super().__init__(f'<unprocessed translation: translation_id={translation_id}>')

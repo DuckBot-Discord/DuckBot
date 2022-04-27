@@ -16,6 +16,8 @@ if TYPE_CHECKING:
     from discord.message import Message
     from bot import DuckBot
 
+from .translation_helpers import FormatString, TranslatedEmbed
+
 
 __all__: Tuple[str, ...] = (
     'DuckContext',
@@ -125,6 +127,17 @@ class DuckContext(commands.Context, Generic[BotT]):
 
         return result
 
+    async def get_locale(self) -> str:
+        """|coro|
+        Gets the locale to use for the translation.
+        """
+        return self.bot.validate_locale(
+            await self.bot.pool.fetchval('SELECT locale FROM user_settings WHERE user_id = $1', self.author.id),
+            default = self.bot.validate_locale(self.interaction.locale if self.interaction else None,
+            default = self.bot.validate_locale(self.guild.preferred_locale if self.guild else None,
+            default = 'en_us')))
+
+
     async def translate(self, translation_id: int, /, *args: Any, locale: str | discord.Locale | None = None) -> str:
         """|coro|
         Handles translating a translation ID.
@@ -138,27 +151,10 @@ class DuckContext(commands.Context, Generic[BotT]):
         locale: Optional[:class:`str` | :class:`~discord.Locale`]
             The locale to use for the translation.
         """
-        locale = await self.bot.pool.fetchval(
-            'SELECT locale FROM user_settings WHERE user_id = $1', self.author.id
-        ) or locale
+        locale = locale or await self.get_locale()
+        return await self.bot.translate(translation_id, *args, locale=locale)
 
-        if locale is None:
-            locale = self.guild.preferred_locale if self.guild else 'en_us'
-
-        if isinstance(locale, discord.Locale):
-            locale = str(locale).replace('-', '_')
-
-        locale = locale.lower()
-        if locale not in self.bot.allowed_locales:
-            locale = 'en_us'
-
-        translations = await self.bot.pool.fetchrow('SELECT * FROM translations WHERE tr_id = $1', translation_id)
-        if not translations:
-            raise RuntimeError(f'Translation ID {translation_id} does not exist')
-        translation = translations[locale] or translations['en_us']
-        return translation.format(*args)
-
-    async def send(self, content: int | str | None = None, *args: Any, **kwargs: Any) -> Message:
+    async def send(self, content: int | str | FormatString | None = None, *args: Any, **kwargs: Any) -> Message:
         """|coro|
         
         Sends a message to the invoking context's channel.
@@ -172,10 +168,15 @@ class DuckContext(commands.Context, Generic[BotT]):
         """
         if kwargs.get('embed') and kwargs.get('embeds'):
             raise ValueError('Cannot send both embed and embeds')
+        
+        locale = kwargs.pop('locale', await self.get_locale())
 
-        embeds = kwargs.pop('embeds', []) or ([kwargs.pop('embed')] if kwargs.get('embed') else [])
+        embeds = kwargs.pop('embeds', []) or ([kwargs.pop('embed')] if kwargs.get('embed', None) else [])
         if embeds:
-            for embed in embeds:
+            for i, embed in enumerate(embeds):
+                if isinstance(embed, TranslatedEmbed):
+                    embed = await embed.translate(self.bot, locale)
+                    embeds[i] = embed
                 if embed.color is None:
                     # Made this the bot's vanity colour, although we'll
                     # be keeping self.color for other stuff like userinfo
@@ -184,8 +185,10 @@ class DuckContext(commands.Context, Generic[BotT]):
             kwargs['embeds'] = embeds
         
         if isinstance(content, int):
-
-            content = await self.translate(content, *args, locale=kwargs.pop('locale', None))
+            content = await self.translate(content, *args, locale=locale)
+        elif isinstance(content, FormatString):
+            content = await self.translate(content.id, *content.args, locale=locale)
+            
 
         return await super().send(content, **kwargs)
 

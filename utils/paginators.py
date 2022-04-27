@@ -8,6 +8,8 @@ import discord
 from discord.ext import menus
 from discord.ui import Modal, TextInput
 
+from utils.translation_helpers import TranslatedEmbed
+
 from .context import DuckContext
 
 __all__: Tuple[str, ...] = ("ViewMenuPages", )
@@ -62,16 +64,16 @@ class ViewMenuPages(discord.ui.View):
             max_pages = self.source.get_max_pages()
             use_last_and_first = max_pages is not None and max_pages >= 2
             if use_last_and_first:
-                self.add_item(self.go_to_first_page)  # type: ignore
-            self.add_item(self.go_to_previous_page)  # type: ignore
+                self.add_item(self.go_to_first_page)
+            self.add_item(self.go_to_previous_page)
             if not self.compact:
-                self.add_item(self.go_to_current_page)  # type: ignore
-            self.add_item(self.go_to_next_page)  # type: ignore
+                self.add_item(self.go_to_current_page)
+            self.add_item(self.go_to_next_page)
             if use_last_and_first:
-                self.add_item(self.go_to_last_page)  # type: ignore
+                self.add_item(self.go_to_last_page)
             if not self.compact:
-                self.add_item(self.numbered_page)  # type: ignore
-            self.add_item(self.stop_pages)  # type: ignore
+                self.add_item(self.numbered_page)
+            self.add_item(self.stop_pages)
 
     async def _get_kwargs_from_page(self, page: int) -> Dict[str, Any]:
         value = await discord.utils.maybe_coroutine(self.source.format_page, self, page)
@@ -81,6 +83,11 @@ class ViewMenuPages(discord.ui.View):
             return {'content': value, 'embed': None}
         elif isinstance(value, discord.Embed):
             return {'embed': value, 'content': None}
+        elif isinstance(value, TranslatedEmbed):
+            return {
+                'embed': await value.translate(
+                    self.ctx.bot, await self.ctx.get_locale()),
+                'content': None}
         else:
             return {}
 
@@ -160,7 +167,7 @@ class ViewMenuPages(discord.ui.View):
         await self.ctx.bot.exceptions.add_error(error=error, ctx=self.ctx)
 
     async def start(self) -> None:
-        if self.check_embeds and not self.ctx.channel.permissions_for(self.ctx.me).embed_links:
+        if self.check_embeds and not self.ctx.channel.permissions_for(self.ctx.me).embed_links:  # type: ignore
             await self.ctx.send('Bot does not have embed links permission in this channel.')
             return
 
@@ -194,7 +201,7 @@ class ViewMenuPages(discord.ui.View):
     async def go_to_last_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """go to the last page"""
         # The call here is safe because it's guarded by skip_if
-        await self.show_page(interaction, self.source.get_max_pages() - 1)
+        await self.show_page(interaction, self.source.get_max_pages() - 1)  # type: ignore
 
     @discord.ui.button(label='Skip to page...', style=discord.ButtonStyle.grey)
     async def numbered_page(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -212,7 +219,7 @@ class ViewMenuPages(discord.ui.View):
             return
         else:
             try:
-                page = int(self.current_modal.value)
+                page = int(self.current_modal.value)  # type: ignore
             except ValueError:
                 await self.current_modal.interaction.response.send_message(
                     'Invalid page number.', ephemeral=True)
