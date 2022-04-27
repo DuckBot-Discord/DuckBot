@@ -1,0 +1,338 @@
+{
+    "locales": [
+        "es_es",
+        "it",
+        "en_us"
+    ],
+    "last_updated": "2022-04-27T08:54:16.612943+00:00",
+    "1": {
+        "en_us": "Tag content is too long! Max 2000 characters.",
+        "es_es": "Contenido de Tag demasiado largo, m\u00e1ximo 2000 caracteres.",
+        "it": "Contenuto del Tag troppo lungo. Massimo 2000 caratteri.",
+        "note": null
+    },
+    "2": {
+        "en_us": "Tag {0} successfully created!",
+        "es_es": "Tag {0} ha sido creada.",
+        "it": "Tag {0} \u00e9 stata creata.",
+        "note": null
+    },
+    "3": {
+        "en_us": "This tag already exists.",
+        "es_es": "Ya existe una tag con este nombre.",
+        "it": "C'\u00e8 gi\u00e0 un tag con questo nome.",
+        "note": null
+    },
+    "4": {
+        "en_us": "Tag name too long! Max 100 characters.",
+        "es_es": "Nombre del tag demasiado largo! M\u00e1ximo 100 caracteres.",
+        "it": "Nome del tag troppo lungo! Massimo 100 caratteri.",
+        "note": null
+    },
+    "5": {
+        "en_us": "No content was provided.",
+        "es_es": "No se ha proporcionado contenido.",
+        "it": "Contenuto del tag mancante.",
+        "note": null
+    },
+    "6": {
+        "en_us": "Could not create tag...",
+        "es_es": "No se ha podido crear el tag...",
+        "it": "Non \u00e8 stato possibile creare il tag...",
+        "note": null
+    },
+    "7": {
+        "en_us": "Timed out waiting for message from {0}...",
+        "es_es": "Tiempo de espera superado esperando mensaje de {0}...",
+        "it": "Timeout in attesa di messagio da  {0}...",
+        "note": null
+    },
+    "8": {
+        "en_us": "Hello, what name would you like to give this tag?",
+        "es_es": "Hola, que nombre quieres darle a este tag?",
+        "it": "Ciao, che nome vorresti dare a questo tag?",
+        "note": null
+    },
+    "9": {
+        "en_us": "{0} Please use {0} to try again.",
+        "es_es": "{0} Use {1} para intentar nuevamente.",
+        "it": "{0} Usi {1} per riprovare.",
+        "note": null
+    },
+    "10": {
+        "en_us": "What would you like the content of this tag to be?",
+        "es_es": "Cual seria el contenido de este tag?",
+        "it": "Quale sarebbe il contenuto di questa tag?",
+        "note": null
+    },
+    "11": {
+        "en_us": "Tag owner still in this server.",
+        "es_es": "Due\u00f1o de la tag sigue en este servidor.",
+        "it": "Padrone di questa tag \u00e8 ancora in questo server.",
+        "note": null
+    },
+    "12": {
+        "en_us": "Tag {0} successfully claimed!",
+        "es_es": "Tag {0} ahora es tuya!",
+        "it": "Tag {0} adesso e tua!",
+        "note": null
+    },
+    "13": {
+        "en_us": "Could not edit tag. Are you sure it exists and you own it?",
+        "es_es": "No se pudo editar la tag. \u00bfEst\u00e1 seguro que existe y es suya?",
+        "it": "Impossibile modificare il tag. \u00c8 sicura che esiste ed \u00e8 sua?",
+        "note": null
+    },
+    "14": {
+        "en_us": "Successfully edited tag!",
+        "es_es": "Tag editada con exito!",
+        "it": "Tag modificata con successo!",
+        "note": null
+    },
+    "15": {
+        "en_us": "Could not delete tag. Are you sure it exists and you own it?",
+        "es_es": "No se pudo eliminar la tag. \u00bfEst\u00e1 seguro que existe y es suya?",
+        "it": "Impossibile eliminare il tag. \u00c8 sicura che esiste ed \u00e8 sua?",
+        "note": null
+    },
+    "16": {
+        "en_us": "Could not delete tag. Are you sure it exists?",
+        "es_es": "No se pudo eliminar la tag. \u00bfEst\u00e1 seguro que existe?",
+        "it": "Impossibile eliminare il tag. \u00c8 sicura che esiste?",
+        "note": null
+    },
+    "17": {
+        "en_us": "Tag {0} that points to {1} deleted!",
+        "es_es": "Tag {0} (alias de {1}) eliminada!",
+        "it": "Tag {0} (alias di {1}) cancellata!",
+        "note": null
+    },
+    "18": {
+        "en_us": "Tag {0} and corresponding aliases deleted!",
+        "es_es": "Tag {0} y aliases eliminados!",
+        "it": "Tag {0} ed aliases cancellati!",
+        "note": null
+    },
+    "19": {
+        "en_us": "You do not have permission to purge tags of a user!",
+        "es_es": "No tienes los permisos necesarios para eliminar todas las tags di un utente!",
+        "it": "Non hai I permessi necessari per eliminare tutte le tag di un utente!",
+        "note": null
+    },
+    "20": {
+        "en_us": "{0} has no tags.",
+        "es_es": "{0} no tiene ninguna tag.",
+        "it": "{0} non ha nessuna tag.",
+        "note": null
+    },
+    "21": {
+        "en_us": "Are you sure you want to purge {0}'s tags?\nThis will delete {1} tags.\n**This action cannot be undone!**",
+        "es_es": "Confirme que quiere eliminar las tags de {0}?\nEsto eliminar\u00e1 {1} tags.\n**Esta acci\u00f3n no se puede deshacer!**",
+        "it": "Vuole cancellare tutte le tag di {0}?\nQuesto canceller\u00e1 {1} tags.\n**Questa azione non si pu\u00f3 disfare!**",
+        "note": null
+    },
+    "22": {
+        "en_us": "Aborted!",
+        "es_es": "Abortado!",
+        "it": "Abortito!",
+        "note": null
+    },
+    "23": {
+        "en_us": "Deleted all of {0}'s tags ({1} tags deleted)!",
+        "es_es": "Eliminado todas ({1}) las tags de {0}!",
+        "it": "Eliminato tutte ({1}) le tag di {0}!",
+        "note": null
+    },
+    "24": {
+        "en_us": "Tag {0} does not exist!",
+        "es_es": "Tag {0} no existe!",
+        "it": "Tag {0} non esiste!",
+        "note": null
+    },
+    "25": {
+        "en_us": "Tag named {0} already exists!",
+        "es_es": "Tag {0} ya existe!  ",
+        "it": "Tag {0} gi\u00e0 esiste!",
+        "note": null
+    },
+    "26": {
+        "en_us": "Could not create alias.",
+        "es_es": "No se ha podido crear alias.",
+        "it": "Non si \u00e8 potuto creare l'alias.",
+        "note": null
+    },
+    "27": {
+        "en_us": "Alias {0} that points to {1} created!",
+        "es_es": "Tag {0} que apunta a {1} creada exitosamente!",
+        "it": "Tag {0} che punta a {1} creata.",
+        "note": null
+    },
+    "28": {
+        "en_us": "Owner",
+        "es_es": "Due\u00f1o",
+        "it": "Padrone",
+        "note": null
+    },
+    "29": {
+        "en_us": "Original Tag",
+        "es_es": "Tag Original",
+        "it": "Tag Originale",
+        "note": null
+    },
+    "30": {
+        "en_us": "Alias created at",
+        "es_es": "Alias creado el",
+        "it": "Alias creato il",
+        "note": null
+    },
+    "31": {
+        "en_us": "Uses",
+        "es_es": "Usos",
+        "it": "Usi",
+        "note": null
+    },
+    "32": {
+        "en_us": "Aliases",
+        "es_es": "Aliases",
+        "it": "Alias",
+        "note": null
+    },
+    "33": {
+        "en_us": "Has {0} aliases",
+        "es_es": "Tiene {0} aliases",
+        "it": "Ha {0} alias",
+        "note": null
+    },
+    "34": {
+        "en_us": "Tag created at",
+        "es_es": "Tag creada el",
+        "it": "Tag creata il",
+        "note": null
+    },
+    "35": {
+        "en_us": "This server has no tags!",
+        "es_es": "Este servidor no tiene tags!",
+        "it": "Questo server non ha tags!",
+        "note": null
+    },
+    "36": {
+        "en_us": "No global tags found!",
+        "es_es": "No hay tags globales!",
+        "it": "Non esistono tag globali!",
+        "note": null
+    },
+    "37": {
+        "en_us": "{0} has no tags!",
+        "es_es": "{0} no tiene tags!",
+        "it": "{0} non ha tags!",
+        "note": null
+    },
+    "38": {
+        "en_us": "Tag List",
+        "es_es": "Lista de Tags",
+        "it": "Lista di Tag",
+        "note": null
+    },
+    "39": {
+        "en_us": "Page {0}/{1} ({2} entries)",
+        "es_es": "Pagina {0}/{1} ({2} items)",
+        "it": "Pagina {0}/{1} ({2} item)",
+        "note": null
+    },
+    "40": {
+        "en_us": "No tags found with that query...",
+        "es_es": "No se encontraron tags con esa busqueda...",
+        "it": "Nessuna tag trovata con quella query...",
+        "note": null
+    },
+    "41": {
+        "en_us": "{0} tags in total, {1} uses in total.",
+        "es_es": "{0} tag totales, {1} usos totales.",
+        "it": "{0} tag totali, {1} usi totali.",
+        "note": null
+    },
+    "42": {
+        "en_us": "No data available...",
+        "es_es": "No hay datos...",
+        "it": "Dati non disponibili...",
+        "note": null
+    },
+    "43": {
+        "en_us": "{0} {1} (used {2} times)",
+        "es_es": "{0} {1} (usada {2} veces)",
+        "it": "{0} {1} (usata {2} volte)",
+        "note": null
+    },
+    "44": {
+        "en_us": "{0} <@{1}> (owns {2} tags)",
+        "es_es": "{0} <@{1}> (posee {2} tags)",
+        "it": "{0} <@{1}> (possiede {2} tag)",
+        "note": null
+    },
+    "45": {
+        "en_us": "Top Tag Creators",
+        "es_es": "Top Creadores de Tags",
+        "it": "Top Creatori di Tag",
+        "note": null
+    },
+    "46": {
+        "en_us": "{0} <@{1}> ({2} tags used)",
+        "es_es": "{0} <@{1}> ({2} tags usadas)",
+        "it": "{0} <@{1}> ({2} tag usate)",
+        "note": null
+    },
+    "47": {
+        "en_us": "Top Tag Users",
+        "es_es": "Top Usuarios de Tags",
+        "it": "Top Utenti di Tag",
+        "note": null
+    },
+    "48": {
+        "en_us": "{0} Tag Stats",
+        "es_es": "Estadisticas de {0}",
+        "it": "Statistiche di {0}",
+        "note": null
+    },
+    "49": {
+        "en_us": "Owned Tags",
+        "es_es": "Tags Propias",
+        "it": "Tag Propie",
+        "note": null
+    },
+    "50": {
+        "en_us": "{0} tags",
+        "es_es": "{0} tags",
+        "it": "{0} tag",
+        "note": null
+    },
+    "51": {
+        "en_us": "Owned Tag Uses",
+        "es_es": "Usos de las Tags Propias",
+        "it": "Usi delle Tag Propie",
+        "note": null
+    },
+    "52": {
+        "en_us": "{0} uses",
+        "es_es": "{0} usos",
+        "it": "{0} usi",
+        "note": null
+    },
+    "54": {
+        "en_us": "Global Tag Stats",
+        "es_es": "Estadisticas Globales de Tags",
+        "it": "Statistiche Globali di Tag",
+        "note": null
+    },
+    "55": {
+        "en_us": "Tag Command Uses",
+        "es_es": "Usos del Comando 'Tag'",
+        "it": "Usi del Comando 'tag'",
+        "note": null
+    },
+    "56": {
+        "en_us": "Top Tags",
+        "es_es": "Top Tags",
+        "it": "Top Tag",
+        "note": null
+    }
+}

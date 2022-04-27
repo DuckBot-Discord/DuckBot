@@ -13,7 +13,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands, menus
 
-from utils import DuckCog, DuckContext, ViewMenuPages, group
+from utils import DuckCog, DuckContext, ViewMenuPages, group, StringTranslatedCommandError
+from utils import TranslatedEmbed, FormatString
 
 T = TypeVar('T')
 CO_T = TypeVar("CO_T", bound='Union[Type[commands.Converter], commands.Converter]')
@@ -91,24 +92,24 @@ class Tag:
             The connection to use.
         """
         if embed is not discord.utils.MISSING:
-            embed = embed.to_dict() if embed else None
+            embed = embed.to_dict() if embed else None  # type: ignore
             query = "UPDATE tags SET content = $1, embed = $2 WHERE id = $3"
             args = (content, embed, self.id)
 
             def update():
-                self.content = content
+                self.content = content  # type: ignore
                 self.embed = embed
         else:
             query = "UPDATE tags SET content = $1 WHERE id = $2"
             args = (content, self.id)
 
             def update():
-                self.content = content
+                self.content = content  # type: ignore
 
         await connection.execute(query, *args)
         update()
 
-    async def transfer(self, connection: typing.Union[asyncpg.Connection, asyncpg.Pool], user: discord.User):
+    async def transfer(self, connection: typing.Union[asyncpg.Connection, asyncpg.Pool], user: discord.Member):
         """|coro|
 
         Transfers the tag to another user.
@@ -154,7 +155,7 @@ class Tag:
             self,
             connection: typing.Union[asyncpg.Connection, asyncpg.Pool],
             alias: typing.Union[str, TagName],
-            user: discord.User
+            user: discord.User | discord.Member,
     ):
         """|coro|
 
@@ -195,6 +196,11 @@ class TagName(commands.clean_content):
     def __init__(self, *, lower=True):
         self.lower = lower
         super().__init__()
+    
+    def __class_getitem__(cls, attr: bool):
+        if not isinstance(attr, bool):
+            raise TypeError("Expected bool, not {}".format(type(attr).__name__))
+        return TagName(lower=attr)
 
     # Taken from R.Danny's code because I'm lazy
     async def actual_conversion(self, converted, error: Type[discord.DiscordException], bot):
@@ -224,7 +230,7 @@ class TagName(commands.clean_content):
 
 class TagsFromFetchedPageSource(menus.ListPageSource):
     def __init__(self, tags: typing.List[asyncpg.Record], *, per_page: int = 10,
-                 member: discord.Member = None, ctx: DuckContext):
+                 member: discord.Member | discord.User | None = None, ctx: DuckContext):
         super().__init__(tags, per_page=per_page)
         self.member = member
         self.ctx = ctx
@@ -232,10 +238,10 @@ class TagsFromFetchedPageSource(menus.ListPageSource):
     async def format_page(self, menu: menus.MenuPages, entries: typing.List[asyncpg.Record]):
         source = enumerate(entries, start=menu.current_page * self.per_page + 1)
         formatted = '\n'.join(f"{idx}. {tag['name']} (ID: {tag['id']})" for idx, tag in source)
-        embed = discord.Embed(title=f"Tags List", description=formatted, colour=self.ctx.bot.colour)
+        embed = TranslatedEmbed(title=38, description=formatted, colour=self.ctx.bot.colour)
         if self.member:
             embed.set_author(name=str(self.member), icon_url=self.member.display_avatar.url)
-        embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()} ({len(self.entries)} entries)")
+        embed.set_footer(text=FormatString(39, menu.current_page + 1, self.get_max_pages(), len(self.entries)))
         return embed
 
 
@@ -266,7 +272,7 @@ class Tags(DuckCog):
         return {"content": text}
 
     @staticmethod
-    def maybe_codeblock(content: str = None, file: discord.File = None, *, filename='tag') -> dict:
+    def maybe_codeblock(content: str | None = None, file: discord.File | None = None, *, filename='tag') -> dict:
         """ Maybe puts `text` in a code block.
 
         **Example**
@@ -280,7 +286,7 @@ class Tags(DuckCog):
         ----------
         content: str
             The text to check.
-        file: discord.File
+        file: discord.File``
             The file to check.
         filename: str
             The filename to use.
@@ -334,7 +340,7 @@ class Tags(DuckCog):
         if find_global is not True:
             query = """
                 SELECT id, name, content, embed, owner_id, guild_id FROM tags 
-                WHERE (LOWER(name) = LOWER($1::TEXT) and guild_id = $2) 
+                WHERE (LOWER(name) = LOWER($1::TEXT) and (guild_id = $2) and (content is not null)) 
                 OR (id = (
                     SELECT points_to FROM tags 
                         WHERE LOWER(name) = LOWER($1::TEXT) 
@@ -346,7 +352,7 @@ class Tags(DuckCog):
         else:
             query = """
                 SELECT id, name, content, embed, owner_id, guild_id FROM tags 
-                WHERE (LOWER(name) = LOWER($1::TEXT) and (guild_id IS NULL or guild_id = $2))  
+                WHERE (LOWER(name) = LOWER($1::TEXT) and (guild_id IS NULL or guild_id = $2) and (content is not null))
                 OR (id = (
                     SELECT points_to FROM tags 
                         WHERE LOWER(name) = LOWER($1::TEXT)
@@ -401,7 +407,7 @@ class Tags(DuckCog):
             self,
             guild: Optional[discord.Guild],
             owner: Union[discord.User, discord.Member],
-            tag: Union[str, TagName],
+            tag: Union[str, commands.clean_content],
             content: Union[str, commands.clean_content],
     ) -> Tag:
         """|coro|
@@ -433,23 +439,23 @@ class Tags(DuckCog):
                     """, tag, content, guild.id if guild else None, owner.id)
                     return Tag(stuff)
             except asyncpg.UniqueViolationError:
-                raise commands.BadArgument("This tag already exists!")
+                raise StringTranslatedCommandError(3)
             except asyncpg.StringDataRightTruncationError:
-                raise commands.BadArgument("Tag name too long! Max 100 characters.")
+                raise StringTranslatedCommandError(4)
             except asyncpg.CheckViolationError:
-                raise commands.BadArgument("No content was provided!")
+                raise StringTranslatedCommandError(5)
             except Exception as e:
                 await self.bot.exceptions.add_error(error=e)
-                raise commands.BadArgument(f"Could not create tag.")
+                raise StringTranslatedCommandError(6)
 
     async def wait_for(
             self,
-            channel: discord.TextChannel,
-            author: discord.Member,
+            channel: discord.abc.MessageableChannel,
+            author: discord.Member | discord.User,
             *,
             timeout: int = 60,
-            converter: CO_T = None,
-            ctx: commands.Context = None
+            converter: CO_T | Type[CO_T] | None = None,
+            ctx: DuckContext | None = None
     ) -> Union[str, CO_T]:
         """|coro|
 
@@ -478,27 +484,27 @@ class Tags(DuckCog):
                 try:
                     if inspect.isclass(converter) and issubclass(converter, commands.Converter):
                         if inspect.ismethod(converter.convert):
-                            content = await converter.convert(ctx, message.content)  # type: ignore
+                            content = await converter.convert(ctx, message.content)
                         else:
-                            content = await converter().convert(ctx, message.content)
+                            content = await converter().convert(ctx, message.content)  # type: ignore
                     elif isinstance(converter, commands.Converter):
-                        content = await converter.convert(ctx, message.content)
+                        content = await converter.convert(ctx, message.content)  # type: ignore
                     else:
                         content = message.content
                 except commands.CommandError:
                     raise
                 except Exception as exc:
-                    raise commands.ConversionError(converter, exc) from exc
+                    raise commands.ConversionError(converter, exc) from exc  # type: ignore
             else:
                 content = message.content
 
             if not content:
-                raise commands.BadArgument('No content was provided... Somehow...')
+                raise StringTranslatedCommandError(5)
             if isinstance(content, str) and len(content) > 2000:
-                raise commands.BadArgument('Content is too long! 2000 characters max.')
+                raise StringTranslatedCommandError(1)
             return content
         except asyncio.TimeoutError:
-            raise commands.BadArgument(f'Timed out waiting for message from {str(author)}...')
+            raise StringTranslatedCommandError(7, f"{str(author)}")
 
     async def __tag(self, ctx: commands.Context, name: TagName, *, guild: discord.Guild | None):
         """|coro|
@@ -511,7 +517,8 @@ class Tags(DuckCog):
             The tag to show
         """
         tag = await self.get_tag(name, guild.id if guild else None, find_global=True)
-        if tag.embed and ctx.channel.permissions_for(ctx.me).embed_links:
+        print(tag.id)
+        if tag.embed and ctx.channel.permissions_for(ctx.me).embed_links:  # type: ignore
             await ctx.channel.send(tag.content, embed=tag.embed)
         else:
             await ctx.channel.send(tag.content)
@@ -527,7 +534,7 @@ class Tags(DuckCog):
     async def tag_global(self, ctx: DuckContext, name: TagName):
         await self.__tag(ctx, name, guild=None)
 
-    async def __tag_create(self, ctx: commands.Context, tag: TagName,
+    async def __tag_create(self, ctx: DuckContext, tag: TagName,
                            content: commands.clean_content, guild: discord.Guild | None):
         """|coro|
 
@@ -541,18 +548,18 @@ class Tags(DuckCog):
             The content of the tag
         """
         if len(str(content)) > 2000:
-            raise commands.BadArgument("Tag content is too long! Max 2000 characters.")
-        tag = await self.make_tag(guild, ctx.author, tag, content)
-        await ctx.send(f"Tag {tag.name!r} successfully created!")
+            raise StringTranslatedCommandError(1)
+        tag_ = await self.make_tag(guild, ctx.author, tag, content)
+        await ctx.send(2, f"{tag_.name!r}")
 
     @tag.command(name='create', aliases=['new', 'add'])
     @copy_doc(__tag_create)
-    async def tag_create(self, ctx: DuckContext, tag: TagName(lower=False), *, content: commands.clean_content):
+    async def tag_create(self, ctx: DuckContext, tag: TagName(lower=False), *, content: commands.clean_content):  # type: ignore
         await self.__tag_create(ctx, tag, content, guild=ctx.guild)
 
     @tag_global.command(name='create', aliases=['new', 'add'])
     @copy_doc(__tag_create)
-    async def tag_global_create(self, ctx: DuckContext, tag: TagName(lower=False), *, content: commands.clean_content):
+    async def tag_global_create(self, ctx: DuckContext, tag: TagName(lower=False), *, content: commands.clean_content):  # type: ignore
         await self.__tag_create(ctx, tag, content, guild=None)
 
     async def __tag_make(self, ctx: DuckContext, guild: discord.Guild | None):
@@ -560,12 +567,12 @@ class Tags(DuckCog):
 
         Interactive prompt to make a tag.
         """
-        await ctx.send('Hello, what name would you like to give this tag?')
+        await ctx.send(8)
         try:
             name = await self.wait_for(ctx.channel, ctx.author, converter=TagName(lower=False), ctx=ctx)
         except commands.BadArgument as e:
-            cmd = f"{ctx.clean_prefix}{ctx.command.qualified_name}"
-            raise commands.BadArgument(f"{e} Please use {cmd!r} to try again.")
+            cmd = f"{ctx.clean_prefix}{ctx.command.qualified_name if ctx.command else '<Unknown Command>'}"
+            raise StringTranslatedCommandError(9, e, f"{cmd!r}")
 
         args = (name, guild.id if guild else 0)
         with self.reserve_tag(*args):
@@ -578,14 +585,15 @@ class Tags(DuckCog):
             """
             check = await self.bot.pool.fetchval(query, *args)
             if check:
-                raise commands.BadArgument(f'A tag with the name {name!r} already exists!')
-            await ctx.send('What would you like the content of this tag to be?')
+                cmd = f"{ctx.clean_prefix}{ctx.command.qualified_name if ctx.command else '<Unknown Command>'}"
+                raise StringTranslatedCommandError(9, await ctx.translate(3), f"{cmd!r}")
+            await ctx.send(10)
             content = await self.wait_for(ctx.channel, ctx.author,
                                           converter=commands.clean_content,
                                           ctx=ctx, timeout=60 * 10)
 
         await self.make_tag(guild, ctx.author, name, content)
-        await ctx.send(f'Tag {name!r} successfully created!')
+        await ctx.send(2, f"{name!r}")
 
     @tag.command(name='make', ignore_extra=False)
     @copy_doc(__tag_make)
@@ -614,12 +622,13 @@ class Tags(DuckCog):
         tag = await self.get_tag(name, ctx.guild.id)
         user = await self.bot.get_or_fetch_member(guild=ctx.guild, user=tag.owner_id)
         if user:
-            await ctx.send('Tag owner still in this server.')
+            await ctx.send(11)
             return
+        assert isinstance(ctx.author, discord.Member)
         await tag.transfer(self.bot.pool, ctx.author)
-        await ctx.send(f'Tag {name!r} successfully claimed!')
+        await ctx.send(12, f"{name!r}")
 
-    async def __tag_edit(self, ctx: DuckContext, tag: TagName, content: commands.clean_content,
+    async def __tag_edit(self, ctx: DuckContext, tag_name: TagName, content: commands.clean_content,
                          guild: discord.Guild | None):
         """|coro|
 
@@ -633,11 +642,11 @@ class Tags(DuckCog):
             The new content of the tag
         """
         async with self.bot.safe_connection() as conn:
-            tag = await self.get_tag(tag, guild.id if guild else None, connection=conn, find_global=guild is None)
+            tag = await self.get_tag(tag_name, guild.id if guild else None, connection=conn, find_global=guild is None)
             if tag.owner_id != ctx.author.id:
-                raise commands.BadArgument("Could not edit tag. Are you sure it exists and you own it?")
+                raise StringTranslatedCommandError(13)
             await tag.edit(conn, content)
-        await ctx.send(f'Successfully edited tag!')
+        await ctx.send(14)
 
     @tag.command(name='edit')
     @copy_doc(__tag_edit)
@@ -669,7 +678,7 @@ class Tags(DuckCog):
                     UPDATE tags
                     SET content = content || E'\n' || $1
                     WHERE name = $2
-                    AND CASE WHEN ( $3 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $3 ) END
+                    AND CASE WHEN ( $3::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $3 ) END
                     AND owner_id = $4
                     RETURNING *
                 )
@@ -677,9 +686,9 @@ class Tags(DuckCog):
             """
             confirm = await conn.fetchval(query, content, tag, guild.id if guild else 0, ctx.author.id)
             if confirm:
-                await ctx.send(f'Succesfully edited tag!')
+                await ctx.send(14)
             else:
-                await ctx.send('Could not edit tag. Are you sure it exists and you own it?')
+                await ctx.send(13)
 
     @tag.command(name='append')
     @copy_doc(__tag_append)
@@ -721,17 +730,17 @@ class Tags(DuckCog):
 
             is_mod = await self.bot.is_owner(ctx.author)
 
-            if guild:
+            if guild and isinstance(ctx.author, discord.Member):
                 is_mod = is_mod or ctx.author.guild_permissions.manage_messages
 
             tag_p = await conn.fetchrow(query, tag, guild.id if guild else 0, ctx.author.id, is_mod)
 
             if tag_p is None:
-                await ctx.send(f"Could not delete tag. Are you sure it exists{'' if is_mod else '  and you own it'}?")
+                await ctx.send(15 if is_mod else 16)
             elif tag_p['parent'] is not None:
-                await ctx.send(f"Tag {tag_p['name']!r} that points to {tag_p['parent']!r} deleted!")
+                await ctx.send(17, tag_p['name'], tag_p['parent'])
             else:
-                await ctx.send(f"Tag {tag_p['name']!r} and corresponding aliases deleted!")
+                await ctx.send(18, tag_p['name'])
 
     @tag.command(name='delete')
     @copy_doc(__tag_delete)
@@ -774,17 +783,17 @@ class Tags(DuckCog):
 
             is_mod = await self.bot.is_owner(ctx.author)
 
-            if guild:
+            if guild and isinstance(ctx.author, discord.Member):
                 is_mod = is_mod or ctx.author.guild_permissions.manage_messages
 
             tag_p = await conn.fetchrow(query, tag_id, guild.id if guild else 0, ctx.author.id, is_mod)
 
             if tag_p is None:
-                await ctx.send(f"Could not delete tag. Are you sure it exists{'' if is_mod else '  and you own it'}?")
+                await ctx.send(15 if is_mod else 16)
             elif tag_p['parent'] is not None:
-                await ctx.send(f"Tag {tag_p['name']!r} that points to {tag_p['parent']!r} deleted!")
+                await ctx.send(17)
             else:
-                await ctx.send(f"Tag {tag_p['name']!r} and corresponding aliases deleted!")
+                await ctx.send(18)
 
     @tag.command(name='delete-id')
     @copy_doc(__tag_delete_id)
@@ -810,15 +819,17 @@ class Tags(DuckCog):
         is_mod = await self.bot.is_owner(ctx.author)
 
         if guild:
+            if not isinstance(ctx.author, discord.Member):
+                raise commands.BadArgument('error!')
             is_mod = is_mod or ctx.author.guild_permissions.manage_messages
 
         if not is_mod:
-            await ctx.send("You do not have permission to purge tags!")
+            await ctx.send(19)
             return
 
         query = """
             SELECT COUNT(*) FROM tags 
-            WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
+            WHERE CASE WHEN ( $1::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
             AND owner_id = $2
         """
         args = (guild.id if guild else 0, member.id)
@@ -826,27 +837,22 @@ class Tags(DuckCog):
         amount: int | None = self.bot.pool.fetchval(query, *args)  # type: ignore
 
         if amount == 0 or amount is None:
-            await ctx.send(f"{member} has no tags!")
+            await ctx.send(20, str(member))
             return
 
-        result = await ctx.confirm(f"Are you sure you want to purge {member}'s tags?\n"
-                                   f"This will delete {amount} tag{'s' if amount > 1 else ''}.\n"
-                                   f"**This action cannot be undone!**")
+        result = await ctx.confirm(await ctx.translate(21, str(member), amount))
 
         if result is None:
             return
         elif result is False:
-            await ctx.send("Aborted!")
+            await ctx.send(22)
             return
-
-        if not (ctx.guild.get_member(ctx.author.id) or ctx.author).guild_permissions.manage_messages:
-            await ctx.send('You no longer have the required permissions to purge tags!')
 
         async with self.bot.safe_connection() as conn:
             query = """
                 WITH deleted AS (
                     DELETE FROM tags
-                        WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
+                        WHERE CASE WHEN ( $1::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $2 ) END
                         AND owner_id = $2
                         RETURNING name, points_to
                 )
@@ -855,7 +861,7 @@ class Tags(DuckCog):
 
             tag_p = await conn.fetchval(query, guild.id if guild else 0, member.id)
 
-            await ctx.send(f"Deleted all of {member}'s tags ({tag_p} tags deleted)!")
+            await ctx.send(23, member, tag_p)
 
     @tag.command(name='purge')
     @copy_doc(__tag_purge)
@@ -884,15 +890,15 @@ class Tags(DuckCog):
             try:
                 tag = await self.get_tag(points_to, guild.id if guild else None, connection=conn, find_global=guild is None)
             except commands.BadArgument:
-                return await ctx.send(f"Tag {points_to!r} does not exist!")
+                return await ctx.send(24, f"{points_to!r}")
             try:
                 await tag.add_alias(conn, alias, ctx.author)
             except asyncpg.UniqueViolationError:
-                return await ctx.send(f"Tag {alias!r} already exists!")
+                return await ctx.send(25)
             except Exception as e:
                 await self.bot.exceptions.add_error(error=e, ctx=ctx)
-                return await ctx.send(f"Could not create alias!")
-            await ctx.send(f"Alias {alias!r} that points to {points_to!r} created!")
+                return await ctx.send(26)
+            await ctx.send(27, f"{alias!r}", f"{points_to!r}")
 
     @tag.command(name='alias')
     @copy_doc(__tag_alias)
@@ -936,16 +942,17 @@ class Tags(DuckCog):
         name, owner_id, created_at, is_alias, parent, uses, aliases_amount = await self.bot.pool.fetchrow(*args)
         owner = await self.bot.get_or_fetch_user(owner_id) or UnknownUser(owner_id)
 
-        embed = discord.Embed(title=name, timestamp=created_at)
+        # TODO: Add a way to translate embeds.
+        embed = TranslatedEmbed(title=name, timestamp=created_at)
         embed.set_author(name=str(owner), icon_url=owner.display_avatar.url)
-        embed.add_field(name='Owner', value=f'{owner.mention}')
+        embed.add_field(name=28, value=f'{owner.mention}')
         if is_alias:
-            embed.add_field(name='Original Tag', value=parent)
-            embed.set_footer(text='Alias created at')
+            embed.add_field(name=29, value=parent)
+            embed.set_footer(text=30)
         else:
-            embed.add_field(name='Uses', value=uses)
-            embed.add_field(name='Aliases', value=f"Has {aliases_amount} aliases", inline=False)
-            embed.set_footer(text='Tag created at')
+            embed.add_field(name=31, value=str(uses))
+            embed.add_field(name=32, value=FormatString(33, aliases_amount), inline=False)
+            embed.set_footer(text=34)
         await ctx.send(embed=embed)
 
     @tag.command(name='info', aliases=['owner'])
@@ -958,7 +965,7 @@ class Tags(DuckCog):
     async def tag_global_info(self, ctx: DuckContext, *, tag: TagName):
         await self.__tag_info(ctx, tag, None)
 
-    async def __tag_list(self, ctx: DuckContext, member: discord.abc.Snowflake | None, guild: discord.Guild | None):
+    async def __tag_list(self, ctx: DuckContext, member: discord.Member | discord.User | None, guild: discord.Guild | None):
         """|coro|
 
         Lists all tags owned by a member.
@@ -970,7 +977,7 @@ class Tags(DuckCog):
         """
         query = """
             SELECT name, id FROM tags
-            WHERE CASE WHEN ( $1 = 0 ) 
+            WHERE CASE WHEN ( $1::BIGINT = 0 ) 
                         THEN ( guild_id IS NULL ) 
                         ELSE ( guild_id = $1 ) END
             AND ( owner_id = $2 OR $2::BIGINT = 0 )
@@ -980,8 +987,7 @@ class Tags(DuckCog):
         tags = await self.bot.pool.fetch(query, *args)
 
         if not tags:
-            return await ctx.send(("This server has no tags!" if guild else "No global tags found!")
-                                  if not member else f"{member} owns no{' global ' if not guild else ' '}tags!")
+            return await ctx.send((35 if guild else 36) if not member else FormatString(37, str(member)))
 
         paginator = ViewMenuPages(
             source=TagsFromFetchedPageSource(tags, member=member, ctx=ctx),
@@ -990,12 +996,12 @@ class Tags(DuckCog):
 
     @tag.command(name='list')
     @copy_doc(__tag_list)
-    async def tag_list(self, ctx: DuckContext, *, member: discord.Member = None):
+    async def tag_list(self, ctx: DuckContext, *, member: Optional[discord.Member] = None):
         await self.__tag_list(ctx, member, ctx.guild)
 
     @tag_global.command(name='list')
     @copy_doc(__tag_list)
-    async def tag_global_list(self, ctx: DuckContext, *, user: discord.User = None):
+    async def tag_global_list(self, ctx: DuckContext, *, user:  Optional[discord.User] = None):
         await self.__tag_list(ctx, user, None)
 
     async def __tag_search(self, ctx: DuckContext, query: str, guild: discord.Guild | None):
@@ -1010,7 +1016,7 @@ class Tags(DuckCog):
         """
         db_query = """
             SELECT name, id FROM tags
-            WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
+            WHERE CASE WHEN ( $1::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
             AND similarity(name, $2) > 0
             ORDER BY similarity(name, $2) DESC
             LIMIT 200
@@ -1018,7 +1024,7 @@ class Tags(DuckCog):
         args = (guild.id if guild else 0, query)
         tags = await self.bot.pool.fetch(db_query, *args)
         if not tags:
-            return await ctx.send("No tags found with that query...")
+            return await ctx.send(40)
 
         paginator = ViewMenuPages(
             source=TagsFromFetchedPageSource(tags, member=None, ctx=ctx),
@@ -1035,7 +1041,7 @@ class Tags(DuckCog):
     async def tag_global_search(self, ctx: DuckContext, *, query: str):
         await self.__tag_search(ctx, query, None)
 
-    async def __tag_raw(self, ctx: DuckContext, tag: TagName, guild: discord.Guild | None):
+    async def __tag_raw(self, ctx: DuckContext, tag_name: TagName, guild: discord.Guild | None):
         """|coro|
 
         Sends a raw tag.
@@ -1045,7 +1051,7 @@ class Tags(DuckCog):
         tag: TagName
             The tag.
         """
-        tag = await self.get_tag(tag, guild.id if guild else None, find_global=guild is None)
+        tag = await self.get_tag(tag_name, guild.id if guild else None, find_global=guild is None)
         await ctx.send(**self.maybe_file(tag.raw))
 
     @tag.command(name='raw')
@@ -1058,7 +1064,7 @@ class Tags(DuckCog):
     async def tag_global_raw(self, ctx: DuckContext, *, tag: TagName):
         await self.__tag_raw(ctx, tag, None)
 
-    async def get_guild_or_global_stats(self, ctx: DuckContext, guild: discord.Guild | None, embed: discord.Embed):
+    async def get_guild_or_global_stats(self, ctx: DuckContext, guild: discord.Guild | None, embed: TranslatedEmbed):
         """|coro|
 
         Gets the tag stats of a guild.
@@ -1083,26 +1089,25 @@ class Tags(DuckCog):
             COUNT(*) OVER () AS total_tags,
             SUM(uses) OVER () AS total_uses
             FROM tags
-            WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
+            WHERE CASE WHEN ( $1::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
             ORDER BY uses DESC
             LIMIT 5;
             """
         data = await self.bot.pool.fetch(query, guild_id)
 
-        embed.description = f"{data[0]['total_tags']} tags in total, " \
-                            f"{data[0]['total_uses']} uses in total." \
-            if data else "No data available...."
+        embed.description = FormatString(41, data[0]['total_tags'], data[0]['total_uses']) \
+            if data else 42
 
-        top_tags = [f"{AWARD_EMOJI[index]} {name} (used {uses} times)"
+        top_tags = [await ctx.translate(43, AWARD_EMOJI[index], name, uses)
                     for index, (name, uses, _, _) in enumerate(data)]
 
-        embed.add_field(name='Top Tags', value='\n'.join(top_tags) or '\u200b', inline=False)
+        embed.add_field(name=56, value='\n'.join(top_tags) or '\u200b', inline=False)
 
         # Top creators
 
         query = """
             SELECT COUNT(*) as tag_amount, owner_id
-            FROM tags WHERE CASE WHEN ( $1 = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
+            FROM tags WHERE CASE WHEN ( $1::BIGINT = 0 ) THEN ( guild_id IS NULL ) ELSE ( guild_id = $1 ) END
             GROUP BY owner_id
             ORDER BY tag_amount DESC
             LIMIT 5;
@@ -1110,17 +1115,17 @@ class Tags(DuckCog):
 
         data = await self.bot.pool.fetch(query, guild_id)
 
-        top_creators = [f"{AWARD_EMOJI[index]} <@{owner_id}> (owns {tag_amount} tags)"
+        top_creators = [await ctx.translate(44, AWARD_EMOJI[index], owner_id ,tag_amount)
                         for index, (tag_amount, owner_id) in enumerate(data)]
 
-        embed.add_field(name='Top Tag Creators', value='\n'.join(top_creators) or '\u200b', inline=False)
+        embed.add_field(name=45, value='\n'.join(top_creators) or '\u200b', inline=False)
 
         # Top users
 
         query = """
             SELECT COUNT(*) as tag_amount, user_id
-            FROM commands WHERE CASE WHEN ( $1 = 0 ) THEN ( TRUE ) ELSE ( guild_id = $1 ) END
-            AND CASE WHEN ( $1 = 0 ) THEN ( command = 'tag global' ) ELSE ( command = 'tag' ) END
+            FROM commands WHERE CASE WHEN ( $1::BIGINT = 0 ) THEN ( TRUE ) ELSE ( guild_id = $1 ) END
+            AND CASE WHEN ( $1::BIGINT = 0 ) THEN ( command = 'tag global' ) ELSE ( command = 'tag' ) END
             GROUP BY user_id
             ORDER BY tag_amount DESC
             LIMIT 5;
@@ -1128,10 +1133,10 @@ class Tags(DuckCog):
 
         data = await self.bot.pool.fetch(query, guild_id)
 
-        top_users = [f"{AWARD_EMOJI[index]} <@{user_id}> ({tag_amount} tags used)"
+        top_users = [await ctx.translate(46, AWARD_EMOJI[index], user_id, tag_amount)
                      for index, (tag_amount, user_id) in enumerate(data)]
 
-        embed.add_field(name='Top Tag Users', value='\n'.join(top_users) or '\u200b', inline=False)
+        embed.add_field(name=47, value='\n'.join(top_users) or '\u200b', inline=False)
 
         await ctx.send(embed=embed)
 
@@ -1152,8 +1157,8 @@ class Tags(DuckCog):
             If ``None``, gets the global tag stats.
         """
 
-        embed = discord.Embed()
-        embed.set_author(name=f"{member.name} Tag Stats", icon_url=member.display_avatar.url)
+        embed = TranslatedEmbed()
+        embed.set_author(name=FormatString(48, str(ctx.author)), icon_url=member.display_avatar.url)
         args = (member.id, guild.id if guild else 0)
 
         # tags created
@@ -1173,8 +1178,8 @@ class Tags(DuckCog):
             tags = 'None'
             uses = 0
 
-        embed.add_field(name='Owned Tags', value=f"{tags} tags")
-        embed.add_field(name='Owned Tag Uses', value=f"{uses} uses")
+        embed.add_field(name=49, value=FormatString(50, tags), inline=False)
+        embed.add_field(name=51, value=FormatString(52, uses), inline=False)
 
         # tags used
 
@@ -1186,7 +1191,7 @@ class Tags(DuckCog):
             """
 
         data = await self.bot.pool.fetchrow(query, *args)
-        embed.add_field(name='Tag Command Uses', value=f"{data['tag_amount']:,} uses" if data else 'None')
+        embed.add_field(name=55, value=FormatString(52, f"{data['tag_amount']:,}") if data else 'None', inline=False)
 
         # top tags
         query = """
@@ -1198,16 +1203,16 @@ class Tags(DuckCog):
             """
 
         data = await self.bot.pool.fetch(query, *args)
-
-        top_tags = [f"{AWARD_EMOJI[index]} {name} (used {uses} times)"
+        
+        top_tags = [await ctx.translate(43, AWARD_EMOJI[index], name, uses)
                     for index, (name, uses) in enumerate(data)]
 
-        embed.add_field(name='Top Tags', value='\n'.join(top_tags) or '\u200b', inline=False)
+        embed.add_field(name=56, value='\n'.join(top_tags) or '\u200b', inline=False)
 
         await ctx.send(embed=embed)
 
     @tag.command(name='stats')
-    async def tag_stats(self, ctx: DuckContext, member: discord.Member = None):
+    async def tag_stats(self, ctx: DuckContext, member: Optional[discord.Member] = None):
         """|coro|
 
         Gets the tag stats of a member or this server.
@@ -1220,15 +1225,15 @@ class Tags(DuckCog):
             the server will be shown.
         """
         if member is None:
-            embed = discord.Embed()
-            embed.set_author(name=f"{ctx.guild.name} Tag Stats",
+            embed = TranslatedEmbed()
+            embed.set_author(name=FormatString(48, str(ctx.guild)),
                              icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
             await self.get_guild_or_global_stats(ctx, guild=ctx.guild, embed=embed)
         else:
             await self.user_tag_stats(ctx, member, ctx.guild)
 
     @tag_global.command(name='stats')
-    async def tag_global_stats(self, ctx: DuckContext, user: discord.User = None):
+    async def tag_global_stats(self, ctx: DuckContext, user: Optional[discord.User] = None):
         """|coro|
 
         Gets the tag stats of a user or global.
@@ -1241,8 +1246,8 @@ class Tags(DuckCog):
             stats will be shown.
         """
         if user is None:
-            embed = discord.Embed()
-            embed.set_author(name=f"Global Tag Stats",
+            embed = TranslatedEmbed()
+            embed.set_author(name=54,
                              icon_url=ctx.me.display_avatar.url)
             await self.get_guild_or_global_stats(ctx, guild=None, embed=embed)
         else:
@@ -1274,14 +1279,16 @@ class Tags(DuckCog):
         is_mod = await self.bot.is_owner(ctx.author)
 
         if guild:
+            if not isinstance(ctx.author, discord.Member):
+                raise commands.BadArgument('error!')
             is_mod = is_mod or ctx.author.guild_permissions.manage_messages
 
         args = (tag, guild.id if guild else 0, ctx.author.id, is_mod)
         exists = await self.bot.pool.fetchval(query, *args)
 
         if not exists:
-            return await ctx.send(f"Could not edit tag. Are you sure it exists{'' if is_mod else '  and you own it'}?")
-        await ctx.send(f"Successfully edited tag!")
+            StringTranslatedCommandError(13)
+        await ctx.send(14)
 
     @tag.command(name='remove-embed')
     @copy_doc(__tag_remove_embed)
@@ -1301,8 +1308,8 @@ class Tags(DuckCog):
     @app_commands.rename(
         tag_name='tag-name',
         raw='raw-content')
-    async def slash_tag(self, interaction: discord.Interaction, *, tag_name: str, ephemeral: bool = None,
-                        raw: typing.Literal['Yes', 'No', 'Send As File', 'Send Using Code Block'] = None):
+    async def slash_tag(self, interaction: discord.Interaction, *, tag_name: str, ephemeral: Optional[bool] = None,
+                        raw: Optional[typing.Literal['Yes', 'No', 'Send As File', 'Send Using Code Block']] = None):
         """ Shows a tag. For more commands, use the "tag" message command. """
         tag = await self.get_tag(tag_name, interaction.guild.id if interaction.guild else None, find_global=True)
         if raw == 'Yes':
@@ -1341,7 +1348,9 @@ class Tags(DuckCog):
             WITH tags AS (
                 SELECT name FROM tags 
                 WHERE (guild_id = $1 OR guild_id IS NULL)
-                AND ( CASE WHEN LENGTH($2) > 0 THEN ( SIMILARITY(name, $2) > 0.05 ) ELSE TRUE END )
+                AND ( CASE WHEN LENGTH($2) > 0 THEN ( SIMILARITY(name, $2) > (
+                    CASE WHEN LENGTH($2) > 3 THEN 0.175 ELSE 0.05 END
+                ) ) ELSE TRUE END )
                 ORDER BY similarity(name, $2) LIMIT 50
             )
             SELECT DISTINCT name FROM tags ORDER BY name LIMIT 25
@@ -1350,7 +1359,8 @@ class Tags(DuckCog):
         tags = await self.bot.pool.fetch(query, interaction.guild.id if interaction.guild else None, current)
         if tags:
             return [app_commands.Choice(name=f"{tag['name']}"[0:100], value=tag['name']) for tag in tags]
-        return [app_commands.Choice(name='No tags found matching your query...', value='list')]
+        ctx = await DuckContext.from_interaction(interaction)
+        return [app_commands.Choice(name=await ctx.translate(40), value='list')]
 
 async def setup(bot):
     await bot.add_cog(Tags(bot))
