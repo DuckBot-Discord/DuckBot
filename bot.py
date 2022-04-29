@@ -314,8 +314,10 @@ class DuckBot(commands.Bot, DuckHelper):
         self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
 
     async def setup_hook(self) -> None:
+        failed = False
         for extension in initial_extensions:
-            await self.load_extension(extension)
+            result = await self.load_extension(extension)
+            failed = failed or not result
 
         self.tree.copy_global_to(guild=discord.Object(id=774561547930304536))
 
@@ -337,7 +339,10 @@ class DuckBot(commands.Bot, DuckHelper):
                 else:
                     log.info('%sCommands for guild %s were already synced', col(6), guild.id)
 
-        self.create_task(sync_with_logging())
+        if not failed:
+            self.create_task(sync_with_logging())
+        else:
+            log.info('Not syncing commands. One or more cogs failed to load.')
 
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -526,19 +531,31 @@ class DuckBot(commands.Bot, DuckHelper):
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.load_extension)
-    async def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return await super().load_extension(name, package=package)
+    async def load_extension(self, name: str, *, package: Optional[str] = None) -> bool:
+        try:
+            await super().load_extension(name, package=package)
+            return True
+        except:
+            raise
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.unload_extension)
-    async def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return await super().unload_extension(name, package=package)
+    async def unload_extension(self, name: str, *, package: Optional[str] = None) -> bool:
+        try:
+            await super().unload_extension(name, package=package)
+            return True
+        except:
+            raise
     
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.reload_extension)
-    async def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        return await super().reload_extension(name, package=package)
-        
+    async def reload_extension(self, name: str, *, package: Optional[str] = None) -> bool:
+        try:
+            await super().reload_extension(name, package=package)
+            return True
+        except:
+            raise
+
     def safe_connection(self, *, timeout: float = 10.0) -> DbContextManager:
         """A context manager that will acquire a connection from the bot's pool.
         
