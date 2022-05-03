@@ -50,11 +50,6 @@ class SQLCommands(DuckCog):
             The query to execute.
         """
         query.value = cleanup_code(query.value)
-        try:
-            query.value = query.value.format(bot=ctx.bot, ctx=ctx, os=os)
-        except KeyError as e:
-            return await ctx.send(f"Variable not found: {e}\nAvailable: `ctx`, `bot`, `os`")
-
         is_multistatement = query.value.count(';') > 1
         if is_multistatement:
             # fetch does not support multiple statements
