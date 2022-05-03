@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 from typing import (
+    Optional,
     TypeVar
 )
 
@@ -35,7 +36,7 @@ class News(DuckCog):
         await NewsViewer.start(ctx, news)
 
     @news.command(hidden=True)
-    async def add(self, ctx: DuckContext, title: str = None, *, content: str = None):
+    async def add(self, ctx: DuckContext, title: Optional[str] = None, *, content: Optional[str] = None):
         """|coro| 
         
         Adds a news item to the news feed

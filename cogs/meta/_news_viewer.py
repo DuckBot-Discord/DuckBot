@@ -21,7 +21,7 @@ from bot import DuckBot
 from utils import format_date
 from utils.context import DuckContext
 
-T = TypeVar('T')
+NVT = TypeVar('NVT', bound='NewsViewer')
 
 fm_dt = discord.utils.format_dt
 
@@ -104,14 +104,14 @@ class NewsViewer(discord.ui.View):
     """
     if TYPE_CHECKING:
         message: discord.Message
+        ctx: Optional[DuckContext]
 
     def __init__(self, obj: typing.Union[DuckContext, discord.Interaction], news: List[Dict[str, Any]]):
         super().__init__()
-        self.author: discord.User
-        if isinstance(obj, commands.Context):
+        if isinstance(obj, DuckContext):
             self.author = obj.author
             self.bot: DuckBot = obj.bot
-            self.ctx: DuckContext = obj  # type: ignore
+            self.ctx = obj
         else:
             self.ctx = None
             self.author = obj.user
@@ -227,7 +227,7 @@ class NewsViewer(discord.ui.View):
         self.previous.disabled = next_page_num == self.news.max_pages
 
     @classmethod
-    async def start(cls: Type[T], ctx: DuckContext, news: List[Dict[str, Any]]) -> T:
+    async def start(cls: Type[NVT], ctx: DuckContext, news: List[Dict[str, Any]]) -> NVT:
         """|coro|
 
         Used to start the view and build internal cache.
@@ -244,7 +244,7 @@ class NewsViewer(discord.ui.View):
         :class:`NewsViewer`
             The news viewer after it has finished.
         """
-        new: NewsViewer = cls(ctx, news)
+        new = cls(ctx, news)
         new.update_labels()
         new.message = await ctx.send(embed=new.get_embed(new.news.current), view=new)
         new.bot.views.add(new)
@@ -252,8 +252,8 @@ class NewsViewer(discord.ui.View):
         return new
 
     @classmethod
-    async def from_interaction(cls: Type[T], interaction: discord.Interaction, news: List[Dict[str, Any]]) -> T:
-        new: NewsViewer = cls(interaction, news)
+    async def from_interaction(cls: Type[NVT], interaction: discord.Interaction, news: List[Dict[str, Any]]) -> NVT:
+        new = cls(interaction, news)
         new.update_labels()
         await interaction.response.send_message(embed=new.get_embed(new.news.current), view=new)
         new.message = await interaction.original_message()
