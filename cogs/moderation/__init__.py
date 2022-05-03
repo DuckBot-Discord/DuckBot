@@ -6,7 +6,6 @@ from .block import Block
 from .tempmute import TempMute
 from .standard import StandardModeration
 from .temporary import TemporaryCommands
-from .app_commands import ApplicationModeration
 
 if TYPE_CHECKING:
     from bot import DuckBot
@@ -17,7 +16,6 @@ class Moderation(
     StandardModeration,
     Block,
     TemporaryCommands,
-    ApplicationModeration,
     emoji='\N{HAMMER AND PICK}',
     brief='Moderation commands!',
 ):

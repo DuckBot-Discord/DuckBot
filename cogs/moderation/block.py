@@ -9,25 +9,93 @@ from typing import (
 )
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from utils import (
     DuckContext,
     DuckCog,
+    ActionNotExecutable,
     HandleHTTPException,
     mdr,
     FutureTime,
     TargetVerifier,
     command
 )
+
+from utils.interactions import (
+    HandleHTTPException as InterHandleHTTPException,
+    can_execute_action,
+    has_permissions,
+    bot_has_permissions,
+)
+
 from utils.errors import TimerNotFound
 from utils.timer import Timer
-from ._block_cog import BlockCog
 
 log = logging.getLogger('DuckBot.moderation.block')
 
 
-class Block(BlockCog):
+class Block(DuckCog):
+
+    async def toggle_block(
+            self,
+            channel: discord.TextChannel,
+            member: discord.Member,
+            blocked: bool = True,
+            update_db: bool = True,
+            reason: Optional[str] = None
+    ) -> None:
+        """|coro|
+
+        Toggle the block status of a member in a channel.
+
+        Parameters
+        ----------
+        channel : `discord.abc.Messageable`
+            The channel to block/unblock the member in.
+        member : `discord.Member`
+            The member to block/unblock.
+        blocked : `bool`, optional
+            Whether to block or unblock the member. Defaults to ``True``, which means block.
+        update_db : `bool`, optional
+            Whether to update the database with the new block status.
+        reason : `str`, optional
+            The reason for the block/unblock.
+        """
+        if isinstance(channel, discord.abc.PrivateChannel):
+            raise commands.NoPrivateMessage()
+
+        if isinstance(channel, discord.Thread):
+            channel = channel.parent  # type: ignore
+            if not channel:
+                raise ActionNotExecutable("Couldn't block! This thread has no parent channel... somehow.")
+
+        val = False if blocked else None
+        overwrites = channel.overwrites_for(member)
+
+        overwrites.update(
+            send_messages=val,
+            add_reactions=val,
+            create_public_threads=val,
+            create_private_threads=val,
+            send_messages_in_threads=val
+        )
+        try:
+            await channel.set_permissions(
+                member, reason=reason,
+                overwrite=overwrites)
+        finally:
+            if update_db:
+                if blocked:
+                    query = 'INSERT INTO blocks (guild_id, channel_id, user_id) VALUES ($1, $2, $3) ' \
+                            'ON CONFLICT (guild_id, channel_id, user_id) DO NOTHING'
+                else:
+                    query = "DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3"
+
+                async with self.bot.safe_connection() as conn:
+                    await conn.execute(query, channel.guild.id, channel.id, member.id)
+
 
     async def format_block(self, guild: discord.Guild, user_id: int, channel_id: Optional[int] = None):
         """|coro|
@@ -73,6 +141,9 @@ class Block(BlockCog):
         member: :class:`discord.Member`
             The member to block.
         """
+        if not isinstance(ctx.channel, discord.TextChannel):
+            raise ActionNotExecutable('This action is not supported in this channel type. Only text channels are currently supported.')
+        
         reason = f'Block by {ctx.author} (ID: {ctx.author.id})'
 
         async with HandleHTTPException(ctx):
@@ -83,7 +154,7 @@ class Block(BlockCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: TargetVerifier(discord.Member)):  # type: ignore
+    async def tempblock(self, ctx: DuckContext[discord.TextChannel], time: FutureTime, *, member: TargetVerifier(discord.Member)):  # type: ignore
         """|coro|
 
         Temporarily blocks a user from your channel.
@@ -95,14 +166,10 @@ class Block(BlockCog):
         member: :class:`discord.Member`
             The member to block.
         """
-        guild = ctx.guild
-        if guild is None:  # Type checker happy
-            return
-
         reason = f'Tempblock by {ctx.author} (ID: {ctx.author.id}) until {time.dt}'
 
-        await self.bot.create_timer(time.dt, 'tempblock', guild.id, ctx.channel.id, member.id, ctx.author.id,
-                                    precise=False)  # type: ignore
+        await self.bot.create_timer(time.dt, 'tempblock', ctx.guild.id, ctx.channel.id, member.id, ctx.author.id,
+                                    precise=False)
 
         async with HandleHTTPException(ctx):
             await self.toggle_block(ctx.channel, member, blocked=True, reason=reason)
@@ -280,3 +347,67 @@ class Block(BlockCog):
             # Finally, we remove the user from the list of blocked users, regardless of any errors.
             await self.bot.pool.execute('DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3',
                                         guild_id, channel_id, user_id)
+
+    slash_block = app_commands.Group(name='block', description='Blocks users from channels')
+
+    @slash_block.command(name='user')
+    @app_commands.describe(
+        user='The user you wish to block.'
+    )
+    async def app_block_user(
+            self,
+            interaction: discord.Interaction,
+            user: discord.Member,
+    ):
+        """ Blocks a user from your channel. """
+        await has_permissions(interaction, manage_messages=True)
+        await bot_has_permissions(interaction, ban_members=True)
+        await can_execute_action(interaction, user)
+        
+        if not isinstance(interaction.channel, discord.TextChannel):
+            raise ActionNotExecutable('This action is not supported in this channel type. Only text channels are currently supported.')
+
+
+        await interaction.response.defer()
+        reason = f'Block by {interaction.user} (ID: {interaction.user.id})'
+
+        async with InterHandleHTTPException(interaction.followup):
+            await self.toggle_block(interaction.channel, user, blocked=True, reason=reason)
+
+        await interaction.followup.send(f'✅ **|** Blocked **{mdr(user)}**')
+
+    @slash_block.command(name='revoke')
+    @app_commands.describe(
+        user='The user you wish to block.'
+    )
+    async def app_unblock_user(
+            self,
+            interaction: discord.Interaction,
+            user: discord.Member,
+    ):
+        """ Unblocks a user from your channel. """
+        await has_permissions(interaction, manage_messages=True)
+        await bot_has_permissions(interaction, ban_members=True)
+        await can_execute_action(interaction, user)
+        assert interaction.guild is not None
+        assert interaction.channel is not None
+
+        await interaction.response.defer()
+        bot: DuckBot = interaction.client  # type: ignore
+        await bot.pool.execute("""
+            DELETE FROM timers WHERE event = 'tempblock'
+            AND (extra->'args'->0)::bigint = $1
+                -- First arg is the guild ID
+            AND (extra->'args'->1)::bigint = $2
+                -- Second arg is the channel ID
+            AND (extra->'args'->2)::bigint = $3
+                -- Third arg is the user ID
+        """, interaction.guild.id, interaction.channel.id, user.id)
+
+        # then the actual unblock
+        reason = f'Unblock by {interaction.user} (ID: {interaction.user.id})'
+
+        async with InterHandleHTTPException(interaction.followup):
+            await self.toggle_block(interaction.channel, user, blocked=False, reason=reason)  # type: ignore
+
+        await interaction.followup.send(f'✅ **|** Unblocked **{mdr(user)}**')

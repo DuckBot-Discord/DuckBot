@@ -17,6 +17,7 @@ from utils import (
     mdr,
     command
 )
+from utils.helpers import can_execute_action
 
 
 class StandardModeration(DuckCog):
@@ -60,7 +61,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(ban_members=True)
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
-    async def ban(self, ctx: DuckContext, user: TargetVerifier(discord.User), *, reason: str = '...') -> Optional[discord.Message]: # type: ignore
+    async def ban(self, ctx: DuckContext, user: discord.User, *, delete_days: Optional[int], reason: str = '...') -> Optional[discord.Message]:
         """|coro|
 
         Ban a member from the server.
@@ -69,15 +70,15 @@ class StandardModeration(DuckCog):
         ----------
         user: :class:`discord.Member`
             The member to ban.
+        delete_days: Optional[:class:`int`]
+            The number of days worth of messages to delete.
         reason: Optional[:class:`str`]
             The reason for banning the member. Defaults to 'being a jerk!'.
         """
-        guild = ctx.guild
-        if guild is None:
-            return
+        await can_execute_action(ctx, user, fail_if_not_upgrade=False)
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
-            await guild.ban(user, reason=safe_reason(ctx.author, reason))
+            await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
 
@@ -111,25 +112,21 @@ class StandardModeration(DuckCog):
         extra = f"Previously banned for: {user.reason}" if user.reason else ''
         return await ctx.send(f"Unbanned **{user}**\n{extra}")
 
-    @command(name='nick')
+    @command(name='nick', hybrid=True)
     @commands.bot_has_guild_permissions(manage_nicknames=True)
     @commands.has_guild_permissions(manage_nicknames=True)
     @commands.guild_only()
-    async def nick(self, ctx: DuckContext, member: TargetVerifier(discord.Member), *, nickname: Optional[str] = None): # type: ignore
-        """|coro|
-
-        Change a member's nickname.
+    async def nick(self, ctx: DuckContext, member: discord.Member, *, nickname: Optional[str] = None):
+        """Change a member's nickname.
 
         Parameters
-        ---------
+        ----------
         member: :class:`discord.Member`
             The member to change the nickname of.
         nickname: Optional[:class:`str`]
             The nickname to set. If no nickname is provided, the nickname will be removed.
         """
-        guild = ctx.guild
-        if guild is None:
-            return
+        await can_execute_action(ctx, member) 
 
         if nickname is None and not member.nick:
             return await ctx.send(f'**{mdr(member)}** has no nickname to remove.')
