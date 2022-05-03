@@ -43,6 +43,7 @@ URL_REGEX = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|%[0-9a-f
 __all__: Tuple[str, ...] = (
     'col',
     'mdr',
+    'cb',
     'safe_reason',
     'add_logging',
     'format_date',
@@ -86,6 +87,26 @@ def mdr(entity: Any) -> str:
         The string of the object with markdown removed.
     """
     return discord.utils.remove_markdown(discord.utils.escape_mentions(str(entity)))
+
+def cb(text: str, /, *, lang: str = 'py'):
+    """Wraps a string into a code-block, and adds zero width 
+    characters to avoid the code block getting cut off.
+
+    Parameters
+    ----------
+    text: str
+        The text to wrap.
+    lang: str
+        The code language to use.
+
+    Returns
+    -------
+    str
+        The wrapped text.
+    """
+    text = text.replace('`', '\u200b`')
+    return f'```{lang}\n{text}\n```'
+
 
 def safe_reason(author: Union[discord.Member, discord.User], reason: str, *, length: int = 512) -> str:
     base = f'Action by {author} ({author.id}) for: '

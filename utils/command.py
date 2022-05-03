@@ -11,19 +11,18 @@ from typing import (
     Callable,
     Dict,
     Iterable,
-    List,
     Mapping,
     TypeVar,
     Any,
     Generic,
-    TypeVar,
     Union,
 )
 from typing_extensions import ParamSpec, Self, Concatenate
 
 import discord
 from discord.ext import commands
-from discord.ext.commands.core import CogT, hooked_wrapped_callback
+from discord.ext.commands.core import hooked_wrapped_callback
+from discord.ext.commands._types import CogT
 from discord.ext.commands._types import ContextT, Coro
 from discord.utils import MISSING
 
@@ -73,7 +72,7 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
 		/,
 		**kwargs: Any
     ) -> None:
-        super().__init__(func, **kwargs)
+        super().__init__(func, **kwargs)  # type: ignore
         self.autocompletes: Dict[str, AutoComplete] = {}
         
     @property
@@ -444,7 +443,7 @@ def command(
 	aliases: Iterable[str] = MISSING,
     hybrid: bool = False,
 	**attrs: Any
-) -> Callable[..., DuckCommand]:
+) -> Callable[..., DuckCommand | DuckHybridCommand]:
     """
     Register a function as a :class:`DuckCommand`.
     
@@ -489,8 +488,9 @@ def group(
 	brief: str = MISSING,
 	aliases: Iterable[str] = MISSING,
     hybrid: bool = False,
+    fallback: str | None = None,
 	**attrs: Any
-) -> Callable[..., DuckGroup]:
+) -> Callable[..., DuckGroup | DuckHybridGroup]:
     """
     Register a function as a :class:`DuckGroup`.
     
@@ -523,6 +523,10 @@ def group(
             kwargs['brief'] = brief
         if aliases is not MISSING:
             kwargs['aliases'] = aliases
+        if fallback is not None:
+            if hybrid is False:
+                raise TypeError('Fallback is only allowed for hybrid commands.')
+            kwargs['fallback'] = fallback
 
         return cls(func, **kwargs)
 

@@ -50,8 +50,8 @@ async def can_execute_action(
     ------
     """
     bot: DuckBot = interaction.client  # type: ignore
-    guild: discord.Guild = interaction.guild
-    user: discord.Member = interaction.user
+    guild: discord.Guild = interaction.guild  # type: ignore
+    user: discord.Member = interaction.user  # type: ignore
     if not interaction.user:
         raise errors.ActionNotExecutable('Somehow, I think you don\'t exist. `Interaction.user` was None...\n'
                                          'Join our support server to get help, or try again later.')

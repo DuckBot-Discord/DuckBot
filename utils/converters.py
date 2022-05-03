@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import typing
-import re
 from typing import (
-    TYPE_CHECKING,
     Type,
     Union,
     Tuple,

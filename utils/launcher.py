@@ -10,10 +10,7 @@ from dotenv import load_dotenv
 from utils.helpers import col
 
 load_dotenv('utils/.env')
-
-os.environ['JISHAKU_NO_UNDERSCORE'] = 'true'
-os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'true'
-os.environ['JISHAKU_RETAIN'] = 'true'
+# (jsk flags are now in the .env)
 
 
 def _get_or_fail(env_var: str) -> str:
