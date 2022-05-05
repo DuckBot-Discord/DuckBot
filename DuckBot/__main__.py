@@ -1,8 +1,6 @@
 import logging
 import os
-from typing import (
-    Union
-)
+from typing import Union
 
 import discord
 from asyncdagpi import ImageFeatures
@@ -13,34 +11,44 @@ from DuckBot.cogs.economy.helper_classes import Wallet
 from DuckBot.helpers.bot_base import BaseDuck, col
 from DuckBot.helpers.context import CustomContext
 
-logging.basicConfig(level=logging.INFO, format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format=f"{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s",
+)
 
-os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
-os.environ['JISHAKU_HIDE'] = 'True'
-TOKEN = os.getenv('DISCORD_TOKEN')
-target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite, str]
+os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
+os.environ["JISHAKU_HIDE"] = "True"
+TOKEN = os.getenv("DISCORD_TOKEN")
+target_type = Union[
+    discord.Member,
+    discord.User,
+    discord.PartialEmoji,
+    discord.Guild,
+    discord.Invite,
+    str,
+]
 
 
 class DuckBot(BaseDuck):
-    async def create_gist(self, *, filename: str, description: str, content: str, public: bool = False):
+    async def create_gist(
+        self, *, filename: str, description: str, content: str, public: bool = False
+    ):
         headers = {
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'DuckBot-Discord',
-            'Authorization': f'token {os.getenv("GH_TOKEN")}'
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "DuckBot-Discord",
+            "Authorization": f'token {os.getenv("GH_TOKEN")}',
         }
 
         data = {
-            'public': public,
-            'files': {
-                filename: {
-                    'content': content
-                }
-            },
-            'description': description
+            "public": public,
+            "files": {filename: {"content": content}},
+            "description": description,
         }
-        output = await self.session.request("POST", "https://api.github.com/gists", json=data, headers=headers)
+        output = await self.session.request(
+            "POST", "https://api.github.com/gists", json=data, headers=headers
+        )
         info = await output.json()
-        return info['html_url']
+        return info["html_url"]
 
     async def get_welcome_channel(self, member: discord.Member):
         if not isinstance(member, discord.Member):
@@ -53,36 +61,54 @@ class DuckBot(BaseDuck):
         if not channel:
             raise errors.NoWelcomeChannel
 
-        welcome_channel = member.guild.get_channel(channel) or (await member.guild.fetch_channel(channel))
+        welcome_channel = member.guild.get_channel(channel) or (
+            await member.guild.fetch_channel(channel)
+        )
         if not welcome_channel:
             self.welcome_channels[member.guild.id] = None
             raise errors.NoWelcomeChannel
         return welcome_channel
 
-    async def dagpi_request(self, ctx: CustomContext, target: target_type, *, feature: ImageFeatures, **kwargs) -> discord.File:
+    async def dagpi_request(
+        self,
+        ctx: CustomContext,
+        target: target_type,
+        *,
+        feature: ImageFeatures,
+        **kwargs,
+    ) -> discord.File:
         bucket = self.dagpi_cooldown.get_bucket(ctx.message)
         retry_after = bucket.update_rate_limit()
         if retry_after:
-            raise commands.CommandOnCooldown(commands.Cooldown(60, 60), retry_after, commands.BucketType.default)
-        url = getattr(target, 'display_avatar', None) or getattr(target, 'icon', None) or getattr(target, 'guild', None) or target
-        url = getattr(getattr(url, 'icon', url), 'url', url)
+            raise commands.CommandOnCooldown(
+                commands.Cooldown(60, 60), retry_after, commands.BucketType.default
+            )
+        url = (
+            getattr(target, "display_avatar", None)
+            or getattr(target, "icon", None)
+            or getattr(target, "guild", None)
+            or target
+        )
+        url = getattr(getattr(url, "icon", url), "url", url)
         request = await self.dagpi_client.image_process(feature, url, **kwargs)
-        return discord.File(fp=request.image, filename=f"DuckBot-{str(feature)}.{request.format}")
+        return discord.File(
+            fp=request.image, filename=f"DuckBot-{str(feature)}.{request.format}"
+        )
 
     # noinspection PyProtectedMember
     def update_log(self, deliver_type: str, webhook_url: str, guild_id: int):
-        guild_id = getattr(guild_id, 'id', guild_id)
-        if deliver_type == 'default':
+        guild_id = getattr(guild_id, "id", guild_id)
+        if deliver_type == "default":
             self.log_channels[guild_id]._replace(default=webhook_url)
-        elif deliver_type == 'message':
+        elif deliver_type == "message":
             self.log_channels[guild_id]._replace(message=webhook_url)
-        elif deliver_type == 'member':
+        elif deliver_type == "member":
             self.log_channels[guild_id]._replace(member=webhook_url)
-        elif deliver_type == 'join_leave':
+        elif deliver_type == "join_leave":
             self.log_channels[guild_id]._replace(join_leave=webhook_url)
-        elif deliver_type == 'voice':
+        elif deliver_type == "voice":
             self.log_channels[guild_id]._replace(voice=webhook_url)
-        elif deliver_type == 'server':
+        elif deliver_type == "server":
             self.log_channels[guild_id]._replace(server=webhook_url)
 
     async def get_wallet(self, user) -> Wallet:
@@ -94,17 +120,16 @@ class DuckBot(BaseDuck):
         return self.wallets[user.id]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     bot = DuckBot()
 
     @bot.check
     def user_blacklisted(ctx: CustomContext):
         if not bot.blacklist.get(ctx.author.id, None) or ctx.author.id == bot.owner_id:
             return True
-        if ctx.command.root_parent and ctx.command.root_parent.name == 'pit':
+        if ctx.command.root_parent and ctx.command.root_parent.name == "pit":
             return True
         raise errors.UserBlacklisted
-
 
     @bot.check
     def maintenance_mode(ctx: CustomContext):
@@ -113,10 +138,4 @@ if __name__ == '__main__':
         else:
             raise errors.BotUnderMaintenance
 
-    try:
-        webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))
-        webhook.send(content='✅ **Bot is starting up...**')
-        bot.run(TOKEN)
-    finally:
-        webhook = discord.SyncWebhook.from_url(os.getenv('UPTIME_WEBHOOK'))
-        webhook.send(content='🛑 **Bot is shutting down...**')
+    bot.run(TOKEN)
