@@ -36,20 +36,30 @@ class ModMail(commands.Cog):
 
     async def get_dm_hook(self, channel: discord.TextChannel) -> discord.Webhook:
         if url := self.bot.dm_webhooks.get(channel.id, None):
-            return discord.Webhook.from_url(url, session=self.bot.session, bot_token=self.bot.http.token)
+            return discord.Webhook.from_url(
+                url, session=self.bot.session, bot_token=self.bot.http.token
+            )
         wh = await get_webhook(channel)
         self.bot.dm_webhooks[channel.id] = wh.url
         return wh
 
-    @commands.Cog.listener('on_message')
+    @commands.Cog.listener("on_message")
     async def on_mail(self, message: discord.Message):
-        if message.guild or message.author == self.bot.user or self.bot.dev_mode is True:
+        if (
+            message.guild
+            or message.author == self.bot.user
+            or self.bot.dev_mode is True
+        ):
             return
 
         if self.bot.blacklist.get(message.author.id, None):
-            return await message.channel.send("Sorry but that message wasn't delivered! You are blacklisted.")
+            return await message.channel.send(
+                "Sorry but that message wasn't delivered! You are blacklisted."
+            )
 
-        category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
+        category = self.bot.get_guild(774561547930304536).get_channel(
+            971703359067258910
+        )
         channel = discord.utils.get(category.channels, topic=str(message.author.id))
         if not channel:
             if not message.reference:
@@ -57,77 +67,94 @@ class ModMail(commands.Cog):
                     "**Warning! This is DuckBot's ModMail thread.** \nThis conversation will be sent to the bot "
                     f"developers. \n_They will reply to you as soon as possible! 💞_\n\n**{constants.EDIT_NICKNAME} "
                     f"Message edits are not saved! {constants.EDIT_NICKNAME}**\nIf the message receives a ⚠ reaction, "
-                    "there was an issue delivering the message.")
+                    "there was an issue delivering the message."
+                )
             channel = await category.create_text_channel(
                 name=f"{message.author}",
                 topic=str(message.author.id),
                 position=0,
-                reason="DuckBot ModMail"
+                reason="DuckBot ModMail",
             )
 
         wh = await self.get_dm_hook(channel)
 
-        files = [await attachment.to_file(spoiler=attachment.is_spoiler()) for attachment in message.attachments if
-                 attachment.size < 8388600]
+        files = [
+            await attachment.to_file(spoiler=attachment.is_spoiler())
+            for attachment in message.attachments
+            if attachment.size < 8388600
+        ]
         if not files and message.attachments:
             await message.author.send(
-                embed=discord.Embed(description="Some files couldn't be sent because they were over 8mb",
-                                    color=discord.Colour.red()))
+                embed=discord.Embed(
+                    description="Some files couldn't be sent because they were over 8mb",
+                    color=discord.Colour.red(),
+                )
+            )
         try:
-            await wh.send(content=message.content,
-                          username=message.author.name,
-                          avatar_url=message.author.display_avatar.url,
-                          files=files)
+            await wh.send(
+                content=message.content,
+                username=message.author.name,
+                avatar_url=message.author.display_avatar.url,
+                files=files,
+            )
         except (discord.Forbidden, discord.HTTPException):
-            return await message.add_reaction('⚠')
+            return await message.add_reaction("⚠")
 
-    @commands.Cog.listener('on_message')
+    @commands.Cog.listener("on_message")
     async def on_mail_reply(self, message: discord.Message):
         if not message.guild:
             return
         if any(
-                (message.author.bot,
-                 self.bot.dev_mode is True,
-                 message.channel.category_id != 878123261525901342
-                 )
+            (
+                message.author.bot,
+                self.bot.dev_mode is True,
+                message.channel.category_id != 971703359067258910,
+            )
         ):
             return
 
         channel = message.channel
         try:
-            user = self.bot.get_user(int(channel.topic)) or \
-                   await self.bot.fetch_user(int(channel.topic))
+            user = self.bot.get_user(int(channel.topic)) or await self.bot.fetch_user(
+                int(channel.topic)
+            )
 
         except (HTTPException, UserNotFound):
             return await channel.send("could not find user.")
 
-        files = [await attachment.to_file(spoiler=attachment.is_spoiler()) for attachment in message.attachments if
-                 attachment.size < 8388600]
+        files = [
+            await attachment.to_file(spoiler=attachment.is_spoiler())
+            for attachment in message.attachments
+            if attachment.size < 8388600
+        ]
         if not files and message.attachments:
-            await message.author.send("Some files couldn't be sent because they were over 8mb")
+            await message.author.send(
+                "Some files couldn't be sent because they were over 8mb"
+            )
 
         try:
             await user.send(content=message.content, files=files)
         except (discord.Forbidden, discord.HTTPException):
-            return await message.add_reaction('⚠')
+            return await message.add_reaction("⚠")
 
-    @commands.Cog.listener('on_user_update')
+    @commands.Cog.listener("on_user_update")
     async def on_mail_username_change(self, before: discord.User, after: discord.User):
         if str(before) == str(after) or before.bot:
             return
-        category = self.bot.get_guild(774561547930304536).get_channel(878123261525901342)
+        category = self.bot.get_guild(774561547930304536).get_channel(
+            971703359067258910
+        )
         channel = discord.utils.get(category.channels, topic=str(after.id))
         if channel:
             await channel.edit(
-                name=str(after),
-                reason=f"DuckBot ModMail Channel Update for {after.id}"
+                name=str(after), reason=f"DuckBot ModMail Channel Update for {after.id}"
             )
             wh = await self.get_dm_hook(channel)
-            embed = discord.Embed(title="ModMail user update!",
-                                  color=discord.Colour.blurple(),
-                                  timestamp=discord.utils.utcnow())
-            embed.add_field(name="Before:",
-                            value=str(before))
-            embed.add_field(name="After:",
-                            value=str(after))
+            embed = discord.Embed(
+                title="ModMail user update!",
+                color=discord.Colour.blurple(),
+                timestamp=discord.utils.utcnow(),
+            )
+            embed.add_field(name="Before:", value=str(before))
+            embed.add_field(name="After:", value=str(after))
             await wh.send(embed=embed, avatar_url=after.display_avatar.url)
