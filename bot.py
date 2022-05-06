@@ -46,7 +46,7 @@ from utils import (
     constants,
     human_join,
     human_timedelta,
-    IPCBase
+    IPCBase,
 )
 from utils.errors import *
 
@@ -687,10 +687,32 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
     async def on_connect(self):
         """|coro|
 
-        Called when the bot connects to the gateway. Used to log to console
-        some basic information about the bot.
+        Called when the bot connects to the gateway.
         """
         log.info(f"{col(2)}Logged in as {self.user}! ({self.user.id})")
+
+    async def on_shard_connect(self, shard_id: int):
+        """|coro|
+
+        Called when one of the shards connects to the gateway.
+        """
+        log.info(f"{col(2)}Shard ID {shard_id} connected!")
+
+    async def on_disconnect(self):
+        """|coro|
+
+        Called when the client has disconnected from Discord,
+        or a connection attempt to Discord has failed.
+        """
+        log.info(f"{col(2)}Unexpectedly lost conection to Discord!")
+
+    async def on_shard_disconnect(self, shard_id: int):
+        """|coro|
+
+        Called when the a shard has disconnected from Discord,
+        or a connection attempt to Discord has failed.
+        """
+        log.info(f"{col(2)}Shard ID {shard_id} unexpectedly lost conection to Discord!")
 
     async def on_ready(self):
         """|coro|
@@ -701,6 +723,27 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         log.info(f"{col(2)}All guilds are chunked and ready to go!")
         if not self._start_time:
             self._start_time = discord.utils.utcnow()
+
+    async def on_shard_ready(self, shard_id: int):
+        """|coro|
+
+        Called when one of the bot's shards is ready.
+        """
+        log.info(f"{col(2)}Shard ID {shard_id} is now ready!")
+
+    async def on_resumed(self):
+        """|coro|
+
+        Called when the gateway resumed it's connection to discord.
+        """
+        log.info(f"{col(2)}Resumed connection to the gateway.")
+
+    async def on_shard_resumed(self, shard_id: int):
+        """|coro|
+
+        Called when one of the bot's shards resumed it's connection to discord.
+        """
+        log.info(f"{col(2)}Shard ID {shard_id} resumed connection to the gateway.")
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         """|coro|
