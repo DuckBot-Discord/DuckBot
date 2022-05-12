@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-import traceback
 import typing
-from contextlib import redirect_stdout
-from io import StringIO
-from textwrap import indent
-from timeit import default_timer
+from typing import List
+from collections import Counter
 from typing import NamedTuple
 
 import discord
 from discord.ext import commands
 from discord.ext.commands.view import StringView
 
-from cogs.owner.eval import cleanup_code
 from utils import DuckCog, DuckContext
 
 
@@ -69,11 +65,53 @@ else:
                         raise
             return args
 
+
+def int_reactions(number: int) -> List[str]:
+    """
+    Returns a list of strings that represent the reactions.
+
+    Parameters
+    ----------
+    number: int
+        The number of reactions to return.
+
+    Returns
+    -------
+    List[str]
+        A list of strings that represent the reactions.
+    """
+    if not isinstance(number, int):
+        raise TypeError("number must be an int")
+
+    characters = list(str(number))
+    if any(i > 2 for i in Counter(characters).values()):
+        return ["\N{PERMANENT PAPER SIGN}"]  # :infinity:
+    added = set()
+    for char in characters:
+        if char in added:
+            yield f"{char}\N{VARIATION SELECTOR-16}\N{combining enclosing keycap}"
+        else:
+            added.add(char)
+            yield f"{char}\N{combining enclosing keycap}"
+
+
 class TestingShit(DuckCog):
     @commands.command()
     async def test(self, ctx: DuckContext, *, args: CatConverter):
-        await ctx.send('\n-----------------\n'.join(
-            f"role = {a.role.mention} ({type(a.role).__name__})"
-            f"\ndescription = {a.description} ({type(a.description).__name__})"
-            f"\nemoji = {str(a.emoji)} ({type(a.emoji).__name__})"
-            for a in args))
+        await ctx.send(
+            "\n-----------------\n".join(
+                f"role = {a.role.mention} ({type(a.role).__name__})"  # type: ignore
+                f"\ndescription = {a.description} ({type(a.description).__name__})"  # type: ignore
+                f"\nemoji = {str(a.emoji)} ({type(a.emoji).__name__})"  # type: ignore
+                for a in args
+            )
+        )
+
+    @commands.command()
+    async def test2(
+        self,
+        ctx: DuckContext,
+        *,
+        arg: discord.Member = commands.param(converter=discord.Member, default=commands.Author, displayed_default="user"),
+    ):
+        await ctx.send(str(arg))
