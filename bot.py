@@ -30,6 +30,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    Mapping,
 )
 
 import asyncpg
@@ -40,6 +41,7 @@ from discord.ext import commands
 from utils import (
     DuckBlacklistManager,
     DuckContext,
+    DuckCog,
     DuckExceptionManager,
     TimerManager,
     col,
@@ -281,6 +283,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         user: discord.ClientUser
         _eval_cog: Eval
         command_prefix: Set[str]
+        cogs: Mapping[str, DuckCog]
 
     def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
         intents = discord.Intents.all()
