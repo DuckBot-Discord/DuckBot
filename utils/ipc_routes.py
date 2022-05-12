@@ -1,7 +1,21 @@
-import functools
-import json
 from aiohttp import web
+from typing import Union
+from discord.ext.commands import Group, Command
+
+from utils.command import DuckCommand, DuckGroup
 from .ipc_base import IPCBase, route
+
+
+def command_dict(command: Union[DuckCommand, Command]) -> dict:
+    return {
+        "aliases": command.aliases,
+        "help_mapping": getattr(command, "help_mapping", None),
+        "help": command.help,
+        "brief": command.brief,
+        "children": {c.name: command_dict(c) for c in command.commands} if isinstance(command, (Group, DuckGroup)) else None,
+        "qualified_name": command.qualified_name,
+        "signature": command.signature,
+    }
 
 
 class DuckBotIPC(IPCBase):
@@ -10,7 +24,10 @@ class DuckBotIPC(IPCBase):
         return web.json_response(
             {
                 "guilds": len(self.bot.guilds),
-                "users": sum(g.member_count or 0 for g in self.bot.guilds),
+                "users": {
+                    "total": sum(g.member_count or 0 for g in self.bot.guilds),
+                    "unique": len(self.bot.users),
+                },
             }
         )
 
@@ -24,18 +41,14 @@ class DuckBotIPC(IPCBase):
 
     @route("/commands", method="get")
     async def get_commands(self, request: web.Request):
-        return web.json_response(
-            {
-                c.name: {
-                    "aliases": c.aliases or [],
-                    "help": c.help,
-                    "brief": c.brief,
-                    "cog": c.cog_name,
-                    "used": await self.bot.pool.fetchval(
-                        "SELECT COUNT(*) FROM commands WHERE command = $1", c.name
-                    ),
-                }
-                for c in self.bot.commands
-            },
-            dumps=functools.partial(json.dumps, indent=4),
-        )
+        data = {
+            name: {
+                "description": cog.description,
+                "brief": cog.emoji,
+                "emoji": cog.emoji,
+                "commands": {c.name: command_dict(c) for c in cog.get_commands()},
+            }
+            for name, cog in self.bot.cogs.items()
+            if not getattr(cog, 'hidden', True)
+        }
+        return web.json_response(data)
