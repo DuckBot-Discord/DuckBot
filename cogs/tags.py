@@ -25,6 +25,7 @@ def copy_doc(original: Callable) -> Callable[[T], T]:
     def decorator(overridden: T) -> T:
         overridden.__doc__ = original.__doc__
         return overridden
+
     return decorator
 
 
@@ -45,6 +46,7 @@ class Tag:
     owner_id: int
         The ID of the owner of the tag.
     """
+
     __slots__ = ("name", "content", "embed", "id", "owner_id", "guild_id", "_cs_raw")
 
     def __init__(self, payload: dict):
@@ -68,14 +70,14 @@ class Tag:
 
     @property
     def is_global(self):
-        """ bool: Whether the tag is global or not. """
+        """bool: Whether the tag is global or not."""
         return self.guild_id is None
 
     async def edit(
-            self,
-            connection: typing.Union[asyncpg.Connection, asyncpg.Pool],
-            content: Union[str, commands.clean_content],
-            embed: Optional[discord.Embed] = discord.utils.MISSING
+        self,
+        connection: typing.Union[asyncpg.Connection, asyncpg.Pool],
+        content: Union[str, commands.clean_content],
+        embed: Optional[discord.Embed] = discord.utils.MISSING,
     ) -> None:
         """|coro|
 
@@ -99,6 +101,7 @@ class Tag:
             def update():
                 self.content = content  # type: ignore
                 self.embed = embed
+
         else:
             query = "UPDATE tags SET content = $1 WHERE id = $2"
             args = (content, self.id)
@@ -152,10 +155,10 @@ class Tag:
         await connection.execute(query, self.id)
 
     async def add_alias(
-            self,
-            connection: typing.Union[asyncpg.Connection, asyncpg.Pool],
-            alias: typing.Union[str, TagName],
-            user: discord.User | discord.Member,
+        self,
+        connection: typing.Union[asyncpg.Connection, asyncpg.Pool],
+        alias: typing.Union[str, TagName],
+        user: discord.User | discord.Member,
     ):
         """|coro|
 
@@ -170,8 +173,10 @@ class Tag:
         connection: Union[asyncpg.Connection, asyncpg.Pool]
             The connection to use.
         """
-        query = "INSERT INTO tags (name, owner_id, guild_id, points_to) VALUES " \
-                "($1, $2, (SELECT guild_id FROM tags WHERE id = $3), $3)"
+        query = (
+            "INSERT INTO tags (name, owner_id, guild_id, points_to) VALUES "
+            "($1, $2, (SELECT guild_id FROM tags WHERE id = $3), $3)"
+        )
         await connection.execute(query, alias, user.id, self.id)
 
 
@@ -196,7 +201,7 @@ class TagName(commands.clean_content):
     def __init__(self, *, lower=True):
         self.lower = lower
         super().__init__()
-    
+
     def __class_getitem__(cls, attr: bool):
         if not isinstance(attr, bool):
             raise TypeError("Expected bool, not {}".format(type(attr).__name__))
@@ -204,7 +209,7 @@ class TagName(commands.clean_content):
 
     # Taken from R.Danny's code because I'm lazy
     async def actual_conversion(self, converted, error: Type[discord.DiscordException], bot):
-        """ The actual conversion function after clean content has done its job. """
+        """The actual conversion function after clean content has done its job."""
         lower = converted.lower().strip()
 
         if not lower:
@@ -229,8 +234,14 @@ class TagName(commands.clean_content):
 
 
 class TagsFromFetchedPageSource(menus.ListPageSource):
-    def __init__(self, tags: typing.List[asyncpg.Record], *, per_page: int = 10,
-                 member: discord.Member | discord.User | None = None, ctx: DuckContext):
+    def __init__(
+        self,
+        tags: typing.List[asyncpg.Record],
+        *,
+        per_page: int = 10,
+        member: discord.Member | discord.User | None = None,
+        ctx: DuckContext,
+    ):
         super().__init__(tags, per_page=per_page)
         self.member = member
         self.ctx = ctx
@@ -245,14 +256,17 @@ class TagsFromFetchedPageSource(menus.ListPageSource):
         return embed
 
 
-class Tags(DuckCog):
+class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for quick access.'):
+    """Tags: A way to store information for quick access. Allows you to create tags
+    that can be used anywhere in the server with the 'tag' command."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._tags_in_progress = defaultdict(set)
 
     @staticmethod
     def maybe_file(text: str, *, filename='tag') -> dict:
-        """ Checks if text is greater than 2000 characters
+        """Checks if text is greater than 2000 characters
 
         Parameters
         ----------
@@ -273,7 +287,7 @@ class Tags(DuckCog):
 
     @staticmethod
     def maybe_codeblock(content: str | None = None, file: discord.File | None = None, *, filename='tag') -> dict:
-        """ Maybe puts `text` in a code block.
+        """Maybe puts `text` in a code block.
 
         **Example**
 
@@ -305,12 +319,12 @@ class Tags(DuckCog):
             return {'file': file}
 
     async def get_tag(
-            self,
-            tag: Union[str, commands.clean_content],
-            guild_id: Optional[int],
-            *,
-            find_global: bool = False,
-            connection: Optional[Union[asyncpg.Connection, asyncpg.Pool]] = None
+        self,
+        tag: Union[str, commands.clean_content],
+        guild_id: Optional[int],
+        *,
+        find_global: bool = False,
+        connection: Optional[Union[asyncpg.Connection, asyncpg.Pool]] = None,
     ) -> Tag:
         """|coro|
 
@@ -394,7 +408,7 @@ class Tags(DuckCog):
 
     @contextlib.contextmanager
     def reserve_tag(self, name, guild_id):
-        """ Simple context manager to reserve a tag. """
+        """Simple context manager to reserve a tag."""
         if name in self._tags_in_progress[guild_id]:
             raise commands.BadArgument("Sorry, this tag is already being created!")
         try:
@@ -404,11 +418,11 @@ class Tags(DuckCog):
             self._tags_in_progress[guild_id].discard(name)
 
     async def make_tag(
-            self,
-            guild: Optional[discord.Guild],
-            owner: Union[discord.User, discord.Member],
-            tag: Union[str, commands.clean_content],
-            content: Union[str, commands.clean_content],
+        self,
+        guild: Optional[discord.Guild],
+        owner: Union[discord.User, discord.Member],
+        tag: Union[str, commands.clean_content],
+        content: Union[str, commands.clean_content],
     ) -> Tag:
         """|coro|
 
@@ -433,10 +447,16 @@ class Tags(DuckCog):
         with self.reserve_tag(tag, guild.id if guild else None):
             try:
                 async with self.bot.safe_connection() as conn:
-                    stuff = await conn.fetchrow("""
+                    stuff = await conn.fetchrow(
+                        """
                         INSERT INTO tags (name, content, guild_id, owner_id) VALUES ($1, $2, $3, $4)
                         RETURNING id, name, content, embed, owner_id, guild_id
-                    """, tag, content, guild.id if guild else None, owner.id)
+                    """,
+                        tag,
+                        content,
+                        guild.id if guild else None,
+                        owner.id,
+                    )
                     return Tag(stuff)
             except asyncpg.UniqueViolationError:
                 raise StringTranslatedCommandError(3)
@@ -449,13 +469,13 @@ class Tags(DuckCog):
                 raise StringTranslatedCommandError(6)
 
     async def wait_for(
-            self,
-            channel: discord.abc.MessageableChannel,
-            author: discord.Member | discord.User,
-            *,
-            timeout: int = 60,
-            converter: CO_T | Type[CO_T] | None = None,
-            ctx: DuckContext | None = None
+        self,
+        channel: discord.abc.MessageableChannel,
+        author: discord.Member | discord.User,
+        *,
+        timeout: int = 60,
+        converter: CO_T | Type[CO_T] | None = None,
+        ctx: DuckContext | None = None,
     ) -> Union[str, CO_T]:
         """|coro|
 
@@ -475,6 +495,7 @@ class Tags(DuckCog):
             The context to use for the converter, if passed.
         """
         try:
+
             def check(msg: discord.Message):
                 return msg.channel == channel and msg.author == author
 
@@ -534,8 +555,9 @@ class Tags(DuckCog):
     async def tag_global(self, ctx: DuckContext, name: TagName):
         await self.__tag(ctx, name, guild=None)
 
-    async def __tag_create(self, ctx: DuckContext, tag: TagName,
-                           content: commands.clean_content, guild: discord.Guild | None):
+    async def __tag_create(
+        self, ctx: DuckContext, tag: TagName, content: commands.clean_content, guild: discord.Guild | None
+    ):
         """|coro|
 
         Creates a tag
@@ -588,9 +610,9 @@ class Tags(DuckCog):
                 cmd = f"{ctx.clean_prefix}{ctx.command.qualified_name if ctx.command else '<Unknown Command>'}"
                 raise StringTranslatedCommandError(9, await ctx.translate(3), f"{cmd!r}")
             await ctx.send(10)
-            content = await self.wait_for(ctx.channel, ctx.author,
-                                          converter=commands.clean_content,
-                                          ctx=ctx, timeout=60 * 10)
+            content = await self.wait_for(
+                ctx.channel, ctx.author, converter=commands.clean_content, ctx=ctx, timeout=60 * 10
+            )
 
         await self.make_tag(guild, ctx.author, name, content)
         await ctx.send(2, f"{name!r}")
@@ -628,8 +650,9 @@ class Tags(DuckCog):
         await tag.transfer(self.bot.pool, ctx.author)
         await ctx.send(12, f"{name!r}")
 
-    async def __tag_edit(self, ctx: DuckContext, tag_name: TagName, content: commands.clean_content,
-                         guild: discord.Guild | None):
+    async def __tag_edit(
+        self, ctx: DuckContext, tag_name: TagName, content: commands.clean_content, guild: discord.Guild | None
+    ):
         """|coro|
 
         Edits a tag
@@ -658,8 +681,9 @@ class Tags(DuckCog):
     async def tag_global_edit(self, ctx: DuckContext, tag: TagName, *, content: commands.clean_content):
         await self.__tag_edit(ctx, tag, content, ctx.guild)
 
-    async def __tag_append(self, ctx: DuckContext, tag: TagName, content: commands.clean_content,
-                           guild: discord.Guild | None):
+    async def __tag_append(
+        self, ctx: DuckContext, tag: TagName, content: commands.clean_content, guild: discord.Guild | None
+    ):
         """|coro|
 
         Appends content to a tag.
@@ -989,9 +1013,7 @@ class Tags(DuckCog):
         if not tags:
             return await ctx.send((35 if guild else 36) if not member else FormatString(37, str(member)))
 
-        paginator = ViewMenuPages(
-            source=TagsFromFetchedPageSource(tags, member=member, ctx=ctx),
-            ctx=ctx)
+        paginator = ViewMenuPages(source=TagsFromFetchedPageSource(tags, member=member, ctx=ctx), ctx=ctx)
         await paginator.start()
 
     @tag.command(name='list')
@@ -1001,7 +1023,7 @@ class Tags(DuckCog):
 
     @tag_global.command(name='list')
     @copy_doc(__tag_list)
-    async def tag_global_list(self, ctx: DuckContext, *, user:  Optional[discord.User] = None):
+    async def tag_global_list(self, ctx: DuckContext, *, user: Optional[discord.User] = None):
         await self.__tag_list(ctx, user, None)
 
     async def __tag_search(self, ctx: DuckContext, query: str, guild: discord.Guild | None):
@@ -1026,9 +1048,7 @@ class Tags(DuckCog):
         if not tags:
             return await ctx.send(40)
 
-        paginator = ViewMenuPages(
-            source=TagsFromFetchedPageSource(tags, member=None, ctx=ctx),
-            ctx=ctx)
+        paginator = ViewMenuPages(source=TagsFromFetchedPageSource(tags, member=None, ctx=ctx), ctx=ctx)
         await paginator.start()
 
     @tag.command(name='search')
@@ -1095,11 +1115,9 @@ class Tags(DuckCog):
             """
         data = await self.bot.pool.fetch(query, guild_id)
 
-        embed.description = FormatString(41, data[0]['total_tags'], data[0]['total_uses']) \
-            if data else 42
+        embed.description = FormatString(41, data[0]['total_tags'], data[0]['total_uses']) if data else 42
 
-        top_tags = [await ctx.translate(43, AWARD_EMOJI[index], name, uses)
-                    for index, (name, uses, _, _) in enumerate(data)]
+        top_tags = [await ctx.translate(43, AWARD_EMOJI[index], name, uses) for index, (name, uses, _, _) in enumerate(data)]
 
         embed.add_field(name=56, value='\n'.join(top_tags) or '\u200b', inline=False)
 
@@ -1115,8 +1133,10 @@ class Tags(DuckCog):
 
         data = await self.bot.pool.fetch(query, guild_id)
 
-        top_creators = [await ctx.translate(44, AWARD_EMOJI[index], owner_id ,tag_amount)
-                        for index, (tag_amount, owner_id) in enumerate(data)]
+        top_creators = [
+            await ctx.translate(44, AWARD_EMOJI[index], owner_id, tag_amount)
+            for index, (tag_amount, owner_id) in enumerate(data)
+        ]
 
         embed.add_field(name=45, value='\n'.join(top_creators) or '\u200b', inline=False)
 
@@ -1133,15 +1153,16 @@ class Tags(DuckCog):
 
         data = await self.bot.pool.fetch(query, guild_id)
 
-        top_users = [await ctx.translate(46, AWARD_EMOJI[index], user_id, tag_amount)
-                     for index, (tag_amount, user_id) in enumerate(data)]
+        top_users = [
+            await ctx.translate(46, AWARD_EMOJI[index], user_id, tag_amount)
+            for index, (tag_amount, user_id) in enumerate(data)
+        ]
 
         embed.add_field(name=47, value='\n'.join(top_users) or '\u200b', inline=False)
 
         await ctx.send(embed=embed)
 
-    async def user_tag_stats(self, ctx: DuckContext, member: discord.Member | discord.User,
-                             guild: discord.Guild | None):
+    async def user_tag_stats(self, ctx: DuckContext, member: discord.Member | discord.User, guild: discord.Guild | None):
         """|coro|
 
         Gets the tag stats of a member.
@@ -1203,9 +1224,8 @@ class Tags(DuckCog):
             """
 
         data = await self.bot.pool.fetch(query, *args)
-        
-        top_tags = [await ctx.translate(43, AWARD_EMOJI[index], name, uses)
-                    for index, (name, uses) in enumerate(data)]
+
+        top_tags = [await ctx.translate(43, AWARD_EMOJI[index], name, uses) for index, (name, uses) in enumerate(data)]
 
         embed.add_field(name=56, value='\n'.join(top_tags) or '\u200b', inline=False)
 
@@ -1226,8 +1246,7 @@ class Tags(DuckCog):
         """
         if member is None:
             embed = TranslatedEmbed()
-            embed.set_author(name=FormatString(48, str(ctx.guild)),
-                             icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
+            embed.set_author(name=FormatString(48, str(ctx.guild)), icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
             await self.get_guild_or_global_stats(ctx, guild=ctx.guild, embed=embed)
         else:
             await self.user_tag_stats(ctx, member, ctx.guild)
@@ -1247,8 +1266,7 @@ class Tags(DuckCog):
         """
         if user is None:
             embed = TranslatedEmbed()
-            embed.set_author(name=54,
-                             icon_url=ctx.me.display_avatar.url)
+            embed.set_author(name=54, icon_url=ctx.me.display_avatar.url)
             await self.get_guild_or_global_stats(ctx, guild=None, embed=embed)
         else:
             await self.user_tag_stats(ctx, user, None)
@@ -1302,46 +1320,45 @@ class Tags(DuckCog):
 
     @app_commands.command(name='tag')
     @app_commands.describe(
-        tag_name='The tag to show.',
-        ephemeral='Whether to show the tag only to you.',
-        raw='Whether to show the raw tag.')
-    @app_commands.rename(
-        tag_name='tag-name',
-        raw='raw-content')
-    async def slash_tag(self, interaction: discord.Interaction, *, tag_name: str, ephemeral: Optional[bool] = None,
-                        raw: Optional[typing.Literal['Yes', 'No', 'Send As File', 'Send Using Code Block']] = None):
-        """ Shows a tag. For more commands, use the "tag" message command. """
+        tag_name='The tag to show.', ephemeral='Whether to show the tag only to you.', raw='Whether to show the raw tag.'
+    )
+    @app_commands.rename(tag_name='tag-name', raw='raw-content')
+    async def slash_tag(
+        self,
+        interaction: discord.Interaction,
+        *,
+        tag_name: str,
+        ephemeral: Optional[bool] = None,
+        raw: Optional[typing.Literal['Yes', 'No', 'Send As File', 'Send Using Code Block']] = None,
+    ):
+        """Shows a tag. For more commands, use the "tag" message command."""
         tag = await self.get_tag(tag_name, interaction.guild.id if interaction.guild else None, find_global=True)
         if raw == 'Yes':
-            kwargs = {**self.maybe_file(tag.raw, filename=tag.name),
-                      'ephemeral': True if ephemeral is None else ephemeral}
+            kwargs = {**self.maybe_file(tag.raw, filename=tag.name), 'ephemeral': True if ephemeral is None else ephemeral}
         elif raw == 'Send As File':
-            kwargs = {'file': discord.File(io.BytesIO(tag.content.encode()), filename=f'{tag.name}.txt'),
-                      'ephemeral': True if ephemeral is None else ephemeral}
+            kwargs = {
+                'file': discord.File(io.BytesIO(tag.content.encode()), filename=f'{tag.name}.txt'),
+                'ephemeral': True if ephemeral is None else ephemeral,
+            }
         elif raw == 'Send Using Code Block':
-            kwargs = {**self.maybe_codeblock(content=tag.content),
-                      'ephemeral': True if ephemeral is None else ephemeral}
+            kwargs = {**self.maybe_codeblock(content=tag.content), 'ephemeral': True if ephemeral is None else ephemeral}
         else:
-            kwargs = {'content': tag.content, 'embed': tag.embed,
-                      'ephemeral': False if ephemeral is None else ephemeral}
+            kwargs = {'content': tag.content, 'embed': tag.embed, 'ephemeral': False if ephemeral is None else ephemeral}
 
         await interaction.response.send_message(**kwargs)
 
         try:
             query = "INSERT INTO commands (guild_id, user_id, command) VALUES ($1, $2, 'tag')"
             await tag.use(self.bot.pool)
-            await self.bot.pool.execute(
-                query,
-                interaction.guild.id if interaction.guild else None,
-                interaction.user.id)
+            await self.bot.pool.execute(query, interaction.guild.id if interaction.guild else None, interaction.user.id)
         except Exception as e:
             await self.bot.exceptions.add_error(error=e)
 
     @slash_tag.autocomplete('tag_name')
     async def tag_autocomplete(
-            self,
-            interaction: discord.Interaction,
-            current: str,
+        self,
+        interaction: discord.Interaction,
+        current: str,
     ) -> List[app_commands.Choice[str]]:
         """Autocomplete for the `/tag` command."""
         query = """
@@ -1361,6 +1378,7 @@ class Tags(DuckCog):
             return [app_commands.Choice(name=f"{tag['name']}"[0:100], value=tag['name']) for tag in tags]
         ctx = await DuckContext.from_interaction(interaction)
         return [app_commands.Choice(name=await ctx.translate(40), value='list')]
+
 
 async def setup(bot):
     await bot.add_cog(Tags(bot))

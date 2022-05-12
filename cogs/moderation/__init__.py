@@ -9,8 +9,8 @@ from .temporary import TemporaryCommands
 
 if TYPE_CHECKING:
     from bot import DuckBot
-    
-    
+
+
 class Moderation(
     TempMute,
     StandardModeration,
@@ -19,9 +19,8 @@ class Moderation(
     emoji='\N{HAMMER AND PICK}',
     brief='Moderation commands!',
 ):
-    """ Moderation commands. """
+    """All commands to moderate members, roles, channels, etc."""
 
 
 async def setup(bot: DuckBot):
     await bot.add_cog(Moderation(bot))
-

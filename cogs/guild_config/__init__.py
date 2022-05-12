@@ -13,7 +13,10 @@ class GuildConfig(
     emoji="\N{WRENCH}",
     brief="Configurations for the current server.",
 ):
-    pass
+    """Commands that allow you to configure the bot for the current server,
+    these include things such as permissions to use specific commands, making the
+    bot ignore channels, change the custom prefixes for this server, logging, and much more!"""
+
 
 async def setup(bot: DuckBot):
     await bot.add_cog(GuildConfig(bot))
