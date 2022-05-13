@@ -32,9 +32,7 @@ class Route(NamedTuple):
     func: Callable[..., Any]
 
 
-def route(
-    name: str, *, method: Literal["get", "post", "put", "patch", "delete"]
-) -> Callable[[FuncT], FuncT]:
+def route(name: str, *, method: Literal["get", "post", "put", "patch", "delete"]) -> Callable[[FuncT], FuncT]:
     def decorator(func: FuncT) -> FuncT:
         actual = func
         if isinstance(actual, staticmethod):
@@ -68,11 +66,15 @@ class IPCBase:
         self.app.add_routes([web.route(x.method, x.name, x.func) for x in self.routes])
 
     async def start(self, *, port: int):
+        log.debug('Starting IPC runner.')
         await self._runner.setup()
+        log.debug('Starting IPC webserver.')
         self._webserver = web.TCPSite(self._runner, "localhost", port=port)
         await self._webserver.start()
 
     async def close(self):
+        log.debug('Cleaning up after IPCBase.')
         await self._runner.cleanup()
         if self._webserver:
+            log.debug('Closing IPC webserver.')
             await self._webserver.stop()
