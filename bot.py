@@ -34,6 +34,7 @@ from typing import (
 )
 
 import asyncpg
+import cachetools
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -96,21 +97,15 @@ class SyncResult(NamedTuple):
     commands: List[app_commands.AppCommand]
 
 
-def _wrap_extension(
-    func: Callable[P, Awaitable[T]]
-) -> Callable[P, Coroutine[Any, Any, Optional[T]]]:
+def _wrap_extension(func: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, Optional[T]]]:
     async def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
-        fmt_args = 'on ext "{}"{}'.format(
-            args[1], f" with kwargs {kwargs}" if kwargs else ""
-        )
+        fmt_args = 'on ext "{}"{}'.format(args[1], f" with kwargs {kwargs}" if kwargs else "")
         start = time.monotonic()
 
         try:
             result = await func(*args, **kwargs)
         except Exception as exc:
-            log.warning(
-                f"Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}"
-            )
+            log.warning(f"Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}")
             bot: DuckBot = args[0]  # type: ignore
             bot.create_task(bot.exceptions.add_error(error=exc))
             return
@@ -209,9 +204,7 @@ class DuckHelper(TimerManager):
         super().__init__(bot=bot)
 
     @staticmethod
-    def chunker(
-        item: Union[str, Sequence[T]], *, size: int = 2000
-    ) -> Generator[Union[str, Sequence[T]], None, None]:
+    def chunker(item: Union[str, Sequence[T]], *, size: int = 2000) -> Generator[Union[str, Sequence[T]], None, None]:
         """Split a string into chunks of a given size.
 
         Parameters
@@ -224,9 +217,7 @@ class DuckHelper(TimerManager):
         for i in range(0, len(item), size):
             yield item[i : i + size]
 
-    def validate_locale(
-        self, locale: str | discord.Locale | None, default: str = "en_us"
-    ) -> str:
+    def validate_locale(self, locale: str | discord.Locale | None, default: str = "en_us") -> str:
         """Validate a locale.
 
         Parameters
@@ -268,9 +259,7 @@ class DuckHelper(TimerManager):
         """
         connection = db or self.bot.pool
         locale = self.validate_locale(locale)
-        translations = await connection.fetchrow(
-            "SELECT * FROM translations WHERE tr_id = $1", translation_id
-        )
+        translations = await connection.fetchrow("SELECT * FROM translations WHERE tr_id = $1", translation_id)
         if not translations:
             raise RuntimeError(f"Translation ID {translation_id} does not exist")
 
@@ -296,9 +285,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions.none(),
             intents=intents,
-            activity=discord.Streaming(
-                name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-            ),
+            activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             strip_after_prefix=True,
             chunk_guilds_at_startup=False,
             max_messages=4000,
@@ -314,18 +301,14 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
         self.exceptions: DuckExceptionManager = DuckExceptionManager(self)
-        self.thread_pool: concurrent.futures.ThreadPoolExecutor = (
-            concurrent.futures.ThreadPoolExecutor(max_workers=20)
-        )
+        self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
         self.constants = constants
         self.tree.error(self.on_tree_error)
 
         self.views: Set[discord.ui.View] = set()
         self._auto_spam_count: DefaultDict[int, int] = defaultdict(int)
-        self.global_mapping = commands.CooldownMapping.from_cooldown(
-            10, 12, commands.BucketType.user
-        )
+        self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
         self.ipc: Optional[IPCBase] = None
 
     async def setup_hook(self) -> None:
@@ -362,9 +345,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
                         guild.id,
                     )
                 else:
-                    log.info(
-                        "%sCommands for guild %s were already synced", col(6), guild.id
-                    )
+                    log.info("%sCommands for guild %s were already synced", col(6), guild.id)
 
         if not failed:
             self.create_task(sync_with_logging())
@@ -438,7 +419,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         Registers listeners for database events.
         """
-        self.listener_connection: asyncpg.Connection = await self.pool.acquire()
+        self.listener_connection: asyncpg.Connection = await self.pool.acquire()  # type: ignore
 
         async def _delete_prefixes_event(conn, pid, channel, payload):
             payload = discord.utils._from_json(payload)  # noqa
@@ -449,18 +430,12 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             payload = discord.utils._from_json(payload)  # noqa
             self.prefix_cache[payload["guild_id"]] = set(payload["prefixes"])
 
-        await self.listener_connection.add_listener(
-            "delete_prefixes", _delete_prefixes_event
-        )
-        await self.listener_connection.add_listener(
-            "update_prefixes", _create_or_update_event
-        )
+        await self.listener_connection.add_listener("delete_prefixes", _delete_prefixes_event)
+        await self.listener_connection.add_listener("update_prefixes", _create_or_update_event)
 
     async def dump_translations(self, filename: str) -> None:
         log.info("%sDumping translations to %s", col(5), f"{filename!r}")
-        translations = await self.pool.fetch(
-            "SELECT * FROM translations ORDER BY tr_id"
-        )
+        translations = await self.pool.fetch("SELECT * FROM translations ORDER BY tr_id")
         log.info(
             "%sDumping %s translations to locales %s%s",
             col(5),
@@ -605,9 +580,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.unload_extension)
-    async def unload_extension(
-        self, name: str, *, package: Optional[str] = None
-    ) -> bool:
+    async def unload_extension(self, name: str, *, package: Optional[str] = None) -> bool:
         try:
             await super().unload_extension(name, package=package)
             return True
@@ -616,9 +589,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
     @_wrap_extension
     @discord.utils.copy_doc(commands.Bot.reload_extension)
-    async def reload_extension(
-        self, name: str, *, package: Optional[str] = None
-    ) -> bool:
+    async def reload_extension(self, name: str, *, package: Optional[str] = None) -> bool:
         try:
             await super().reload_extension(name, package=package)
             return True
@@ -637,9 +608,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         """
         return DbContextManager(self, timeout=timeout)
 
-    async def get_prefix(
-        self, message: discord.Message, raw: bool = False
-    ) -> List[str]:
+    async def get_prefix(self, message: discord.Message, raw: bool = False) -> List[str]:
         """|coro|
 
         Returns the prefixes for the given message.
@@ -652,11 +621,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         raw: :class:`bool`
             Whether to return the raw prefixes or not.
         """
-        meth = (
-            commands.when_mentioned_or
-            if raw is False
-            else lambda *pres: lambda _, __: list(pres)
-        )
+        meth = commands.when_mentioned_or if raw is False else lambda *pres: lambda _, __: list(pres)
 
         cached_prefixes = self.prefix_cache.get((message.guild and message.guild.id), None)  # type: ignore
         if cached_prefixes is not None:
@@ -670,9 +635,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         # but it's not the neatest thing, it's up to you :P
         return meth(*base)(self, message)
 
-    async def get_context(
-        self, message: discord.Message, *, cls: Type[DCT] = None
-    ) -> Union[DuckContext, commands.Context]:
+    async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
         """|coro|
 
         Used to get the invocation context from the message.
@@ -768,9 +731,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         await self.process_commands(message)
 
-    async def on_message_edit(
-        self, before: discord.Message, after: discord.Message
-    ) -> None:
+    async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
         """|coro|
 
         Called every time a message is edited.
@@ -782,8 +743,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         after: :class:`~discord.Message`
             The message after it was edited.
         """
-        if before.content != after.content and await self.is_owner(after.author):
-            await self.process_commands(after)
+        await self.process_commands(after)
 
     async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
@@ -816,9 +776,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             return
 
         if self.extra_events.get("on_app_command_error"):
-            return interaction.client.dispatch(
-                "app_command_error", interaction, command, error
-            )
+            return interaction.client.dispatch("app_command_error", interaction, command, error)
 
         raise error from None
 
@@ -839,13 +797,9 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         Awaitable[T]
             The wrapped function you can await.
         """
-        return self.loop.run_in_executor(
-            self.thread_pool, functools.partial(func, *args, **kwargs)
-        )
+        return self.loop.run_in_executor(self.thread_pool, functools.partial(func, *args, **kwargs))
 
-    def create_task(
-        self, coro: Coroutine[T, Any, Any], *, name: Optional[str] = None
-    ) -> asyncio.Task[T]:
+    def create_task(self, coro: Coroutine[T, Any, Any], *, name: Optional[str] = None) -> asyncio.Task[T]:
         """Create a task from a coroutine object.
 
         Parameters
@@ -868,9 +822,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
     async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
         return await super().is_owner(user)
 
-    async def start(
-        self, token: str, *, reconnect: bool = True, verbose: bool = True
-    ) -> None:
+    async def start(self, token: str, *, reconnect: bool = True, verbose: bool = True) -> None:
         """|coro|
 
         Starts the bot.
@@ -928,17 +880,13 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
     async def cleanup_views(self, *, timeout: float = 5.0) -> None:
         """Cleans up the views of the bot."""
-        future = await asyncio.gather(
-            *[v.on_timeout() for v in self.views], return_exceptions=True
-        )
+        future = await asyncio.gather(*[v.on_timeout() for v in self.views], return_exceptions=True)
         for item in future:
             if isinstance(item, Exception):
                 log.debug("A view failed to clean up", exc_info=item)
 
     @staticmethod
-    async def get_or_fetch_member(
-        guild: discord.Guild, user: Union[discord.User, int]
-    ) -> Optional[discord.Member]:
+    async def get_or_fetch_member(guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:
         """|coro|
 
         Used to get a member from a guild. If the member was not found, the function
@@ -1006,9 +954,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
                 if self._auto_spam_count[author_id] >= 5:
                     await self._auto_blacklist_add(ctx.author)
                     del self._auto_spam_count[author_id]
-                    await self._log_rl_excess(
-                        ctx, ctx.message, retry_after, auto_block=True
-                    )
+                    await self._log_rl_excess(ctx, ctx.message, retry_after, auto_block=True)
                 else:
                     await self._log_rl_excess(ctx, ctx.message, retry_after)
                 return
@@ -1042,9 +988,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         guild_name = getattr(ctx.guild, "name", "No Guild (DMs)")
         guild_id = getattr(ctx.guild, "id", None)
         fmt = "User %s (ID %s) in guild %r (ID %s) spamming, retry_after: %.2fs"
-        logging.warning(
-            fmt, message.author, message.author.id, guild_name, guild_id, retry_after
-        )
+        logging.warning(fmt, message.author, message.author.id, guild_name, guild_id, retry_after)
         if not auto_block:
             return
 
@@ -1055,9 +999,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             value=f"{message.author} (ID: {message.author.id})",
             inline=False,
         )
-        embed.add_field(
-            name="Guild Info", value=f"{guild_name} (ID: {guild_id})", inline=False
-        )
+        embed.add_field(name="Guild Info", value=f"{guild_name} (ID: {guild_id})", inline=False)
         embed.add_field(
             name="Channel Info",
             value=f"{message.channel} (ID: {message.channel.id}",
@@ -1092,15 +1034,12 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         if amount >= 5:
             await self.blacklist.add_user(
                 user,
-                end_time=discord.utils.utcnow()
-                + datetime.timedelta(minutes=1 * amount),
+                end_time=discord.utils.utcnow() + datetime.timedelta(minutes=1 * amount),
             )
         else:
             await self.blacklist.add_user(user)
 
-    async def try_syncing(
-        self, *, guild: discord.abc.Snowflake | None = None
-    ) -> SyncResult:
+    async def try_syncing(self, *, guild: discord.abc.Snowflake | None = None) -> SyncResult:
         """|coro|
 
         Tries to sync the command tree.
@@ -1114,14 +1053,10 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         await self.wait_until_ready()
 
         guild_id = guild.id if guild else 0
-        all_cmds = self.bot.tree._get_all_commands(
-            guild=guild
-        )  # noqa F401  # private method kekw.
+        all_cmds = self.bot.tree._get_all_commands(guild=guild)  # noqa F401  # private method kekw.
         payloads = [(guild_id, cmd.to_dict()) for cmd in all_cmds]
 
-        databased = await self.pool.fetch(
-            "SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id
-        )
+        databased = await self.pool.fetch("SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id)
         saved_payloads = [d["payload"] for d in databased]
 
         not_synced = [p for _, p in payloads if p not in saved_payloads] + [
@@ -1129,12 +1064,8 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         ]
 
         if not_synced:
-            await self.pool.execute(
-                "DELETE FROM auto_sync WHERE guild_id = $1", guild_id
-            )
-            await self.pool.executemany(
-                "INSERT INTO auto_sync (guild_id, payload) VALUES ($1, $2)", payloads
-            )
+            await self.pool.execute("DELETE FROM auto_sync WHERE guild_id = $1", guild_id)
+            await self.pool.executemany("INSERT INTO auto_sync (guild_id, payload) VALUES ($1, $2)", payloads)
 
             synced = await self.bot.tree.sync(guild=guild)
             return SyncResult(commands=synced, synced=True)
