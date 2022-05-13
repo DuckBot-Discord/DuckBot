@@ -1,13 +1,8 @@
 from __future__ import annotations
+from copy import deepcopy
+from logging import getLogger
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generic, 
-    Tuple, 
-    Optional,
-    TypeVar
-)
+from typing import TYPE_CHECKING, Any, Dict, Generic, Tuple, Optional, TypeVar
 
 import discord
 from discord.ext import commands
@@ -25,27 +20,34 @@ __all__: Tuple[str, ...] = (
 )
 
 BotT = TypeVar('BotT', bound='DuckBot')
+log = getLogger('DuckBot.context')
+VALID_EDIT_KWARGS: Dict[str, Any] = {
+    'content': None,
+    'embeds': [],
+    'attachments': [],
+    'suppress': False,
+    'delete_after': None,
+    'allowed_mentions': None,
+    'view': None,
+}
+
 
 def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
     """A function to convert a boolean value with label to an emoji with label.
-        
+
     Parameters
     ----------
     opt: Optional[:class:`bool`]
         The boolean value to convert.
     label: Optional[:class:`str`]
         The label to use for the emoji.
-    
+
     Returns
     -------
     :class:`str`
         The emoji with label.
     """
-    lookup = {
-        True: '\N{WHITE HEAVY CHECK MARK}',
-        False: '\N{CROSS MARK}',
-        None: '\N{BLACK QUESTION MARK ORNAMENT}'
-    }
+    lookup = {True: '\N{WHITE HEAVY CHECK MARK}', False: '\N{CROSS MARK}', None: '\N{BLACK QUESTION MARK ORNAMENT}'}
     emoji = lookup.get(opt, '\N{CROSS MARK}')
     if label is not None:
         return f'{emoji} {label}'
@@ -68,8 +70,8 @@ class ConfirmationView(discord.ui.View):
         self.ctx.bot.views.discard(self)
         if self.message:
             for item in self.children:
-                item.disabled = True # type: ignore
-                
+                item.disabled = True  # type: ignore
+
             await self.message.edit(content=f'Timed out waiting for a button press from {self.ctx.author}.', view=self)
 
     def stop(self) -> None:
@@ -79,7 +81,7 @@ class ConfirmationView(discord.ui.View):
     @discord.ui.button(label='Confirm', style=discord.ButtonStyle.primary)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         assert interaction.message is not None
-        
+
         self.value = True
         self.stop()
         await interaction.message.delete()
@@ -87,7 +89,7 @@ class ConfirmationView(discord.ui.View):
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         assert interaction.message is not None
-        
+
         self.value = False
         self.stop()
         await interaction.message.delete()
@@ -95,11 +97,10 @@ class ConfirmationView(discord.ui.View):
 
 class DuckContext(commands.Context, Generic[BotT]):
     """The subclassed Context to allow some extra functionality."""
+
     if TYPE_CHECKING:
         bot: DuckBot
         guild: discord.Guild
-
-    __slots__: Tuple[str, ...] = ()
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -112,13 +113,15 @@ class DuckContext(commands.Context, Generic[BotT]):
 
     @discord.utils.cached_property
     def color(self) -> discord.Color:
-        """:class:`~discord.Color`: Returns DuckBot's color, or the author's color. Falls back to blurple """
+        """:class:`~discord.Color`: Returns DuckBot's color, or the author's color. Falls back to blurple"""
+
         def check(color):
             return color not in {discord.Color.default(), None}
+
         checks = (
             me_color if check(me_color := self.me.color) else None,
             you_color if check(you_color := self.author.color) else None,
-            self.bot.color
+            self.bot.color,
         )
 
         result = discord.utils.find(lambda e: e, checks)
@@ -133,10 +136,11 @@ class DuckContext(commands.Context, Generic[BotT]):
         """
         return self.bot.validate_locale(
             await self.bot.pool.fetchval('SELECT locale FROM user_settings WHERE user_id = $1', self.author.id),
-            default = self.bot.validate_locale(self.interaction.locale if self.interaction else None,
-            default = self.bot.validate_locale(self.guild.preferred_locale if self.guild else None,
-            default = 'en_us')))
-
+            default=self.bot.validate_locale(
+                self.interaction.locale if self.interaction else None,
+                default=self.bot.validate_locale(self.guild.preferred_locale if self.guild else None, default='en_us'),
+            ),
+        )
 
     async def translate(self, translation_id: int, /, *args: Any, locale: str | discord.Locale | None = None) -> str:
         """|coro|
@@ -156,19 +160,19 @@ class DuckContext(commands.Context, Generic[BotT]):
 
     async def send(self, content: int | str | FormatString | None = None, *args: Any, **kwargs: Any) -> Message:
         """|coro|
-        
+
         Sends a message to the invoking context's channel.
 
         View :meth:`~discord.ext.commands.Context.send` for more information of parameters.
-        
+
         Returns
         -------
         :class:`~discord.Message`
             The message that was created.
         """
         if kwargs.get('embed') and kwargs.get('embeds'):
-            raise ValueError('Cannot send both embed and embeds')
-        
+            raise TypeError('Cannot mix embed and embeds keyword arguments.')
+
         locale = kwargs.pop('locale', await self.get_locale())
 
         embeds = kwargs.pop('embeds', []) or ([kwargs.pop('embed')] if kwargs.get('embed', None) else [])
@@ -182,15 +186,52 @@ class DuckContext(commands.Context, Generic[BotT]):
                     # be keeping self.color for other stuff like userinfo
                     embed.color = self.bot.color
 
-            kwargs['embeds'] = embeds
-        
+        kwargs['embeds'] = embeds
+
         if isinstance(content, int):
             content = await self.translate(content, *args, locale=locale)
         elif isinstance(content, FormatString):
             content = await self.translate(content.id, *content.args, locale=locale)
-            
 
-        return await super().send(content, **kwargs)
+        if self._previous_message:
+            log.info('editing')
+            new_kwargs = deepcopy(VALID_EDIT_KWARGS)
+            new_kwargs['content'] = content
+            new_kwargs.update(kwargs)
+
+            try:
+                return await self._previous_message.edit(**new_kwargs)
+            except discord.HTTPException:
+                self._previous_message = None
+                self._previous_message = m = await super().send(content=content, **new_kwargs)
+                return m
+
+        log.info(self._previous_message)
+
+        self._previous_message = m = await super().send(content, **kwargs)
+        return m
+
+    @property
+    def _previous_message(self) -> Optional[discord.Message]:
+        log.info('trying to get this.')
+        if self.message:
+            log.info('getting message')
+            try:
+                return self.bot.messages[repr(self)]
+            except KeyError:
+                log.info('key error')
+                return None
+
+        log.info('not getting message.')
+
+    @_previous_message.setter
+    def _previous_message(self, message: Optional[discord.Message]) -> None:
+        log.info('setting attribute.')
+        log.info(f"Attribute being set to {message}, {type(message)}")
+        if isinstance(message, discord.Message):
+            self.bot.messages[repr(self)] = message
+        else:
+            self.bot.messages.pop(repr(self), None)
 
     async def confirm(self, content=None, /, *, timeout: int = 30, **kwargs) -> bool | None:
         """|coro|
@@ -221,6 +262,13 @@ class DuckContext(commands.Context, Generic[BotT]):
             view.stop()
             return None
 
+    def __repr__(self) -> str:
+        if self.message:
+            return f'<utils.DuckContext bound to message ({self.channel.id}-{self.message.id})>'
+        elif self.interaction:
+            return f'<utils.DuckContext bound to interaction {self.interaction}>'
+        return super().__repr__()
+
 
 async def setup(bot: DuckBot) -> None:
     """Sets up the DuckContext class.
@@ -230,6 +278,7 @@ async def setup(bot: DuckBot) -> None:
     bot: DuckBot
         The bot to set up the DuckContext class for.
     """
+    bot.messages.clear()
     bot._context_cls = DuckContext
 
 

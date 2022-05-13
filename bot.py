@@ -294,6 +294,9 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         self.session: ClientSession = session
         self._context_cls: Type[commands.Context] = commands.Context
         self.prefix_cache: DefaultDict[int, Set[str]] = defaultdict(set)
+        self.messages: cachetools.TTLCache[str, discord.Message] = cachetools.TTLCache(
+            maxsize=1000, ttl=300.0
+        )  # {repr(ctx): message(from ctx.send) }
         self.error_webhook_url: Optional[str] = kwargs.get("error_wh")
         self._start_time: Optional[datetime.datetime] = None
         self.listener_connection: Optional[asyncpg.Connection] = None  # type: ignore
@@ -744,6 +747,25 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             The message after it was edited.
         """
         await self.process_commands(after)
+
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
+        """|coro|
+
+        Called every time a message is deleted.
+
+        Parameters
+        ----------
+        message: :class:`~discord.Message`
+            The message that was deleted.
+        """
+        _repr = f'<utils.DuckContext bound to message ({payload.channel_id}-{payload.message_id})>'
+        if _repr in self.messages:
+            message = self.messages[_repr]
+            try:
+                await message.delete()
+            except discord.HTTPException:
+                pass
+            del self.messages[_repr]
 
     async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
