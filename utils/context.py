@@ -200,10 +200,12 @@ class DuckContext(commands.Context, Generic[BotT]):
             new_kwargs.update(kwargs)
 
             try:
-                return await self._previous_message.edit(**new_kwargs)
+                m = await self._previous_message.edit(**new_kwargs)
+                self._previous_message = m
+                return m
             except discord.HTTPException:
                 self._previous_message = None
-                self._previous_message = m = await super().send(content=content, **new_kwargs)
+                self._previous_message = m = await super().send(content, **kwargs)
                 return m
 
         log.info(self._previous_message)
