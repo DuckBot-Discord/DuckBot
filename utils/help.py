@@ -22,15 +22,15 @@ import discord
 from discord.ext import commands
 
 from .constants import SERVERS_ICON, GITHUB
-from .errors import DuckNotFound, DuckBotNotStarted
+from utils.bases.errors import DuckNotFound, DuckBotNotStarted
 from .time import human_join
-from .context import DuckContext
-from .command import DuckCommand, DuckGroup
+from utils.bases.context import DuckContext
+from utils.bases.command import DuckCommand, DuckGroup
 
 from bot import DuckBot
 
 if TYPE_CHECKING:
-    from .base_cog import DuckCog
+    from utils.bases.base_cog import DuckCog
 
     class _Parentable(Protocol):
         parent: Union[_Parentable, DuckBot]

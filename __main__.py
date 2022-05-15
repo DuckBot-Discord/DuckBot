@@ -1,7 +1,7 @@
 import asyncio
 import click
 
-from utils.launcher import run_bot
+from utils.bases.launcher import run_bot
 
 
 @click.command()

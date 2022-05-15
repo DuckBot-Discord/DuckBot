@@ -21,13 +21,12 @@ from utils import (
     group
 )
 
-from utils.errors import (
+from utils import (
     HierarchyException, 
     MemberNotMuted,
-    MemberAlreadyMuted, 
+    MemberAlreadyMuted,
+    Timer
 )
-
-from utils.timer import Timer
 
 if TYPE_CHECKING:
     from asyncpg import Connection

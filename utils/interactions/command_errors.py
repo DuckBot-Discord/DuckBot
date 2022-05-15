@@ -6,7 +6,7 @@ from bot import DuckBot
 from discord import app_commands
 from discord.ext.commands import UserInputError
 from typing import Union, Optional
-from ..errors import SilentCommandError, DuckBotException
+from utils.bases.errors import SilentCommandError, DuckBotException
 from . import errors
 import logging
 

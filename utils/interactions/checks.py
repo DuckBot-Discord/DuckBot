@@ -10,7 +10,7 @@ from typing import (
 )
 
 from . import errors
-from .. import errors as base_errors
+from ..bases import errors as base_errors
 
 if TYPE_CHECKING:
 

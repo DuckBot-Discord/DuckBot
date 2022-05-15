@@ -19,8 +19,8 @@ from typing import (
 
 import discord
 
-from utils.context import DuckContext
-from utils.errors import DuckBotException, SilentCommandError, log
+from utils.bases.context import DuckContext
+from utils.bases.errors import DuckBotException, SilentCommandError, log
 from utils.types.exception import DuckTraceback, _DuckTracebackOptional
 
 if TYPE_CHECKING:

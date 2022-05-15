@@ -7,11 +7,10 @@ from typing import (
 )
 
 import discord
-from discord.ext import commands
 
 from utils import DuckCog, group
 from ._news_viewer import NewsViewer
-from utils.context import DuckContext
+from utils import DuckContext
 
 T = TypeVar('T')
 

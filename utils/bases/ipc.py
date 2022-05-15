@@ -1,6 +1,6 @@
 from logging import getLogger
 from bot import DuckBot
-from .ipc_routes import DuckBotIPC
+from utils.ipc_routes import DuckBotIPC
 
 
 log = getLogger('DuckBot.ipc')

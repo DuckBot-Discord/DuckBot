@@ -2,8 +2,8 @@ from aiohttp import web
 from typing import Union
 from discord.ext.commands import Group, Command
 
-from utils.command import DuckCommand, DuckGroup
-from .ipc_base import IPCBase, route
+from utils.bases.command import DuckCommand, DuckGroup
+from utils.bases.ipc_base import IPCBase, route
 
 
 def command_dict(command: Union[DuckCommand, Command]) -> dict:

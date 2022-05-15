@@ -3,7 +3,7 @@ from types import TracebackType
 from typing import Optional, Type, Tuple
 
 import discord
-from ..errors import SilentCommandError
+from utils.bases.errors import SilentCommandError
 
 __all__: Tuple[str, ...] = (
     "HandleHTTPException",

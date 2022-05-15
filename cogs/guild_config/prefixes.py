@@ -9,9 +9,7 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from utils import DuckCog, SilentCommandError
-from utils.context import DuckContext
-from utils.command import group
+from utils import DuckCog, DuckContext, group
 
 if TYPE_CHECKING:
     from bot import DuckBot

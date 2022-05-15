@@ -8,9 +8,9 @@ import discord
 from discord.ext import menus
 from discord.ui import Modal, TextInput
 
-from utils.translation_helpers import TranslatedEmbed
+from utils.bases.translation_helpers import TranslatedEmbed
 
-from .context import DuckContext
+from utils.bases.context import DuckContext
 
 __all__: Tuple[str, ...] = ("ViewMenuPages", )
 

@@ -1,5 +1,5 @@
 from discord.app_commands import AppCommandError
-from ..errors import DuckBotException
+from utils.bases.errors import DuckBotException
 from .. import human_join
 
 from typing import Tuple

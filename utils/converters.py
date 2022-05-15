@@ -16,7 +16,7 @@ from discord.ext import commands
 from discord.ext.commands import FlagConverter
 
 from .helpers import can_execute_action
-from .context import DuckContext
+from utils.bases.context import DuckContext
 from .errorhandler import HandleHTTPException
 
 

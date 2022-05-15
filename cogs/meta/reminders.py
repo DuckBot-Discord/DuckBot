@@ -9,10 +9,7 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from utils import DuckCog, group
-from utils.context import DuckContext
-from utils.time import UserFriendlyTime
-from utils.timer import Timer, TimerNotFound
+from utils import DuckCog, group, DuckContext, UserFriendlyTime, TimerNotFound
 
 log = logging.getLogger('DuckBot.cogs.meta.reminders')
 

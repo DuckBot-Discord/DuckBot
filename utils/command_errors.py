@@ -7,10 +7,10 @@ from typing import (
 
 from discord.ext import commands
 
-from utils import errors
+from utils.bases import errors
 
 if TYPE_CHECKING:
-    from .context import DuckContext
+    from utils.bases.context import DuckContext
     from bot import DuckBot
     
 __all__: Tuple[str, ...] = ()

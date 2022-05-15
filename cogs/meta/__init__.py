@@ -1,7 +1,7 @@
 import discord
 from .news import News
 from bot import DuckBot
-from utils.errors import DuckBotNotStarted
+from utils import DuckBotNotStarted
 from .reminders import Reminders
 from .app_commands import ApplicationMeta
 from .embed import EmbedMaker

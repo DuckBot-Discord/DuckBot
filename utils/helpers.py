@@ -22,14 +22,14 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from .context import DuckContext
+from utils.bases.context import DuckContext
 
 try:
     from typing import ParamSpec  # type: ignore
 except ImportError:
     from typing_extensions import ParamSpec
 
-from .errors import *
+from utils.bases.errors import *
 
 
 T = TypeVar('T')

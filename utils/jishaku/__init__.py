@@ -10,8 +10,6 @@ from typing import (
     Any,
     Optional,
     TypeVar,
-    Union,
-    Literal,
 )
 import itertools
 import traceback
@@ -29,14 +27,14 @@ from jishaku.functools import AsyncSender
 from jishaku.repl import AsyncCodeExecutor, get_var_dict_from_ctx
 from jishaku.paginators import use_file_check, PaginatorInterface, WrappedPaginator
 
-from utils.translation_helpers import TranslatedEmbed
+from utils.bases.translation_helpers import TranslatedEmbed
 
 if TYPE_CHECKING:
-    from typing import List as Greedy
+    pass
 else:
-    from discord.ext.commands import Greedy
+    pass
 
-from ..context import DuckContext
+from utils.bases.context import DuckContext
 from .. import add_logging, DuckCog
 
 try:

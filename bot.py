@@ -51,7 +51,7 @@ from utils import (
     human_timedelta,
     IPCBase,
 )
-from utils.errors import *
+from utils.bases.errors import *
 
 try:
     from typing import ParamSpec
@@ -77,11 +77,11 @@ log = logging.getLogger("DuckBot.main")
 initial_extensions: Tuple[str, ...] = (
     # Helpers
     "utils.jishaku",
-    "utils.context",
+    "utils.bases.context",
     "utils.command_errors",
     "utils.interactions.command_errors",
     "utils.help",
-    "utils.ipc",
+    "utils.bases.ipc",
     # Cogs
     "cogs.guild_config",
     "cogs.meta",

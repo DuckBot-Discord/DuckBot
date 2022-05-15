@@ -19,7 +19,7 @@ from discord.ext import commands
 
 from bot import DuckBot
 from utils import format_date
-from utils.context import DuckContext
+from utils import DuckContext
 
 NVT = TypeVar('NVT', bound='NewsViewer')
 

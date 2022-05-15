@@ -18,7 +18,7 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from . import time
+from utils import time
 from .context import DuckContext
 from .errors import TimerNotFound
 

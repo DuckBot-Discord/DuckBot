@@ -19,10 +19,10 @@ from datetime import datetime
 
 if TYPE_CHECKING:
     from bot import DuckBot
-    from utils.context import DuckContext
+    from utils.bases.context import DuckContext
 else:
     from discord.ext.commands import Bot as DuckBot
-    from utils.context import DuckContext
+    from utils.bases.context import DuckContext
 
 from utils import EntityBlacklisted
 

@@ -30,8 +30,7 @@ from utils.interactions import (
     bot_has_permissions,
 )
 
-from utils.errors import TimerNotFound
-from utils.timer import Timer
+from utils import TimerNotFound, Timer
 
 log = logging.getLogger('DuckBot.moderation.block')
 

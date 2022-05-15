@@ -13,9 +13,7 @@ from typing import (
 
 from discord.ext import commands
 
-from utils.command import DuckCommand
-
-from .errors import *
+from utils.bases.command import DuckCommand
 
 if TYPE_CHECKING:
     from bot import DuckBot
