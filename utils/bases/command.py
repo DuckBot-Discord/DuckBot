@@ -498,6 +498,7 @@ def group(
     aliases: Iterable[str] = MISSING,
     hybrid: bool = False,
     fallback: str | None = None,
+    invoke_without_command: bool = True,
     **attrs: Any,
 ) -> Callable[..., DuckGroup | DuckHybridGroup]:
     """
@@ -522,7 +523,7 @@ def group(
         if isinstance(func, DuckGroup):
             raise TypeError('Callback is already a command.')
 
-        kwargs = {}
+        kwargs: Dict[str, Any] = {'invoke_without_command': invoke_without_command}
         kwargs.update(attrs)
         if name is not MISSING:
             kwargs['name'] = name
