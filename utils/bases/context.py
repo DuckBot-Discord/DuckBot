@@ -1,6 +1,5 @@
 from __future__ import annotations
 from copy import deepcopy
-from logging import getLogger
 
 from typing import TYPE_CHECKING, Any, Dict, Generic, Tuple, Optional, TypeVar
 
@@ -20,7 +19,7 @@ __all__: Tuple[str, ...] = (
 )
 
 BotT = TypeVar('BotT', bound='DuckBot')
-log = getLogger('DuckBot.context')
+
 VALID_EDIT_KWARGS: Dict[str, Any] = {
     'content': None,
     'embeds': [],
@@ -194,7 +193,6 @@ class DuckContext(commands.Context, Generic[BotT]):
             content = await self.translate(content.id, *content.args, locale=locale)
 
         if self._previous_message:
-            log.info('editing')
             new_kwargs = deepcopy(VALID_EDIT_KWARGS)
             new_kwargs['content'] = content
             new_kwargs.update(kwargs)
@@ -208,28 +206,19 @@ class DuckContext(commands.Context, Generic[BotT]):
                 self._previous_message = m = await super().send(content, **kwargs)
                 return m
 
-        log.info(self._previous_message)
-
         self._previous_message = m = await super().send(content, **kwargs)
         return m
 
     @property
     def _previous_message(self) -> Optional[discord.Message]:
-        log.info('trying to get this.')
         if self.message:
-            log.info('getting message')
             try:
                 return self.bot.messages[repr(self)]
             except KeyError:
-                log.info('key error')
                 return None
-
-        log.info('not getting message.')
 
     @_previous_message.setter
     def _previous_message(self, message: Optional[discord.Message]) -> None:
-        log.info('setting attribute.')
-        log.info(f"Attribute being set to {message}, {type(message)}")
         if isinstance(message, discord.Message):
             self.bot.messages[repr(self)] = message
         else:
