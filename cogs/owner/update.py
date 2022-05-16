@@ -39,7 +39,7 @@ def fmt(exc: Exception) -> str:
 
 
 def wrap(text: str, language: str = 'py') -> List[str]:
-    paginator = WrappedPaginator(prefix=f'```{language}' + language, suffix='```')
+    paginator = WrappedPaginator(prefix=f'```{language}' + language, suffix='```', force_wrap=True)
     for line in text.splitlines():
         paginator.add_line(line)
     return paginator.pages
@@ -68,11 +68,11 @@ class ExtensionsManager(DuckCog):
             paginator.add_line(f'\N{BLACK QUESTION MARK ORNAMENT} `{extension}`')
         except Exception as e:
             paginator.add_line(f'\N{CROSS MARK} `{extension}`')
-            paginator.add_line(fmt(e))
+            paginator.add_line(f"```py\n{fmt(e)}\n```")
 
     @group(invoke_without_command=True)
     async def reload(self, ctx: DuckContext, *extensions: str):
-        paginator = WrappedPaginator()
+        paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
         for extension in extensions:
             await self.reload_to_page(extension, paginator=paginator)
         for page in paginator.pages:
@@ -106,7 +106,7 @@ class ExtensionsManager(DuckCog):
                 stdout.replace(module.path, f"\N{CROSS MARK} {module.path}")
                 module.exception = e
 
-        paginator = WrappedPaginator(force_wrap=True)
+        paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
         for page in wrap(stdout, language='sh'):
             paginator.add_line(page)
         paginator.add_line()
@@ -114,12 +114,12 @@ class ExtensionsManager(DuckCog):
         for module in filter(lambda m: m.failed, modules):
             assert module.exception is not None
             paginator.add_line(f"\N{WARNING SIGN} {module.path}")
-            paginator.add_line(fmt(module.exception), empty=True)
+            paginator.add_line(f"```py\n{fmt(module.exception)}\n```", empty=True)
 
     @reload.command(name='all')
     async def reload_all(self, ctx: DuckContext):
         '''Reloads all extensions.'''
-        paginator = WrappedPaginator()
+        paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
         for extension in self.bot.extensions:
             await self.reload_to_page(extension, paginator=paginator)
         for page in paginator.pages:
@@ -135,7 +135,7 @@ class ExtensionsManager(DuckCog):
             The module to reload.
 
         '''
-        paginator = WrappedPaginator()
+        paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
         for module in modules:
             try:
                 m = importlib.import_module(module)
@@ -143,6 +143,6 @@ class ExtensionsManager(DuckCog):
                 paginator.add_line(f"\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS} {module}")
             except Exception as e:
                 paginator.add_line(f"\N{CROSS MARK} {module}")
-                paginator.add_line(fmt(e), empty=True)
+                paginator.add_line(f"```py\n{fmt(e)}\n```", empty=True)
         for page in paginator.pages:
             await ctx.send(page)

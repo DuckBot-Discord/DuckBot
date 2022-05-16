@@ -105,10 +105,8 @@ def _wrap_extension(func: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[An
         try:
             result = await func(*args, **kwargs)
         except Exception as exc:
-            log.warning(f"Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}")
-            bot: DuckBot = args[0]  # type: ignore
-            bot.create_task(bot.exceptions.add_error(error=exc))
-            return
+            log.warning(f"Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}", exc_info=exc)
+            raise
 
         fmt = f"{func.__name__} took {(time.monotonic() - start)*1000:.2f}ms {fmt_args}"
         log.info(fmt)
@@ -317,8 +315,13 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
     async def setup_hook(self) -> None:
         failed = False
         for extension in initial_extensions:
-            result = await self.load_extension(extension)
-            failed = failed or not result
+            try:
+                result = await self.load_extension(extension)
+            except Exception as e:
+                failed = True
+                await self.exceptions.add_error(error=e)
+            else:
+                failed = failed or not result
 
         self.tree.copy_global_to(guild=discord.Object(id=774561547930304536))
 
