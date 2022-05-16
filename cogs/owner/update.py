@@ -85,13 +85,15 @@ class ExtensionsManager(DuckCog):
             await ctx.send(page)
 
     @reload.command(name='git')
-    async def reload_git(self, ctx: DuckContext, stdout: str):
+    async def reload_git(self, ctx: DuckContext):
         '''|coro|
 
         Updates the bot.
 
         This command will pull from github, and then reload the modules of the bot that have changed.
         '''
+        shell = Shell('git pull')
+        stdout = (await shell.run()).stdout
 
         modules = self.find_modules_to_reload(stdout)
 
