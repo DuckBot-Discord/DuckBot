@@ -125,7 +125,7 @@ class ExtensionsManager(DuckCog):
     async def reload_all(self, ctx: DuckContext):
         '''Reloads all extensions.'''
         paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
-        for extension in self.bot.extensions:
+        for extension in list(self.bot.extensions.keys()):
             await self.reload_to_page(extension, paginator=paginator)
         for page in paginator.pages:
             await ctx.send(page)
