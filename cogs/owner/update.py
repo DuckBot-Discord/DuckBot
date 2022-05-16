@@ -25,8 +25,8 @@ class Module:
     def name(self) -> str:
         match = COGS_PATTERN.match(self.path)
         if match:
-            return match.group()[0].replace('/', '.').removeprefix('.py').rstrip('.')
-        return self.path.replace('/', '.').removeprefix('.py').rstrip('.')
+            return match.group()[0].replace('/', '.').removesuffix('.py').rstrip('.')
+        return self.path.replace('/', '.').removesuffix('.py').rstrip('.')
 
     @property
     def failed(self):
