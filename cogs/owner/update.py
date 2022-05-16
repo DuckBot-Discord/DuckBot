@@ -25,8 +25,8 @@ class Module:
     def name(self) -> str:
         match = COGS_PATTERN.match(self.path)
         if match:
-            return match.group()[0].replace('/', '.').removesuffix('.py').rstrip('.')
-        return self.path.replace('/', '.').removesuffix('.py').rstrip('.')
+            return match.group()[0].replace('/', '.').removesuffix('.py').strip('.')
+        return self.path.replace('/', '.').removesuffix('.py').strip('.')
 
     @property
     def failed(self):
@@ -95,12 +95,12 @@ class ExtensionsManager(DuckCog):
             try:
                 if module.is_cog:
                     emoji = await self.try_reload(module.name)
-                    stdout.replace(module.path, f"{emoji} {module.path}")
+                    stdout = stdout.replace(module.path, f"{emoji} {module.path}")
                 else:
                     m = importlib.import_module(module.name)
                     importlib.reload(m)
             except Exception as e:
-                stdout.replace(module.path, f"\N{CROSS MARK} {module.path}")
+                stdout = stdout.replace(module.path, f"\N{CROSS MARK} {module.path}")
                 module.exception = e
 
         paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
