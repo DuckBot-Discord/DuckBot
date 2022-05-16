@@ -1,6 +1,5 @@
-from utils import DuckContext, HandleHTTPException, cb
-from discord.ext.commands import NotOwner, Paginator, ExtensionFailed
-from traceback import format_exception
+from utils import DuckContext, HandleHTTPException
+from discord.ext.commands import NotOwner
 from utils import command
 
 from .blacklist import BlackListManagement
@@ -9,6 +8,7 @@ from .badges import BadgeManagement
 from .eval import Eval
 from .sql import SQLCommands
 from .translations import TranslationManager
+from .update import ExtensionsManager
 
 
 class Owner(
@@ -18,6 +18,7 @@ class Owner(
     Eval,
     TranslationManager,
     SQLCommands,
+    ExtensionsManager,
     command_attrs=dict(hidden=True),
     emoji="<:blushycat:913554213555028069>",
     brief="Restricted! hah.",
@@ -38,30 +39,6 @@ class Owner(
         cmds = await ctx.bot.tree.sync(guild=ctx.guild)
         async with HandleHTTPException(ctx):
             await msg.edit(content=f"✅ Synced {len(cmds)} commands.")
-
-    @command()
-    async def rall(self, ctx):
-        """Reloads all cogs."""
-        paginator = Paginator(prefix="", suffix="")
-        for extension in list(self.bot.extensions.keys()):
-            try:
-                await self.bot.reload_extension(extension)
-                paginator.add_line(
-                    f"\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS} `{extension}`"
-                )
-
-            except Exception as e:
-                if isinstance(e, ExtensionFailed):
-                    e = e.original
-                paginator.add_line(
-                    f"\N{WARNING SIGN} Failed to load extension: `{extension}`",
-                    empty=True,
-                )
-                error = "".join(format_exception(type(e), e, e.__traceback__))
-                paginator.add_line(cb(error))
-
-        for page in paginator.pages:
-            await ctx.send(page)
 
 
 async def setup(bot):
