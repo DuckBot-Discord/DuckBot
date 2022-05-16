@@ -1,22 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import io
 import logging
 import os
 import re
+import subprocess
 import time as time_lib
 from datetime import datetime
-from typing import (
-    TYPE_CHECKING,
-    TypeVar,
-    Callable,
-    Awaitable,
-    Union,
-    Any,
-    Optional,
-    Tuple
-)
+from typing import TYPE_CHECKING, TypeVar, Callable, Awaitable, Union, Any, Optional, Tuple
 
 import aiohttp
 import discord
@@ -25,7 +18,7 @@ from discord.ext import commands
 from utils.bases.context import DuckContext
 
 try:
-    from typing import ParamSpec  # type: ignore
+    from typing import ParamSpec
 except ImportError:
     from typing_extensions import ParamSpec
 
@@ -36,8 +29,10 @@ T = TypeVar('T')
 P = ParamSpec('P')
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
 
-CDN_REGEX = re.compile(r'(https?://)?(media|cdn)\.discord(app)?\.(com|net)/attachments/'
-                       r'(?P<channel_id>[0-9]+)/(?P<message_id>[0-9]+)/(?P<filename>[\S]+)')
+CDN_REGEX = re.compile(
+    r'(https?://)?(media|cdn)\.discord(app)?\.(com|net)/attachments/'
+    r'(?P<channel_id>[0-9]+)/(?P<message_id>[0-9]+)/(?P<filename>[\S]+)'
+)
 URL_REGEX = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|%[0-9a-fA-F][0-9a-fA-F])+')
 
 __all__: Tuple[str, ...] = (
@@ -50,7 +45,9 @@ __all__: Tuple[str, ...] = (
     'can_execute_action',
     'DeleteButton',
     'URLObject',
+    'Shell',
 )
+
 
 def col(color=None, /, *, fmt=0, bg=False) -> str:
     """
@@ -73,6 +70,7 @@ def col(color=None, /, *, fmt=0, bg=False) -> str:
             base += "3{color}m"
     return base.format(fmt=fmt, color=color)
 
+
 def mdr(entity: Any) -> str:
     """Returns the string of an object with discord markdown removed.
 
@@ -88,8 +86,9 @@ def mdr(entity: Any) -> str:
     """
     return discord.utils.remove_markdown(discord.utils.escape_mentions(str(entity)))
 
+
 def cb(text: str, /, *, lang: str = 'py'):
-    """Wraps a string into a code-block, and adds zero width 
+    """Wraps a string into a code-block, and adds zero width
     characters to avoid the code block getting cut off.
 
     Parameters
@@ -113,7 +112,7 @@ def safe_reason(author: Union[discord.Member, discord.User], reason: str, *, len
 
     length_limit = length - len(base)
     if len(reason) > length_limit:
-        reason = reason[:length_limit - 3] + '...'
+        reason = reason[: length_limit - 3] + '...'
 
     return base + reason
 
@@ -233,7 +232,8 @@ async def can_execute_action(
 
 
 class DeleteButtonCallback(discord.ui.Button['DeleteButton']):
-    """ Internal. """
+    """Internal."""
+
     async def callback(self, interaction: discord.Interaction) -> Any:
         try:
             if interaction.message:
@@ -241,6 +241,7 @@ class DeleteButtonCallback(discord.ui.Button['DeleteButton']):
         finally:
             if self.view:
                 self.view.stop()
+
 
 class DeleteButton(discord.ui.View):
     """
@@ -259,6 +260,7 @@ class DeleteButton(discord.ui.View):
     emoji: :class:`str`
         The emoji of the button. Defaults to None.
     """
+
     def __init__(self, *args, **kwargs):
         self.bot: Optional[commands.Bot] = None
         self._message = kwargs.pop('message', None)
@@ -267,20 +269,22 @@ class DeleteButton(discord.ui.View):
 
         super().__init__(timeout=kwargs.pop('timeout', 180))
 
-        self.add_item(DeleteButtonCallback(
-            style=kwargs.pop('style', discord.ButtonStyle.red),
-            label=kwargs.pop('label', 'Delete'),
-            emoji=kwargs.pop('emoji', None),
-        ))
+        self.add_item(
+            DeleteButtonCallback(
+                style=kwargs.pop('style', discord.ButtonStyle.red),
+                label=kwargs.pop('label', 'Delete'),
+                emoji=kwargs.pop('emoji', None),
+            )
+        )
         if isinstance(self.bot, commands.Bot):
             self.bot.views.add(self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        """ Checks if the user is the right one. """
+        """Checks if the user is the right one."""
         return interaction.user == self.author
 
     async def on_timeout(self) -> None:
-        """ Deletes the message on timeout. """
+        """Deletes the message on timeout."""
         if self.message:
             try:
                 if self.delete_on_timeout:
@@ -295,7 +299,7 @@ class DeleteButton(discord.ui.View):
             pass
 
     def stop(self) -> None:
-        """ Stops the view. """
+        """Stops the view."""
         try:
             self.bot.views.remove(self)  # type: ignore
         except (AttributeError, ValueError):
@@ -305,7 +309,7 @@ class DeleteButton(discord.ui.View):
 
     @property
     def message(self) -> Optional[discord.Message]:
-        """ The message to delete. """
+        """The message to delete."""
         return self._message
 
     @message.setter
@@ -313,17 +317,12 @@ class DeleteButton(discord.ui.View):
         self._message = message
         try:
             # noinspection PyProtectedMember
-            self.bot = message._state._get_client()
+            self.bot = message._state._get_client()  # type: ignore
         except Exception as e:
             logging.error(f'Failed to get client from message %s: %s', message, exc_info=e)
 
     @classmethod
-    async def to_destination(
-            cls,
-            destination: discord.abc.Messageable | discord.Webhook,
-            *args,
-            **kwargs
-    ) -> 'DeleteButton':
+    async def to_destination(cls, destination: discord.abc.Messageable | discord.Webhook, *args, **kwargs) -> 'DeleteButton':
         if kwargs.get('view', None):
             raise TypeError('Cannot pass a view to to_destination')
 
@@ -333,7 +332,7 @@ class DeleteButton(discord.ui.View):
             emoji=kwargs.pop('emoji', None),
             author=kwargs.pop('author'),
             timeout=kwargs.pop('timeout', 180),
-            delete_on_timeout=kwargs.pop('delete_on_timeout', True)
+            delete_on_timeout=kwargs.pop('delete_on_timeout', True),
         )
         message = await destination.send(*args, **kwargs, view=view)
         view.message = message
@@ -348,7 +347,7 @@ class DeleteButton(discord.ui.View):
 
 
 class URLObject:
-    """ A class to represent a URL.
+    """A class to represent a URL.
 
     Attributes
     ----------
@@ -361,6 +360,7 @@ class URLObject:
     message_id: :class:`int`
         The ID of the message the URL is in.
     """
+
     if TYPE_CHECKING:
         url: str
         name: str
@@ -386,11 +386,7 @@ class URLObject:
             self.channel_id = None
             self.message_id = None
 
-    async def read(
-            self,
-            *,
-            session: Optional[aiohttp.ClientSession] = None
-    ) -> bytes:
+    async def read(self, *, session: Optional[aiohttp.ClientSession] = None) -> bytes:
         """|coro|
 
         Retrieves the contents of the URL.
@@ -422,7 +418,7 @@ class URLObject:
         fp: Union[io.BufferedIOBase, os.PathLike[Any]],
         *,
         seek_begin: bool = True,
-        session: Optional[aiohttp.ClientSession] = None
+        session: Optional[aiohttp.ClientSession] = None,
     ) -> int:
         """|coro|
 
@@ -458,7 +454,7 @@ class URLObject:
 
     @property
     def spoiler(self):
-        """ Weather this file is a discord spoiler """
+        """Weather this file is a discord spoiler"""
         return self.name.startswith("SPOILER_")
 
     async def to_file(self, *, session: aiohttp.ClientSession):
@@ -477,3 +473,59 @@ class URLObject:
             The file object.
         """
         return discord.File(io.BytesIO(await self.read(session=session)), self.name, spoiler=False)
+
+
+@dataclass()
+class ShellOutput:
+    stdout: str
+    stderr: str
+
+
+class ShellRunner:
+    def __init__(self, command: str, output: ShellOutput) -> None:
+        self.output: ShellOutput = output
+        self.command: str = command
+
+    async def execute(self) -> None:
+        process = await asyncio.create_subprocess_shell(self.command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = await process.communicate()
+        self.output.stdout = stdout.decode()
+        self.output.stderr = stderr.decode()
+
+    async def asoutput(self) -> ShellOutput:
+        await self.execute()
+        return self.output
+
+    async def astuple(self) -> Tuple[str, str]:
+        await self.execute()
+        return self.output.stdout, self.output.stderr
+
+    def __await__(self):
+        return self.asoutput().__await__()
+
+
+class Shell:
+    def __init__(self, command: str) -> None:
+        self._command = command
+        self._output: ShellOutput = ShellOutput("", "")
+
+    def run(self) -> ShellRunner:
+        return ShellRunner(self._command, self._output)
+
+    @property
+    def stdout(self) -> str:
+        return self._output.stdout
+
+    @property
+    def stderr(self) -> str:
+        return self._output.stderr
+
+    @property
+    def command(self) -> str:
+        return self._command
+
+    @command.setter
+    def command(self, command: str) -> None:
+        self._command = command
+        self._output.stdout = ""
+        self._output.stderr = ""
