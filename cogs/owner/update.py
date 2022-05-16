@@ -89,9 +89,6 @@ class ExtensionsManager(DuckCog):
         shell = Shell('git pull')
         stdout = (await shell.run()).stdout
 
-        if stdout.startswith('Already up-to-date.'):
-            return await ctx.send(stdout)
-
         modules = self.find_modules_to_reload(stdout)
 
         for module in sorted(modules, key=lambda m: m.is_cog, reverse=True):
@@ -115,6 +112,9 @@ class ExtensionsManager(DuckCog):
             assert module.exception is not None
             paginator.add_line(f"\N{WARNING SIGN} {module.path}")
             paginator.add_line(f"```py\n{fmt(module.exception)}\n```", empty=True)
+
+        for page in paginator.pages:
+            await ctx.send(page)
 
     @reload.command(name='all')
     async def reload_all(self, ctx: DuckContext):
