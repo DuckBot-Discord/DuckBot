@@ -5,9 +5,8 @@ from typing import Optional, Type, Tuple
 import discord
 from utils.bases.errors import SilentCommandError
 
-__all__: Tuple[str, ...] = (
-    "HandleHTTPException",
-)
+__all__: Tuple[str, ...] = ("HandleHTTPException",)
+
 
 class HandleHTTPException:
     __slots__: Tuple[str, ...] = ('webhook', 'message')
@@ -29,7 +28,8 @@ class HandleHTTPException:
             embed = discord.Embed(
                 title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
-                colour=discord.Colour.red())
+                colour=discord.Colour.red(),
+            )
 
             try:
                 asyncio.get_event_loop().create_task(self.webhook.send(embed=embed, ephemeral=True))
@@ -52,7 +52,8 @@ class HandleHTTPException:
             embed = discord.Embed(
                 title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
-                colour=discord.Colour.red())
+                colour=discord.Colour.red(),
+            )
 
             try:
                 asyncio.get_event_loop().create_task(self.webhook.send(embed=embed, ephemeral=True))
@@ -61,4 +62,3 @@ class HandleHTTPException:
             raise SilentCommandError
 
         return False
-

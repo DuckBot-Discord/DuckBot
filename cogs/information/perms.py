@@ -64,16 +64,18 @@ voice_perms_text = """```
 {use_embedded_activities} Use VC Games
 ```"""
 
+
 def get_type(entity: typing.Any) -> type:
     if isinstance(entity, SimpleOverwrite):
         return type(entity.entity)
     return type(entity)
 
+
 class PermsEmbed(discord.Embed):
     def __init__(
-            self,
-            entity: Union[Member, Role, SimpleOverwrite],
-            permissions: Union[Permissions, PermissionOverwrite],
+        self,
+        entity: Union[Member, Role, SimpleOverwrite],
+        permissions: Union[Permissions, PermissionOverwrite],
     ):
         sym = '@' if isinstance(entity, (discord.Role, discord.abc.User)) else '#'
         word = 'Permissions' if isinstance(permissions, discord.Permissions) else 'Overwrites'
@@ -89,12 +91,7 @@ class PermsEmbed(discord.Embed):
 
 
 class SimpleOverwrite:
-    def __init__(
-            self,
-            entity: typing.Union[discord.Member, discord.Role],
-            overwrite: discord.PermissionOverwrite,
-            pos
-    ):
+    def __init__(self, entity: typing.Union[discord.Member, discord.Role], overwrite: discord.PermissionOverwrite, pos):
         self.entity = entity
         self.overwrite = overwrite
         self.position = pos
@@ -117,12 +114,18 @@ class SimpleOverwrite:
     def __repr__(self):
         return f"<SimpleOverwrite id={self.id}>"
 
+
 class GuildPermsViewer(discord.ui.View):
     """
     A view that shows the permissions for an object.
     """
-    def __init__(self, ctx: DuckContext, message: discord.Message,
-                 chunks: typing.List[typing.List[SimpleOverwrite]] | typing.List[typing.List[discord.Role]],):
+
+    def __init__(
+        self,
+        ctx: DuckContext,
+        message: discord.Message,
+        chunks: typing.List[typing.List[SimpleOverwrite]] | typing.List[typing.List[discord.Role]],
+    ):
         super().__init__()
         self.ctx = ctx
         self.guild = ctx.guild
@@ -134,13 +137,7 @@ class GuildPermsViewer(discord.ui.View):
 
     def get_options_from_chunk(self, index: int):
         roles = self.chunks[index]
-        return [
-            discord.SelectOption(
-                label=f"{r.position + 1}) {get_type(r).__name__} @{r}",
-                value=str(r.id)
-            )
-            for r in roles
-        ]
+        return [discord.SelectOption(label=f"{r.position + 1}) {get_type(r).__name__} @{r}", value=str(r.id)) for r in roles]
 
     @discord.ui.select()
     async def select_role(self, interaction: discord.Interaction, select: discord.ui.Select):
@@ -176,8 +173,9 @@ class GuildPermsViewer(discord.ui.View):
         self.next_page.disabled = self.current_page >= self.max_pages
         self.previous_page.disabled = self.current_page <= 0
         self.select_role.options = self.get_options_from_chunk(self.current_page)
-        self.select_role.placeholder = f"Viewing @{self.current_role or 'no role'} " \
-                                       f"(page {self.current_page + 1}/{self.max_pages + 1})"
+        self.select_role.placeholder = (
+            f"Viewing @{self.current_role or 'no role'} " f"(page {self.current_page + 1}/{self.max_pages + 1})"
+        )
 
     @classmethod
     async def start(cls, ctx: DuckContext):
@@ -198,9 +196,9 @@ class GuildPermsViewer(discord.ui.View):
 
     @classmethod
     async def from_overwrites(
-            cls,
-            ctx: DuckContext,
-            overwrites: typing.Dict[typing.Union[discord.Member, discord.Role], discord.PermissionOverwrite]
+        cls,
+        ctx: DuckContext,
+        overwrites: typing.Dict[typing.Union[discord.Member, discord.Role], discord.PermissionOverwrite],
     ) -> None:
         """|coro|
 
@@ -214,7 +212,9 @@ class GuildPermsViewer(discord.ui.View):
             The overwrites to view.
         """
         message = await ctx.send('Loading...')
-        chunks = [[SimpleOverwrite(k, v, i) for i, (k, v) in enumerate(chunk)] for chunk in as_chunks(overwrites.items(), 10)]
+        chunks = [
+            [SimpleOverwrite(k, v, i) for i, (k, v) in enumerate(chunk)] for chunk in as_chunks(overwrites.items(), 10)
+        ]
         new = cls(ctx, message, chunks)
         new.update_components()
         await message.edit(content=None, view=new)
@@ -226,21 +226,18 @@ class GuildPermsViewer(discord.ui.View):
     async def on_timeout(self) -> None:
         self.ctx.bot.views.discard(self)
         for item in self.children:
-            item.disabled = True # type: ignore
+            item.disabled = True  # type: ignore
         await self.message.edit(view=self)
 
     def stop(self) -> None:
         self.ctx.bot.views.discard(self)
         super().stop()
 
-class PermsViewer(DuckCog):
 
+class PermsViewer(DuckCog):
     @command()
     async def perms(
-            self,
-            ctx: DuckContext,
-            *,
-            entity: discord.abc.GuildChannel | discord.Role | discord.Member | None = None
+        self, ctx: DuckContext, *, entity: discord.abc.GuildChannel | discord.Role | discord.Member | None = None
     ) -> None:
         """|coro|
 
@@ -260,5 +257,3 @@ class PermsViewer(DuckCog):
 
             embed = PermsEmbed(entity=entity, permissions=perms)
             await DeleteButton.to_destination(ctx, embed=embed, author=ctx.author)
-
-    

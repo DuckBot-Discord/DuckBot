@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from typing import (
-    List,
-    Optional,
-    TYPE_CHECKING
-)
+from typing import List, Optional, TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -43,7 +39,8 @@ class PrefixChanges(DuckCog):
         if len(prefix) > 50:
             return await ctx.send('Prefixes can only be up to 50 characters long.')
 
-        prefixes = await self.bot.pool.fetchval("""
+        prefixes = await self.bot.pool.fetchval(
+            """
             INSERT INTO guilds (guild_id, prefixes) VALUES ($1, ARRAY(
             SELECT DISTINCT * FROM array_append($3::text[], $2::text)))
             ON CONFLICT (guild_id) DO UPDATE SET prefixes = ARRAY( 
@@ -51,7 +48,11 @@ class PrefixChanges(DuckCog):
             CASE WHEN array_length(guilds.prefixes, 1) > 0 
             THEN guilds.prefixes ELSE $3::text[] END, $2)))
             RETURNING guilds.prefixes
-        """, ctx.guild.id, prefix, ctx.bot.command_prefix)
+        """,
+            ctx.guild.id,
+            prefix,
+            ctx.bot.command_prefix,
+        )
 
         await ctx.send(f'✅ Added prefix {prefix}')
 
@@ -90,11 +91,10 @@ class PrefixChanges(DuckCog):
             return await ctx.send('Prefixes can only be up to 50 characters long.')
 
         await self.bot.pool.execute(
-            "UPDATE guilds SET prefixes = ARRAY_REMOVE(prefixes, $1) WHERE guild_id = $2",
-            prefix, ctx.guild.id)
+            "UPDATE guilds SET prefixes = ARRAY_REMOVE(prefixes, $1) WHERE guild_id = $2", prefix, ctx.guild.id
+        )
         return await ctx.send(f'✅ Removed prefix {prefix}')
 
     @prefix_remove.autocomplete('prefix')
     async def prefix_remove_autocomplete(self, ctx: DuckContext, value: str) -> List[str]:
         return list(await ctx.bot.get_prefix(ctx.message, raw=True))
-        

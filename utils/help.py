@@ -43,9 +43,7 @@ QUESTION_MARK = "\N{BLACK QUESTION MARK ORNAMENT}"
 HOME = "\N{HOUSE BUILDING}"
 NON_MARKDOWN_INFORMATION_SOURCE = "\N{INFORMATION SOURCE}"
 
-InteractionCheckCallback = Callable[
-    [discord.ui.View, discord.Interaction], Awaitable[bool]
-]
+InteractionCheckCallback = Callable[[discord.ui.View, discord.Interaction], Awaitable[bool]]
 
 log = logging.getLogger("Duckbot.utils.help")
 
@@ -93,9 +91,7 @@ def _find_bot(parentable: ParentType) -> DuckBot:
 
         parentable = parentable.parent  # type: ignore # Can not use isinstance for DuckBot so we have to ignore this
 
-    raise DuckNotFound(
-        f"Could not find DuckBot from base parentable {base}, {repr(base)}."
-    )
+    raise DuckNotFound(f"Could not find DuckBot from base parentable {base}, {repr(base)}.")
 
 
 def _walk_through_parents(parentable: ParentType) -> Generator[ParentType, None, None]:
@@ -134,9 +130,7 @@ def _find_author_from_parent(
     return author
 
 
-async def _interaction_check(
-    view: discord.ui.View, interaction: discord.Interaction
-) -> Optional[bool]:
+async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction) -> Optional[bool]:
     """An internal helper used to check if the interaction is valid."""
     # Let's find the original author of the help command
     author = _find_author_from_parent(view)  # type: ignore
@@ -301,9 +295,7 @@ class CommandSelecter(discord.ui.Select):
     def __init__(self, *, parent: ParentType, cmds: List[DuckCommand]) -> None:
         self.parent: ParentType = parent
 
-        self._command_mapping: Mapping[str, DuckCommand] = {
-            c.qualified_name: c for c in cmds
-        }
+        self._command_mapping: Mapping[str, DuckCommand] = {c.qualified_name: c for c in cmds}
         super().__init__(
             placeholder="Select a command...",
             options=[
@@ -637,15 +629,9 @@ class HelpView(discord.ui.View):
             title="DuckBot Help Menu",
             description="Hello, I'm DuckBot! A multi-purpose bot with a lot of features.",
         )
-        embed.set_author(
-            name=self.bot.user.name, icon_url=self.bot.user.display_avatar.url
-        )
-        embed.add_field(
-            name="Getting Help", value="\n".join(getting_help), inline=False
-        )
-        embed.add_field(
-            name="Getting Support", value="\n".join(getting_support), inline=False
-        )
+        embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.display_avatar.url)
+        embed.add_field(name="Getting Help", value="\n".join(getting_help), inline=False)
+        embed.add_field(name="Getting Support", value="\n".join(getting_support), inline=False)
         embed.add_field(
             name="Who am I?",
             value=f"I'm DuckBot, a multipurpose bot created and maintained by {GITHUB}[LeoCx1000](https://github.com/LeoCx1000)."
@@ -657,13 +643,10 @@ class HelpView(discord.ui.View):
         )
         embed.add_field(
             name="Support DuckBot",
-            value="If you like DuckBot, you can support by voting here:\n"
-            "⭐ https://top.gg/bot/788278464474120202 ⭐",
+            value="If you like DuckBot, you can support by voting here:\n" "⭐ https://top.gg/bot/788278464474120202 ⭐",
             inline=False,
         )
-        embed.set_footer(
-            text=f"{NON_MARKDOWN_INFORMATION_SOURCE} For more info on a command press {QUESTION_MARK} help."
-        )
+        embed.set_footer(text=f"{NON_MARKDOWN_INFORMATION_SOURCE} For more info on a command press {QUESTION_MARK} help.")
         return embed
 
 
@@ -712,9 +695,7 @@ class DuckHelp(commands.HelpCommand):
 
         return cogs  # type: ignore
 
-    async def send_bot_help(
-        self, mapping: Mapping[Optional[DuckCog], List[DuckCommand]]
-    ) -> discord.Message:
+    async def send_bot_help(self, mapping: Mapping[Optional[DuckCog], List[DuckCommand]]) -> discord.Message:
         """|coro|
 
         A method used to send the bot's main help message.
@@ -756,9 +737,7 @@ class DuckHelp(commands.HelpCommand):
         view = HelpCog(parent=self.context.bot, cog=cog, author=self.context.author)
         return await self.context.send(embed=view.embed, view=view)
 
-    async def send_group_help(
-        self, group: DuckGroup[Any, ..., Any], /
-    ) -> discord.Message:
+    async def send_group_help(self, group: DuckGroup[Any, ..., Any], /) -> discord.Message:
         """|coro|
 
         A method used to display the help message for the given group.
@@ -773,14 +752,10 @@ class DuckHelp(commands.HelpCommand):
         :class:`discord.Message`
             The message that was sent to the user.
         """
-        view = HelpGroup(
-            parent=self.context.bot, group=group, author=self.context.author
-        )
+        view = HelpGroup(parent=self.context.bot, group=group, author=self.context.author)
         return await self.context.send(embed=view.embed, view=view)
 
-    async def send_command_help(
-        self, command: DuckCommand[Any, ..., Any], /
-    ) -> discord.Message:
+    async def send_command_help(self, command: DuckCommand[Any, ..., Any], /) -> discord.Message:
         """|coro|
 
         A method used to display the help message for the given command.
@@ -797,9 +772,7 @@ class DuckHelp(commands.HelpCommand):
         """
         if isinstance(command, DuckGroup):
             return await self.send_group_help(command)
-        view = HelpCommand(
-            parent=self.context.bot, command=command, author=self.context.author
-        )
+        view = HelpCommand(parent=self.context.bot, command=command, author=self.context.author)
         return await self.context.send(embed=view.embed, view=view)
 
     async def command_not_found(self, string: str, /) -> str:
@@ -822,11 +795,11 @@ class DuckHelp(commands.HelpCommand):
         matches.extend(c.qualified_name for c in self.bot.cogs.values())
 
         maybe_found = await self.bot.wrap(process.extractOne, string, matches)
-        return f'The command / group called "{string}" was not found. Maybe you meant `{self.context.prefix}{maybe_found[0]}`?'
+        return (
+            f'The command / group called "{string}" was not found. Maybe you meant `{self.context.prefix}{maybe_found[0]}`?'
+        )
 
-    async def subcommand_not_found(
-        self, command: DuckCommand[Any, ..., Any], string: str, /
-    ) -> str:
+    async def subcommand_not_found(self, command: DuckCommand[Any, ..., Any], string: str, /) -> str:
         """|coro|
 
         A coroutine called when a subcommand is not found. This will return any matches that are similar
@@ -847,16 +820,12 @@ class DuckHelp(commands.HelpCommand):
 
         fmt = [f'There was no subcommand named "{string}" found on that command.']
         if isinstance(command, DuckGroup):
-            maybe_found = await self.bot.wrap(
-                process.extractOne, string, [c.qualified_name for c in command.commands]
-            )
+            maybe_found = await self.bot.wrap(process.extractOne, string, [c.qualified_name for c in command.commands])
             fmt.append(f"Maybe you meant `{maybe_found[0]}`?")
 
         return "".join(fmt)
 
-    async def on_help_command_error(
-        self, ctx: DuckContext, error: commands.CommandError, /
-    ) -> discord.Message:
+    async def on_help_command_error(self, ctx: DuckContext, error: commands.CommandError, /) -> discord.Message:
         """|coro|
 
         A coroutine called when an error occurs while displaying the help command.
@@ -874,14 +843,10 @@ class DuckHelp(commands.HelpCommand):
             The message that was sent to the user.
         """
         if isinstance(error, DuckBotNotStarted):
-            return await ctx.send(
-                f"Oop! Duck bot is not started yet, give me a minute and try again."
-            )
+            return await ctx.send(f"Oop! Duck bot is not started yet, give me a minute and try again.")
 
         await ctx.bot.exceptions.add_error(error=error, ctx=ctx)
-        return await ctx.send(
-            "I ran into a new error! I apologize for the inconvenience."
-        )
+        return await ctx.send("I ran into a new error! I apologize for the inconvenience.")
 
 
 async def setup(bot: DuckBot) -> None:

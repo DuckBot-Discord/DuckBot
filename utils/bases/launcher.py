@@ -26,21 +26,23 @@ ERROR_WH = _get_or_fail('ERROR_WEBHOOK_URL')
 
 logging.basicConfig(
     level=logging.INFO,
-    format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s{col()}'
+    format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s{col()}',
 )
 
 log = logging.getLogger('DuckBot.launcher')
 
+
 async def run_bot(to_dump: str | None, to_load: str | None, run: bool) -> None:
-    async with aiohttp.ClientSession() as session, \
-            DuckBot.temporary_pool(uri=URI) as pool, \
-            DuckBot(session=session, pool=pool, error_wh=ERROR_WH) as duck:
+    async with aiohttp.ClientSession() as session, DuckBot.temporary_pool(uri=URI) as pool, DuckBot(
+        session=session, pool=pool, error_wh=ERROR_WH
+    ) as duck:
         if to_dump:
             await duck.dump_translations(to_dump)
         elif to_load:
             await duck.load_translations(to_load)
         elif run:
             await duck.start(TOKEN, reconnect=True, verbose=False)
-    
+
+
 if __name__ == '__main__':
     asyncio.run(run_bot(to_dump=None, to_load=None, run=True))

@@ -12,15 +12,16 @@ from utils.bases.translation_helpers import TranslatedEmbed
 
 from utils.bases.context import DuckContext
 
-__all__: Tuple[str, ...] = ("ViewMenuPages", )
+__all__: Tuple[str, ...] = ("ViewMenuPages",)
 
 
 log = logging.getLogger('DuckBot.paginators')  # noqa
 
 
 class SkipToModal(Modal, title='Skip to page...'):
-    page = TextInput(label='Which page do you want to skip to?', max_length=10,
-                     placeholder='This prompt times out in 20 seconds...')
+    page = TextInput(
+        label='Which page do you want to skip to?', max_length=10, placeholder='This prompt times out in 20 seconds...'
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -84,10 +85,7 @@ class ViewMenuPages(discord.ui.View):
         elif isinstance(value, discord.Embed):
             return {'embed': value, 'content': None}
         elif isinstance(value, TranslatedEmbed):
-            return {
-                'embed': await value.translate(
-                    self.ctx.bot, await self.ctx.get_locale()),
-                'content': None}
+            return {'embed': await value.translate(self.ctx.bot, await self.ctx.get_locale()), 'content': None}
         else:
             return {}
 
@@ -221,8 +219,7 @@ class ViewMenuPages(discord.ui.View):
             try:
                 page = int(self.current_modal.value)  # type: ignore
             except ValueError:
-                await self.current_modal.interaction.response.send_message(
-                    'Invalid page number.', ephemeral=True)
+                await self.current_modal.interaction.response.send_message('Invalid page number.', ephemeral=True)
             else:
                 await self.current_modal.interaction.response.defer()
                 await self.show_checked_page(interaction, page - 1)

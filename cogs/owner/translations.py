@@ -10,6 +10,7 @@ class LocaleFlags(commands.FlagConverter, case_insensitive=True, prefix='--', de
     spanish: str | None = commands.Flag(name='spanish', aliases=['es'])  # type: ignore
     italian: str | None = commands.Flag(name='italian', aliases=['it'], default=None)  # type: ignore
 
+
 class TranslationManager(DuckCog):
 
     # noinspection SqlInsertValues
@@ -45,11 +46,14 @@ class TranslationManager(DuckCog):
         query += ', '.join(query_args) + ') VALUES (' + ', '.join(f'${x+1}' for x in range(len(query_args))) + ')'
 
         if translation_id is not None:
-            query += ' ON CONFLICT (tr_id) DO UPDATE SET ' + ', '.join(f'{x} = ${i}' for i, x in enumerate(query_args[1:], start=2))
+            query += ' ON CONFLICT (tr_id) DO UPDATE SET ' + ', '.join(
+                f'{x} = ${i}' for i, x in enumerate(query_args[1:], start=2)
+            )
 
         query += ' RETURNING tr_id;'
 
         _id = await self.bot.pool.fetchval(query, *args)
-        await ctx.send(f'Updated translation of ID {_id} for languages '
-                       f'{", ".join(query_args[(1 if translation_id is not None else 0):])}.')
-        
+        await ctx.send(
+            f'Updated translation of ID {_id} for languages '
+            f'{", ".join(query_args[(1 if translation_id is not None else 0):])}.'
+        )

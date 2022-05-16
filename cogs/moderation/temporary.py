@@ -22,22 +22,22 @@ from utils import (
     human_timedelta,
     Timer,
     format_date,
-    command
+    command,
 )
 
 log = logging.getLogger('DuckBot.moderation.temporary')
 
-class TemporaryCommands(DuckCog):
 
+class TemporaryCommands(DuckCog):
     @command(name='tempban', aliases=['tban'])
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     async def tempban(
         self,
         ctx: DuckContext,
-        member: TargetVerifier(discord.Member, discord.User, fail_if_not_upgrade=False), # type: ignore
+        member: TargetVerifier(discord.Member, discord.User, fail_if_not_upgrade=False),  # type: ignore
         *,
-        when: UserFriendlyTime(commands.clean_content, default='...') # type: ignore
+        when: UserFriendlyTime(commands.clean_content, default='...'),  # type: ignore
     ) -> None:
         """|coro|
 
@@ -60,21 +60,18 @@ class TemporaryCommands(DuckCog):
         async with HandleHTTPException(ctx):
             await ctx.guild.ban(member, reason=safe_reason(ctx.author, when.arg))
 
-        await self.bot.pool.execute("""
+        await self.bot.pool.execute(
+            """
             DELETE FROM timers
             WHERE event = 'ban'
             AND (extra->'args'->0) = $1
             AND (extra->'args'->1) = $2
-        """, member.id, ctx.guild.id)
-
-        await self.bot.create_timer(
-            when.dt,
-            'ban',
+        """,
             member.id,
             ctx.guild.id,
-            ctx.author.id,
-            precise=False
         )
+
+        await self.bot.create_timer(when.dt, 'ban', member.id, ctx.guild.id, ctx.author.id, precise=False)
 
         await ctx.send(f"Banned **{mdr(member)}** for {human_timedelta(when.dt)}.")
 
@@ -95,9 +92,9 @@ class TemporaryCommands(DuckCog):
             mod = f"@{moderator} ({moderator_id})"
 
         try:
-            await guild.unban(discord.Object(id=member_id),
-                              reason=f"Automatic unban for temp-ban by {mod} "
-                                     f"on {format_date(timer.created_at)}.")
+            await guild.unban(
+                discord.Object(id=member_id),
+                reason=f"Automatic unban for temp-ban by {mod} " f"on {format_date(timer.created_at)}.",
+            )
         except discord.HTTPException as e:
             log.debug(f"Failed to unban {member_id} in {guild_id}.", exc_info=e)
-

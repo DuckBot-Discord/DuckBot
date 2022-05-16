@@ -1,6 +1,8 @@
 import discord
 from discord import (
-    Interaction, Member, User,
+    Interaction,
+    Member,
+    User,
 )
 
 from typing import (
@@ -23,10 +25,11 @@ __all__: Tuple[str, ...] = (
     'bot_has_permissions',
 )
 
+
 async def can_execute_action(
-        interaction: Interaction,
-        target: Union[Member, User],
-        fail_if_not_upgrade: bool = False,
+    interaction: Interaction,
+    target: Union[Member, User],
+    fail_if_not_upgrade: bool = False,
 ) -> None:
     """|coro|
 
@@ -53,8 +56,10 @@ async def can_execute_action(
     guild: discord.Guild = interaction.guild  # type: ignore
     user: discord.Member = interaction.user  # type: ignore
     if not interaction.user:
-        raise errors.ActionNotExecutable('Somehow, I think you don\'t exist. `Interaction.user` was None...\n'
-                                         'Join our support server to get help, or try again later.')
+        raise errors.ActionNotExecutable(
+            'Somehow, I think you don\'t exist. `Interaction.user` was None...\n'
+            'Join our support server to get help, or try again later.'
+        )
     if not target:
         raise errors.ActionNotExecutable('Somehow the target was not found.')
     if not guild:
@@ -82,13 +87,13 @@ async def can_execute_action(
 
 
 async def has_permissions(
-        interaction: discord.Interaction,
-        **perms: bool,
+    interaction: discord.Interaction,
+    **perms: bool,
 ) -> None:
     """|coro|
-    
+
     Checks permissions of the invoking interaction user.
-    
+
     """
     if interaction.channel:
         permissions = interaction.channel.permissions_for(interaction.user)
@@ -104,9 +109,10 @@ async def has_permissions(
     if any((missing, needed)):
         raise errors.PermissionsError(needed=needed, missing=missing)
 
+
 async def bot_has_permissions(
-        interaction: discord.Interaction,
-        **perms: bool,
+    interaction: discord.Interaction,
+    **perms: bool,
 ) -> None:
     """|coro|
 

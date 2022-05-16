@@ -2,16 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import typing
-from typing import (
-    TYPE_CHECKING,
-    List,
-    Dict,
-    Any,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar
-)
+from typing import TYPE_CHECKING, List, Dict, Any, Optional, Tuple, Type, TypeVar
 
 import cachetools
 import discord
@@ -28,6 +19,7 @@ fm_dt = discord.utils.format_dt
 
 class Page(typing.NamedTuple):
     """Represents a page of news."""
+
     news_id: int
     title: str
     content: str
@@ -45,6 +37,7 @@ class NewsFeed:
     max_pages: :class:`int`
         The maximum number of pages in the feed.
     """
+
     __slots__: Tuple[str, ...] = (
         'news',
         'max_pages',
@@ -102,6 +95,7 @@ class NewsViewer(discord.ui.View):
     news: :class:`NewsFeed`
         The news feed.
     """
+
     if TYPE_CHECKING:
         message: discord.Message
         ctx: Optional[DuckContext]

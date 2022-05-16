@@ -4,26 +4,13 @@ import datetime
 import math
 import asyncpg
 import discord
-from typing import (
-    List,
-    Optional,
-    Union
-)
+from typing import List, Optional, Union
 
 
-from utils import (
-    DuckCog,
-    DuckContext,
-    ShortTime,
-    mdr,
-    format_date,
-    human_timedelta,
-    group
-)
+from utils import DuckCog, DuckContext, ShortTime, mdr, format_date, human_timedelta, group
 
 
 class BlackListManagement(DuckCog):
-
     async def format_entry(self, entry: asyncpg.Record) -> Optional[str]:
         """Formats an entry from the blacklist.
 
@@ -67,7 +54,7 @@ class BlackListManagement(DuckCog):
         self,
         ctx: DuckContext,
         entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel],
-        when: Optional[ShortTime] = None
+        when: Optional[ShortTime] = None,
     ) -> None:
         """|coro|
 
@@ -100,9 +87,7 @@ class BlackListManagement(DuckCog):
 
     @blacklist.command(name='remove', aliases=['rm'])
     async def blacklist_remove(
-        self,
-        ctx: DuckContext,
-        entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel]
+        self, ctx: DuckContext, entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel]
     ) -> None:
         """|coro|
 
@@ -129,7 +114,7 @@ class BlackListManagement(DuckCog):
         ctx: DuckContext,
         guild: Optional[discord.Guild],
         user: Union[discord.Member, discord.User],
-        when: Optional[ShortTime] = None
+        when: Optional[ShortTime] = None,
     ) -> None:
         """|coro|
 
@@ -153,7 +138,11 @@ class BlackListManagement(DuckCog):
 
         success = await self.bot.blacklist.add_user(user, guild, dt)
         etype = str(type(user).__name__).split('.')[-1]
-        await ctx.send(ctx.tick(success, 'Added {} for guild {}.' if success else '{} already blacklisted in {}.').format(etype, mdr(guild)))
+        await ctx.send(
+            ctx.tick(success, 'Added {} for guild {}.' if success else '{} already blacklisted in {}.').format(
+                etype, mdr(guild)
+            )
+        )
 
     @blacklist.command(name='list', aliases=['ls'])
     async def blacklist_list(self, ctx: DuckContext, page: int = 1) -> None:
@@ -174,8 +163,10 @@ class BlackListManagement(DuckCog):
         if page < 1:
             page = 1
 
-        result = await self.bot.pool.fetch("SELECT blacklist_type, entity_id, guild_id, created_at "
-                                           "FROM blacklist ORDER BY created_at DESC OFFSET $1", (page - 1) * 10)
+        result = await self.bot.pool.fetch(
+            "SELECT blacklist_type, entity_id, guild_id, created_at " "FROM blacklist ORDER BY created_at DESC OFFSET $1",
+            (page - 1) * 10,
+        )
         count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM blacklist")
 
         rows: List[Optional[str]] = [await self.format_entry(row) for row in result]
@@ -184,8 +175,10 @@ class BlackListManagement(DuckCog):
             await ctx.send(ctx.tick(False, 'no entries'))
             return
 
-        formatted = '```\n' + '\n'.join(rows) + '\n```' # type: ignore
+        formatted = '```\n' + '\n'.join(rows) + '\n```'  # type: ignore
         pages = math.ceil(count / 10)
 
-        message = f"📋 **|** Blacklisted entities - Showing `{len(result)}/{count}` entries - Page `{page}/{pages}`:\n{formatted}"
+        message = (
+            f"📋 **|** Blacklisted entities - Showing `{len(result)}/{count}` entries - Page `{page}/{pages}`:\n{formatted}"
+        )
         await ctx.send(message)

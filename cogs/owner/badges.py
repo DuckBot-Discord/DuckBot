@@ -4,7 +4,6 @@ from utils import DuckCog, group
 
 
 class BadgeManagement(DuckCog):
-
     @group(name='badges', aliases=['badge'], invoke_without_command=True)
     async def badges(self, ctx):
         """|coro|
@@ -32,9 +31,9 @@ class BadgeManagement(DuckCog):
             The name of the badge.
         """
         badge_id = await self.bot.pool.fetchval(
-            "INSERT INTO badges (name, emoji) VALUES ($1, $2) RETURNING badge_id", name, emoji)
-        await ctx.send(f"Created badge with id {badge_id}:\n"
-                       f"> {emoji} {name}")
+            "INSERT INTO badges (name, emoji) VALUES ($1, $2) RETURNING badge_id", name, emoji
+        )
+        await ctx.send(f"Created badge with id {badge_id}:\n" f"> {emoji} {name}")
 
     @badges.command(name='delete')
     async def badges_delete(self, ctx, badge_id: int):
@@ -69,7 +68,10 @@ class BadgeManagement(DuckCog):
         try:
             await self.bot.pool.execute(
                 "INSERT INTO acknowledgements (user_id, badge_id) VALUES ($1, $2) "
-                "ON CONFLICT (user_id, badge_id) DO NOTHING ", user.id, badge_id)
+                "ON CONFLICT (user_id, badge_id) DO NOTHING ",
+                user.id,
+                badge_id,
+            )
             await ctx.message.add_reaction("✅")
         except asyncpg.ForeignKeyViolationError:
             await ctx.send("That badge doesn't exist.")
@@ -88,8 +90,8 @@ class BadgeManagement(DuckCog):
             The ID of the badge.
         """
         b_id = await self.bot.pool.execute(
-                "DELETE FROM acknowledgements WHERE user_id = $1 AND badge_id = $2 RETURNING badge_id",
-            user.id, badge_id)
+            "DELETE FROM acknowledgements WHERE user_id = $1 AND badge_id = $2 RETURNING badge_id", user.id, badge_id
+        )
         if b_id is not None:
             await ctx.message.add_reaction("✅")
         else:

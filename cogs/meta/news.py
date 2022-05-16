@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import (
-    Optional,
-    TypeVar
-)
+from typing import Optional, TypeVar
 
 import discord
 
@@ -25,19 +22,19 @@ class News(DuckCog):
     @group(invoke_without_command=True)
     async def news(self, ctx: DuckContext):
         """|coro|
-        
+
         Opens the bot's news feed.
         """
         news = await ctx.bot.pool.fetch("SELECT * FROM news ORDER BY news_id DESC")
         if not news:
             return await ctx.send("No news has been posted yet.")
-        
+
         await NewsViewer.start(ctx, news)
 
     @news.command(hidden=True)
     async def add(self, ctx: DuckContext, title: Optional[str] = None, *, content: Optional[str] = None):
-        """|coro| 
-        
+        """|coro|
+
         Adds a news item to the news feed
 
         Parameters
@@ -51,9 +48,14 @@ class News(DuckCog):
             return await self.news(ctx)
 
         async with ctx.bot.safe_connection() as conn:
-            await conn.execute("INSERT INTO news (news_id, title, content, author_id) VALUES ($1, $2, $3, $4)",
-                               ctx.message.id, title, content, ctx.author.id)
-            
+            await conn.execute(
+                "INSERT INTO news (news_id, title, content, author_id) VALUES ($1, $2, $3, $4)",
+                ctx.message.id,
+                title,
+                content,
+                ctx.author.id,
+            )
+
         try:
             await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
         except discord.HTTPException:
@@ -62,8 +64,8 @@ class News(DuckCog):
 
     @news.command(hidden=True)
     async def remove(self, ctx: DuckContext, news_id: int):
-        """|coro| 
-        
+        """|coro|
+
         Removes a news item from the news feed
 
         Parameters
@@ -81,7 +83,7 @@ class News(DuckCog):
             ) SELECT COUNT(*) FROM deleted
             """
             removed = await conn.fetchval(query, news_id)
-            
+
         try:
             await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}" if removed else "\N{WARNING SIGN}")
         except discord.HTTPException:

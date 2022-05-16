@@ -7,16 +7,7 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from utils import (
-    DuckContext,
-    HandleHTTPException,
-    TargetVerifier,
-    BanEntryConverter,
-    DuckCog,
-    safe_reason,
-    mdr,
-    command
-)
+from utils import DuckContext, HandleHTTPException, TargetVerifier, BanEntryConverter, DuckCog, safe_reason, mdr, command
 from utils.helpers import can_execute_action
 
 

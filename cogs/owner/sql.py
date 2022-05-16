@@ -5,7 +5,7 @@ import os
 import time
 from tabulate import tabulate
 from typing import List
- 
+
 from import_expression import eval
 from discord import File
 from discord.ext.commands import FlagConverter, Flag, Converter
@@ -17,6 +17,7 @@ from .eval import cleanup_code
 class plural:
     def __init__(self, value):
         self.value = value
+
     def __format__(self, format_spec):
         v = self.value
         singular, _, plural = format_spec.partition('|')
@@ -31,10 +32,8 @@ class EvaluatedArg(Converter):
         return eval(cleanup_code(argument), {'bot': ctx.bot, 'ctx': ctx})
 
 
-class SqlCommandFlags(FlagConverter,prefix="--", delimiter=" ",case_insensitive=True):
-    args: List[str] = Flag(
-        name='argument', aliases=['a', 'arg'], 
-        annotation=List[EvaluatedArg], default=[])  # type: ignore
+class SqlCommandFlags(FlagConverter, prefix="--", delimiter=" ", case_insensitive=True):
+    args: List[str] = Flag(name='argument', aliases=['a', 'arg'], annotation=List[EvaluatedArg], default=[])  # type: ignore
 
 
 class SQLCommands(DuckCog):
@@ -67,7 +66,7 @@ class SQLCommands(DuckCog):
         rows = len(results)
         if rows == 0 or isinstance(results, str):
             result = 'Query returned o rows\n' if rows == 0 else str(results)
-            await ctx.send(result+f'*Ran in {dt:.2f}ms*')
+            await ctx.send(result + f'*Ran in {dt:.2f}ms*')
 
         else:
             table = tabulate(results, headers='keys', tablefmt='orgtbl')
@@ -76,7 +75,7 @@ class SQLCommands(DuckCog):
             if len(fmt) > 2000:
                 fp = io.BytesIO(table.encode('utf-8'))
                 await ctx.send(
-                    f'*Too many results...\nReturned {plural(rows):row} in {dt:.2f}ms*', 
-                    file=File(fp, 'output.txt'))
+                    f'*Too many results...\nReturned {plural(rows):row} in {dt:.2f}ms*', file=File(fp, 'output.txt')
+                )
             else:
                 await ctx.send(fmt)

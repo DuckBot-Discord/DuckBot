@@ -10,11 +10,11 @@ __all__: Tuple[str, ...] = ("CleanContent",)
 # noinspection PyShadowingBuiltins
 class CleanContent(Transformer):
     def __init__(
-            self,
-            fix_channel_mentions: bool = True,
-            escape_markdown: bool = True,
-            remove_markdown: bool = True,
-            use_nicknames: bool = True
+        self,
+        fix_channel_mentions: bool = True,
+        escape_markdown: bool = True,
+        remove_markdown: bool = True,
+        use_nicknames: bool = True,
     ):
         self.fix_channel_mentions = fix_channel_mentions
         self.escape_markdown = escape_markdown

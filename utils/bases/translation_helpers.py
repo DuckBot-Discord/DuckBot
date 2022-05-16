@@ -97,9 +97,7 @@ class TranslatedEmbed:
         elif isinstance(value, int):
             self._colour = Colour(value=value)
         else:
-            raise TypeError(
-                f"Expected discord.Colour, int, or None but received {value.__class__.__name__} instead."
-            )
+            raise TypeError(f"Expected discord.Colour, int, or None but received {value.__class__.__name__} instead.")
 
     color = colour
 
@@ -116,9 +114,7 @@ class TranslatedEmbed:
         elif value is None:
             self._timestamp = None
         else:
-            raise TypeError(
-                f"Expected datetime.datetime or None received {value.__class__.__name__} instead"
-            )
+            raise TypeError(f"Expected datetime.datetime or None received {value.__class__.__name__} instead")
 
     @property
     def footer(self) -> _EmbedFooterProxy:
@@ -131,9 +127,7 @@ class TranslatedEmbed:
         # Lying to the type checker for better developer UX.
         return EmbedProxy(getattr(self, "_footer", {}))  # type: ignore
 
-    def set_footer(
-        self, *, text: Optional[Any] = None, icon_url: Optional[Any] = None
-    ) -> Self:
+    def set_footer(self, *, text: Optional[Any] = None, icon_url: Optional[Any] = None) -> Self:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -265,9 +259,7 @@ class TranslatedEmbed:
         # Lying to the type checker for better developer UX.
         return EmbedProxy(getattr(self, "_author", {}))  # type: ignore
 
-    def set_author(
-        self, *, name: Any, url: Optional[Any] = None, icon_url: Optional[Any] = None
-    ) -> Self:
+    def set_author(self, *, name: Any, url: Optional[Any] = None, icon_url: Optional[Any] = None) -> Self:
         """Sets the author for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -350,9 +342,7 @@ class TranslatedEmbed:
 
         return self
 
-    def insert_field_at(
-        self, index: int, *, name: Any, value: Any, inline: bool = True
-    ) -> Self:
+    def insert_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
         """Inserts a field before a specified index to the embed.
 
         This function returns the class instance to allow for fluent-style
@@ -413,9 +403,7 @@ class TranslatedEmbed:
         except (AttributeError, IndexError):
             pass
 
-    def set_field_at(
-        self, index: int, *, name: Any, value: Any, inline: bool = True
-    ) -> Self:
+    def set_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
         """Modifies a field to the embed object.
 
         The index must point to a valid pre-existing field. Can only be up to 25 fields.
@@ -476,29 +464,21 @@ class TranslatedEmbed:
             if isinstance(self.title, int):
                 embed.title = await bot.translate(self.title, locale=locale, db=conn)
             elif isinstance(self.title, FormatString):
-                embed.title = await bot.translate(
-                    self.title.id, *self.title.args, locale=locale, db=conn
-                )
+                embed.title = await bot.translate(self.title.id, *self.title.args, locale=locale, db=conn)
             else:
                 embed.title = self.title
 
             if isinstance(self.description, int):
-                embed.description = await bot.translate(
-                    self.description, locale=locale, db=conn
-                )
+                embed.description = await bot.translate(self.description, locale=locale, db=conn)
             elif isinstance(self.description, FormatString):
-                embed.description = await bot.translate(
-                    self.description.id, *self.description.args, locale=locale, db=conn
-                )
+                embed.description = await bot.translate(self.description.id, *self.description.args, locale=locale, db=conn)
             else:
                 embed.description = self.description
 
             if self.footer:
                 kwargs = {}
                 if isinstance(self.footer.text, int):
-                    kwargs["text"] = await bot.translate(
-                        self.footer.text, locale=locale, db=conn
-                    )
+                    kwargs["text"] = await bot.translate(self.footer.text, locale=locale, db=conn)
                 elif isinstance(self.footer.text, FormatString):
                     kwargs["text"] = await bot.translate(
                         self.footer.text.id,
@@ -510,9 +490,7 @@ class TranslatedEmbed:
                     kwargs["text"] = self.footer.text
 
                 if isinstance(self.footer.icon_url, int):
-                    kwargs["icon_url"] = await bot.translate(
-                        self.footer.icon_url, locale=locale, db=conn
-                    )
+                    kwargs["icon_url"] = await bot.translate(self.footer.icon_url, locale=locale, db=conn)
                 elif isinstance(self.footer.icon_url, FormatString):
                     kwargs["icon_url"] = await bot.translate(
                         self.footer.icon_url.id,
@@ -526,22 +504,14 @@ class TranslatedEmbed:
                 embed.set_footer(**kwargs)
 
             if isinstance(self.image.url, int):
-                embed.set_image(
-                    url=await bot.translate(self.image.url, locale=locale, db=conn)
-                )
+                embed.set_image(url=await bot.translate(self.image.url, locale=locale, db=conn))
             elif isinstance(self.image.url, FormatString):
-                embed.set_image(
-                    url=await bot.translate(
-                        self.image.url.id, *self.image.url.args, locale=locale, db=conn
-                    )
-                )
+                embed.set_image(url=await bot.translate(self.image.url.id, *self.image.url.args, locale=locale, db=conn))
             else:
                 embed.set_image(url=self.image.url)
 
             if isinstance(self.thumbnail.url, int):
-                embed.set_thumbnail(
-                    url=await bot.translate(self.thumbnail.url, locale=locale, db=conn)
-                )
+                embed.set_thumbnail(url=await bot.translate(self.thumbnail.url, locale=locale, db=conn))
             elif isinstance(self.thumbnail.url, FormatString):
                 embed.set_thumbnail(
                     url=await bot.translate(
@@ -557,9 +527,7 @@ class TranslatedEmbed:
             if self.author:
                 kwargs = {}
                 if isinstance(self.author.name, int):
-                    kwargs["name"] = await bot.translate(
-                        self.author.name, locale=locale, db=conn
-                    )
+                    kwargs["name"] = await bot.translate(self.author.name, locale=locale, db=conn)
                 elif isinstance(self.author.name, FormatString):
                     kwargs["name"] = await bot.translate(
                         self.author.name.id,
@@ -571,9 +539,7 @@ class TranslatedEmbed:
                     kwargs["name"] = self.author.name
 
                 if isinstance(self.author.url, int):
-                    kwargs["url"] = await bot.translate(
-                        self.author.url, locale=locale, db=conn
-                    )
+                    kwargs["url"] = await bot.translate(self.author.url, locale=locale, db=conn)
                 elif isinstance(self.author.url, FormatString):
                     kwargs["url"] = await bot.translate(
                         self.author.url.id,
@@ -585,9 +551,7 @@ class TranslatedEmbed:
                     kwargs["url"] = self.author.url
 
                 if isinstance(self.author.icon_url, int):
-                    kwargs["icon_url"] = await bot.translate(
-                        self.author.icon_url, locale=locale, db=conn
-                    )
+                    kwargs["icon_url"] = await bot.translate(self.author.icon_url, locale=locale, db=conn)
                 elif isinstance(self.author.icon_url, FormatString):
                     kwargs["icon_url"] = await bot.translate(
                         self.author.icon_url.id,
@@ -603,28 +567,19 @@ class TranslatedEmbed:
             for field in self.fields:
                 kwargs = {}
                 if isinstance(field.name, int):
-                    kwargs["name"] = await bot.translate(
-                        field.name, locale=locale, db=conn
-                    )
+                    kwargs["name"] = await bot.translate(field.name, locale=locale, db=conn)
                 elif isinstance(field.name, FormatString):
-                    kwargs["name"] = await bot.translate(
-                        field.name.id, *field.name.args, locale=locale, db=conn
-                    )
+                    kwargs["name"] = await bot.translate(field.name.id, *field.name.args, locale=locale, db=conn)
                 else:
                     kwargs["name"] = field.name
 
                 if isinstance(field.value, int):
-                    kwargs["value"] = await bot.translate(
-                        field.value, locale=locale, db=conn
-                    )
+                    kwargs["value"] = await bot.translate(field.value, locale=locale, db=conn)
                 elif isinstance(field.value, FormatString):
-                    kwargs["value"] = await bot.translate(
-                        field.value.id, *field.value.args, locale=locale, db=conn
-                    )
+                    kwargs["value"] = await bot.translate(field.value.id, *field.value.args, locale=locale, db=conn)
                 else:
                     kwargs["value"] = field.value
 
-            
                 kwargs["inline"] = field.inline
 
                 embed.add_field(**kwargs)

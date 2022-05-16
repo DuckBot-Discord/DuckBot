@@ -43,24 +43,25 @@ type_mapping = {
     discord.ActivityType.custom: "",
 }
 
+
 def generate_user_statuses(member: discord.Member):
     mobile = {
         discord.Status.online: constants.statuses.ONLINE_MOBILE,
         discord.Status.idle: constants.statuses.IDLE_MOBILE,
         discord.Status.dnd: constants.statuses.DND_MOBILE,
-        discord.Status.offline: constants.statuses.OFFLINE_MOBILE
+        discord.Status.offline: constants.statuses.OFFLINE_MOBILE,
     }[member.mobile_status]
     web = {
         discord.Status.online: constants.statuses.ONLINE_WEB,
         discord.Status.idle: constants.statuses.IDLE_WEB,
         discord.Status.dnd: constants.statuses.DND_WEB,
-        discord.Status.offline: constants.statuses.OFFLINE_WEB
+        discord.Status.offline: constants.statuses.OFFLINE_WEB,
     }[member.web_status]
     desktop = {
         discord.Status.online: constants.statuses.ONLINE,
         discord.Status.idle: constants.statuses.IDLE,
         discord.Status.dnd: constants.statuses.DND,
-        discord.Status.offline: constants.statuses.OFFLINE
+        discord.Status.offline: constants.statuses.OFFLINE,
     }[member.desktop_status]
     return f"\u200b{desktop}\u200b{web}\u200b{mobile}"
 
@@ -82,8 +83,11 @@ def deltaconv(s):
     return '{:02}:{:02}'.format(int(minutes), int(seconds))
 
 
-async def get_user_badges(user: typing.Union[discord.Member, discord.User], bot: DuckBot,
-                          fetched_user: discord.User | typing.Literal[False] | None = None):
+async def get_user_badges(
+    user: typing.Union[discord.Member, discord.User],
+    bot: DuckBot,
+    fetched_user: discord.User | typing.Literal[False] | None = None,
+):
     flags = dict(user.public_flags)
 
     user_flags = []
@@ -113,10 +117,13 @@ async def get_user_badges(user: typing.Union[discord.Member, discord.User], bot:
     if user.bot:
         user_flags.append(f'{constants.BOT} Bot')
 
-    badges = await bot.pool.fetch("""
+    badges = await bot.pool.fetch(
+        """
         SELECT name, emoji FROM badges WHERE badge_id IN 
         (SELECT badge_id FROM acknowledgements WHERE user_id = $1)
-    """, user.id)
+    """,
+        user.id,
+    )
     for name, emoji in badges:
         user_flags.append(f'{emoji} {name}')
 
@@ -132,8 +139,15 @@ class BaseEmbed(discord.Embed):
 
 
 class UserInfoViewer(discord.ui.View):
-    def __init__(self, user: typing.Union[discord.Member, discord.User], /, *, bot: DuckBot, author: discord.User,
-                 color: discord.Colour | None = None):
+    def __init__(
+        self,
+        user: typing.Union[discord.Member, discord.User],
+        /,
+        *,
+        bot: DuckBot,
+        author: discord.User,
+        color: discord.Colour | None = None,
+    ):
         super().__init__()
         self.user = user
         self.bot = bot
@@ -161,17 +175,15 @@ class UserInfoViewer(discord.ui.View):
         else:
             self.fetched = False
 
-        general = [
-            f"**ID:** {user.id}",
-            f"**Username:** {user.name}"
-        ]
+        general = [f"**ID:** {user.id}", f"**Username:** {user.name}"]
 
         if is_member and user.nick:
             general.append(f"╰ **Nick:** {user.nick}")
 
         try:
-            _pr_resp = await self.bot.session.get('https://pronoundb.org/api/v1/lookup', timeout=1.5,
-                                                  params=dict(platform='discord', id=user.id))
+            _pr_resp = await self.bot.session.get(
+                'https://pronoundb.org/api/v1/lookup', timeout=1.5, params=dict(platform='discord', id=user.id)
+            )
             _prs = await _pr_resp.json()
             pronouns = pronoun_mapping.get(_prs.get('pronouns', 'unspecified'), 'Unknown...')
             general.append(f'**Pronouns:** {pronouns}')
@@ -187,11 +199,15 @@ class UserInfoViewer(discord.ui.View):
 
         embed.add_field(name=f'{constants.INFORMATION_SOURCE} General', value='\n'.join(general), inline=True)
 
-        embed.add_field(name=f'{constants.STORE_TAG} Badges / DuckBadges',
-                        value=await get_user_badges(user, self.bot, self.fetched))
+        embed.add_field(
+            name=f'{constants.STORE_TAG} Badges / DuckBadges', value=await get_user_badges(user, self.bot, self.fetched)
+        )
 
-        embed.add_field(name=f"{constants.INVITE} Created At", inline=False,
-                        value=f"╰ {format_dt(user.created_at)} ({format_dt(user.created_at, 'R')})")
+        embed.add_field(
+            name=f"{constants.INVITE} Created At",
+            inline=False,
+            value=f"╰ {format_dt(user.created_at)} ({format_dt(user.created_at, 'R')})",
+        )
 
         if is_member and user.joined_at:
             text = f"╰ {format_dt(user.joined_at)} ({format_dt(user.joined_at, 'R')})"
@@ -200,8 +216,11 @@ class UserInfoViewer(discord.ui.View):
         embed.add_field(name=f"{constants.JOINED_SERVER} Joined At", value=text, inline=False)
 
         if is_member and user.premium_since:
-            embed.add_field(name=f"{constants.BOOST} Boosting since", inline=False,
-                            value=f"╰ {format_dt(user.premium_since)} ({format_dt(user.premium_since, 'R')})")
+            embed.add_field(
+                name=f"{constants.BOOST} Boosting since",
+                inline=False,
+                value=f"╰ {format_dt(user.premium_since)} ({format_dt(user.premium_since, 'R')})",
+            )
 
         if is_member:
             now = discord.utils.utcnow()
@@ -215,12 +234,14 @@ class UserInfoViewer(discord.ui.View):
 
             spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), user.activities)
             if isinstance(spotify, discord.Spotify):
-                embed.add_field(name=f"{constants.FULL_SPOTIFY}\u200b",
-                                value=f"**[{spotify.title}]({spotify.track_url})**"
-                                      f"\n**By** {spotify.artist}"
-                                      f"\n**On** {spotify.album}"
-                                      f"\n**Time:** {deltaconv((now - spotify.start).total_seconds())}/"
-                                      f"{deltaconv(spotify.duration.total_seconds())}")
+                embed.add_field(
+                    name=f"{constants.FULL_SPOTIFY}\u200b",
+                    value=f"**[{spotify.title}]({spotify.track_url})**"
+                    f"\n**By** {spotify.artist}"
+                    f"\n**On** {spotify.album}"
+                    f"\n**Time:** {deltaconv((now - spotify.start).total_seconds())}/"
+                    f"{deltaconv(spotify.duration.total_seconds())}",
+                )
 
         embeds = [embed]
         self._main_embed = embeds
@@ -231,7 +252,7 @@ class UserInfoViewer(discord.ui.View):
             return self._perms_embed
         user = self.user
         if isinstance(user, discord.Member):
-            embed = PermsEmbed(entity=user, permissions=user.guild_permissions )
+            embed = PermsEmbed(entity=user, permissions=user.guild_permissions)
             embed.colour = self.color
             embed.title = '\N{SCROLL} Server Permissions Page'
             embed.set_thumbnail(url=user.display_avatar.url)
@@ -242,16 +263,34 @@ class UserInfoViewer(discord.ui.View):
         else:
             return []
 
-    @discord.ui.select(options=[
-        discord.SelectOption(label='Main Page', value='main', emoji='\N{BUSTS IN SILHOUETTE}',
-                             description='Basic info, join dates, badges, status, etc.'),
-        discord.SelectOption(label='Permissions', value='perms', emoji='\N{INFORMATION SOURCE}',
-                             description='Global permissions for this user.'),
-        discord.SelectOption(label='Assets', value='assets', emoji='🎨',
-                             description="The user's assets, such as their profile picture, banner, etc."),
-        discord.SelectOption(label='Roles', value='roles', emoji=constants.ROLES_ICON,
-                             description="All information about this user's roles.")
-    ])
+    @discord.ui.select(
+        options=[
+            discord.SelectOption(
+                label='Main Page',
+                value='main',
+                emoji='\N{BUSTS IN SILHOUETTE}',
+                description='Basic info, join dates, badges, status, etc.',
+            ),
+            discord.SelectOption(
+                label='Permissions',
+                value='perms',
+                emoji='\N{INFORMATION SOURCE}',
+                description='Global permissions for this user.',
+            ),
+            discord.SelectOption(
+                label='Assets',
+                value='assets',
+                emoji='🎨',
+                description="The user's assets, such as their profile picture, banner, etc.",
+            ),
+            discord.SelectOption(
+                label='Roles',
+                value='roles',
+                emoji=constants.ROLES_ICON,
+                description="All information about this user's roles.",
+            ),
+        ]
+    )
     async def select(self, interaction: discord.Interaction, select: discord.ui.Select):
         value = select.values[0]
         if value == 'main':
@@ -267,7 +306,7 @@ class UserInfoViewer(discord.ui.View):
     async def start(self, ctx):
         self.message = await ctx.send(embeds=await self.make_main_embed(), view=self)
         ctx.bot.views.add(self)
-    
+
     async def on_timeout(self) -> None:
         self.bot.views.discard(self)
         if self.message:
@@ -277,8 +316,8 @@ class UserInfoViewer(discord.ui.View):
         self.bot.views.discard(self)
         super().stop()
 
-class UserInfo(DuckCog):
 
+class UserInfo(DuckCog):
     @command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
     async def user_info(self, ctx: DuckContext, *, user: typing.Union[discord.Member, discord.User] = None):
         """|coro|
@@ -294,7 +333,6 @@ class UserInfo(DuckCog):
         user = user or ctx.author
         ctx.bot.create_task(ctx.trigger_typing())
         await UserInfoViewer(user, bot=ctx.bot, author=ctx.author, color=ctx.color).start(ctx)
-
 
 
 """

@@ -6,16 +6,7 @@ import os
 import traceback
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from types import TracebackType
-from typing import (
-    Tuple,
-    Optional, 
-    Dict,
-    List,
-    Generator,
-    Any,
-    TYPE_CHECKING,
-    Type
-)
+from typing import Tuple, Optional, Dict, List, Generator, Any, TYPE_CHECKING, Type
 
 import discord
 
@@ -27,10 +18,7 @@ if TYPE_CHECKING:
     from bot import DuckBot
 
 
-__all__: Tuple[str, ...] = (
-    'DuckExceptionManager',
-    'HandleHTTPException'
-)
+__all__: Tuple[str, ...] = ('DuckExceptionManager', 'HandleHTTPException')
 
 
 class DuckExceptionManager:
@@ -58,15 +46,8 @@ class DuckExceptionManager:
     error_webhook: :class:`discord.Webhook`
         The error webhook used to send errors.
     """
-    __slots__: Tuple[str, ...] = (
-        'bot',
-        'cooldown',
-        '_lock',
-        '_most_recent',
-        'errors',
-        'code_blocker',
-        'error_webhook'
-    )
+
+    __slots__: Tuple[str, ...] = ('bot', 'cooldown', '_lock', '_most_recent', 'errors', 'code_blocker', 'error_webhook')
 
     def __init__(self, bot: DuckBot, *, cooldown: datetime.timedelta = datetime.timedelta(seconds=5)) -> None:
         if not bot.error_webhook_url:
@@ -80,14 +61,15 @@ class DuckExceptionManager:
 
         self.errors: Dict[str, List[DuckTraceback]] = {}
         self.code_blocker: str = '```py\n{}```'
-        self.error_webhook: discord.Webhook = discord.Webhook.from_url(bot.error_webhook_url, session=bot.session,
-                                                                       bot_token=bot.http.token)
+        self.error_webhook: discord.Webhook = discord.Webhook.from_url(
+            bot.error_webhook_url, session=bot.session, bot_token=bot.http.token
+        )
 
     def _yield_code_chunks(self, iterable: str, *, chunksize: int = 2000) -> Generator[str, None, None]:
         cbs = len(self.code_blocker) - 2  # code blocker size
 
         for i in range(0, len(iterable), chunksize - cbs):
-            yield self.code_blocker.format(iterable[i:i + chunksize - cbs])
+            yield self.code_blocker.format(iterable[i : i + chunksize - cbs])
 
     async def release_error(self, traceback: str, packet: DuckTraceback) -> None:
         """|coro|
@@ -137,17 +119,17 @@ class DuckExceptionManager:
         if not fmt.get('author') and (author_id := packet.get('author')):
             fmt['author'] = f'<Unknown User> - <@{author_id}> ({author_id})'
 
-        if (command := packet.get('command')):
+        if command := packet.get('command'):
             fmt['command'] = command.qualified_name
             display = f'in command "{command.qualified_name}"'
         else:
             display = f'in no command (in DuckBot)'
 
-        embed = discord.Embed(
-            title=f'An error has occured in {display}',
-            timestamp=packet['time']
+        embed = discord.Embed(title=f'An error has occured in {display}', timestamp=packet['time'])
+        embed.add_field(
+            name='Metadata',
+            value='\n'.join([f'**{k.title()}**: {v}' for k, v in fmt.items()]),
         )
-        embed.add_field(name='Metadata', value='\n'.join([f'**{k.title()}**: {v}' for k, v in fmt.items()]), )
 
         kwargs: Dict[str, Any] = {}
         if self.bot.user:
@@ -195,10 +177,7 @@ class DuckExceptionManager:
         """
         log.info('Adding error "%s" to log.', str(error))
 
-        packet: DuckTraceback = {
-            'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(),
-            'exception': error
-        }
+        packet: DuckTraceback = {'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(), 'exception': error}
 
         if ctx is not None:
             addons: _DuckTracebackOptional = {
@@ -209,9 +188,9 @@ class DuckExceptionManager:
             }
             packet.update(addons)  # type: ignore
 
-        traceback_string = ''.join(traceback.format_exception(
-            type(error), error, error.__traceback__)
-        ).replace(os.getcwd(), 'CWD')
+        traceback_string = ''.join(traceback.format_exception(type(error), error, error.__traceback__)).replace(
+            os.getcwd(), 'CWD'
+        )
         current = self.errors.get(traceback_string)
 
         if current:
@@ -287,17 +266,20 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
         self,
         exc_type: Optional[Type[BaseException]] = None,
         exc_val: Optional[BaseException] = None,
-        exc_tb: Optional[TracebackType] = None
+        exc_tb: Optional[TracebackType] = None,
     ) -> bool:
-        log.warning('Context manager HandleHTTPException was used with `with` statement.'
-                    '\nThis can be somewhat unreliable as it uses create_task, '
-                    'please use `async with` syntax instead.')
-        
+        log.warning(
+            'Context manager HandleHTTPException was used with `with` statement.'
+            '\nThis can be somewhat unreliable as it uses create_task, '
+            'please use `async with` syntax instead.'
+        )
+
         if exc_val is not None and isinstance(exc_val, discord.HTTPException) and exc_type is not None:
             embed = discord.Embed(
                 title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
-                colour=discord.Colour.red())
+                colour=discord.Colour.red(),
+            )
 
             loop = asyncio.get_event_loop()
             loop.create_task(self.destination.send(embed=embed))
@@ -311,13 +293,14 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
         exc_tb: Optional[TracebackType] = None,
     ) -> bool:
         if exc_val is not None and isinstance(exc_val, discord.HTTPException) and exc_type:
-            
+
             embed = discord.Embed(
                 title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',
-                colour=discord.Colour.red())
-            
+                colour=discord.Colour.red(),
+            )
+
             await self.destination.send(embed=embed)
             raise SilentCommandError
-        
+
         return False

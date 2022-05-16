@@ -68,18 +68,16 @@ class clean_c(clean_content):
 
 
 class ApplicationReminders(DuckCog):
-    """ Reminds the user of something """
+    """Reminds the user of something"""
 
     slash_reminder = app_commands.Group(name='reminder', description='Reminds the user of something')
 
     @slash_reminder.command(name='add')
-    @app_commands.describe(
-        when='When and what to remind you of. Example: "in 10 days do this", "next monday do that."'
-    )
+    @app_commands.describe(when='When and what to remind you of. Example: "in 10 days do this", "next monday do that."')
     async def slash_remind_add(
-            self,
-            interaction: discord.Interaction,
-            when: str,
+        self,
+        interaction: discord.Interaction,
+        when: str,
     ) -> None:
         """Reminds you of something in the future."""
         bot: DuckBot = interaction.client  # type: ignore
@@ -90,15 +88,7 @@ class ApplicationReminders(DuckCog):
         original = await interaction.original_message()
 
         timer = await bot.create_timer(
-            when.dt,
-            'reminder',
-
-            interaction.user.id,
-            interaction.channel.id,
-            when.arg,
-
-            message_id=original.id,
-            precise=False
+            when.dt, 'reminder', interaction.user.id, interaction.channel.id, when.arg, message_id=original.id, precise=False
         )
         await interaction.followup.send(f"Alright, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
@@ -126,11 +116,14 @@ class ApplicationReminders(DuckCog):
 
         await interaction.response.defer(ephemeral=True)
 
-        timers = await bot.pool.fetch("""
+        timers = await bot.pool.fetch(
+            """
             SELECT id, expires, (extra->'args'->2) AS reason FROM timers
             WHERE event = 'reminder' AND (extra->'args'->0)::bigint = $1
             ORDER BY expires
-        """, interaction.user.id)
+        """,
+            interaction.user.id,
+        )
 
         if not timers:
             await interaction.followup.send("You have no upcoming reminders.")

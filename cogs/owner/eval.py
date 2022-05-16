@@ -21,12 +21,14 @@ from bot import DuckBot
 
 CODEBLOCK_REGEX = re.compile(r'`{3}(python\n|py\n|\n)?(?P<code>[^`]*)\n?`{3}')
 
+
 class TextInput(discord.ui.TextInput):
     if typing.TYPE_CHECKING:
         value: str
 
+
 class EvalCtxMenu(discord.ui.Modal):
-    def __init__(self, last_code: typing.Optional[str], *, timeout: int = 60*15, **kwargs):
+    def __init__(self, last_code: typing.Optional[str], *, timeout: int = 60 * 15, **kwargs):
         self.interaction: typing.Optional[discord.Interaction] = None
         self.body.default = last_code
         super().__init__(
@@ -39,6 +41,7 @@ class EvalCtxMenu(discord.ui.Modal):
         self.interaction = interaction
         await interaction.response.defer()
 
+
 def cleanup_code(content: str):
     """Automatically removes code blocks from the code."""
     # remove ```py\n```
@@ -48,20 +51,17 @@ def cleanup_code(content: str):
     # remove `foo`
     return content.strip('` \n')
 
+
 @discord.app_commands.context_menu(name='Evaluate Message')
 async def eval_message(interaction: discord.Interaction, message: discord.Message):
-    """ Evaluates the message content. """
+    """Evaluates the message content."""
     bot: DuckBot = interaction.client  # type: ignore
 
     if not await bot.is_owner(interaction.user):
-        return await interaction.response.send_message(
-            'You are not the owner of this bot!',
-            ephemeral=True)
+        return await interaction.response.send_message('You are not the owner of this bot!', ephemeral=True)
 
     if not message.content:
-        return await interaction.response.send_message(
-            'That message contained no content!',
-            ephemeral=True)
+        return await interaction.response.send_message('That message contained no content!', ephemeral=True)
 
     await interaction.response.defer()
 
@@ -102,11 +102,18 @@ async def eval_message(interaction: discord.Interaction, message: discord.Messag
     result = await eval_cog.eval(body, env)
 
     if result:
-        await DeleteButton.to_destination(**result, destination=followup, wait=True,
-                                          author=interaction.user, delete_on_timeout=False)
+        await DeleteButton.to_destination(
+            **result, destination=followup, wait=True, author=interaction.user, delete_on_timeout=False
+        )
     else:
-        await DeleteButton.to_destination(content='Done! Code ran with no output...', destination=followup,
-                                          author=interaction.user, delete_on_timeout=False, wait=True)
+        await DeleteButton.to_destination(
+            content='Done! Code ran with no output...',
+            destination=followup,
+            author=interaction.user,
+            delete_on_timeout=False,
+            wait=True,
+        )
+
 
 class Eval(DuckCog):
     def __init__(self, *args, **kwargs):
@@ -119,9 +126,7 @@ class Eval(DuckCog):
         self.bot._eval_cog = self
 
     async def cog_unload(self) -> None:
-        self.bot.tree.remove_command(
-            eval_message.name, type=discord.AppCommandType.message
-        )
+        self.bot.tree.remove_command(eval_message.name, type=discord.AppCommandType.message)
         try:
             del self.bot._eval_cog
         except AttributeError:
@@ -178,7 +183,7 @@ class Eval(DuckCog):
 
     # noinspection PyBroadException
     async def eval(self, body: str, env: typing.Dict[str, typing.Any]) -> dict | None:
-        """ Evaluates arbitrary python code """
+        """Evaluates arbitrary python code"""
         env.update(self.clean_globals())
 
         body = cleanup_code(body)
@@ -230,8 +235,7 @@ class Eval(DuckCog):
         async def react_with_play(msg: discord.Message):
             await asyncio.sleep(1.5)
             try:
-                await msg.add_reaction(
-                    '\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}')
+                await msg.add_reaction('\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}')
             except discord.HTTPException:
                 pass
 
@@ -256,9 +260,7 @@ class Eval(DuckCog):
         bot: DuckBot = interaction.client  # type: ignore
 
         if not await bot.is_owner(interaction.user):
-            return await interaction.response.send_message(
-                'You are not the owner of this bot!',
-                ephemeral=True)
+            return await interaction.response.send_message('You are not the owner of this bot!', ephemeral=True)
 
         timed_out = None
 
@@ -298,11 +300,17 @@ class Eval(DuckCog):
         result = await self.eval(body, env)
 
         if result:
-            await DeleteButton.to_destination(**result, destination=followup, wait=True,
-                                              author=interaction.user, delete_on_timeout=False)
+            await DeleteButton.to_destination(
+                **result, destination=followup, wait=True, author=interaction.user, delete_on_timeout=False
+            )
         else:
             if timed_out is None:
-                await DeleteButton.to_destination(content='Done! Code ran with no output...', destination=followup,
-                                                  author=interaction.user, delete_on_timeout=False, wait=True)
+                await DeleteButton.to_destination(
+                    content='Done! Code ran with no output...',
+                    destination=followup,
+                    author=interaction.user,
+                    delete_on_timeout=False,
+                    wait=True,
+                )
             else:
                 await followup.send(content='Done! Code ran with no output...', ephemeral=True)

@@ -6,10 +6,9 @@ from .._news_viewer import NewsViewer
 
 
 class ApplicationNews(DuckCog):
-
     @app_commands.command(name='news')
     async def app_news(self, interaction: discord.Interaction):
-        """ See what's new on DuckBot! """
+        """See what's new on DuckBot!"""
 
         news = await self.bot.pool.fetch("SELECT * FROM news ORDER BY news_id DESC")
         if not news:

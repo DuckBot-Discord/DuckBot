@@ -1,17 +1,12 @@
 import discord
 from discord.ext import commands
 from bot import DuckBot
-from utils import (
-    DuckCog,
-    DuckContext,
-    cache,
-    Strategy,
-    group
-)
+from utils import DuckCog, DuckContext, cache, Strategy, group
 
 from typing import (
     Union,
 )
+
 
 class CommandConfig(DuckCog):
     """
@@ -43,9 +38,7 @@ class CommandConfig(DuckCog):
 
     @config.command(name='ignore')
     async def config_ignore(
-            self,
-            ctx: DuckContext,
-            *ignorable: Union[discord.abc.GuildChannel, discord.Member, discord.Role]
+        self, ctx: DuckContext, *ignorable: Union[discord.abc.GuildChannel, discord.Member, discord.Role]
     ):
         """|coro|
 

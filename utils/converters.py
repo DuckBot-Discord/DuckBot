@@ -30,21 +30,21 @@ __all__: Tuple[str, ...] = (
     'ChannelVerifier',
     'UntilFlag',
 )
-    
+
 
 class TargetVerifier(commands.Converter[T]):
     """Used to verify a traget is permitted to perform
     an action upon another target.
-            
-    In this use case, the target is being checked by 
+
+    In this use case, the target is being checked by
     :attr:`DuckBot.author` for an operation.
-    
+
     .. code-block:: python3
-    
+
         @commands.command()
         async def ban(self, ctx: DuckContext, member: TargetVerifier(discord.Member, discord.User), *, reason: str = '...'):
             await member.ban(reason=reason)
-    
+
     Attributes
     ----------
     fail_if_not_upgrade: :class:`bool`
@@ -52,37 +52,35 @@ class TargetVerifier(commands.Converter[T]):
         a :class:`~discord.User` to a :class:`~discord.Member`. For more information,
         check out :meth:`can_execute_action`.
     """
+
     __slots__: Tuple[str, ...] = (
         '_targets',
         'fail_if_not_upgrade',
         '_cs_converter_mapping',
     )
-    
+
     def __init__(self, *targets: Type[T], fail_if_not_upgrade: bool = True) -> None:
         self._targets: Tuple[Type[T], ...] = targets
         self.fail_if_not_upgrade: bool = fail_if_not_upgrade
-        
+
     @discord.utils.cached_slot_property('_cs_converter_mapping')
     def converter_mapping(self) -> Dict[Type[T], Type[commands.Converter]]:
         """Dict[Type[T], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
-        return {
-            discord.Member: commands.MemberConverter,
-            discord.User: commands.UserConverter
-        }
-            
+        return {discord.Member: commands.MemberConverter, discord.User: commands.UserConverter}
+
     async def convert(self, ctx: DuckContext, argument: str) -> Union[discord.Member, discord.User]:
         """|coro|
-        
+
         The main convert method of the converter. This will use the types given to transform the argument
         to the given type, then verify that the target is permitted to perform the action.
-        
+
         Parameters
         ----------
         ctx: :class:`DuckContext`
             The context of the command.
         argument: :class:`str`
             The argument to convert.
-            
+
         Returns
         -------
         Union[discord.Member, discord.User]
@@ -102,53 +100,53 @@ class TargetVerifier(commands.Converter[T]):
                     target = await commands.MemberConverter().convert(ctx, argument)
                 except:
                     pass
-            
+
             if not target:
                 target = await commands.UserConverter().convert(ctx, argument)
-        
+
         # Then check if the operation is legal
         await can_execute_action(ctx, target, fail_if_not_upgrade=self.fail_if_not_upgrade)
         return target
-    
-    
+
+
 # Including `commands.Converter` is faster on discord backend iirc
 class BanEntryConverter(discord.guild.BanEntry):
     """
     A converter for :class:`BanEntry`.
-    
+
     .. container:: operations
 
         .. describe:: repr(x)
 
             Returns the string representation of the converter.
-        
+
         .. describe:: str(x)
 
             Returns a formatted string of the converter showing the
             user who was banned and their ID. Formatted as ``'{0.user} ({0.user.id})'.format(self)``
     """
-    
+
     @classmethod
     async def convert(cls: Type[BanEntryConverter], ctx: DuckContext, argument: str) -> discord.guild.BanEntry:
         """|coro|
-        
+
         The main convert method of the converter. This will use the types given to transform the argument
         to a :class:`~disord.guild.BanEntry`.
-        
+
         Parameters
         ----------
         ctx: :class:`DuckContext`
             The context of the command.
         argument: :class:`str`
             The argument to convert.
-            
+
         Returns
         -------
         :class:`~discord.guild.BanEntry`
             The converted target as specifying when defining the converter.
         """
         await ctx.trigger_typing()
-        
+
         guild = ctx.guild
         if guild is None:
             raise commands.NoPrivateMessage('This command cannot be used in private messages.')
@@ -164,28 +162,27 @@ class BanEntryConverter(discord.guild.BanEntry):
                     raise commands.BadArgument('This member has not been banned before.') from None
                 else:
                     return cls(user=entry.user, reason=entry.reason)
-            
+
             _find_entitiy = lambda u: str(u.user).lower() == argument.lower() or str(u.user.name).lower() == argument.lower()
-            
+
             # we search by username now.
             ban_list = [b async for b in guild.bans(limit=None)]
             entity = discord.utils.find(_find_entitiy, ban_list)
-            
+
             if entity is None:
                 raise commands.BadArgument('This member has not been banned before.')
-            
+
             return cls(user=entity.user, reason=entity.reason)
 
     def __repr__(self) -> str:
         return '<BanEntryConverter user={0.user} ({0.user.id}) reason={0.reason}>'
-    
+
     def __str__(self) -> str:
         return '{0.user} ({0.user.id})'.format(self)
 
 
 # Lel so bad :weary:
 class VerifyChannelMeta(type):
-
     @overload
     def __getitem__(cls, item: Type[discord.abc.GuildChannel]) -> TargetVerifier:
         ...
@@ -207,19 +204,15 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
         async def send(self, ctx: DuckContext, channel: AccessibleChannel[discord.TextChannel, discord.VoiceChannel], *, text: str = '...'):
             await channel.send(text)
     """
+
     __slots__: Tuple[str, ...] = (
         '_targets',
         '_cs_converter_mapping',
     )
 
     def __init__(
-            self,
-            targets: Type[
-                Union[
-                    Union[discord.Member, discord.User],
-                    Tuple[Union[discord.Member, discord.User], ...]
-                ]
-            ],
+        self,
+        targets: Type[Union[Union[discord.Member, discord.User], Tuple[Union[discord.Member, discord.User], ...]]],
     ) -> None:
         self._targets = targets
 
@@ -308,7 +301,7 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
 
 
 class UntilFlag(Generic[FCT]):
-    """ A converter that will convert until a flag is reached.
+    """A converter that will convert until a flag is reached.
 
     **Example**
 
@@ -327,7 +320,7 @@ class UntilFlag(Generic[FCT]):
             '''Send a message to a channel.'''
             channel = text.flags.channel or ctx.channel
             await channel.send(text.value)
-    
+
     Attributes
     ----------
     value: :class:`str`
@@ -335,12 +328,13 @@ class UntilFlag(Generic[FCT]):
     flags: :class:`FlagConverter`
         The resolved flags.
     """
+
     def __init__(self, value: str, flags: FCT) -> None:
         self.value = value
         self.flags = flags
         self._regex = self.flags.__commands_flag_regex__  # type: ignore
         self._start = self.flags.__commands_flag_prefix__  # type: ignore
-        
+
     def __class_getitem__(cls, item: Type[FlagConverter]) -> UntilFlag:
         return cls(value='...', flags=item())
 
@@ -359,7 +353,7 @@ class UntilFlag(Generic[FCT]):
         Returns
         -------
         :class:`str`
-            Whether or not the argument is valid.       
+            Whether or not the argument is valid.
 
         Raises
         ------
@@ -373,7 +367,7 @@ class UntilFlag(Generic[FCT]):
 
     async def convert(self, ctx: DuckContext, argument: str) -> UntilFlag:
         """|coro|
-        
+
         The main convert method of the converter. This will take the given flag converter and
         use it to delimit the flags from the value.
 
@@ -392,5 +386,5 @@ class UntilFlag(Generic[FCT]):
         value = self._regex.split(argument, maxsplit=1)[0]
         if not await discord.utils.maybe_coroutine(self.validate_value, argument):
             raise commands.BadArgument('Failed to validate argument preceding flags.')
-        flags = await self.flags.convert(ctx, argument=argument[len(value):])
+        flags = await self.flags.convert(ctx, argument=argument[len(value) :])
         return UntilFlag(value=value, flags=flags)

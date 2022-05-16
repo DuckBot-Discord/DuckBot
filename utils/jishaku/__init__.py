@@ -92,9 +92,7 @@ class OverwrittenRootCommand(RootCommand):
                         pid = proc.pid
                         thread_count = proc.num_threads()
 
-                        summary.append(
-                            f"Running on PID {pid} (`{name}`) with {thread_count} thread(s)."
-                        )
+                        summary.append(f"Running on PID {pid} (`{name}`) with {thread_count} thread(s).")
                     except psutil.AccessDenied:
                         pass
 
@@ -106,9 +104,7 @@ class OverwrittenRootCommand(RootCommand):
                 )
                 summary.append("")  # blank line
 
-        cache_summary = (
-            f"{len(self.bot.guilds)} guild(s) and {len(self.bot.users)} user(s)"
-        )
+        cache_summary = f"{len(self.bot.guilds)} guild(s) and {len(self.bot.users)} user(s)"
 
         # Show shard settings to summary
         if isinstance(self.bot, discord.AutoShardedClient):
@@ -133,9 +129,7 @@ class OverwrittenRootCommand(RootCommand):
 
         # pylint: disable=protected-access
         if self.bot._connection.max_messages:
-            message_cache = (
-                f"Message cache capped at {self.bot._connection.max_messages}"
-            )
+            message_cache = f"Message cache capped at {self.bot._connection.max_messages}"
         else:
             message_cache = "Message cache is disabled"
 
@@ -152,9 +146,7 @@ class OverwrittenRootCommand(RootCommand):
         # pylint: enable=protected-access
 
         # Show websocket latency in milliseconds
-        summary.append(
-            f"Average websocket latency: {round(self.bot.latency * 1000, 2)}ms"
-        )
+        summary.append(f"Average websocket latency: {round(self.bot.latency * 1000, 2)}ms")
 
         summ = "\n".join(summary)
         if ctx.channel.permissions_for(ctx.me).embed_links:  # type: ignore
@@ -191,9 +183,7 @@ class OverwrittenManagementFeature(ManagementFeature):
             try:
                 await discord.utils.maybe_coroutine(method, extension)
             except Exception as exc:  # pylint: disable=broad-except
-                traceback_data = "".join(
-                    traceback.format_exception(type(exc), exc, exc.__traceback__, 1)
-                )
+                traceback_data = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__, 1))
 
                 paginator.add_line(
                     f"{icon}\N{WARNING SIGN} `{extension}`\n```py\n{traceback_data}\n```",
@@ -206,23 +196,17 @@ class OverwrittenManagementFeature(ManagementFeature):
             await ctx.send(page)
 
     @Feature.Command(parent="jsk", name="sync")
-    async def jsk_sync(
-        self, ctx: DuckContext, sync_globally: Optional[bool], *guild_ids: int
-    ):
+    async def jsk_sync(self, ctx: DuckContext, sync_globally: Optional[bool], *guild_ids: int):
         """
         Sync global or guild application commands to Discord.
         """
-        guild_ids = guild_ids or (
-            () if sync_globally else ((ctx.guild.id,) if ctx.guild else ())
-        )
+        guild_ids = guild_ids or (() if sync_globally else ((ctx.guild.id,) if ctx.guild else ()))
 
         paginator = WrappedPaginator(prefix="", suffix="")
 
         if not guild_ids:
             synced = await self.bot.tree.sync()
-            paginator.add_line(
-                f"\N{SATELLITE ANTENNA} Synced {len(synced)} global commands"
-            )
+            paginator.add_line(f"\N{SATELLITE ANTENNA} Synced {len(synced)} global commands")
         else:
             for guild_id in guild_ids:
                 try:
@@ -230,9 +214,7 @@ class OverwrittenManagementFeature(ManagementFeature):
                 except discord.HTTPException as exc:
                     paginator.add_line(f"\N{WARNING SIGN} `{guild_id}`: {exc.text}")
                 else:
-                    paginator.add_line(
-                        f"\N{SATELLITE ANTENNA} `{guild_id}` Synced {len(synced)} guild commands"
-                    )
+                    paginator.add_line(f"\N{SATELLITE ANTENNA} `{guild_id}` Synced {len(synced)} guild commands")
 
         for page in paginator.pages:
             await ctx.send(page)
@@ -301,9 +283,7 @@ class DuckBotJishaku(
             if redirect_stdout:
                 result = f"{stripper.format(redirect_stdout)}\n{result}"
 
-            return await ctx.send(
-                result.replace(self.bot.http.token or "", "[token omitted]")
-            )
+            return await ctx.send(result.replace(self.bot.http.token or "", "[token omitted]"))
 
         if use_file_check(ctx, len(result)):  # File "full content" preview limit
             # Discord's desktop and web client now supports an interactive file content
@@ -311,20 +291,14 @@ class DuckBotJishaku(
             # Since this avoids escape issues and is more intuitive than pagination for
             #  long results, it will now be prioritized over PaginatorInterface if the
             #  resultant content is below the filesize threshold
-            return await ctx.send(
-                file=discord.File(
-                    filename="output.py", fp=io.BytesIO(result.encode("utf-8"))
-                )
-            )
+            return await ctx.send(file=discord.File(filename="output.py", fp=io.BytesIO(result.encode("utf-8"))))
 
         # inconsistency here, results get wrapped in codeblocks when they are too large
         #  but don't if they're not. probably not that bad, but noting for later review
         paginator = WrappedPaginator(prefix="```py", suffix="```", max_size=1985)
 
         if redirect_stdout:
-            for chunk in self.bot.chunker(
-                f'{stripper.format(redirect_stdout).replace("**", "")}\n', size=1975
-            ):
+            for chunk in self.bot.chunker(f'{stripper.format(redirect_stdout).replace("**", "")}\n', size=1975):
                 paginator.add_line(chunk)
 
         for chunk in self.bot.chunker(result, size=1975):
@@ -335,9 +309,7 @@ class DuckBotJishaku(
 
     @discord.utils.copy_doc(PythonFeature.jsk_python)
     @Feature.Command(parent="jsk", name="py", aliases=["python"])
-    async def jsk_python(
-        self, ctx: DuckContext, *, argument: codeblock_converter
-    ) -> None:
+    async def jsk_python(self, ctx: DuckContext, *, argument: codeblock_converter) -> None:
         """|coro|
 
         The subclassed jsk python command to implement some more functionality and features.
@@ -365,9 +337,7 @@ class DuckBotJishaku(
             async with ReplResponseReactor(ctx.message):
                 with self.submit(ctx):
                     with contextlib.redirect_stdout(printed):
-                        executor = AsyncCodeExecutor(
-                            argument.content, scope, arg_dict=arg_dict
-                        )
+                        executor = AsyncCodeExecutor(argument.content, scope, arg_dict=arg_dict)
                         start = time.perf_counter()
 
                         # Absolutely a garbage lib that I have to fix jesus christ.

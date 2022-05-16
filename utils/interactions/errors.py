@@ -15,19 +15,24 @@ class InteractionError(DuckBotException, AppCommandError):
     """
     Base class for all errors DuckBot errors.
     """
+
     __all__: Tuple[str, ...] = ()
+
 
 class ActionNotExecutable(InteractionError):
     """
     The action is not executable.
     """
+
     def __init__(self, message: str):
         super().__init__(f"{message}")
+
 
 class PermissionsError(InteractionError):
     """
     The invoker does not have the required permissions.
     """
+
     def __init__(self, missing: list = None, needed: list = None):
         self.missing: list = missing
         self.needed: list = needed
@@ -41,10 +46,12 @@ class PermissionsError(InteractionError):
         message += '.'
         super().__init__(message)
 
+
 class BotPermissionsError(InteractionError):
     """
     The invoker does not have the required permissions.
     """
+
     def __init__(self, missing: list = None, needed: list = None):
         self.missing: list = missing
         self.needed: list = needed

@@ -12,16 +12,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import (
-    DuckContext,
-    DuckCog,
-    ActionNotExecutable,
-    HandleHTTPException,
-    mdr,
-    FutureTime,
-    TargetVerifier,
-    command
-)
+from utils import DuckContext, DuckCog, ActionNotExecutable, HandleHTTPException, mdr, FutureTime, TargetVerifier, command
 
 from utils.interactions import (
     HandleHTTPException as InterHandleHTTPException,
@@ -36,14 +27,13 @@ log = logging.getLogger('DuckBot.moderation.block')
 
 
 class Block(DuckCog):
-
     async def toggle_block(
-            self,
-            channel: discord.TextChannel,
-            member: discord.Member,
-            blocked: bool = True,
-            update_db: bool = True,
-            reason: Optional[str] = None
+        self,
+        channel: discord.TextChannel,
+        member: discord.Member,
+        blocked: bool = True,
+        update_db: bool = True,
+        reason: Optional[str] = None,
     ) -> None:
         """|coro|
 
@@ -78,23 +68,22 @@ class Block(DuckCog):
             add_reactions=val,
             create_public_threads=val,
             create_private_threads=val,
-            send_messages_in_threads=val
+            send_messages_in_threads=val,
         )
         try:
-            await channel.set_permissions(
-                member, reason=reason,
-                overwrite=overwrites)
+            await channel.set_permissions(member, reason=reason, overwrite=overwrites)
         finally:
             if update_db:
                 if blocked:
-                    query = 'INSERT INTO blocks (guild_id, channel_id, user_id) VALUES ($1, $2, $3) ' \
-                            'ON CONFLICT (guild_id, channel_id, user_id) DO NOTHING'
+                    query = (
+                        'INSERT INTO blocks (guild_id, channel_id, user_id) VALUES ($1, $2, $3) '
+                        'ON CONFLICT (guild_id, channel_id, user_id) DO NOTHING'
+                    )
                 else:
                     query = "DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3"
 
                 async with self.bot.safe_connection() as conn:
                     await conn.execute(query, channel.guild.id, channel.id, member.id)
-
 
     async def format_block(self, guild: discord.Guild, user_id: int, channel_id: Optional[int] = None):
         """|coro|
@@ -141,8 +130,10 @@ class Block(DuckCog):
             The member to block.
         """
         if not isinstance(ctx.channel, discord.TextChannel):
-            raise ActionNotExecutable('This action is not supported in this channel type. Only text channels are currently supported.')
-        
+            raise ActionNotExecutable(
+                'This action is not supported in this channel type. Only text channels are currently supported.'
+            )
+
         reason = f'Block by {ctx.author} (ID: {ctx.author.id})'
 
         async with HandleHTTPException(ctx):
@@ -167,8 +158,9 @@ class Block(DuckCog):
         """
         reason = f'Tempblock by {ctx.author} (ID: {ctx.author.id}) until {time.dt}'
 
-        await self.bot.create_timer(time.dt, 'tempblock', ctx.guild.id, ctx.channel.id, member.id, ctx.author.id,
-                                    precise=False)
+        await self.bot.create_timer(
+            time.dt, 'tempblock', ctx.guild.id, ctx.channel.id, member.id, ctx.author.id, precise=False
+        )
 
         async with HandleHTTPException(ctx):
             await self.toggle_block(ctx.channel, member, blocked=True, reason=reason)
@@ -195,7 +187,8 @@ class Block(DuckCog):
         if guild is None:
             return
 
-        db_timers = await self.bot.pool.fetch("""
+        db_timers = await self.bot.pool.fetch(
+            """
             SELECT id FROM timers WHERE event = 'tempblock'
             AND (extra->'args'->0)::bigint = $1
                 -- First arg is the guild ID
@@ -204,7 +197,11 @@ class Block(DuckCog):
             AND (extra->'args'->2)::bigint = $3
                 -- Third arg is the user ID
             ORDER BY expires
-        """, guild.id, ctx.channel.id, member.id)
+        """,
+            guild.id,
+            ctx.channel.id,
+            member.id,
+        )
 
         with contextlib.suppress(TimerNotFound):
             for timer in db_timers:
@@ -268,10 +265,12 @@ class Block(DuckCog):
             extra = ''
 
         channel_fmt = f"{channel.mention}\n" if channel else 'all channels - '
-        await ctx.send(f'📋 **|** Blocked users in {channel_fmt}'
-                       f'Showing: `{len(fetched_blocks)}/{count}` - '
-                       f'Showing Page: `{page}/{max_pages}`\n'
-                       f'```\n{blocks}\n```' + extra)
+        await ctx.send(
+            f'📋 **|** Blocked users in {channel_fmt}'
+            f'Showing: `{len(fetched_blocks)}/{count}` - '
+            f'Showing Page: `{page}/{max_pages}`\n'
+            f'```\n{blocks}\n```' + extra
+        )
 
     @commands.Cog.listener('on_member_join')
     async def on_member_join(self, member: discord.Member):
@@ -280,8 +279,9 @@ class Block(DuckCog):
         if guild is None:
             return
 
-        channel_ids = await self.bot.pool.fetch('SELECT channel_id FROM blocks WHERE guild_id = $1 AND user_id = $2',
-                                                guild.id, member.id)
+        channel_ids = await self.bot.pool.fetch(
+            'SELECT channel_id FROM blocks WHERE guild_id = $1 AND user_id = $2', guild.id, member.id
+        )
 
         for record in channel_ids:
             channel_id = record['channel_id']
@@ -289,8 +289,9 @@ class Block(DuckCog):
                 channel = guild.get_channel(channel_id) or await guild.fetch_channel(channel_id)
             except discord.HTTPException:
                 log.debug(f"Discarding blocked users for channel id {channel_id} as it can't be found.")
-                await self.bot.pool.execute('DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2', guild.id,
-                                            channel_id)
+                await self.bot.pool.execute(
+                    'DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2', guild.id, channel_id
+                )
                 continue
             else:
                 try:
@@ -300,12 +301,13 @@ class Block(DuckCog):
                             member,
                             blocked=True,
                             update_db=False,
-                            reason='[MEMBER-JOIN] Automatic re-block for previously blocked user. See "db.blocked" for a list of blocked users.'
+                            reason='[MEMBER-JOIN] Automatic re-block for previously blocked user. See "db.blocked" for a list of blocked users.',
                         )
                         await asyncio.sleep(1)
                 except discord.Forbidden:
-                    log.debug(f"Did not unblock user {member} in channel {channel} due to missing permissions.",
-                              exc_info=False)
+                    log.debug(
+                        f"Did not unblock user {member} in channel {channel} due to missing permissions.", exc_info=False
+                    )
                     continue
                 except discord.HTTPException:
                     log.debug(f"Unexpected error while re-blocking user {member} in channel {channel}.", exc_info=False)
@@ -338,34 +340,35 @@ class Block(DuckCog):
             await self.toggle_block(
                 channel,  # type: ignore
                 member,
-                blocked=False, update_db=False,
-                reason=f'Expiring temp-block made on {timer.created_at} by {mod}'
+                blocked=False,
+                update_db=False,
+                reason=f'Expiring temp-block made on {timer.created_at} by {mod}',
             )
 
         finally:
             # Finally, we remove the user from the list of blocked users, regardless of any errors.
-            await self.bot.pool.execute('DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3',
-                                        guild_id, channel_id, user_id)
+            await self.bot.pool.execute(
+                'DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3', guild_id, channel_id, user_id
+            )
 
     slash_block = app_commands.Group(name='block', description='Blocks users from channels')
 
     @slash_block.command(name='user')
-    @app_commands.describe(
-        user='The user you wish to block.'
-    )
+    @app_commands.describe(user='The user you wish to block.')
     async def app_block_user(
-            self,
-            interaction: discord.Interaction,
-            user: discord.Member,
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
     ):
-        """ Blocks a user from your channel. """
+        """Blocks a user from your channel."""
         await has_permissions(interaction, manage_messages=True)
         await bot_has_permissions(interaction, ban_members=True)
         await can_execute_action(interaction, user)
-        
-        if not isinstance(interaction.channel, discord.TextChannel):
-            raise ActionNotExecutable('This action is not supported in this channel type. Only text channels are currently supported.')
 
+        if not isinstance(interaction.channel, discord.TextChannel):
+            raise ActionNotExecutable(
+                'This action is not supported in this channel type. Only text channels are currently supported.'
+            )
 
         await interaction.response.defer()
         reason = f'Block by {interaction.user} (ID: {interaction.user.id})'
@@ -376,15 +379,13 @@ class Block(DuckCog):
         await interaction.followup.send(f'✅ **|** Blocked **{mdr(user)}**')
 
     @slash_block.command(name='revoke')
-    @app_commands.describe(
-        user='The user you wish to block.'
-    )
+    @app_commands.describe(user='The user you wish to block.')
     async def app_unblock_user(
-            self,
-            interaction: discord.Interaction,
-            user: discord.Member,
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
     ):
-        """ Unblocks a user from your channel. """
+        """Unblocks a user from your channel."""
         await has_permissions(interaction, manage_messages=True)
         await bot_has_permissions(interaction, ban_members=True)
         await can_execute_action(interaction, user)
@@ -393,7 +394,8 @@ class Block(DuckCog):
 
         await interaction.response.defer()
         bot: DuckBot = interaction.client  # type: ignore
-        await bot.pool.execute("""
+        await bot.pool.execute(
+            """
             DELETE FROM timers WHERE event = 'tempblock'
             AND (extra->'args'->0)::bigint = $1
                 -- First arg is the guild ID
@@ -401,7 +403,11 @@ class Block(DuckCog):
                 -- Second arg is the channel ID
             AND (extra->'args'->2)::bigint = $3
                 -- Third arg is the user ID
-        """, interaction.guild.id, interaction.channel.id, user.id)
+        """,
+            interaction.guild.id,
+            interaction.channel.id,
+            user.id,
+        )
 
         # then the actual unblock
         reason = f'Unblock by {interaction.user} (ID: {interaction.user.id})'

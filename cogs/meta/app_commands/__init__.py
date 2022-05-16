@@ -3,4 +3,4 @@ from .reminders import ApplicationReminders
 
 
 class ApplicationMeta(ApplicationNews, ApplicationReminders):
-    """ Application commands of meta cog. """
+    """Application commands of meta cog."""

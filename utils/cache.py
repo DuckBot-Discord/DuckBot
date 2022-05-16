@@ -76,10 +76,16 @@ def cache(maxsize=128, strategy=Strategy.lru, ignore_kwargs=False):
             _stats = _internal_cache.get_stats
         elif strategy is Strategy.raw:
             _internal_cache = {}
-            def _stats(): return 0, 0
+
+            def _stats():
+                return 0, 0
+
         elif strategy is Strategy.timed:
             _internal_cache = ExpiringCache(maxsize)
-            def _stats(): return 0, 0
+
+            def _stats():
+                return 0, 0
+
         else:
             raise ValueError("Unknown strategy")
 

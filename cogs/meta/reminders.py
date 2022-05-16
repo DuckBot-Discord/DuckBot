@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import pytz
 from typing import (
-    Optional, 
+    Optional,
 )
 
 import discord
@@ -25,13 +25,10 @@ class Reminders(DuckCog):
 
     @group(name='remind', aliases=['remindme', 'reminder'], invoke_without_command=True)
     async def remindme(
-        self,
-        ctx: DuckContext,
-        *,
-        when: UserFriendlyTime(commands.clean_content, default='...')  # type: ignore
+        self, ctx: DuckContext, *, when: UserFriendlyTime(commands.clean_content, default='...')  # type: ignore
     ) -> None:
         """|coro|
-        
+
         Reminds you of something in the future.
 
         Parameters
@@ -47,15 +44,7 @@ class Reminders(DuckCog):
             Times are in UTC.
         """
         timer = await self.bot.create_timer(
-            when.dt,
-            'reminder',
-
-            ctx.author.id,
-            ctx.channel.id,
-            when.arg,
-
-            message_id=ctx.message.id,
-            precise=False
+            when.dt, 'reminder', ctx.author.id, ctx.channel.id, when.arg, message_id=ctx.message.id, precise=False
         )
         await ctx.send(f"Alright {ctx.author.mention}, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
@@ -89,11 +78,14 @@ class Reminders(DuckCog):
         Lists all your upcoming reminders.
         """
 
-        timers = await self.bot.pool.fetch("""
+        timers = await self.bot.pool.fetch(
+            """
             SELECT id, expires, (extra->'args'->2) AS reason FROM timers
             WHERE event = 'reminder' AND (extra->'args'->0)::bigint = $1
             ORDER BY expires
-        """, ctx.author.id)
+        """,
+            ctx.author.id,
+        )
 
         if not timers:
             await ctx.send("You have no upcoming reminders.")
@@ -121,28 +113,25 @@ class Reminders(DuckCog):
     @commands.Cog.listener('on_reminder_timer_complete')
     async def reminder_dispatch(self, timer: Timer) -> None:
         await self.bot.wait_until_ready()
-        
+
         user_id, channel_id, user_input = timer.args
-        
-        channel: Union[discord.TextChannel, discord.Thread] = self.bot.get_channel(channel_id) # type: ignore # Type checker hates me
+
+        channel: Union[discord.TextChannel, discord.Thread] = self.bot.get_channel(channel_id)  # type: ignore # Type checker hates me
         if channel is None:
             return log.warning('Discarding channel %s as it\'s not found in cache.', channel_id)
 
         guild_id = channel.guild.id if isinstance(channel, (discord.TextChannel, discord.Thread)) else '@me'
-        
+
         # We need to format_dt in utc so the user
         # can see the time in their local timezone. If not
         # the user will see the timestamp as 5 hours ahead.
         aware = timer.created_at.replace(tzinfo=pytz.UTC)
         msg = f'<@{user_id}>, {discord.utils.format_dt(aware, "R")}: {user_input}'
-        
+
         view = discord.utils.MISSING
         if message_id := timer.kwargs.get('message_id'):
             jump_url = f'https://discordapp.com/channels/{guild_id}/{channel_id}/{message_id}'
             view = JumpView(jump_url)
-        
+
         mentions = discord.AllowedMentions(users=True, everyone=False, roles=False)
         await channel.send(msg, view=view, allowed_mentions=mentions)
-     
-
-

@@ -10,9 +10,8 @@ from utils.bases.launcher import run_bot
 @click.option('--norun', is_flag=True, help='Add to not run the bot.')
 def run(dump, norun, load):
     """Options to run the bot."""
-    asyncio.run(run_bot(to_dump=dump, to_load=load,
-    run=(not norun if (not dump or not load) else False)))
-    
+    asyncio.run(run_bot(to_dump=dump, to_load=load, run=(not norun if (not dump or not load) else False)))
+
 
 if __name__ == '__main__':
     run()

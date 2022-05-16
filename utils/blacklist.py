@@ -27,13 +27,11 @@ else:
 from utils import EntityBlacklisted
 
 
-__all__: Tuple[str, ...] = (
-    "DuckBlacklistManager",
-)
+__all__: Tuple[str, ...] = ("DuckBlacklistManager",)
 
 
 class FakeChannel:
-    """ A fake channel to pass to the remove_channel method.
+    """A fake channel to pass to the remove_channel method.
 
     Parameters
     ----------
@@ -80,6 +78,7 @@ class DuckBlacklistManager:
         A set of blacklisted guild ids.
 
     """
+
     __slots__: Tuple[str, ...] = (
         "bot",
         "_global_blacklisted_users",
@@ -91,10 +90,7 @@ class DuckBlacklistManager:
     def __init__(self, bot: DuckBot, add_check: bool = True):
         self.bot: DuckBot = bot
 
-        self.bot.add_listener(
-            self._temp_blacklist_end_event,
-            'on_blacklist_timer_complete'
-        )
+        self.bot.add_listener(self._temp_blacklist_end_event, 'on_blacklist_timer_complete')
 
         if add_check:
             self.bot.add_check(self.check_context, call_once=True)
@@ -106,10 +102,7 @@ class DuckBlacklistManager:
         self._blacklisted_channels: DefaultDict[int, Set[int]] = defaultdict(set)
 
     def __del__(self):
-        self.bot.remove_listener(
-            self._temp_blacklist_end_event,
-            'on_blacklist_timer_complete'
-        )
+        self.bot.remove_listener(self._temp_blacklist_end_event, 'on_blacklist_timer_complete')
         self.bot.remove_check(self.check_context, call_once=True)
 
     async def build_cache(self, conn: asyncpg.Connection) -> None:
@@ -134,11 +127,7 @@ class DuckBlacklistManager:
                 self._blacklisted_channels[row["guild_id"]].add(row["entity_id"])
 
     async def _temp_blacklist_end_event(
-            self,
-            *,
-            blacklist_type: Literal['user', 'guild', 'channel'],
-            entity_id: int,
-            guild_id: Optional[int] = None
+        self, *, blacklist_type: Literal['user', 'guild', 'channel'], entity_id: int, guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         The event that is called when a temporary blacklist ends.
@@ -187,10 +176,12 @@ class DuckBlacklistManager:
         self.check_guild(ctx.guild, should_raise=True)
         return True
 
-    async def add_user(self,
-                       user: typing.Union[discord.User, discord.Member],
-                       guild: Optional[discord.Guild] = None,
-                       end_time: Optional[datetime] = None) -> bool:
+    async def add_user(
+        self,
+        user: typing.Union[discord.User, discord.Member],
+        guild: Optional[discord.Guild] = None,
+        end_time: Optional[datetime] = None,
+    ) -> bool:
         """|coro|
 
         Adds a user to the blacklist.
@@ -225,22 +216,24 @@ class DuckBlacklistManager:
                        AND (extra->'kwargs'->'blacklist_type')::TEXT = 'user'
                        AND (extra->'kwargs'->'entity_id')::BIGINT = $1 
                        AND (extra->'kwargs'->'guild_id')::BIGINT = $2""",
-                user.id, guild.id if guild else 0)
+                user.id,
+                guild.id if guild else 0,
+            )
 
             # Then, we create a new timer.
             await self.bot.create_timer(
-                end_time,
-                "blacklist",
-                blacklist_type='user',
-                entity_id=user.id,
-                guild_id=guild.id if guild else 0
+                end_time, "blacklist", blacklist_type='user', entity_id=user.id, guild_id=guild.id if guild else 0
             )
 
             # Lastly we add the user to the blacklist.
-            return await self.try_query("""
+            return await self.try_query(
+                """
                 INSERT INTO blacklist (blacklist_type, entity_id, guild_id) VALUES ('user', $1, $2)
                 ON CONFLICT (blacklist_type, entity_id, guild_id) DO UPDATE SET created_at = NOW()
-            """, user.id, guild.id if guild else 0)
+            """,
+                user.id,
+                guild.id if guild else 0,
+            )
 
         else:  # If the block is not temporary, we just add the user to the blacklist.
             query = "INSERT INTO blacklist (blacklist_type, entity_id, guild_id) VALUES ('user', $1, $2)"
@@ -278,7 +271,9 @@ class DuckBlacklistManager:
                    AND (extra->'kwargs'->'blacklist_type')::TEXT = 'user'
                    AND (extra->'kwargs'->'entity_id')::BIGINT = $1
                    AND (extra->'kwargs'->'guild_id')::BIGINT = $2""",
-            user.id, guild.id if guild else 0)
+            user.id,
+            guild.id if guild else 0,
+        )
 
         # Then we remove the user from the blacklist.
         query = "DELETE FROM blacklist WHERE entity_id = $1 AND guild_id = $2 AND blacklist_type = 'user' RETURNING *"
@@ -345,7 +340,9 @@ class DuckBlacklistManager:
                        AND (extra->'kwargs'->'blacklist_type')::TEXT = 'channel'
                        AND (extra->'kwargs'->'entity_id')::BIGINT = $1
                        AND (extra->'kwargs'->'guild_id')::BIGINT = $2""",
-                channel.id, channel.guild.id)
+                channel.id,
+                channel.guild.id,
+            )
 
             # Then we make a new one
             await self.bot.create_timer(
@@ -357,10 +354,14 @@ class DuckBlacklistManager:
             )
 
             # Lastly we add the channel to the blacklist.
-            return await self.try_query("""
+            return await self.try_query(
+                """
                 INSERT INTO blacklist (blacklist_type, entity_id, guild_id) VALUES ('channel', $1, $2)
                 ON CONFLICT (blacklist_type, entity_id, guild_id) DO UPDATE SET created_at = NOW()
-            """, channel.id, channel.guild.id)
+            """,
+                channel.id,
+                channel.guild.id,
+            )
 
         else:  # If the block is not temporary, we just add the guild to the blacklist.
             query = "INSERT INTO blacklist (blacklist_type, entity_id, guild_id) VALUES ('channel', $1, $2)"
@@ -391,7 +392,9 @@ class DuckBlacklistManager:
                    AND (extra->'kwargs'->'blacklist_type')::TEXT = 'channel'
                    AND (extra->'kwargs'->'entity_id')::BIGINT = $1
                    AND (extra->'kwargs'->'guild_id')::BIGINT = $2""",
-            channel.id, channel.guild.id)
+            channel.id,
+            channel.guild.id,
+        )
 
         # Then we remove the channel from the blacklist.
         query = """DELETE FROM blacklist 
@@ -453,7 +456,8 @@ class DuckBlacklistManager:
                        WHERE event = 'blacklist'
                        AND (extra->'kwargs'->'blacklist_type')::TEXT = 'guild'
                        AND (extra->'kwargs'->'entity_id')::BIGINT = $1""",
-                guild.id)
+                guild.id,
+            )
 
             # Then, we create a new timer.
             await self.bot.create_timer(
@@ -464,10 +468,13 @@ class DuckBlacklistManager:
             )
 
             # Lastly we add the guild to the blacklist.
-            return await self.try_query("""
+            return await self.try_query(
+                """
                 INSERT INTO blacklist (blacklist_type, entity_id) VALUES ('guild', $1)
                 ON CONFLICT (blacklist_type, entity_id, guild_id) DO UPDATE SET created_at = NOW()
-            """, guild.id)
+            """,
+                guild.id,
+            )
 
         else:  # If the block is not temporary, we just add the guild to the blacklist.
             query = "INSERT INTO blacklist (blacklist_type, entity_id) VALUES ('guild', $1)"
@@ -497,7 +504,8 @@ class DuckBlacklistManager:
                    WHERE event = 'blacklist'
                    AND (extra->'kwargs'->'blacklist_type')::TEXT = 'guild'
                    AND (extra->'kwargs'->'entity_id')::BIGINT = $1""",
-            guild.id)
+            guild.id,
+        )
 
         # Then we remove the guild from the blacklist
         query = """DELETE FROM blacklist 

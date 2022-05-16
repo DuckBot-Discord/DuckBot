@@ -5,12 +5,14 @@ from discord.ext import commands
 
 from utils import DuckContext, DuckCog, command
 from cogs.tags import TagName
+
 try:
     from utils.ignored import HORRIBLE_HELP_EMBED
 except ImportError:
     HORRIBLE_HELP_EMBED = discord.Embed(title='No information available...')
 
 __all__ = ('EmbedMaker', 'EmbedFlags')
+
 
 def strip_codeblock(content):
     """Automatically removes code blocks from the code."""
@@ -47,7 +49,6 @@ class AuthorFlags(commands.FlagConverter, prefix='--', delimiter='', case_insens
 
 
 class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
-
     @classmethod
     async def convert(cls, ctx: DuckContext, argument: str):
         argument = strip_codeblock(argument).replace(' —', ' --')
@@ -67,7 +68,6 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
 
 
 class EmbedMaker(DuckCog):
-
     @command(brief='Sends an embed using flags')
     async def embed(self, ctx: DuckContext, *, flags: typing.Union[typing.Literal['--help'], EmbedFlags]):
         """|coro|
@@ -127,9 +127,13 @@ class EmbedMaker(DuckCog):
             """
             confirm = await ctx.bot.pool.fetchval(query, flags.save, ctx.guild.id, ctx.author.id)
             if confirm is True:
-                confirm = await ctx.confirm(f"{ctx.author.mention} do you want to add this embed to "
-                                            f"tag {flags.save!r}\n_This prompt will time out in 3 minutes, "
-                                            f"so take your time_", embed=embed, timeout=180)
+                confirm = await ctx.confirm(
+                    f"{ctx.author.mention} do you want to add this embed to "
+                    f"tag {flags.save!r}\n_This prompt will time out in 3 minutes, "
+                    f"so take your time_",
+                    embed=embed,
+                    timeout=180,
+                )
                 if confirm is True:
                     query = """
                         with upsert as (
@@ -151,4 +155,3 @@ class EmbedMaker(DuckCog):
                     await ctx.send(f'Cancelled!')
             else:
                 await ctx.send(f'Could not find tag {flags.save!r}. Are you sure it exists and you own it?')
-
