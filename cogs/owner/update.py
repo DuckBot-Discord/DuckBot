@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import importlib
+import logging
 import re
 import traceback
 from typing import List, Optional
@@ -23,10 +24,15 @@ class Module:
 
     @property
     def name(self) -> str:
+        logging.info('matching path %s', self.path)
         match = COGS_PATTERN.match(self.path)
         if match:
-            return match.group()[0].replace('/', '.').removesuffix('.py').strip('.')
-        return self.path.replace('/', '.').removesuffix('.py').strip('.')
+            logging.info('got a match for %s', match.group())
+            ret = match.group().replace('/', '.').removesuffix('.py').strip('.')
+        else:
+            ret = self.path.replace('/', '.').removesuffix('.py').strip('.')
+        logging.info('returning %s', ret)
+        return ret
 
     @property
     def failed(self):
@@ -79,15 +85,13 @@ class ExtensionsManager(DuckCog):
             await ctx.send(page)
 
     @reload.command(name='git')
-    async def reload_git(self, ctx: DuckContext):
+    async def reload_git(self, ctx: DuckContext, stdout: str):
         '''|coro|
 
         Updates the bot.
 
         This command will pull from github, and then reload the modules of the bot that have changed.
         '''
-        shell = Shell('git pull')
-        stdout = (await shell.run()).stdout
 
         modules = self.find_modules_to_reload(stdout)
 
@@ -95,12 +99,13 @@ class ExtensionsManager(DuckCog):
             try:
                 if module.is_cog:
                     emoji = await self.try_reload(module.name)
-                    stdout = stdout.replace(module.path, f"{emoji} {module.path}")
+                    stdout = stdout.replace(f' {module.path}', module.path).replace(module.path, f"{emoji}{module.path}")
                 else:
+                    logging.info('module reload of %s - %s', module.path, module.name)
                     m = importlib.import_module(module.name)
                     importlib.reload(m)
             except Exception as e:
-                stdout = stdout.replace(module.path, f"\N{CROSS MARK} {module.path}")
+                stdout = stdout.replace(f' {module.path}', module.path).replace(module.path, f"\N{CROSS MARK}{module.path}")
                 module.exception = e
 
         paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
