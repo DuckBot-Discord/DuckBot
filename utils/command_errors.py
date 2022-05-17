@@ -41,6 +41,9 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
         return
     elif isinstance(error, errors.StringTranslatedCommandError):
         await ctx.send(error.translation_id, *error.args)
+    elif isinstance(error, commands.BadUnionArgument):
+        es = str(error) + '\n\n' + '\n'.join(str(e) for e in error.errors)
+        await ctx.send(es)
     elif isinstance(error, (commands.UserInputError, errors.DuckBotException)):
         await ctx.send(str(error))
     elif isinstance(error, commands.CommandInvokeError):
