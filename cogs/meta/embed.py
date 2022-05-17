@@ -39,13 +39,13 @@ class FieldFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
 
 class FooterFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     text: str
-    icon: verify_link = None
+    icon: verify_link = None  # type: ignore
 
 
 class AuthorFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     name: str
-    icon: verify_link = None
-    url: verify_link = None
+    icon: verify_link = None  # type: ignore
+    url: verify_link = None  # type: ignore
 
 
 class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
@@ -56,20 +56,20 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
         # a regular double-dash for ease of use.
         return await super().convert(ctx, argument)
 
-    title: str = None
-    description: str = None
-    color: discord.Color = None
-    field: typing.List[FieldFlags] = None
-    footer: FooterFlags = None
-    image: verify_link = None
-    author: AuthorFlags = None
-    thumbnail: verify_link = None
-    save: TagName = None
+    title: typing.Optional[str] = None
+    description: typing.Optional[str] = None
+    color: typing.Optional[discord.Color] = None
+    field: typing.List[FieldFlags] = None  # type: ignore
+    footer: typing.Optional[FooterFlags] = None
+    image: verify_link = None  # type: ignore
+    author: typing.Optional[AuthorFlags] = None
+    thumbnail: verify_link = None  # type: ignore
+    save: typing.Optional[TagName] = None
 
 
 class EmbedMaker(DuckCog):
     @command(brief='Sends an embed using flags')
-    async def embed(self, ctx: DuckContext, *, flags: EmbedFlags):
+    async def embed(self, ctx: DuckContext, *, flags: typing.Union[typing.Literal['--help'], EmbedFlags]):
         """|coro|
 
         Sends an embed using flags.
@@ -82,7 +82,7 @@ class EmbedMaker(DuckCog):
             The flags to use.
         """
 
-        if isinstance(flags, str) and flags.lower() == '--help':
+        if flags == '--help':
             return await ctx.send(embed=HORRIBLE_HELP_EMBED)
 
         embed = discord.Embed(title=flags.title, description=flags.description, colour=flags.color)
