@@ -46,11 +46,11 @@ from utils import (
     DuckExceptionManager,
     TimerManager,
     col,
-    constants,
     human_join,
     human_timedelta,
     IPCBase,
 )
+from utils.types import constants
 from utils.bases.errors import *
 
 try:

@@ -21,9 +21,9 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from .constants import SERVERS_ICON, GITHUB
+from utils.types.constants import SERVERS_ICON, GITHUB
 from utils.bases.errors import DuckNotFound, DuckBotNotStarted
-from .time import human_join
+from utils.time import human_join
 from utils.bases.context import DuckContext
 from utils.bases.command import DuckCommand, DuckGroup
 

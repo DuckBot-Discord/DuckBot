@@ -69,7 +69,7 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
 
 class EmbedMaker(DuckCog):
     @command(brief='Sends an embed using flags')
-    async def embed(self, ctx: DuckContext, *, flags: typing.Union[typing.Literal['--help'], EmbedFlags]):
+    async def embed(self, ctx: DuckContext, *, flags: EmbedFlags):
         """|coro|
 
         Sends an embed using flags.

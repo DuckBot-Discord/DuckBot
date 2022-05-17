@@ -7,7 +7,8 @@ from typing import Union
 import discord
 from discord import Permissions, PermissionOverwrite, Member, Role
 
-from utils import DuckContext, DuckCog, constants, DeleteButton, command
+from utils import DuckContext, DuckCog, DeleteButton, command
+from utils.types import constants
 from discord.utils import as_chunks
 
 # These are just for making it look nicer,

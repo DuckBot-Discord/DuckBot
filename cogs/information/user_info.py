@@ -6,7 +6,8 @@ import discord
 from discord.utils import format_dt
 
 from bot import DuckBot
-from utils import DuckContext, DuckCog, constants, command
+from utils import DuckContext, DuckCog, command
+from utils.types import constants
 
 from .perms import PermsEmbed
 
