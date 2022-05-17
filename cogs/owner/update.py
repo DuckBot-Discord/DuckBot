@@ -106,6 +106,9 @@ class ExtensionsManager(DuckCog):
                     logging.info('module reload of %s - %s', module.path, module.name)
                     m = importlib.import_module(module.name)
                     importlib.reload(m)
+                    stdout = stdout.replace(f' {module.path}', module.path).replace(
+                        module.path, f"\N{WHITE HEAVY CHECK MARK}{module.path}"
+                    )
             except Exception as e:
                 stdout = stdout.replace(f' {module.path}', module.path).replace(module.path, f"\N{CROSS MARK}{module.path}")
                 module.exception = e
