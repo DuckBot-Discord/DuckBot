@@ -4,6 +4,7 @@ import logging
 import re
 import traceback
 from typing import List, Optional
+from bot import DuckBot
 from utils import DuckCog, DuckContext, Shell, group
 from jishaku.paginators import WrappedPaginator
 from discord.ext.commands import ExtensionNotLoaded, ExtensionNotFound, NoEntryPointError, Paginator
@@ -18,9 +19,8 @@ class Module:
     path: str
     exception: Optional[Exception] = None
 
-    @property
-    def is_cog(self):
-        return self.name.startswith('cogs.')
+    def is_extension(self, bot: DuckBot) -> bool:
+        return self.name.startswith('cogs.') or self.name in bot.extensions
 
     @property
     def name(self) -> str:
@@ -97,9 +97,9 @@ class ExtensionsManager(DuckCog):
 
         modules = self.find_modules_to_reload(stdout)
 
-        for module in sorted(modules, key=lambda m: m.is_cog, reverse=True):
+        for module in sorted(modules, key=lambda m: m.is_extension(ctx.bot), reverse=True):
             try:
-                if module.is_cog:
+                if module.is_extension(ctx.bot):
                     emoji = await self.try_reload(module.name)
                     stdout = stdout.replace(f' {module.path}', module.path).replace(module.path, f"{emoji}{module.path}")
                 else:
