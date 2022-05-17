@@ -104,6 +104,7 @@ class DuckContext(commands.Context, Generic[BotT]):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.is_error_handled = False
+        self._message_count: int = 0
 
     @staticmethod
     @discord.utils.copy_doc(tick)
@@ -200,6 +201,7 @@ class DuckContext(commands.Context, Generic[BotT]):
             try:
                 m = await self._previous_message.edit(**new_kwargs)
                 self._previous_message = m
+                self._message_count += 1
                 return m
             except discord.HTTPException:
                 self._previous_message = None
@@ -207,6 +209,7 @@ class DuckContext(commands.Context, Generic[BotT]):
                 return m
 
         self._previous_message = m = await super().send(content, **kwargs)
+        self._message_count += 1
         return m
 
     @property
@@ -255,7 +258,7 @@ class DuckContext(commands.Context, Generic[BotT]):
 
     def __repr__(self) -> str:
         if self.message:
-            return f'<utils.DuckContext bound to message ({self.channel.id}-{self.message.id})>'
+            return f'<utils.DuckContext bound to message ({self.channel.id}-{self.message.id}-{self._message_count})>'
         elif self.interaction:
             return f'<utils.DuckContext bound to interaction {self.interaction}>'
         return super().__repr__()

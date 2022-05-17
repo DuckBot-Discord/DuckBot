@@ -761,14 +761,18 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         message: :class:`~discord.Message`
             The message that was deleted.
         """
-        _repr = f'<utils.DuckContext bound to message ({payload.channel_id}-{payload.message_id})>'
-        if _repr in self.messages:
-            message = self.messages[_repr]
+        _repr_regex = f'<utils\\.DuckContext bound to message \\({payload.channel_id}-{payload.message_id}-[0-9]+\\)>'
+        pattern = re.compile(_repr_regex)
+        messages = {r: m for r, m in self.messages.items() if pattern.fullmatch(r)}
+        for _repr, message in messages.items():
             try:
                 await message.delete()
             except discord.HTTPException:
                 pass
-            del self.messages[_repr]
+            try:
+                del self.messages[_repr]
+            except KeyError:
+                pass
 
     async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
