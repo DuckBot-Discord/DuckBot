@@ -3,7 +3,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from utils import DuckContext, DuckCog, command
+from utils import DuckContext, DuckCog, command, FlagConverter  # for `--inline` instead of `--inline yes/no`
 from cogs.tags import TagName
 
 try:
@@ -31,7 +31,7 @@ def verify_link(argument: str) -> str:
     return link.string
 
 
-class FieldFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
+class FieldFlags(FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     name: str
     value: str
     inline: bool = True
