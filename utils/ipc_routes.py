@@ -31,6 +31,19 @@ class DuckBotIPC(IPCBase):
             }
         )
 
+    @route('/topguilds', method='get')
+    async def topguilds(self, request: web.Request):
+        return web.json_response(
+            [
+                {
+                    "guild_id": g.id,
+                    "name": g.name,
+                    "member_count": g.member_count,
+                }
+                for g in sorted(self.bot.guilds, key=lambda g: g.member_count, reverse=True)[0:10]  # type: ignore
+            ]
+        )
+
     @route("/users/{id}", method="get")
     async def get_user(self, request: web.Request):
         id = int(request.match_info["id"])
