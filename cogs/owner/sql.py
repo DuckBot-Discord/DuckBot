@@ -1,7 +1,6 @@
 from __future__ import annotations
 import io
 
-import os
 import time
 from tabulate import tabulate
 from typing import List
@@ -65,8 +64,8 @@ class SQLCommands(DuckCog):
 
         rows = len(results)
         if rows == 0 or isinstance(results, str):
-            result = 'Query returned o rows\n' if rows == 0 else str(results)
-            await ctx.send(result + f'*Ran in {dt:.2f}ms*')
+            result = 'Query returned 0 rows' if rows == 0 else str(results)
+            await ctx.send(f'`{result}`\n*Ran in {dt:.2f}ms*')
 
         else:
             table = tabulate(results, headers='keys', tablefmt='orgtbl')
