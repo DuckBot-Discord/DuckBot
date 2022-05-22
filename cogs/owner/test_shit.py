@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import typing
-from typing import List
+from typing import Generator, Iterable, Optional
 from collections import Counter
 from typing import NamedTuple
 
@@ -22,10 +22,6 @@ if typing.TYPE_CHECKING:
     # typechecker happy wit dis >:)
     CatConverter = typing.List[Arg]
 else:
-    # runtime converter:
-
-    async def to_str(ctx: DuckContext, string: str) -> str:
-        return string
 
     class CatConverter(commands.Converter):
         # noinspection PyProtocol
@@ -66,7 +62,7 @@ else:
             return args
 
 
-def int_reactions(number: int) -> List[str]:
+def int_reactions(number: int) -> Generator[str, None, Optional[Iterable[str]]]:
     """
     Returns a list of strings that represent the reactions.
 

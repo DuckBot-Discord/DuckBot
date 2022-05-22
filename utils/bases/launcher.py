@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import logging
 import os
 import aiohttp
 import asyncio
 
 from bot import DuckBot
 from dotenv import load_dotenv
-from utils.helpers import col
 
 load_dotenv('utils/.env')
 # (jsk flags are now in the .env)
@@ -23,13 +21,6 @@ def _get_or_fail(env_var: str) -> str:
 TOKEN = _get_or_fail('TOKEN')
 URI = _get_or_fail('POSTGRES')
 ERROR_WH = _get_or_fail('ERROR_WEBHOOK_URL')
-
-logging.basicConfig(
-    level=logging.INFO,
-    format=f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s{col()}',
-)
-
-log = logging.getLogger('DuckBot.launcher')
 
 
 async def run_bot(to_dump: str | None, to_load: str | None, run: bool) -> None:
