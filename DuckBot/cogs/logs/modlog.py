@@ -64,7 +64,7 @@ class ModLogs(LoggingBase):
     def build_embed(
         self,
         action: str,
-        offender: Optional[discord.abc.User],
+        offender: discord.abc.User,
         case_id: int,
         role: Optional[discord.Role] = None,
         log_date: Optional[datetime.datetime] = None,
@@ -76,25 +76,27 @@ class ModLogs(LoggingBase):
         """
         embed = discord.Embed(
             color=colors.get(action, Col.dark_grey()),
-            title=f"{format_action(action)} | Case #{case_id}",
+            title=f"`{format_action(action)}` | Case #{case_id}",
             timestamp=log_date or discord.utils.utcnow(),
         )
 
-        information = [f"**Offender**: {strip(offender)} ({offender and offender.id})"]
-
-        no_reason = f"No reason provided. Do `db.modlogs reason {case_id} <reason>` to add one."
-
-        if role is not None:
-            information.append(f"**Role**: {strip(role)} ({role.id})")
+        embed.add_field(name='Target:', value=f"{strip(offender)}\n{offender and offender.mention}")
+        embed.set_footer(text=f'ID: {offender and offender.id}')
 
         if moderator is not None:
-            information.append(f"**Moderator**: {strip(moderator)} ({moderator.id})")
+            embed.add_field(name='Moderator:', value=f"{strip(moderator)}\n{moderator and moderator.mention}")
         else:
-            information.append(f"**Moderator**: Unknown moderator. Do `db.modlogs setmod {case_id} <user>` to add one.")
+            embed.add_field(name='Moderator: Not Found', value='Do `db.ml setmod <case_id> <user>` to set it.')
 
-        information.append(f"**Reason**: {strip(reason) or no_reason}")
+        if role is not None:
+            embed.add_field(name='Role:', value=f'{role}\n{role.mention}', inline=False)
 
-        embed.description = "\n".join(information)
+        if reason:
+            embed.add_field(name='Reason:', value=strip(reason).strip() or '\u200b')
+        else:
+            embed.add_field(
+                name='Reason: Not Found', value='Do `db.ml setreason <case_id> <reason>` to set it.', inline=False
+            )
 
         return embed
 
