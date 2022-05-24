@@ -266,7 +266,7 @@ class ErrorHandler(EventsBase):
 
         await ctx.send(f"⚠ **An unexpected error occurred!**", view=ExceptionView(error, ctx.author.id))
 
-        traceback_string = "".join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__))
+        traceback_string = "".join(traceback.format_exception(type(error), error, error.__traceback__))  # type: ignore
         if ctx.guild:
             command_data = (
                 f"by: {ctx.author.name} ({ctx.author.id})"

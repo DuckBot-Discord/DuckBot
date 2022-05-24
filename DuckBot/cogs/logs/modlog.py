@@ -1,6 +1,6 @@
 import datetime
 import typing
-from typing import Optional
+from typing import List, Optional
 
 import asyncpg
 import discord
@@ -13,8 +13,8 @@ colors = {
     "ban": Col.red(),
     "unban": Col.green(),
     "kick": Col.orange(),
-    "role_add": Col.red(),
-    "role_remove": Col.green(),
+    "role_add": Col.green(),
+    "role_remove": Col.red(),
     "timeout_grant": Col.red(),
     "timeout_remove": Col.green(),
     "timeout_update": Col.orange(),
@@ -64,7 +64,7 @@ class ModLogs(LoggingBase):
     def build_embed(
         self,
         action: str,
-        offender: discord.abc.User,
+        offender: Optional[discord.abc.User],
         case_id: int,
         role: Optional[discord.Role] = None,
         log_date: Optional[datetime.datetime] = None,
@@ -80,9 +80,9 @@ class ModLogs(LoggingBase):
             timestamp=log_date or discord.utils.utcnow(),
         )
 
-        information = [f"**Offender**: {strip(offender)} ({offender.id})"]
+        information = [f"**Offender**: {strip(offender)} ({offender and offender.id})"]
 
-        no_reason = f"No reason provided. Do `db.reason {case_id} <reason>` to add one."
+        no_reason = f"No reason provided. Do `db.modlogs reason {case_id} <reason>` to add one."
 
         if role is not None:
             information.append(f"**Role**: {strip(role)} ({role.id})")
@@ -90,7 +90,7 @@ class ModLogs(LoggingBase):
         if moderator is not None:
             information.append(f"**Moderator**: {strip(moderator)} ({moderator.id})")
         else:
-            information.append(f"**Moderator**: Unknown moderator. Do `db.moderator {case_id} <user>` to add one.")
+            information.append(f"**Moderator**: Unknown moderator. Do `db.modlogs setmod {case_id} <user>` to add one.")
 
         information.append(f"**Reason**: {strip(reason) or no_reason}")
 
@@ -103,9 +103,9 @@ class ModLogs(LoggingBase):
         action: str,
         guild: discord.Guild,
         offender: discord.abc.User,
-        role: discord.Role = None,
-        moderator: discord.abc.User = None,
-        reason: str = None,
+        role: Optional[discord.Role] = None,
+        moderator: Optional[discord.abc.User] = None,
+        reason: Optional[str] = None,
     ) -> None:
         """Logs an action to the Mod Log"""
         if not (modlog := await self.get_modlog(guild)):
@@ -190,7 +190,6 @@ class ModLogs(LoggingBase):
             return
 
         if before.timed_out_until != after.timed_out_until:
-            print(before.timed_out_until, '\n', after.timed_out_until)
 
             if before.timed_out_until is None and after.timed_out_until is not None:
                 action = 'timeout_grant'
@@ -212,34 +211,97 @@ class ModLogs(LoggingBase):
             await self.log_action(action=action, guild=before.guild, offender=after, moderator=moderator, reason=reason)
 
         if before.roles != after.roles:
-            special_roles = await self.bot.db.fetch("SELECT special_roles FROM prefixes")
-            if not special_roles:
-                return
-            added_roles = set(after.roles) - set(before.roles)
-            removed_roles = set(before.roles) - set(after.roles)
-            for role in added_roles:
-                if role.id in special_roles:
-                    action = 'role_remove'
-                    moderator = reason = None
-                    async for entry in before.guild.audit_logs(limit=4, action=discord.AuditLogAction.member_role_update):
-                        if hasattr(entry.before, 'roles') and hasattr(entry.after, 'roles') and entry.target == after:
-                            if role in entry.before.roles:
-                                moderator = entry.user
-                                reason = entry.reason
-                                break
-                    await self.log_action(
-                        action=action, guild=before.guild, offender=after, role=role, moderator=moderator, reason=reason
-                    )
-            for role in removed_roles:
-                if role.id in special_roles:
-                    action = 'role_add'
-                    moderator = reason = None
-                    async for entry in before.guild.audit_logs(limit=4, action=discord.AuditLogAction.member_role_update):
-                        if hasattr(entry.before, 'roles') and hasattr(entry.after, 'roles') and entry.target == after:
-                            if role in entry.after.roles:
-                                moderator = entry.user
-                                reason = entry.reason
-                                break
-                    await self.log_action(
-                        action=action, guild=before.guild, offender=after, role=role, moderator=moderator, reason=reason
-                    )
+            special_roles: List[int] = await self.bot.db.fetchval(
+                "SELECT special_roles FROM prefixes WHERE guild_id = $1", before.guild.id
+            )
+
+            if special_roles:
+                added_roles = set(after.roles) - set(before.roles)
+                removed_roles = set(before.roles) - set(after.roles)
+                for role in added_roles:
+                    if role.id in special_roles:
+                        action = 'role_add'
+                        moderator = reason = None
+                        async for entry in before.guild.audit_logs(
+                            limit=4, action=discord.AuditLogAction.member_role_update
+                        ):
+                            if hasattr(entry.before, 'roles') and hasattr(entry.after, 'roles') and entry.target == after:
+                                if role in entry.before.roles:
+                                    moderator = entry.user
+                                    reason = entry.reason
+                                    break
+                        await self.log_action(
+                            action=action, guild=before.guild, offender=after, role=role, moderator=moderator, reason=reason
+                        )
+                for role in removed_roles:
+                    if role.id in special_roles:
+                        action = 'role_remove'
+                        moderator = reason = None
+                        async for entry in before.guild.audit_logs(
+                            limit=4, action=discord.AuditLogAction.member_role_update
+                        ):
+                            if hasattr(entry.before, 'roles') and hasattr(entry.after, 'roles') and entry.target == after:
+                                if role in entry.after.roles:
+                                    moderator = entry.user
+                                    reason = entry.reason
+                                    break
+                        await self.log_action(
+                            action=action, guild=before.guild, offender=after, role=role, moderator=moderator, reason=reason
+                        )
+
+    @commands.Cog.listener('on_member_ban')
+    async def member_ban_modlog(self, guild: discord.Guild, user: discord.User):
+        """
+        Logged actions:
+            - Ban
+        """
+        if not await self.is_guild_logged(guild):
+            return
+
+        moderator = reason = None
+        async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+            if entry.target == user:
+                moderator = entry.user
+                reason = entry.reason
+                break
+
+        await self.log_action(action='ban', guild=guild, offender=user, moderator=moderator, reason=reason)
+
+    @commands.Cog.listener('on_member_unban')
+    async def member_unban_modlog(self, guild: discord.Guild, user: discord.User):
+        """
+        Logged actions:
+            - Unban
+        """
+        if not await self.is_guild_logged(guild):
+            return
+
+        moderator = reason = None
+        async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.unban):
+            if entry.target == user:
+                moderator = entry.user
+                reason = entry.reason
+                break
+
+        await self.log_action(action='unban', guild=guild, offender=user, moderator=moderator, reason=reason)
+
+    @commands.Cog.listener('on_member_remove')
+    async def member_remove_modlog(self, member: discord.Member):
+        """
+        Logged actions:
+            - Kick
+        """
+        if not await self.is_guild_logged(member.guild):
+            return
+
+        moderator = reason = None
+        async for entry in member.guild.audit_logs(limit=3, action=discord.AuditLogAction.kick):
+            if entry.target == member:
+                moderator = entry.user
+                reason = entry.reason
+                break
+
+        if not moderator:
+            return
+
+        await self.log_action(action='kick', guild=member.guild, offender=member, moderator=moderator, reason=reason)
