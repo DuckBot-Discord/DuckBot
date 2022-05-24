@@ -99,7 +99,7 @@ class ModLogs(ConfigBase):
         except asyncpg.UndefinedTableError:
             raise commands.BadArgument(f'I could not find the case number {case_id}!')
         await self.bot.db.execute(
-            "UPDATE modlogs.modlogs_{} SET mod_id = $2 WHERE case_id = $1".format(ctx.guild.id), case_id, user.id
+            "UPDATE modlogs.modlogs_{} SET moderator = $2 WHERE case_id = $1".format(ctx.guild.id), case_id, user.id
         )
         await cog.update_message(ctx.guild, case_id)
         if mod_log != ctx.channel:
