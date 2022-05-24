@@ -99,6 +99,7 @@ class ModLogs(LoggingBase):
             embed.add_field(
                 name='Timeout Until:',
                 value=f'{discord.utils.format_dt(until)} ({discord.utils.format_dt(until, style="R")})',
+                inline=False,
             )
 
         if reason:
