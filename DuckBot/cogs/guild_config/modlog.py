@@ -43,8 +43,8 @@ class ModLogs(ConfigBase):
             await ctx.send('✅ | **ModLogs** have been disabled')
 
     @commands.has_permissions(manage_guild=True)
-    @modlogs.command(name='reason')
-    async def reason(self, ctx: CustomContext, case_id: int, *, reason: str):
+    @modlogs.command(name='reason', aliases=['setreason', 'r'])
+    async def modlogs_reason(self, ctx: CustomContext, case_id: int, *, reason: str):
         """Sets the reason for a mod-log entry"""
         cog: LoggingBackend = self.bot.get_cog('LoggingBackend')  # type: ignore
         if not cog:
@@ -75,7 +75,7 @@ class ModLogs(ConfigBase):
                 await ctx.message.add_reaction('✅')
 
     @commands.has_permissions(manage_guild=True)
-    @modlogs.command(name='setmod')
+    @modlogs.command(name='setmod', aliases=['sm', 'mod'])
     async def setmod(self, ctx: CustomContext, case_id: int, *, user: discord.Member):
         """Sets the mod for a mod-log entry"""
         cog: LoggingBackend = self.bot.get_cog('LoggingBackend')  # type: ignore
