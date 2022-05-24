@@ -16,9 +16,18 @@ class ModLogs(ConfigBase):
     async def modlogs(self, ctx: CustomContext, channel: discord.TextChannel = None):  # type: ignore
         """Enables mod-logs"""
         if channel:
+            confirm = bool(await ctx.bot.db.fetchval('SELECT modlog FROM prefixes WHERE guild_id = $1', ctx.guild.id))
+            if confirm:
+                r = await ctx.confirm(
+                    f'Mod-logs are already enabled in {channel.mention}. Do you want to overwrite it?\n'
+                    '**This will delete all previous mod-logs** This action cannot be undone.'
+                )
+                if not r:
+                    return
             await self.bot.db.execute(
+                f"DROP TABLE IF EXISTS modlogs.modlogs_{ctx.guild.id};"
                 "INSERT INTO prefixes (guild_id, modlog) VALUES ($1, $2) "
-                "ON CONFLICT (guild_id) DO UPDATE SET modlog = $2",
+                "ON CONFLICT (guild_id) DO UPDATE SET modlog = $2;",
                 ctx.guild.id,
                 channel.id,
             )
