@@ -50,7 +50,7 @@ class UseItems(EconomyBase):
     @require_setup()
     @commands.command()
     async def use(self, ctx: CustomContext, *, item: OwnedItem):
-        """ Uses an item in your inventory. """
+        """Uses an item in your inventory."""
         async with ctx.wallet:
             used = False
             if item.noises:

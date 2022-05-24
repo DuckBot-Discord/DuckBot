@@ -8,7 +8,6 @@ from ._base import ModerationBase, BannedMember
 
 
 class BasicModCommands(ModerationBase):
-    
     @commands.command(help="Kicks a member from the server")
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True, kick_members=True)
@@ -22,22 +21,42 @@ class BasicModCommands(ModerationBase):
     @commands.command(help="Bans a member from the server")
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True, ban_members=True)
-    async def ban(self, ctx: CustomContext, user: typing.Union[discord.Member, discord.User], delete_days: typing.Optional[int] = 1, *, reason: str = None):
+    async def ban(
+        self,
+        ctx: CustomContext,
+        user: typing.Union[discord.Member, discord.User],
+        delete_days: typing.Optional[int] = 1,
+        *,
+        reason: str = None,
+    ):
         if delete_days and not 8 > delete_days > -1:
             raise commands.BadArgument("**delete_days** must be between 0 and 7 days")
 
         self.bot_can_execute_action(ctx, user)
 
         if self.can_execute_action(ctx, ctx.author, user):
-            await ctx.guild.ban(user, reason=f"Banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''), delete_message_days=delete_days)  # noqa
-            return await ctx.send(f'🔨 **|** banned **{discord.utils.escape_markdown(str(user))}**' + (f' for {reason}' if reason else ''))
+            await ctx.guild.ban(
+                user,
+                reason=f"Banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''),
+                delete_message_days=delete_days,
+            )  # noqa
+            return await ctx.send(
+                f'🔨 **|** banned **{discord.utils.escape_markdown(str(user))}**' + (f' for {reason}' if reason else '')
+            )
         await ctx.send('Sorry, but you can\'t ban that member')
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True, ban_members=True)
-    async def softban(self, ctx: CustomContext, user: typing.Union[discord.Member, discord.User], delete_days: typing.Optional[int] = 1, *, reason: str = None):
-        """ Soft-bans a member from the server.
+    async def softban(
+        self,
+        ctx: CustomContext,
+        user: typing.Union[discord.Member, discord.User],
+        delete_days: typing.Optional[int] = 1,
+        *,
+        reason: str = None,
+    ):
+        """Soft-bans a member from the server.
         What is soft ban?
         """
         if delete_days and not 8 > delete_days > -1:
@@ -46,9 +65,17 @@ class BasicModCommands(ModerationBase):
         self.bot_can_execute_action(ctx, user)
 
         if self.can_execute_action(ctx, ctx.author, user):
-            await ctx.guild.ban(user, reason=f"Soft-banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''), delete_message_days=delete_days)  # noqa
-            await ctx.guild.unban(user, reason=f"Soft-banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''))
-            return await ctx.send(f'🔨 **|** soft-banned **{discord.utils.escape_markdown(str(user))}**' + (f' for {reason}' if reason else ''))
+            await ctx.guild.ban(
+                user,
+                reason=f"Soft-banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else ''),
+                delete_message_days=delete_days,
+            )  # noqa
+            await ctx.guild.unban(
+                user, reason=f"Soft-banned by {ctx.author} ({ctx.author.id})" + (f'for {reason}' if reason else '')
+            )
+            return await ctx.send(
+                f'🔨 **|** soft-banned **{discord.utils.escape_markdown(str(user))}**' + (f' for {reason}' if reason else '')
+            )
         await ctx.send('Sorry, but you can\'t ban that member')
 
     @commands.command()
@@ -71,8 +98,9 @@ class BasicModCommands(ModerationBase):
     @commands.command(aliases=['sn', 'nick'])
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(send_messages=True, manage_nicknames=True)
-    async def setnick(self, ctx: CustomContext, member: discord.Member, *, new: str = None) -> \
-            typing.Optional[discord.Message]:
+    async def setnick(
+        self, ctx: CustomContext, member: discord.Member, *, new: str = None
+    ) -> typing.Optional[discord.Message]:
         """
         Removes someone's nickname. Don't send a new nickname to remove it.
         """
@@ -85,7 +113,7 @@ class BasicModCommands(ModerationBase):
             raise commands.MissingPermissions(['role_hierarchy'])
 
         await member.edit(nick=new)
-        return await ctx.send(f"✏ {ctx.author.mention} edited {member.mention}"
-                              f"\nnickname: **`{old}`** -> **`{new}`**",
-                              allowed_mentions=discord.AllowedMentions().none())
-
+        return await ctx.send(
+            f"✏ {ctx.author.mention} edited {member.mention}" f"\nnickname: **`{old}`** -> **`{new}`**",
+            allowed_mentions=discord.AllowedMentions().none(),
+        )

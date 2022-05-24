@@ -14,3 +14,6 @@ DuckBot/cogs/music-config.json
 DuckBot/cogs/beta.py
 .json
 DuckBot/cogs/lowlight.py
+venv/
+.idea/
+.vscode/

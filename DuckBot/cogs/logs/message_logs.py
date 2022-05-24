@@ -11,29 +11,45 @@ from ._base import LoggingBase
 
 
 class MessageLogs(LoggingBase):
-
     @commands.Cog.listener('on_message_delete')
     async def logger_on_message_delete(self, message: discord.Message) -> None:
-        if message.author.bot or not message.guild or message.guild.id not in self.bot.log_channels or not self.bot.guild_loggings[message.guild.id].message_delete:
+        if (
+            message.author.bot
+            or not message.guild
+            or message.guild.id not in self.bot.log_channels
+            or not self.bot.guild_loggings[message.guild.id].message_delete
+        ):
             return
         if message.guild.id in self.bot.log_channels:
-            embed = discord.Embed(title=f'Message deleted in #{message.channel}',
-                                  description=(message.content or '\u200b')[0:4000],
-                                  colour=discord.Colour.red(), timestamp=discord.utils.utcnow())
+            embed = discord.Embed(
+                title=f'Message deleted in #{message.channel}',
+                description=(message.content or '\u200b')[0:4000],
+                colour=discord.Colour.red(),
+                timestamp=discord.utils.utcnow(),
+            )
             embed.set_author(name=str(message.author), icon_url=message.author.display_avatar.url)
             embed.set_footer(text=f"Channel: {message.channel.id}")
             if message.attachments:
-                embed.add_field(name='Attachments:', value='\n'.join([a.filename for a in message.attachments]), inline=False)
+                embed.add_field(
+                    name='Attachments:', value='\n'.join([a.filename for a in message.attachments]), inline=False
+                )
             if message.stickers:
                 embed.add_field(name='Stickers:', value='\n'.join([a.name for a in message.stickers]), inline=False)
             self.log(embed, guild=message.guild, send_to=self.send_to.message)
 
     @commands.Cog.listener('on_raw_bulk_message_delete')
     async def logger_on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
-        if not payload.guild_id or payload.guild_id not in self.bot.log_channels or not self.bot.guild_loggings[payload.guild_id].message_purge:
+        if (
+            not payload.guild_id
+            or payload.guild_id not in self.bot.log_channels
+            or not self.bot.guild_loggings[payload.guild_id].message_purge
+        ):
             return
-        embed = discord.Embed(title=f'{len(payload.message_ids)} messages purged in #{self.bot.get_channel(payload.channel_id)}',
-                              colour=discord.Colour.red(), timestamp=discord.utils.utcnow())
+        embed = discord.Embed(
+            title=f'{len(payload.message_ids)} messages purged in #{self.bot.get_channel(payload.channel_id)}',
+            colour=discord.Colour.red(),
+            timestamp=discord.utils.utcnow(),
+        )
         msgs = []
         for message in payload.cached_messages:
             if message.author.bot:
@@ -57,15 +73,27 @@ class MessageLogs(LoggingBase):
 
     @commands.Cog.listener('on_message_edit')
     async def logger_on_message_edit(self, before: discord.Message, after: discord.Message):
-        if before.author.bot or not before.guild or before.guild.id not in self.bot.log_channels or not self.bot.guild_loggings[after.guild.id].message_edit:
+        if (
+            before.author.bot
+            or not before.guild
+            or before.guild.id not in self.bot.log_channels
+            or not self.bot.guild_loggings[after.guild.id].message_edit
+        ):
             return
         if not self.bot.guild_loggings[before.guild.id].message_edit:
             return
         if before.guild.id in self.bot.log_channels:
-            if before.content == after.content and before.attachments == after.attachments and before.stickers == after.stickers:
+            if (
+                before.content == after.content
+                and before.attachments == after.attachments
+                and before.stickers == after.stickers
+            ):
                 return
-            embed = discord.Embed(title=f'Message edited in #{before.channel}',
-                                  colour=discord.Colour.blurple(), timestamp=discord.utils.utcnow())
+            embed = discord.Embed(
+                title=f'Message edited in #{before.channel}',
+                colour=discord.Colour.blurple(),
+                timestamp=discord.utils.utcnow(),
+            )
             embed.set_author(name=str(before.author), icon_url=before.author.display_avatar.url)
             embed.set_footer(text=f"Channel: {before.channel.id}")
 

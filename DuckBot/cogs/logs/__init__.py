@@ -10,5 +10,5 @@ class LoggingBackend(JoinLeaveLogs, MemberLogs, MessageLogs, ServerLogs, ModLogs
     pass
 
 
-def setup(bot):
-    bot.add_cog(LoggingBackend(bot))
+async def setup(bot):
+    await bot.add_cog(LoggingBackend(bot))

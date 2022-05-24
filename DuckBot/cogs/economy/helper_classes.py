@@ -46,7 +46,7 @@ class MemberPrompt(discord.ui.View):
         self.prompt_message = prompt_message
 
     @discord.ui.button(label='Confirm', emoji='✅')
-    async def confirm(self, _, interaction: Interaction):
+    async def confirm(self, interaction: Interaction, _):
         if interaction.user.id == self.member.id:
             await interaction.response.defer()
             self.value = True
@@ -55,13 +55,15 @@ class MemberPrompt(discord.ui.View):
             await interaction.response.defer()
 
     @discord.ui.button(label='Deny', emoji='❌')
-    async def deny(self, _, interaction: Interaction):
+    async def deny(self, interaction: Interaction, _):
         if interaction.user.id == self.ctx.author.id:
             await interaction.response.edit_message(
-                content=f"{self.ctx.author.mention}, you have cancelled the challenge.", view=None)
+                content=f"{self.ctx.author.mention}, you have cancelled the challenge.", view=None
+            )
         else:
             await interaction.response.edit_message(
-                content=f"{self.ctx.author.mention}, {self.member} has denied your challenge.", view=None)
+                content=f"{self.ctx.author.mention}, {self.member} has denied your challenge.", view=None
+            )
         self.value = False
         self.stop()
 
@@ -79,15 +81,22 @@ class MemberPrompt(discord.ui.View):
         await interaction.response.defer()
 
     async def on_timeout(self) -> None:
-        await self.message.edit(content=f"{self.ctx.author.mention}, did not respond in time to the challenge!",
-                                view=None)
+        await self.message.edit(content=f"{self.ctx.author.mention}, did not respond in time to the challenge!", view=None)
         self.stop()
 
 
 # noinspection SqlResolve
 class ShopItem:
-    def __init__(self, name: str = None, iid: int = None, price: int = None, stock: int = None, inventory: int = None,
-                 noises: list = None, messages: list = None):
+    def __init__(
+        self,
+        name: str = None,
+        iid: int = None,
+        price: int = None,
+        stock: int = None,
+        inventory: int = None,
+        noises: list = None,
+        messages: list = None,
+    ):
         self.name: int = name
         self.id: int = iid
         self.price: int = price
@@ -98,8 +107,15 @@ class ShopItem:
 
     @classmethod
     def from_db(cls, row: dict):
-        return cls(row.get('item_name'), row.get('item_id'), row.get('price'), row.get('stock'), row.get('amount'),
-                   row.get('noises'), row.get('messages'))
+        return cls(
+            row.get('item_name'),
+            row.get('item_id'),
+            row.get('price'),
+            row.get('stock'),
+            row.get('amount'),
+            row.get('noises'),
+            row.get('messages'),
+        )
 
     async def convert(self, ctx: CustomContext, argument: str):
         if argument.isdigit():
@@ -119,25 +135,31 @@ class OwnedItem(ShopItem):
             row = await ctx.bot.db.fetchrow(
                 "SELECT items.item_id, stock, amount, price, item_name FROM inventory, items "
                 "WHERE user_id = $1 AND inventory.item_id = $2::bigint AND items.item_id = inventory.item_id",
-                ctx.author.id, argument)
+                ctx.author.id,
+                argument,
+            )
         else:
             row = await ctx.bot.db.fetchrow(
                 "SELECT items.item_id, stock, amount, price, item_name, noises FROM inventory, items WHERE user_id = $1 AND UPPER(items.item_name) = UPPER($2) AND items.item_id = inventory.item_id LIMIT 1",
-                ctx.author.id, argument)
+                ctx.author.id,
+                argument,
+            )
         if not row:
             raise commands.BadArgument(f"❗ **{argument[0:100]}** is not in your **📦 Storage Box**.")
         else:
             item = self.from_db(row)
             if item.inventory == 0:
                 raise commands.BadArgument(
-                    f"❗ **{row.get('item_name', argument[0:100])}** is not in your **📦 Storage Box**.")
+                    f"❗ **{row.get('item_name', argument[0:100])}** is not in your **📦 Storage Box**."
+                )
             return item
 
     async def use(self, ctx: CustomContext):
         if self.inventory <= 0:
             raise commands.BadArgument(f"❗ **{self.name}** is not in your **📦 Storage Box**.")
         await ctx.bot.db.execute(
-            "UPDATE inventory SET amount = amount - 1 WHERE user_id = $1 AND item_id = $2", ctx.author.id, self.id)
+            "UPDATE inventory SET amount = amount - 1 WHERE user_id = $1 AND item_id = $2", ctx.author.id, self.id
+        )
         self.inventory -= 1
         return self
 
@@ -168,8 +190,7 @@ class DuckTrack:
         return f"`{self.number}` - {meta} {'- ' * (self.track_length - self.progress)}{icon}"
 
     def __repr__(self):
-        return f'<Dog number={self.number} progress={self.progress} ' \
-               f'track_length={self.track_length}>'
+        return f'<Dog number={self.number} progress={self.progress} ' f'track_length={self.track_length}>'
 
 
 class TradeSession:
@@ -205,31 +226,32 @@ class TradeSession:
             return
         if self.closed1 is not None and self.closed2 is not None:
             await channel.send(
-                f'Both **{self.wallet1.user.name}** and **{self.wallet2.user.name}** confirmed to trade. {wallet.bot.user.name} is updating all wallets and storage boxes...')
+                f'Both **{self.wallet1.user.name}** and **{self.wallet2.user.name}** confirmed to trade. {wallet.bot.user.name} is updating all wallets and storage boxes...'
+            )
             try:
                 async with self.wallet1.bot.db.acquire() as conn:
                     for item, amount in self.items1.items():
                         try:
                             await self.wallet1._remove_item(conn, item, amount)
                         except Exception as e:
-                            logging.error(f"Error removing item {item.name} from {self.wallet1.user.name}'s wallet",
-                                          exc_info=e)
+                            logging.error(
+                                f"Error removing item {item.name} from {self.wallet1.user.name}'s wallet", exc_info=e
+                            )
                         try:
                             await self.wallet2._add_item(conn, item, amount)
                         except Exception as e:
-                            logging.error(f"Error adding item {item.name} to {self.wallet2.user.name}'s wallet",
-                                          exc_info=e)
+                            logging.error(f"Error adding item {item.name} to {self.wallet2.user.name}'s wallet", exc_info=e)
                     for item, amount in self.items2.items():
                         try:
                             await self.wallet2._remove_item(conn, item, amount)
                         except Exception as e:
-                            logging.error(f"Error removing item {item.name} from {self.wallet2.user.name}'s wallet",
-                                          exc_info=e)
+                            logging.error(
+                                f"Error removing item {item.name} from {self.wallet2.user.name}'s wallet", exc_info=e
+                            )
                         try:
                             await self.wallet1._add_item(conn, item, amount)
                         except Exception as e:
-                            logging.error(f"Error adding item {item.name} to {self.wallet1.user.name}'s wallet",
-                                          exc_info=e)
+                            logging.error(f"Error adding item {item.name} to {self.wallet1.user.name}'s wallet", exc_info=e)
             finally:
                 self.wallet1.trade_session = None
                 self.wallet2.trade_session = None
@@ -239,11 +261,14 @@ class TradeSession:
     async def prompt(self, ctx):
         if not self.wallet2:
             raise commands.BadArgument('❗ The other user has not accepted the trade yet.')
-        prompt = await ctx.confirm(f'🔃 Do you want to confirm this trade?'
-                                   f'\n**To continue trading, wait 15 seconds for this menu to disappear.**',
-                                   timeout=15, buttons=(('✔', 'Confirm and end', discord.ButtonStyle.green),
-                                                        ('❌', 'Cancel and end', discord.ButtonStyle.grey)),
-                                   delete_after_confirm=True, delete_after_timeout=True)
+        prompt = await ctx.confirm(
+            f'🔃 Do you want to confirm this trade?'
+            f'\n**To continue trading, wait 15 seconds for this menu to disappear.**',
+            timeout=15,
+            buttons=(('✔', 'Confirm and end', discord.ButtonStyle.green), ('❌', 'Cancel and end', discord.ButtonStyle.grey)),
+            delete_after_confirm=True,
+            delete_after_timeout=True,
+        )
         if prompt is not None:
             await self.end_session(ctx.wallet, ctx.channel, prompt)
 
@@ -465,52 +490,68 @@ class Wallet:
 
     async def refresh(self):
         async with self.bot.db.acquire() as conn:
-            self.balance, self._deleted = await conn.fetchrow("SELECT balance, deleted FROM economy WHERE user_id = $1",
-                                                              self.user.id)
+            self.balance, self._deleted = await conn.fetchrow(
+                "SELECT balance, deleted FROM economy WHERE user_id = $1", self.user.id
+            )
 
     async def _add_money(self, conn: asyncpg.Connection, amount: int):
         if self._deleted:
             raise AccountNotFound(self.user)
-        self.balance = await conn.fetchval("UPDATE economy SET balance = $1 WHERE user_id = $2 RETURNING balance",
-                                           self.balance + amount, self.user.id)
+        self.balance = await conn.fetchval(
+            "UPDATE economy SET balance = $1 WHERE user_id = $2 RETURNING balance", self.balance + amount, self.user.id
+        )
 
     async def _remove_money(self, conn: asyncpg.Connection, amount: int):
         if self._deleted:
             raise AccountNotFound(self.user)
         if amount > self.balance:
             amount = self.balance
-        self.balance = await conn.fetchval("UPDATE economy SET balance = $1 WHERE user_id = $2 RETURNING balance",
-                                           self.balance - amount, self.user.id)
+        self.balance = await conn.fetchval(
+            "UPDATE economy SET balance = $1 WHERE user_id = $2 RETURNING balance", self.balance - amount, self.user.id
+        )
 
     async def _purchase_items(self, conn: asyncpg.Connection, item: ShopItem, amount: int):
         if self._deleted:
             raise AccountNotFound(self.user)
         await self._remove_money(conn, item.price * amount)
-        await conn.execute('INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3)'
-                           'ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3',
-                           self.user.id, item.id, amount)
+        await conn.execute(
+            'INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3)'
+            'ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3',
+            self.user.id,
+            item.id,
+            amount,
+        )
         await conn.execute('UPDATE items SET stock = $1 WHERE item_id = $2', item.stock - amount, item.id)
 
     async def _sell_items(self, conn: asyncpg.Connection, item: OwnedItem, amount: int):
         if self._deleted:
             raise AccountNotFound(self.user)
         await self._add_money(conn, int(item.price * amount - (item.price / 10 * amount)))
-        await conn.execute('UPDATE inventory SET amount = $3 WHERE user_id = $1 AND item_id = $2', self.user.id,
-                           item.id, item.inventory - amount)
+        await conn.execute(
+            'UPDATE inventory SET amount = $3 WHERE user_id = $1 AND item_id = $2',
+            self.user.id,
+            item.id,
+            item.inventory - amount,
+        )
         await conn.execute('UPDATE items SET stock = stock + $1 WHERE item_id = $2', amount, item.id)
 
     async def _add_item(self, conn: asyncpg.Connection, item: ShopItem, amount: int):
         if self._deleted:
             raise AccountNotFound(self.user)
-        await conn.execute('INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3) '
-                           'ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3',
-                           self.user.id, item.id, amount)
+        await conn.execute(
+            'INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3) '
+            'ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3',
+            self.user.id,
+            item.id,
+            amount,
+        )
 
     async def _remove_item(self, conn: asyncpg.Connection, item: ShopItem, amount: int):
         if self._deleted:
             raise AccountNotFound(self.user)
-        await conn.execute('UPDATE inventory SET amount = amount - $3 WHERE user_id = $1 AND item_id = $2',
-                           self.user.id, item.id, amount)
+        await conn.execute(
+            'UPDATE inventory SET amount = amount - $3 WHERE user_id = $1 AND item_id = $2', self.user.id, item.id, amount
+        )
 
     # Wallet management methods
     async def delete(self):
@@ -519,9 +560,7 @@ class Wallet:
                 del self.bot.wallets[self.user.id]
             raise AccountNotFound(self.user)
         async with self.bot.db.acquire() as conn:
-            await conn.execute("UPDATE economy SET deleted = TRUE, "
-                               "balance = 200 "
-                               "where user_id = $1", self.user.id)
+            await conn.execute("UPDATE economy SET deleted = TRUE, " "balance = 200 " "where user_id = $1", self.user.id)
             self._deleted = True
 
     @classmethod
@@ -546,8 +585,9 @@ class Wallet:
             except asyncpg.UniqueViolationError:
                 account = await conn.fetchrow("SELECT * FROM economy WHERE user_id = $1", user.id) or {}
                 if account.get('deleted'):
-                    account = await conn.fetchrow("UPDATE economy SET deleted = FALSE WHERE user_id = $1 RETURNING *",
-                                                  user.id)
+                    account = await conn.fetchrow(
+                        "UPDATE economy SET deleted = FALSE WHERE user_id = $1 RETURNING *", user.id
+                    )
                 else:
                     raise AccountAlreadyExists(user)
             wallet = cls(bot, user, account)

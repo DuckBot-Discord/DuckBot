@@ -16,12 +16,14 @@ def require_snipe(should_be: bool = True):
             return True
         else:
             raise commands.BadArgument(f'Snipe is {"not" if should_be is True else ""} enabled on this server.')
+
     return commands.check(predicate)  # type: ignore
 
 
 class SimpleAuthor:
-    """ A more memory efficient slotted class to store the
-    author information of a message. """
+    """A more memory efficient slotted class to store the
+    author information of a message."""
+
     __slots__ = ('id', 'name', 'discriminator', 'avatar_url')
 
     def __init__(self, member: discord.Member):
@@ -35,8 +37,9 @@ class SimpleAuthor:
 
 
 class SimpleMessage:
-    """ A more memory efficient and non-slotted class to store
-     only the information I need for the snipe command. """
+    """A more memory efficient and non-slotted class to store
+    only the information I need for the snipe command."""
+
     __slots__ = ('content', 'author', 'embeds', 'timestamp', 'components')
 
     def __init__(self, message: discord.Message):
@@ -62,11 +65,16 @@ class Snipe(ModerationBase):
     async def snipe(self, ctx: CustomContext, index: int = 1):
         try:
             message = self.bot.snipes[ctx.guild.id][ctx.channel.id][-index]
-            embed = discord.Embed(description=message.content or '_No content in message_',
-                                  timestamp=message.timestamp, colour=ctx.color)
-            embed.set_author(name=f'{message.author} ({message.author.id}) said in #{ctx.channel}', icon_url=message.author.avatar_url)
-            embed.set_footer(text=f'Index {index-1}/{len(self.bot.snipes[ctx.channel.id][ctx.channel.id])} - '
-                                  f'Message sent {human_timedelta(message.timestamp)}, at')
+            embed = discord.Embed(
+                description=message.content or '_No content in message_', timestamp=message.timestamp, colour=ctx.color
+            )
+            embed.set_author(
+                name=f'{message.author} ({message.author.id}) said in #{ctx.channel}', icon_url=message.author.avatar_url
+            )
+            embed.set_footer(
+                text=f'Index {index-1}/{len(self.bot.snipes[ctx.channel.id][ctx.channel.id])} - '
+                f'Message sent {human_timedelta(message.timestamp)}, at'
+            )
             view = None
             if message.components:
                 view = discord.ui.View.from_message(message, timeout=0)
@@ -80,7 +88,10 @@ class Snipe(ModerationBase):
     @commands.check_any(*snipe_checks)
     @snipe.command(name='enable')
     async def snipe_enable(self, ctx):
-        await self.bot.db.execute('INSERT INTO prefixes (guild_id, snipe_enabled) VALUES ($1, TRUE) ON CONFLICT (guild_id) DO UPDATE SET snipe_enabled = TRUE', ctx.guild.id)
+        await self.bot.db.execute(
+            'INSERT INTO prefixes (guild_id, snipe_enabled) VALUES ($1, TRUE) ON CONFLICT (guild_id) DO UPDATE SET snipe_enabled = TRUE',
+            ctx.guild.id,
+        )
         await ctx.send('✅ **snipe** has been enabled!')
 
     @require_snipe()

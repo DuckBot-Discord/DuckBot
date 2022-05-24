@@ -1,14 +1,17 @@
+import asyncio
 import logging
 import os
 from typing import Union
 
+import aiohttp
+import asyncpg
 import discord
-from asyncdagpi import ImageFeatures
+from asyncdagpi.image_features import ImageFeatures
 from discord.ext import commands
 
 from DuckBot import errors
 from DuckBot.cogs.economy.helper_classes import Wallet
-from DuckBot.helpers.bot_base import BaseDuck, col
+from DuckBot.helpers.bot_base import BaseDuck, col, get_or_fail
 from DuckBot.helpers.context import CustomContext
 
 logging.basicConfig(
@@ -30,9 +33,7 @@ target_type = Union[
 
 
 class DuckBot(BaseDuck):
-    async def create_gist(
-        self, *, filename: str, description: str, content: str, public: bool = False
-    ):
+    async def create_gist(self, *, filename: str, description: str, content: str, public: bool = False):
         headers = {
             "Accept": "application/vnd.github.v3+json",
             "User-Agent": "DuckBot-Discord",
@@ -44,9 +45,7 @@ class DuckBot(BaseDuck):
             "files": {filename: {"content": content}},
             "description": description,
         }
-        output = await self.session.request(
-            "POST", "https://api.github.com/gists", json=data, headers=headers
-        )
+        output = await self.session.request("POST", "https://api.github.com/gists", json=data, headers=headers)
         info = await output.json()
         return info["html_url"]
 
@@ -61,9 +60,7 @@ class DuckBot(BaseDuck):
         if not channel:
             raise errors.NoWelcomeChannel
 
-        welcome_channel = member.guild.get_channel(channel) or (
-            await member.guild.fetch_channel(channel)
-        )
+        welcome_channel = member.guild.get_channel(channel) or (await member.guild.fetch_channel(channel))
         if not welcome_channel:
             self.welcome_channels[member.guild.id] = None
             raise errors.NoWelcomeChannel
@@ -80,9 +77,7 @@ class DuckBot(BaseDuck):
         bucket = self.dagpi_cooldown.get_bucket(ctx.message)
         retry_after = bucket.update_rate_limit()
         if retry_after:
-            raise commands.CommandOnCooldown(
-                commands.Cooldown(60, 60), retry_after, commands.BucketType.default
-            )
+            raise commands.CommandOnCooldown(commands.Cooldown(60, 60), retry_after, commands.BucketType.default)
         url = (
             getattr(target, "display_avatar", None)
             or getattr(target, "icon", None)
@@ -91,9 +86,7 @@ class DuckBot(BaseDuck):
         )
         url = getattr(getattr(url, "icon", url), "url", url)
         request = await self.dagpi_client.image_process(feature, url, **kwargs)
-        return discord.File(
-            fp=request.image, filename=f"DuckBot-{str(feature)}.{request.format}"
-        )
+        return discord.File(fp=request.image, filename=f"DuckBot-{str(feature)}.{request.format}")
 
     # noinspection PyProtectedMember
     def update_log(self, deliver_type: str, webhook_url: str, guild_id: int):
@@ -121,21 +114,34 @@ class DuckBot(BaseDuck):
 
 
 if __name__ == "__main__":
-    bot = DuckBot()
 
-    @bot.check
-    def user_blacklisted(ctx: CustomContext):
-        if not bot.blacklist.get(ctx.author.id, None) or ctx.author.id == bot.owner_id:
+    async def user_blacklisted(ctx: CustomContext):
+        if not ctx.bot.blacklist.get(ctx.author.id, None) or await ctx.bot.is_owner(ctx.author):
             return True
-        if ctx.command.root_parent and ctx.command.root_parent.name == "pit":
+        if ctx.command and ctx.command.root_parent and ctx.command.root_parent.name == "pit":
             return True
         raise errors.UserBlacklisted
 
-    @bot.check
-    def maintenance_mode(ctx: CustomContext):
-        if not bot.maintenance or ctx.author.id == bot.owner_id:
+    async def maintenance_mode(ctx: CustomContext):
+        if not ctx.bot.maintenance or await ctx.bot.is_owner(ctx.author):
             return True
         else:
             raise errors.BotUnderMaintenance
 
-    bot.run(TOKEN)
+    credentials = {
+        "user": f"{get_or_fail('PSQL_USER')}",
+        "password": f"{get_or_fail('PSQL_PASSWORD')}",
+        "database": f"{get_or_fail('PSQL_DB')}",
+        "host": f"{get_or_fail('PSQL_HOST')}",
+        "port": f"{get_or_fail('PSQL_PORT')}",
+    }
+
+    async def runner():
+        async with asyncpg.create_pool(**credentials) as pool, aiohttp.ClientSession() as session, DuckBot(
+            pool, session
+        ) as bot:
+            bot.add_check(user_blacklisted)
+            bot.add_check(maintenance_mode)
+            await bot.start(TOKEN)
+
+    asyncio.run(runner())

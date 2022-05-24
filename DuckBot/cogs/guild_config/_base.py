@@ -106,7 +106,9 @@ class ConfigBase(commands.Cog):
         current = time.time()
         self.bot.expiring_invites = {
             inv.max_age - int(current - inv.created_at.replace(tzinfo=datetime.timezone.utc).timestamp()): inv
-            for inv in flattened if inv.max_age != 0}
+            for inv in flattened
+            if inv.max_age != 0
+        }
 
         exists = True
 
@@ -238,8 +240,7 @@ class ConfigBase(commands.Cog):
             # we sort the invites to ensure we are comparing
             # A.uses == A.uses
             invites = sorted(invites.values(), key=lambda i: i.code)
-            cached = sorted(self.bot.invites[member.guild.id].values(),
-                            key=lambda i: i.code)
+            cached = sorted(self.bot.invites[member.guild.id].values(), key=lambda i: i.code)
 
             # zipping is the easiest way to compare each in order, and
             # they should be the same size? if we do it properly

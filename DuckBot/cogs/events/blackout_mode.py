@@ -39,7 +39,9 @@ class BlackoutMode(EventsBase):
             role = self.bot.get_guild(payload.guild_id).get_role(self.BLACKOUT_ROLE_ID)
             if not role:
                 return
-            await db.execute('INSERT INTO blackout (user_id, roles) VALUES ($1, $2)', payload.member.id, [r.id for r in to_remove])
+            await db.execute(
+                'INSERT INTO blackout (user_id, roles) VALUES ($1, $2)', payload.member.id, [r.id for r in to_remove]
+            )
             try:
                 await payload.member.remove_roles(*to_remove, reason='Blackout mode')
             except discord.HTTPException:
@@ -67,5 +69,6 @@ class BlackoutMode(EventsBase):
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         if channel.guild.id != self.BLACKOUT_GUILD_ID:
             return
-        await channel.set_permissions(channel.guild.get_role(self.BLACKOUT_ROLE_ID), view_channel=False,
-                                      reason=f'automatic Blackout mode')
+        await channel.set_permissions(
+            channel.guild.get_role(self.BLACKOUT_ROLE_ID), view_channel=False, reason=f'automatic Blackout mode'
+        )

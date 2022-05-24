@@ -10,28 +10,28 @@ from ...helpers import constants
 from ...helpers.context import CustomContext
 
 
-_8ball_good = ['It is certain',
-               'It is decidedly so',
-               'Without a doubt',
-               'Yes - definitely',
-               'You may rely on it',
-               'As I see it, yes',
-               'Most likely',
-               'Outlook good',
-               'Yes',
-               'Signs point to yes']
+_8ball_good = [
+    'It is certain',
+    'It is decidedly so',
+    'Without a doubt',
+    'Yes - definitely',
+    'You may rely on it',
+    'As I see it, yes',
+    'Most likely',
+    'Outlook good',
+    'Yes',
+    'Signs point to yes',
+]
 
-_8ball_meh = ['Reply hazy, try again',
-              'Ask again later',
-              'Better not tell you now',
-              'Cannot predict now',
-              'Concentrate and ask again']
+_8ball_meh = [
+    'Reply hazy, try again',
+    'Ask again later',
+    'Better not tell you now',
+    'Cannot predict now',
+    'Concentrate and ask again',
+]
 
-_8ball_bad = ['Don\'t count on it',
-              'My reply is no',
-              'My sources say no',
-              'Outlook not so good',
-              'Very doubtful']
+_8ball_bad = ['Don\'t count on it', 'My reply is no', 'My sources say no', 'Outlook not so good', 'Very doubtful']
 
 _8ball_answers = _8ball_good + _8ball_meh + _8ball_bad
 
@@ -57,8 +57,7 @@ class BasicFun(FunBase):
         """
         async with ctx.typing():
             await asyncio.sleep(0.5)
-            return await ctx.send(f"**Q: {question[0:1800]}**"
-                                  f"\nA: {random.choice(_8ball_answers)}")
+            return await ctx.send(f"**Q: {question[0:1800]}**" f"\nA: {random.choice(_8ball_answers)}")
 
     @commands.command()
     async def choose(self, ctx: CustomContext, *choices: str) -> discord.Message:
@@ -68,12 +67,11 @@ class BasicFun(FunBase):
         """
         if len(choices) < 2:
             return await ctx.send("You must input at least 2 choices")
-        return await ctx.send(random.choice(choices),
-                              allowed_mentions=discord.AllowedMentions().none())
+        return await ctx.send(random.choice(choices), allowed_mentions=discord.AllowedMentions().none())
 
     @commands.command(aliases=['cf', 'flip', 'coin'])
     async def coinflip(self, ctx: CustomContext) -> discord.Message:
-        """ Flips a VirtualCoin™ """
+        """Flips a VirtualCoin™"""
         return await ctx.send(random.choice(constants.COINS_STRING))
 
     @commands.command(aliases=['random-number', 'dice'])
@@ -96,9 +94,11 @@ class BasicFun(FunBase):
 
     @commands.command(aliases=['cag'])
     async def catch(self, ctx: CustomContext, member: typing.Optional[discord.Member]):
-        """Catches someone. 😂 """
+        """Catches someone. 😂"""
         upper_hand = await ctx.send(constants.CAG_UP, reply=False, reminders=False)
-        message: discord.Message = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me)
+        message: discord.Message = await self.bot.wait_for(
+            'message', check=lambda m: m.channel == ctx.channel and m.author != ctx.me
+        )
         if (member and message.author != member) or message.author == ctx.author:
             await ctx.message.add_reaction(random.choice(constants.DONE))
             return await upper_hand.delete()

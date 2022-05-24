@@ -9,17 +9,16 @@ import discord
 import typing
 import random
 
-from asyncdagpi import ImageFeatures
-from discord import Interaction, InvalidArgument
+from asyncdagpi.image_features import ImageFeatures
+from discord import Interaction
 from discord.ext import commands
+from discord.ext.commands.errors import BadArgument
 
 from DuckBot.cogs.economy.helper_classes import Wallet
 from DuckBot.helpers import constants
 from typing import Union, TYPE_CHECKING
 
-target_type = Union[
-    discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite
-]
+target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite]
 
 if TYPE_CHECKING:
     from DuckBot.__main__ import DuckBot
@@ -203,19 +202,13 @@ class CustomContext(commands.Context):
         if file is True and maybe_attachment is True:
             raise ValueError("You can't use both file and attachment")
 
-        reference = (
-            (reference or self.message.reference or self.message)
-            if reply is True
-            else reference
-        )
+        reference = (reference or self.message.reference or self.message) if reply is True else reference
 
         if reminders is True:
             reminders = random.randint(0, 200) == 100
 
         if embed and embeds:
-            raise InvalidArgument(
-                "cannot pass both embed and embeds parameter to send()"
-            )
+            raise BadArgument("cannot pass both embed and embeds parameter to send()")
 
         if content or embed:
             test_string = re.sub(
@@ -223,12 +216,8 @@ class CustomContext(commands.Context):
                 "",
                 (str(content) or "") + str((embed.to_dict() if embed else "")),
             )
-            if self.bot.http.token in test_string.replace("\u200b", "").replace(
-                " ", ""
-            ):
-                raise commands.BadArgument(
-                    "Could not send message as it contained the bot's token!"
-                )
+            if self.bot.http.token in test_string.replace("\u200b", "").replace(" ", ""):
+                raise commands.BadArgument("Could not send message as it contained the bot's token!")
 
         if embed and footer is True:
             if not embed.footer:
@@ -239,7 +228,7 @@ class CustomContext(commands.Context):
                 embed.timestamp = discord.utils.utcnow()
 
         if embed:
-            colors = {embed.color} - {discord.Color.default(), discord.Embed.Empty}
+            colors = {embed.color} - {discord.Color.default(), None}
             embed.colour = next(iter(colors), self.color)
 
         embeds = [embed] if embed else (embeds or [])
@@ -254,8 +243,8 @@ class CustomContext(commands.Context):
             content = f"<{content}>"
 
         elif maybe_attachment and len(content) > 2000:
-            file = io.StringIO(cleanup_code(content))
-            file = discord.File(file, filename=f"output.{extension}")
+            _file = io.BytesIO(cleanup_code(content).encode())
+            file = discord.File(_file, filename=f"output.{extension}")
             content = None
 
         if reminders:
@@ -263,40 +252,30 @@ class CustomContext(commands.Context):
                 embeds.append(random.choice(reminder_embeds))
 
         try:
-            return await super().send(
-                content=content, embeds=embeds, reference=reference, file=file, **kwargs
-            )
+            return await super().send(content=content, embeds=embeds, reference=reference, file=file, **kwargs)
         except discord.HTTPException:
-            return await super().send(
-                content=content, embeds=embeds, reference=None, file=file, **kwargs
-            )
+            return await super().send(content=content, embeds=embeds, reference=None, file=file, **kwargs)
 
     async def confirm(
         self,
         message: str = "Do you want to confirm?",
-        buttons: typing.Tuple[
-            typing.Union[discord.PartialEmoji, str], str, discord.ButtonStyle
-        ] = None,
+        buttons: typing.Optional[typing.Tuple[typing.Union[discord.PartialEmoji, str], str, discord.ButtonStyle]] = None,
         timeout: int = 30,
         delete_after_confirm: bool = False,
         delete_after_timeout: bool = False,
-        delete_after_cancel: bool = None,
+        delete_after_cancel: typing.Optional[bool] = None,
         return_message: bool = False,
     ) -> typing.Union[bool, typing.Tuple[bool, discord.Message]]:
         """A confirmation menu."""
 
-        delete_after_cancel = (
-            delete_after_cancel
-            if delete_after_cancel is not None
-            else delete_after_confirm
-        )
+        delete_after_cancel = delete_after_cancel if delete_after_cancel is not None else delete_after_confirm
 
         view = Confirm(
             buttons=buttons
             or (
                 (None, "Confirm", discord.ButtonStyle.green),
                 (None, "Cancel", discord.ButtonStyle.red),
-            ),
+            ),  # type: ignore
             timeout=timeout,
         )
         view.ctx = self
@@ -323,57 +302,38 @@ class CustomContext(commands.Context):
 
             try:
                 if return_message is False:
-                    (
-                        await message.edit(view=view)
-                    ) if delete_after_timeout is False else (await message.delete())
+                    (await message.edit(view=view)) if delete_after_timeout is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
-            return (
-                (None, message)
-                if delete_after_timeout is False and return_message is True
-                else None
-            )
+            return (None, message) if delete_after_timeout is False and return_message is True else None
 
         elif view.value:
 
             try:
                 if return_message is False:
-                    (
-                        await message.edit(view=view)
-                    ) if delete_after_confirm is False else (await message.delete())
+                    (await message.edit(view=view)) if delete_after_confirm is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
-            return (
-                (True, message)
-                if delete_after_confirm is False and return_message is True
-                else True
-            )
+            return (True, message) if delete_after_confirm is False and return_message is True else True
 
         else:
 
             try:
                 if return_message is False:
-                    (
-                        await message.edit(view=view)
-                    ) if delete_after_cancel is False else (await message.delete())
+                    (await message.edit(view=view)) if delete_after_cancel is False else (await message.delete())
             except (discord.Forbidden, discord.HTTPException):
                 pass
 
-            return (
-                (False, message)
-                if delete_after_cancel is False and return_message is True
-                else False
-            )
+            return (False, message) if delete_after_cancel is False and return_message is True else False
 
     @property
     def color(self):
         """Returns DuckBot's color, or the author's color. Falls back to blurple"""
         return (
             self.me.color
-            if self.me.color not in (discord.Color.default(), discord.Embed.Empty, None)
+            if self.me.color not in (discord.Color.default(), None, None)
             else self.author.color
-            if self.author.color
-            not in (discord.Color.default(), discord.Embed.Empty, None)
+            if self.author.color not in (discord.Color.default(), None, None)
             else discord.Color.blurple()
         )
 
@@ -391,9 +351,7 @@ class CustomContext(commands.Context):
         public: bool = True,
     ):
         """Shortcut of bot.create_gist + ctx.send(gist)"""
-        gist = await self.bot.create_gist(
-            filename=filename, description=description, content=content, public=public
-        )
+        gist = await self.bot.create_gist(filename=filename, description=description, content=content, public=public)
         await self.send(f"<{gist}>")
 
     async def trigger_typing(self) -> None:
@@ -402,9 +360,7 @@ class CustomContext(commands.Context):
         except (discord.Forbidden, discord.HTTPException):
             pass
 
-    async def dagpi(
-        self, target: target_type = None, *, feature: ImageFeatures, **kwargs
-    ) -> discord.File:
+    async def dagpi(self, target: target_type = None, *, feature: ImageFeatures, **kwargs) -> discord.File:
         await self.trigger_typing()
         try:
             return await self.bot.dagpi_request(self, target, feature=feature, **kwargs)
@@ -446,13 +402,7 @@ class CustomContext(commands.Context):
         return_message: bool = False,
     ):
         """Prompts the user for text input."""
-        bot_message = await self.send(
-            **{
-                "content"
-                if not isinstance(message, discord.Embed)
-                else "embed": message
-            }
-        )
+        bot_message = await self.send(**{"content" if not isinstance(message, discord.Embed) else "embed": message})
         usermessage = None
         try:
             usermessage = await self.bot.wait_for(
@@ -479,20 +429,11 @@ class CustomContext(commands.Context):
             if isinstance(usermessage, discord.Message):
                 if delete_after:
                     to_do.append(bot_message.delete())
-                    if (
-                        message
-                        and self.channel.permissions_for(self.me).manage_messages
-                    ):
+                    if message and self.channel.permissions_for(self.me).manage_messages:
                         to_do.append(usermessage.delete())
                     else:
-                        to_do.append(
-                            usermessage.add_reaction(
-                                random.choice(self.bot.constants.DONE)
-                            )
-                        )
+                        to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
                 else:
-                    to_do.append(
-                        usermessage.add_reaction(random.choice(self.bot.constants.DONE))
-                    )
+                    to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
 
                 [self.bot.loop.create_task(to_do_item) for to_do_item in to_do]

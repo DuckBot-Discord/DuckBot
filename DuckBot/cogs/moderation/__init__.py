@@ -7,16 +7,22 @@ from .snipe import Snipe
 from discord.ext.commands import NoPrivateMessage
 
 
-class Moderation(BasicModCommands, ChannelManagementCommands, RemovalCommands,
-                 MuteCommands, RoleManagementCommands, Snipe):
+class Moderation(
+    BasicModCommands,
+    ChannelManagementCommands,
+    RemovalCommands,
+    MuteCommands,
+    RoleManagementCommands,
+    Snipe,
+):
     """
     🔨 Commands to facilitate server moderation, and all utilities for admins and mods.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.select_emoji = '🔨'
-        self.select_brief = 'Mod Commands, like Ban and Mute'
+        self.select_emoji = "🔨"
+        self.select_brief = "Mod Commands, like Ban and Mute"
 
     async def cog_check(self, ctx):
         if not ctx.guild:
@@ -24,5 +30,5 @@ class Moderation(BasicModCommands, ChannelManagementCommands, RemovalCommands,
         return True
 
 
-def setup(bot):
-    bot.add_cog(Moderation(bot))
+async def setup(bot):
+    await bot.add_cog(Moderation(bot))

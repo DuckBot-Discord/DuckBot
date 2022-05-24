@@ -36,6 +36,7 @@ def refresh():
             except Exception as e:
                 logging.error('Silently failed to refresh wallet for {}: {}'.format(ctx.author, e), exc_info=e)
         return True
+
     return commands.check(predicate)
 
 

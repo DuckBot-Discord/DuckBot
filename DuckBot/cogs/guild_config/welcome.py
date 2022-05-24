@@ -44,16 +44,21 @@ Q_T = typing.Union[str, discord.Embed]
 
 
 class Welcome(ConfigBase):
-
     async def prompt(self, ctx: CustomContext, question: Q_T, *, timeout: int = 60) -> str:
         try:
             return await ctx.prompt(question, timeout=timeout)
         except commands.UserInputError:
             raise SilentError
 
-    async def prompt_converter(self, ctx: CustomContext, question: Q_T, retry_question: Q_T = None,
-                               converter: commands.Converter | typing.Any = None, timeout: int = 60):
-        """ Prompts the user for something """
+    async def prompt_converter(
+        self,
+        ctx: CustomContext,
+        question: Q_T,
+        retry_question: Q_T = None,
+        converter: commands.Converter | typing.Any = None,
+        timeout: int = 60,
+    ):
+        """Prompts the user for something"""
         if retry_question and not converter:
             raise ValueError("You must provide a converter if you want to use a retry question")
 
@@ -93,26 +98,29 @@ class Welcome(ConfigBase):
 
         question = "Where would you like me to send the welcome message to? Please mention a channel / ID"
         retry_question = "That's not a valid channel / ID. Please try again or say `cancel` to cancel"
-        channel = await self.prompt_converter(ctx, question, retry_question=retry_question,
-                                              converter=commands.TextChannelConverter())
-        embed = discord.Embed(title="What do you want the welcome message to say?",
-                              description="**__Here are all available placeholders__**\n"
-                                          "To use these placeholders, surround them in `{}`. For example: {user-mention}\n\n"
-                                          "> **`server`** : returns the server's name (Server Name)\n"
-                                          "> **`user`** : returns the user's name (Name)\n"
-                                          "> **`full-user`** : returns the user's full name (Name#1234)\n"
-                                          "> **`user-mention`** : will mention the user (@Name)\n"
-                                          "> **`count`** : returns the member count of the server(4385)\n"
-                                          "> **`ordinal`** : returns the ordinal member count of the server(4385th)\n"
-                                          "> **`code`** : the invite code the member used to join(TdRfGKg8Wh) **\\***\n"
-                                          "> **`full-code`** : the full invite (discord.gg/TdRfGKg8Wh) **\\***\n"
-                                          "> **`full-url`** : the full url (<https://discord.gg/TdRfGKg8Wh>) **\\***\n"
-                                          "> **`inviter`** : returns the inviters name (Name) *****\n"
-                                          "> **`full-inviter`** : returns the inviters full name (Name#1234) **\\***\n"
-                                          "> **`inviter-mention`** : returns the inviters mention (@Name) **\\***\n\n"
-                                          "⚠ These placeholders are __CASE SENSITIVE.__\n"
-                                          "⚠ Placeholders marked with **\\*** may not be populated when a member joins, "
-                                          "like when a bot joins, or when a user is added by an integration.\n")
+        channel = await self.prompt_converter(
+            ctx, question, retry_question=retry_question, converter=commands.TextChannelConverter()
+        )
+        embed = discord.Embed(
+            title="What do you want the welcome message to say?",
+            description="**__Here are all available placeholders__**\n"
+            "To use these placeholders, surround them in `{}`. For example: {user-mention}\n\n"
+            "> **`server`** : returns the server's name (Server Name)\n"
+            "> **`user`** : returns the user's name (Name)\n"
+            "> **`full-user`** : returns the user's full name (Name#1234)\n"
+            "> **`user-mention`** : will mention the user (@Name)\n"
+            "> **`count`** : returns the member count of the server(4385)\n"
+            "> **`ordinal`** : returns the ordinal member count of the server(4385th)\n"
+            "> **`code`** : the invite code the member used to join(TdRfGKg8Wh) **\\***\n"
+            "> **`full-code`** : the full invite (discord.gg/TdRfGKg8Wh) **\\***\n"
+            "> **`full-url`** : the full url (<https://discord.gg/TdRfGKg8Wh>) **\\***\n"
+            "> **`inviter`** : returns the inviters name (Name) *****\n"
+            "> **`full-inviter`** : returns the inviters full name (Name#1234) **\\***\n"
+            "> **`inviter-mention`** : returns the inviters mention (@Name) **\\***\n\n"
+            "⚠ These placeholders are __CASE SENSITIVE.__\n"
+            "⚠ Placeholders marked with **\\*** may not be populated when a member joins, "
+            "like when a bot joins, or when a user is added by an integration.\n",
+        )
         embed.set_footer(text="If you want to cancel, say cancel")
         r_q = 'Sorry but there was an invalid placeholder. Please try again or say `cancel` to cancel'
         message = await self.prompt_converter(ctx, question=embed, retry_question=r_q)
@@ -133,10 +141,11 @@ class Welcome(ConfigBase):
                 raise commands.BadArgument("You can't send messages in that channel!")
             await self.bot.db.execute(query, ctx.guild.id, channel.id)
             self.bot.welcome_channels[ctx.guild.id] = channel.id
-            message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
-                                                 ctx.guild.id)
-            await ctx.send(f"Done! Welcome channel updated to {channel.mention} \n"
-                           f"{'also, you can customize the welcome message with the `welcome message` command.' if not message else ''}")
+            message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+            await ctx.send(
+                f"Done! Welcome channel updated to {channel.mention} \n"
+                f"{'also, you can customize the welcome message with the `welcome message` command.' if not message else ''}"
+            )
         else:
             await self.bot.db.execute(query, ctx.guild.id, None)
             self.bot.welcome_channels[ctx.guild.id] = None
@@ -182,18 +191,20 @@ class Welcome(ConfigBase):
         member = ctx.author
         inviter = random.choice(ctx.guild.members)
 
-        to_format = {'server': str(member.guild),
-                     'user': str(member.display_name),
-                     'full-user': str(member),
-                     'user-mention': str(member.mention),
-                     'count': str(member.guild.member_count),
-                     'ordinal': str(make_ordinal(member.guild.member_count)),
-                     'code': "discord-api",
-                     'full-code': "discord.gg/discord-api",
-                     'full-url': "https://discord.gg/discord-api",
-                     'inviter': str(inviter),
-                     'full-inviter': str(inviter if inviter else 'N/A'),
-                     'inviter-mention': str(inviter.mention if inviter else 'N/A')}
+        to_format = {
+            'server': str(member.guild),
+            'user': str(member.display_name),
+            'full-user': str(member),
+            'user-mention': str(member.mention),
+            'count': str(member.guild.member_count),
+            'ordinal': str(make_ordinal(member.guild.member_count)),
+            'code': "discord-api",
+            'full-code': "discord.gg/discord-api",
+            'full-url': "https://discord.gg/discord-api",
+            'inviter': str(inviter),
+            'full-inviter': str(inviter if inviter else 'N/A'),
+            'inviter-mention': str(inviter.mention if inviter else 'N/A'),
+        }
 
         if len(message) > 1000:
             raise commands.BadArgument(f"That welcome message is too long! ({len(message)}/1000)")
@@ -211,28 +222,32 @@ class Welcome(ConfigBase):
     @commands.guild_only()
     @welcome.command(name='fake-message', aliases=['fake', 'test-message'])
     async def welcome_message_test(self, ctx: CustomContext):
-        """ Sends a fake welcome message to test the one set using the `welcome message` command. """
+        """Sends a fake welcome message to test the one set using the `welcome message` command."""
         member = ctx.author
-        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
-                                             member.guild.id)
+        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", member.guild.id)
         message = message or default_message
-        invite = SimpleNamespace(url='https://discord.gg/TdRfGKg8Wh',
-                                 code='discord-api',
-                                 inviter=random.choice(ctx.guild.members))
+        invite = SimpleNamespace(
+            url='https://discord.gg/TdRfGKg8Wh', code='discord-api', inviter=random.choice(ctx.guild.members)
+        )
 
-        to_format = {'server': str(member.guild),
-                     'user': str(member.display_name),
-                     'full-user': str(member),
-                     'user-mention': str(member.mention),
-                     'count': str(member.guild.member_count),
-                     'ordinal': str(make_ordinal(member.guild.member_count)),
-                     'code': str(invite.code),
-                     'full-code': f"discord.gg/{invite.code}",
-                     'full-url': str(invite.url),
-                     'inviter': str(((member.guild.get_member(
-                         invite.inviter.id).display_name) or invite.inviter.name) if invite.inviter else 'N/A'),
-                     'full-inviter': str(invite.inviter if invite.inviter else 'N/A'),
-                     'inviter-mention': str(invite.inviter.mention if invite.inviter else 'N/A')}
+        to_format = {
+            'server': str(member.guild),
+            'user': str(member.display_name),
+            'full-user': str(member),
+            'user-mention': str(member.mention),
+            'count': str(member.guild.member_count),
+            'ordinal': str(make_ordinal(member.guild.member_count)),
+            'code': str(invite.code),
+            'full-code': f"discord.gg/{invite.code}",
+            'full-url': str(invite.url),
+            'inviter': str(
+                ((member.guild.get_member(invite.inviter.id).display_name) or invite.inviter.name)
+                if invite.inviter
+                else 'N/A'
+            ),
+            'full-inviter': str(invite.inviter if invite.inviter else 'N/A'),
+            'inviter-mention': str(invite.inviter.mention if invite.inviter else 'N/A'),
+        }
 
         await ctx.send(message.format(**to_format), allowed_mentions=discord.AllowedMentions.none())
 
@@ -242,23 +257,26 @@ class Welcome(ConfigBase):
             channel = await self.bot.get_welcome_channel(member)
         except errors.NoWelcomeChannel:
             return
-        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1",
-                                             member.guild.id)
+        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", member.guild.id)
         message = message or default_message
 
-        to_format = {'server': str(member.guild),
-                     'user': str(member.display_name),
-                     'full-user': str(member),
-                     'user-mention': str(member.mention),
-                     'count': str(member.guild.member_count),
-                     'ordinal': str(make_ordinal(member.guild.member_count)),
-                     'code': (str(invite.code) if invite else 'N/A'),
-                     'full-code': (f"discord.gg/{invite.code}" if invite else 'N/A'),
-                     'full-url': (str(invite) if invite else 'N/A'),
-                     'inviter': str(((member.guild.get_member(
-                         invite.inviter.id).display_name) or invite.inviter.name)
-                                    if invite and invite.inviter else 'N/A'),
-                     'full-inviter': str(invite.inviter if invite and invite.inviter else 'N/A'),
-                     'inviter-mention': str(invite.inviter.mention if invite and invite.inviter else 'N/A')}
+        to_format = {
+            'server': str(member.guild),
+            'user': str(member.display_name),
+            'full-user': str(member),
+            'user-mention': str(member.mention),
+            'count': str(member.guild.member_count),
+            'ordinal': str(make_ordinal(member.guild.member_count)),
+            'code': (str(invite.code) if invite else 'N/A'),
+            'full-code': (f"discord.gg/{invite.code}" if invite else 'N/A'),
+            'full-url': (str(invite) if invite else 'N/A'),
+            'inviter': str(
+                ((member.guild.get_member(invite.inviter.id).display_name) or invite.inviter.name)
+                if invite and invite.inviter
+                else 'N/A'
+            ),
+            'full-inviter': str(invite.inviter if invite and invite.inviter else 'N/A'),
+            'inviter-mention': str(invite.inviter.mention if invite and invite.inviter else 'N/A'),
+        }
 
         await channel.send(message.format(**to_format))

@@ -3,7 +3,6 @@ import typing
 
 import aiofiles
 import discord
-from discord import VoiceRegion
 from discord.flags import BaseFlags, fill_with_flags, flag_value
 
 from DuckBot.helpers import constants
@@ -16,7 +15,7 @@ def get_perms(permissions: discord.Permissions):
     return [p.replace('_', ' ').replace('guild', 'server').title() for p in wanted_perms]
 
 
-def get_user_badges(user: discord.Member, bot, fetched_user: discord.User = None):
+def get_user_badges(user: discord.Member, bot, fetched_user: typing.Optional[discord.User] = None):
     flags = dict(user.public_flags)
 
     user_flags = []
@@ -50,97 +49,6 @@ def get_user_badges(user: discord.Member, bot, fetched_user: discord.User = None
     return '\n'.join(user_flags) if user_flags else None
 
 
-def get_server_region(guild: discord.Guild):
-    r = discord.VoiceRegion.us_central
-    region = guild.region
-
-    if region == VoiceRegion.amsterdam:
-        return "🇳🇱 Amsterdam"
-    if region == VoiceRegion.brazil:
-        return "🇧🇷 Brazil"
-    if region == VoiceRegion.dubai:
-        return "🇦🇪 Dubai"
-    if region == VoiceRegion.eu_central:
-        return "🇪🇺 EU central"
-    if region == VoiceRegion.eu_west:
-        return "🇪🇺 EU west"
-    if region == VoiceRegion.europe:
-        return "🇪🇺 Europe"
-    if region == VoiceRegion.frankfurt:
-        return "🇩🇪 Frankfurt"
-    if region == VoiceRegion.hongkong:
-        return "🇭🇰 Hong Kong"
-    if region == VoiceRegion.india:
-        return "🇮🇳 India"
-    if region == VoiceRegion.japan:
-        return "🇯🇵 Japan"
-    if region == VoiceRegion.london:
-        return "🇬🇧 London"
-    if region == VoiceRegion.russia:
-        return "🇷🇺 Russia"
-    if region == VoiceRegion.singapore:
-        return "🇸🇬 Singapore"
-    if region == VoiceRegion.southafrica:
-        return "🇿🇦 South Africa"
-    if region == VoiceRegion.south_korea:
-        return "🇰🇷 South Korea"
-    if region == VoiceRegion.sydney:
-        return "🇦🇺 Sydney"
-    if region == VoiceRegion.us_central:
-        return "🇺🇸 US Central"
-    if region == VoiceRegion.us_east:
-        return "🇺🇸 US East"
-    if region == VoiceRegion.us_south:
-        return "🇺🇸 US South"
-    if region == VoiceRegion.us_west:
-        return "🇺🇸 US West"
-    if region == VoiceRegion.vip_amsterdam:
-        return "🇳🇱🌟 VIP Amsterdam"
-    if region == VoiceRegion.vip_us_east:
-        return "🇺🇸🌟 VIP US East"
-    if region == VoiceRegion.vip_us_west:
-        return "🇺🇸🌟 VIP US West"
-    if str(region) == 'atlanta':
-        return "🇺🇸 Atlanta"
-    if str(region) == 'santa-clara':
-        return "🇺🇸 Santa Clara"
-    else:
-        return "⁉ Not Found"
-
-
-def generate_youtube_bar(position: int, duration: int, bar_length: int,
-                         bar_style: typing.Tuple[typing.Tuple[str, str, str]] = None) -> str:
-    bar_length = bar_length if bar_length > 0 else 1
-    duration = duration if duration > 0 else 1
-    played = int((position / duration) * bar_length)
-    missing = int(bar_length - played)
-    bars = bar_style or constants.YOUTUBE_BARS
-    bar = []
-    if played == 0 and missing > 0:
-        bar += [bars[0][1]]
-        bar += [bars[1][2] * (missing - 2)]
-        bar += [bars[2][2]]
-
-    elif played > 0 and missing == 0:
-        bar += [bars[0][0]]
-        bar += [bars[1][0] * (played - 2)]
-        bar += [bars[2][1]]
-
-    elif played > 0 and missing > 0:
-        bar += [bars[0][0]]
-        bar += [bars[1][0] * (played - 1)]
-        bar += [bars[1][1]]
-        bar += [bars[1][2] * (missing - 2)]
-        bar += [bars[2][2]]
-
-    elif played > missing:
-        bar += [bars[0][0]]
-        bar += [bars[1][0] * (bar_length - 2)]
-        bar += [bars[2][0]]
-
-    return ''.join(bar)
-
-
 async def count_lines(path: str, filetype: str = '.py'):
     lines = 0
     for i in os.scandir(path):
@@ -157,15 +65,16 @@ async def count_others(path: str, filetype: str = '.py', file_contains: str = 'd
     for i in os.scandir(path):
         if i.is_file():
             if i.path.endswith(filetype):
-                line_count += len([line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if
-                                   file_contains in line])
+                line_count += len(
+                    [line for line in (await (await aiofiles.open(i.path, 'r')).read()).split("\n") if file_contains in line]
+                )
         elif i.is_dir():
             line_count += await count_others(i.path, filetype, file_contains)
     return line_count
 
 
 class Url(discord.ui.View):
-    def __init__(self, url: str, label: str = 'Open', emoji: str = None):
+    def __init__(self, url: str, label: str = 'Open', emoji: typing.Optional[str] = None):
         super().__init__()
         self.add_item(discord.ui.Button(label=label, emoji=emoji, url=url))
 
@@ -185,19 +94,19 @@ def generate_user_statuses(member: discord.Member):
         discord.Status.online: constants.statuses.ONLINE_MOBILE,
         discord.Status.idle: constants.statuses.IDLE_MOBILE,
         discord.Status.dnd: constants.statuses.DND_MOBILE,
-        discord.Status.offline: constants.statuses.OFFLINE_MOBILE
+        discord.Status.offline: constants.statuses.OFFLINE_MOBILE,
     }[member.mobile_status]
     web = {
         discord.Status.online: constants.statuses.ONLINE_WEB,
         discord.Status.idle: constants.statuses.IDLE_WEB,
         discord.Status.dnd: constants.statuses.DND_WEB,
-        discord.Status.offline: constants.statuses.OFFLINE_WEB
+        discord.Status.offline: constants.statuses.OFFLINE_WEB,
     }[member.web_status]
     desktop = {
         discord.Status.online: constants.statuses.ONLINE,
         discord.Status.idle: constants.statuses.IDLE,
         discord.Status.dnd: constants.statuses.DND,
-        discord.Status.offline: constants.statuses.OFFLINE
+        discord.Status.offline: constants.statuses.OFFLINE,
     }[member.desktop_status]
     return f"\u200b{desktop}\u200b{web}\u200b{mobile}"
 
@@ -212,7 +121,6 @@ def convert_bytes(size):
 
 @fill_with_flags()
 class LoggingEventsFlags(BaseFlags):
-
     def __init__(self, permissions: int = 0, **kwargs: bool):
         super().__init__(**kwargs)
         if not isinstance(permissions, int):

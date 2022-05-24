@@ -19,7 +19,6 @@ class Arguments(argparse.ArgumentParser):
 
 
 class RemovalCommands(ModerationBase):
-
     @staticmethod
     async def do_removal(ctx: CustomContext, limit: int, predicate, *, before=None, after=None, bulk: bool = True):
         if limit > 2000:
@@ -148,9 +147,11 @@ class RemovalCommands(ModerationBase):
 
             spammers = Counter(m.author.display_name for m in deleted)
             deleted = len(deleted)
-            messages = [f'{deleted} message'
-                        f'{" and its associated thread was" if deleted == 1 else "s and their associated messages were"} '
-                        f'removed.']
+            messages = [
+                f'{deleted} message'
+                f'{" and its associated thread was" if deleted == 1 else "s and their associated messages were"} '
+                f'removed.'
+            ]
 
             if deleted:
                 messages.append('')
@@ -160,8 +161,9 @@ class RemovalCommands(ModerationBase):
             to_send = '\n'.join(messages)
 
             if len(to_send) > 2000:
-                await ctx.send(f'Successfully removed {deleted} messages and their associated threads.',
-                               delete_after=10, reply=False)
+                await ctx.send(
+                    f'Successfully removed {deleted} messages and their associated threads.', delete_after=10, reply=False
+                )
             else:
                 await ctx.send(to_send, delete_after=10, reply=False)
 
@@ -181,8 +183,11 @@ class RemovalCommands(ModerationBase):
 
             await ctx.send(f'Successfully removed {total_reactions} reactions.')
 
-    @remove.command(name="custom", brief="A more advanced purge command, with a command line-like interface. "
-                                         "\nSee help on this command for more info, using `%PRE%help remove custom`")
+    @remove.command(
+        name="custom",
+        brief="A more advanced purge command, with a command line-like interface. "
+        "\nSee help on this command for more info, using `%PRE%help remove custom`",
+    )
     async def remove_custom(self, ctx, *, args: str):
         """A more advanced purge command.
         This command uses a powerful "command line" syntax.
@@ -312,6 +317,7 @@ class RemovalCommands(ModerationBase):
 
             def check(msg):
                 return msg.author == ctx.me or msg.content.startswith(prefix)
+
         else:
             bulk = False
 

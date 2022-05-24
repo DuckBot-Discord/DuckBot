@@ -10,7 +10,6 @@ from DuckBot.helpers.context import CustomContext
 
 
 class BannedMember(commands.Converter):
-
     async def convert(self, ctx: CustomContext, argument):  # noqa
         await ctx.trigger_typing()
         if argument.isdigit():
@@ -30,9 +29,12 @@ class BannedMember(commands.Converter):
                     if entity:
                         val = await ctx.confirm(
                             f'Found closest match: **{entity.user}**. Do you want me to unban them?',
-                            delete_after_cancel=True, delete_after_confirm=True,
-                            delete_after_timeout=False, timeout=60,
-                            buttons=((None, 'Yes', discord.ButtonStyle.green), (None, 'No', discord.ButtonStyle.grey)))  # noqa
+                            delete_after_cancel=True,
+                            delete_after_confirm=True,
+                            delete_after_timeout=False,
+                            timeout=60,
+                            buttons=((None, 'Yes', discord.ButtonStyle.green), (None, 'No', discord.ButtonStyle.grey)),
+                        )  # noqa
                         if val is None:
                             raise errors.NoHideout
                         elif val is False:
@@ -69,5 +71,3 @@ class ModerationBase(commands.Cog):
             elif target == ctx.guild.me:
                 raise commands.BadArgument('I cannot perform that action on myself.')
             return True
-
-

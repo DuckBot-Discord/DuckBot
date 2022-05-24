@@ -7,27 +7,28 @@ import re
 import traceback
 import typing
 from collections import defaultdict, deque
-from typing import List, Optional, Any, TYPE_CHECKING, Type
+from typing import Dict, Iterable, List, Optional, Any, TYPE_CHECKING, Type
 
 import aiohttp
 import aiohttp.web
 import asyncpg
 import asyncpraw
 import discord
-import slash_util
 import topgg
-from asyncdagpi import Client as DagpiClient
-from discord.ext import commands, ipc
+from asyncdagpi.client import Client as DagpiClient
+from discord.ext import commands
 from dotenv import load_dotenv
+from discord.ext import commands
 
 from DuckBot.cogs.economy.helper_classes import Wallet
 from DuckBot.helpers import constants
 from DuckBot.helpers.context import CustomContext
 from DuckBot.helpers.helper import LoggingEventsFlags
 
-SimpleMessage = None
 if TYPE_CHECKING:
     from ..cogs.moderation.snipe import SimpleMessage
+else:
+    SimpleMessage = None
 
 initial_extensions = ("jishaku",)
 
@@ -43,7 +44,6 @@ extensions = (
     "DuckBot.cogs.info",
     "DuckBot.cogs.management",
     "DuckBot.cogs.modmail",
-    "DuckBot.cogs.ipc",
     "DuckBot.cogs.test",
     "DuckBot.cogs.utility",
     "DuckBot.cogs.moderation",
@@ -66,6 +66,13 @@ def col(color=None, /, *, fmt=0, bg=False):
     return base.format(fmt=fmt, color=color)
 
 
+def get_or_fail(var: str) -> str:
+    v = os.getenv(var)
+    if v is None:
+        raise Exception(f"{var!r} is not set in the .env file")
+    return v
+
+
 class LoggingConfig:
     __slots__ = ("default", "message", "member", "join_leave", "voice", "server")
 
@@ -82,12 +89,12 @@ class LoggingConfig:
             setattr(self, key, value)
 
 
-class BaseDuck(slash_util.Bot):
+class BaseDuck(commands.AutoShardedBot):
     PRE: tuple = ("db.",)
     logger = logging.getLogger("DuckBot.logging")
     _ext_log = logging.getLogger("DuckBot.extensions")
 
-    def __init__(self) -> None:
+    def __init__(self, pool: asyncpg.Pool, session: aiohttp.ClientSession) -> None:
         intents = discord.Intents.all()
         # noinspection PyDunderSlots,PyUnresolvedReferences
         intents.typing = False
@@ -96,23 +103,23 @@ class BaseDuck(slash_util.Bot):
             intents=intents,
             command_prefix=self.get_pre,
             case_insensitive=True,
-            activity=discord.Streaming(
-                name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-            ),
+            activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             strip_after_prefix=True,
             chunk_guilds_at_startup=False,
         )
+
+        self.db = pool
+        self.session = session
+
         self.log_webhooks: Type[LoggingConfig] = LoggingConfig
-        self.ipc: ipc.Server = ipc.Server(self, secret_key="testing")
-        self.ipc.start()
         self.allowed_mentions = discord.AllowedMentions.none()
 
         self.reddit = asyncpraw.Reddit(
-            client_id=os.getenv("ASYNC_PRAW_CID"),
-            client_secret=os.getenv("ASYNC_PRAW_CS"),
-            user_agent=os.getenv("ASYNC_PRAW_UA"),
-            username=os.getenv("ASYNC_PRAW_UN"),
-            password=os.getenv("ASYNC_PRAW_PA"),
+            client_id=get_or_fail("ASYNC_PRAW_CID"),
+            client_secret=get_or_fail("ASYNC_PRAW_CS"),
+            user_agent=get_or_fail("ASYNC_PRAW_UA"),
+            username=get_or_fail("ASYNC_PRAW_UN"),
+            password=get_or_fail("ASYNC_PRAW_PA"),
         )
 
         self.owner_id = 349373972103561218
@@ -132,25 +139,22 @@ class BaseDuck(slash_util.Bot):
         self.noprefix = False
         self.persistent_views_added = False
         self.uptime = self.last_rall = datetime.datetime.utcnow()
-        self.session: aiohttp.ClientSession = None  # type: ignore
-        self.top_gg = topgg.DBLClient(self, os.getenv("TOPGG_TOKEN"))
+        self.top_gg = topgg.client.DBLClient(get_or_fail("TOPGG_TOKEN"))
         self.dev_mode = True if os.getenv("DEV_MODE") == "yes" else False
-        self.dagpi_cooldown = commands.CooldownMapping.from_cooldown(
-            60, 60, commands.BucketType.default
-        )
-        self.dagpi_client = DagpiClient(os.getenv("DAGPI_TOKEN"))
+        self.dagpi_cooldown = commands.CooldownMapping.from_cooldown(60, 60, commands.BucketType.default)
+        self.dagpi_client = DagpiClient(get_or_fail("DAGPI_TOKEN"))
         self.constants = constants
 
         # Cache stuff
         self.invites = None
-        self.prefixes = {}
+        self.prefixes: Dict[int, Iterable[str]] = {}
         self.blacklist = {}
         self.afk_users = {}
         self.auto_un_afk = {}
         self.welcome_channels = {}
         self.suggestion_channels = {}
         self.dm_webhooks = defaultdict(str)
-        self.wallets: typing.Dict[Wallet] = {}
+        self.wallets: typing.Dict[str, Wallet] = {}
         self.counting_channels = {}
         self.counting_rewards = {}
         self.saved_messages = {}
@@ -158,83 +162,48 @@ class BaseDuck(slash_util.Bot):
         self.log_channels: typing.Dict[int, LoggingConfig] = {}
         self.log_cache = defaultdict(lambda: defaultdict(list))
         self.guild_loggings: typing.Dict[int, LoggingEventsFlags] = {}
-        self.snipes: typing.Dict[
-            int, typing.Dict[int, typing.Deque[SimpleMessage]]
-        ] = defaultdict(lambda: defaultdict(lambda: deque(maxlen=50)))
-
-        self.global_mapping = commands.CooldownMapping.from_cooldown(
-            10, 12, commands.BucketType.user
+        self.snipes: typing.Dict[int, typing.Dict[int, typing.Deque[SimpleMessage]]] = defaultdict(
+            lambda: defaultdict(lambda: deque(maxlen=50))
         )
-        self.db: asyncpg.Pool = self.loop.run_until_complete(self.create_db_pool())
-        self.load_cogs()
-        self.loop.run_until_complete(self.populate_cache())
 
-    def load_cogs(self) -> None:
+        self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
+
+    async def setup_hook(self) -> None:
+        await self.populate_cache()
+
         for ext in initial_extensions:
-            with contextlib.suppress(Exception):
-                self.load_extension(ext)
+            await self.load_extension(ext, _raise=False)
 
         for ext in extensions:
-            with contextlib.suppress(Exception):
-                self.load_extension(ext)
+            await self.load_extension(ext, _raise=False)
 
-    async def get_pre(
-        self, bot, message: discord.Message, raw_prefix: Optional[bool] = False
-    ) -> List[str]:
+    async def get_pre(self, bot, message: discord.Message, raw_prefix: Optional[bool] = False) -> Iterable[str]:
         if not message:
-            return (
-                commands.when_mentioned_or(*self.PRE)(bot, message)
-                if not raw_prefix
-                else self.PRE
-            )
+            return commands.when_mentioned_or(*self.PRE)(bot, message) if not raw_prefix else self.PRE
         if not message.guild:
-            return (
-                commands.when_mentioned_or(*self.PRE)(bot, message)
-                if not raw_prefix
-                else self.PRE
-            )
+            return commands.when_mentioned_or(*self.PRE)(bot, message) if not raw_prefix else self.PRE
         try:
             prefix = self.prefixes[message.guild.id]
         except KeyError:
             prefix = [
-                x["prefix"]
-                for x in await bot.db.fetch(
-                    "SELECT prefix FROM pre WHERE guild_id = $1", message.guild.id
-                )
+                x["prefix"] for x in await bot.db.fetch("SELECT prefix FROM pre WHERE guild_id = $1", message.guild.id)
             ] or self.PRE
             self.prefixes[message.guild.id] = prefix
 
         should_noprefix = False
-        if not message.content.startswith(
-            ("jishaku", "eval", "jsk", "ev", "rall", "dev", "rmsg")
-        ):
+        if not message.content.startswith(("jishaku", "eval", "jsk", "ev", "rall", "dev", "rmsg")):
             pass
         elif not message.guild:
             should_noprefix = True
         elif not message.guild.get_member(788278464474120202):
             should_noprefix = True
 
-        if await bot.is_owner(message.author) and (
-            bot.noprefix is True or should_noprefix
-        ):
-            return (
-                commands.when_mentioned_or(*prefix, "")(bot, message)
-                if not raw_prefix
-                else prefix
-            )
-        return (
-            commands.when_mentioned_or(*prefix)(bot, message)
-            if not raw_prefix
-            else prefix
-        )
+        if await bot.is_owner(message.author) and (bot.noprefix is True or should_noprefix):
+            return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
+        return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
 
     async def fetch_prefixes(self, message):
-        prefixes = [
-            x["prefix"]
-            for x in await self.db.fetch(
-                "SELECT prefix FROM pre WHERE guild_id = $1", message.guild.id
-            )
-        ]
+        prefixes = [x["prefix"] for x in await self.db.fetch("SELECT prefix FROM pre WHERE guild_id = $1", message.guild.id)]
         if not prefixes:
             await self.db.execute(
                 "INSERT INTO pre (guild_id, prefix) VALUES ($1, $2)",
@@ -270,11 +239,8 @@ class BaseDuck(slash_util.Bot):
         for line in traceback_string.split("\n"):
             self.logger.error(line, exc_info=None)
         await self.wait_until_ready()
-        error_channel = self.get_channel(880181130408636456)
-        to_send = (
-            f"```yaml\nAn error occurred in an {event_method} event``````py"
-            f"\n{traceback_string}\n```"
-        )
+        error_channel: discord.TextChannel = self.get_channel(880181130408636456)  # type: ignore # known ID
+        to_send = f"```yaml\nAn error occurred in an {event_method} event``````py" f"\n{traceback_string}\n```"
         if len(to_send) < 2000:
             try:
                 await error_channel.send(to_send)
@@ -322,11 +288,7 @@ class BaseDuck(slash_util.Bot):
             self.welcome_channels[value["guild_id"]] = value["welcome_channel"] or None
 
         self.afk_users = dict(
-            [
-                (r["user_id"], True)
-                for r in (await self.db.fetch("SELECT user_id, start_time FROM afk"))
-                if r["start_time"]
-            ]
+            [(r["user_id"], True) for r in (await self.db.fetch("SELECT user_id, start_time FROM afk")) if r["start_time"]]
         )
         self.auto_un_afk = dict(
             [
@@ -338,11 +300,7 @@ class BaseDuck(slash_util.Bot):
         self.suggestion_channels = dict(
             [
                 (r["channel_id"], r["image_only"])
-                for r in (
-                    await self.db.fetch(
-                        "SELECT channel_id, image_only FROM suggestions"
-                    )
-                )
+                for r in (await self.db.fetch("SELECT channel_id, image_only FROM suggestions"))
             ]
         )
         self.counting_channels = dict(
@@ -398,64 +356,34 @@ class BaseDuck(slash_util.Bot):
         self.dispatch("cache_ready")
 
     async def start(self, *args, **kwargs):
-        self.session = aiohttp.ClientSession()
         await super().start(*args, **kwargs)
 
-    async def close(self):
-        await self.db.close()
-        await self.session.close()
-        await super().close()
-
-    async def create_db_pool(self) -> asyncpg.Pool:
-        credentials = {
-            "user": f"{os.getenv('PSQL_USER')}",
-            "password": f"{os.getenv('PSQL_PASSWORD')}",
-            "database": f"{os.getenv('PSQL_DB')}",
-            "host": f"{os.getenv('PSQL_HOST')}",
-            "port": f"{os.getenv('PSQL_PORT')}",
-        }
-        db = None
-        try:
-            db = await asyncpg.create_pool(**credentials)
-        except Exception as e:
-            self.logger.error("Could not create database pool", exc_info=e)
-        else:
-            self.logger.info(f"{col(2)}Database successful.")
-        finally:
-            self.dispatch("pool_create")
-            return db
-
-    def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
+    async def load_extension(self, name: str, *, package: Optional[str] = None, _raise: bool = True) -> None:
         self._ext_log.info(f"{col(7)}Attempting to load {col(7, fmt=4)}{name}{col()}")
         try:
-            super().load_extension(name, package=package)
+            await super().load_extension(name, package=package)
             self._ext_log.info(f"{col(2)}Loaded extension {col(2, fmt=4)}{name}{col()}")
         except Exception as e:
             self._ext_log.error(f"Failed to load extension {name}", exc_info=e)
-            raise e
+            if _raise:
+                raise e
 
-    def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        self._ext_log.info(
-            f"{col(7)}Attempting to unload extension {col(7, fmt=4)}{name}{col()}"
-        )
+    async def unload_extension(self, name: str, *, package: Optional[str] = None, _raise: bool = True) -> None:
+        self._ext_log.info(f"{col(7)}Attempting to unload extension {col(7, fmt=4)}{name}{col()}")
         try:
-            super().unload_extension(name, package=package)
-            self._ext_log.info(
-                f"{col(2)}Unloaded extension {col(2, fmt=4)}{name}{col()}"
-            )
+            await super().unload_extension(name, package=package)
+            self._ext_log.info(f"{col(2)}Unloaded extension {col(2, fmt=4)}{name}{col()}")
         except Exception as e:
             self._ext_log.error(f"Failed to unload extension {name}", exc_info=e)
-            raise e
+            if _raise:
+                raise e
 
-    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        self._ext_log.info(
-            f"{col(7)}Attempting to reload extension {col(7, fmt=4)}{name}{col()}"
-        )
+    async def reload_extension(self, name: str, *, package: Optional[str] = None, _raise: bool = True) -> None:
+        self._ext_log.info(f"{col(7)}Attempting to reload extension {col(7, fmt=4)}{name}{col()}")
         try:
-            super().reload_extension(name, package=package)
-            self._ext_log.info(
-                f"{col(2)}Reloaded extension {col(2, fmt=4)}{name}{col()}"
-            )
+            await super().reload_extension(name, package=package)
+            self._ext_log.info(f"{col(2)}Reloaded extension {col(2, fmt=4)}{name}{col()}")
         except Exception as e:
             self._ext_log.error(f"Failed to reload extension {name}", exc_info=e)
-            raise e
+            if _raise:
+                raise e

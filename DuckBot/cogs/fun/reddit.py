@@ -12,9 +12,9 @@ from ...helpers.context import CustomContext
 
 
 class Reddit(FunBase):
-
-    async def reddit(self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE') \
-            -> typing.Union[discord.Embed, typing.Tuple]:
+    async def reddit(
+        self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE'
+    ) -> typing.Union[discord.Embed, typing.Tuple]:
         try:
             subreddit = await self.bot.reddit.subreddit(subreddit)
             post = await subreddit.random()
@@ -23,10 +23,12 @@ class Reddit(FunBase):
                 while 'i.redd.it' not in post.url or post.over_18:
                     post = await subreddit.random()
 
-                embed = discord.Embed(color=discord.Color.random(),
-                                      description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
-                                                  f"{constants.REDDIT_UPVOTE} {post.score} ({post.upvote_ratio * 100}%) "
-                                                  f"• from [r/{subreddit}](https://reddit.com/r/{subreddit})")
+                embed = discord.Embed(
+                    color=discord.Color.random(),
+                    description=f"🌐 [Post](https://reddit.com{post.permalink}) • "
+                    f"{constants.REDDIT_UPVOTE} {post.score} ({post.upvote_ratio * 100}%) "
+                    f"• from [r/{subreddit}](https://reddit.com/r/{subreddit})",
+                )
                 embed.title = post.title if title is True else None
                 embed.set_image(url=post.url)
                 return embed
@@ -46,13 +48,11 @@ class Reddit(FunBase):
                     if iterations > 9:
                         iterations = 1
 
-                embed = discord.Embed(color=discord.Color.random(),
-                                      description='\n'.join(options))
+                embed = discord.Embed(color=discord.Color.random(), description='\n'.join(options))
                 embed.title = post.title if title is True else None
                 return embed, emojis
         except Exception as error:
-            for line in "".join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__)).split(
-                    '\n'):
+            for line in "".join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__)).split('\n'):
                 logging.info(line)
             await self.bot.get_channel(880181130408636456).send('A reddit error occurred! Please check the console.')
             return discord.Embed(description='Whoops! An unexpected error occurred')
@@ -61,7 +61,7 @@ class Reddit(FunBase):
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def cat(self, ctx: CustomContext):
-        """ Sends a random cat image from r/cats """
+        """Sends a random cat image from r/cats"""
         async with ctx.typing():
             await ctx.send(embed=await self.reddit('cats'))
 
@@ -69,7 +69,7 @@ class Reddit(FunBase):
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def dog(self, ctx: CustomContext):
-        """ Sends a random dog image from r/dog """
+        """Sends a random dog image from r/dog"""
         async with ctx.typing():
             await ctx.send(embed=await self.reddit('dog'))
 

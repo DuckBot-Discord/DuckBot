@@ -9,15 +9,24 @@ from .typerace import TypeRace
 from .vc_games import DiscordActivities
 
 
-class Fun(Apis, BasicFun, EmbedMaker, FancyText, Reddit,
-          RockPaperScissorsCommand, TicTacToeCommand,
-          TypeRace, DiscordActivities):
+class Fun(
+    Apis,
+    BasicFun,
+    EmbedMaker,
+    FancyText,
+    Reddit,
+    RockPaperScissorsCommand,
+    TicTacToeCommand,
+    TypeRace,
+    DiscordActivities,
+):
     """
     🤪 General entertainment commands, and all other commands that don't fit within other categories.
     """
-    select_emoji = '🤪'
-    select_brief = 'General Entertainment Commands'
+
+    select_emoji = "🤪"
+    select_brief = "General Entertainment Commands"
 
 
-def setup(bot):
-    bot.add_cog(Fun(bot))
+async def setup(bot):
+    await bot.add_cog(Fun(bot))

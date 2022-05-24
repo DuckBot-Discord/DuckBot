@@ -15,8 +15,9 @@ from ...helpers.context import CustomContext
 
 
 class TypeRace(FunBase):
-
-    async def message_receiver(self, channel: discord.TextChannel, content: str, timeout: int) -> typing.AsyncIterable[discord.Message]:
+    async def message_receiver(
+        self, channel: discord.TextChannel, content: str, timeout: int
+    ) -> typing.AsyncIterable[discord.Message]:
         def check(m: discord.Message):
             return m.channel == channel and m.content.lower() == content.lower() and not m.author.bot
 
@@ -31,7 +32,7 @@ class TypeRace(FunBase):
     @commands.max_concurrency(1, per=commands.BucketType.channel)
     @commands.command(name='type-race', aliases=['tr'], brief='Starts a type-race game. No cheating!')
     async def type_race(self, ctx: CustomContext, amount: typing.Optional[int] = 6):
-        """ Starts a Type-Race game.
+        """Starts a Type-Race game.
         Sends some random words as a sentence.
         """
         messages = []
@@ -42,10 +43,11 @@ class TypeRace(FunBase):
         words = ' '.join(res)
 
         inv_ch = '\u200b'
-        embed = discord.Embed(title=f'{constants.TYPING_INDICATOR} Type-race:',
-                              description="**Type the following words:**\n"
-                                          f"```\n{inv_ch.join(words)}\n```",
-                              timestamp=ctx.message.created_at)
+        embed = discord.Embed(
+            title=f'{constants.TYPING_INDICATOR} Type-race:',
+            description="**Type the following words:**\n" f"```\n{inv_ch.join(words)}\n```",
+            timestamp=ctx.message.created_at,
+        )
         embed.set_footer(text=f"Results will appear in {amount * 5} seconds!")
         main = await ctx.send(embed=embed)
 
@@ -58,8 +60,10 @@ class TypeRace(FunBase):
             except discord.HTTPException:
                 pass
             embed.clear_fields()
-            embed.add_field(name='Results:', value='\n'.join(
-                f'{m.author} ({(m.created_at - main.created_at).total_seconds()}s)' for m in messages))
+            embed.add_field(
+                name='Results:',
+                value='\n'.join(f'{m.author} ({(m.created_at - main.created_at).total_seconds()}s)' for m in messages),
+            )
             try:
                 await main.edit(embed=embed)
             except discord.HTTPException:
@@ -87,9 +91,9 @@ class TypeRace(FunBase):
                     emoji = '🏅'
                 winner_lines.append(f'{emoji} {line}')
 
-                embed = discord.Embed(title=f'💤 Type-race game ended!',
-                                      description=f"```\n{words}\n```",
-                                      timestamp=ctx.message.created_at)
+                embed = discord.Embed(
+                    title=f'💤 Type-race game ended!', description=f"```\n{words}\n```", timestamp=ctx.message.created_at
+                )
                 embed.add_field(name='Game Winners:', value='\n'.join(winner_lines))
                 embed.set_footer(text=f'{len(messages)} players got the words right!')
             await ctx.send(embed=embed, reply=False)

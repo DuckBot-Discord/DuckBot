@@ -12,12 +12,13 @@ from ._base import ConfigBase
 
 
 class InviteStats(ConfigBase):
-
     @commands.guild_only()
     @commands.command(usage=None)
     @commands.has_permissions(manage_guild=True)
     @commands.bot_has_guild_permissions(manage_guild=True)
-    async def invitestats(self, ctx: CustomContext, *, _=None, return_embed: bool = False, guild_id: int = None) -> Optional[discord.Embed]:
+    async def invitestats(
+        self, ctx: CustomContext, *, _=None, return_embed: bool = False, guild_id: int = None
+    ) -> Optional[discord.Embed]:
         """Displays the top 10 most used invites in the guild, and the top 10 inviters."""
         max_table_length = 10
         # PEP8 + same code, more readability
@@ -30,9 +31,9 @@ class InviteStats(ConfigBase):
             if return_embed:
                 embed = discord.Embed(
                     title="Something Went Wrong...",
-                    description="No invites found."
-                                "\nDo I have `Manage Server` permissions?",
-                    colour=discord.Colour.red())
+                    description="No invites found." "\nDo I have `Manage Server` permissions?",
+                    colour=discord.Colour.red(),
+                )
                 return embed
             raise commands.BadArgument('I couldn\'t find any Invites. (try again?)')
 
@@ -51,12 +52,24 @@ class InviteStats(ConfigBase):
         amount = max_table_length if len(invites) >= max_table_length else len(invites)
         # list comp on the sorted invites and then
         # join it into one string with str.join
-        description = f'**__Top server {amount} invites__**\n```py\n' + tabulate.tabulate(
-            [(f'{i + 1}. [{invites[i].code if return_embed is False else "*"*(len(invites[i].code)-4)}] {invites[i].inviter.name}',
-              f'{invites[i].uses}') for i in range(amount)],
-            headers=['Invite', 'Uses']) + (
-                          f'\n``` ___There are {len(invites) - max_table_length} more invites in this server.___\n' if len(
-                              invites) > max_table_length else '\n```')
+        description = (
+            f'**__Top server {amount} invites__**\n```py\n'
+            + tabulate.tabulate(
+                [
+                    (
+                        f'{i + 1}. [{invites[i].code if return_embed is False else "*"*(len(invites[i].code)-4)}] {invites[i].inviter.name}',
+                        f'{invites[i].uses}',
+                    )
+                    for i in range(amount)
+                ],
+                headers=['Invite', 'Uses'],
+            )
+            + (
+                f'\n``` ___There are {len(invites) - max_table_length} more invites in this server.___\n'
+                if len(invites) > max_table_length
+                else '\n```'
+            )
+        )
 
         inv = collections.defaultdict(int)
         for t in [(invite.inviter.name, invite.uses) for invite in invites]:
@@ -66,9 +79,17 @@ class InviteStats(ConfigBase):
         value = max_table_length if len(invites) >= max_table_length else len(invites)
         table = tabulate.tabulate(invites[0:value], headers=['Inviter', 'Added'])
 
-        description = description + f'\n**__Top server {value} inviters__**\n```\n' + table + '```' + \
-                      (f' ___There are {len(invites) - max_table_length} more inviters in this server.___' if len(
-                          invites) > max_table_length else '')
+        description = (
+            description
+            + f'\n**__Top server {value} inviters__**\n```\n'
+            + table
+            + '```'
+            + (
+                f' ___There are {len(invites) - max_table_length} more inviters in this server.___'
+                if len(invites) > max_table_length
+                else ''
+            )
+        )
 
         if return_embed is True:
             description += '\nInvite codes hidden for privacy reasons. See\nthe `invite-stats` command for invite codes.'

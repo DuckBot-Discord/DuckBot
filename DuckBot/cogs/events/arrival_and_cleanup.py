@@ -13,7 +13,7 @@ class WelcomeView(discord.ui.View):
         super().__init__(timeout=None)
 
     @discord.ui.button(emoji='🗑', custom_id='delete_joining_message')
-    async def delete(self, _, interaction: discord.Interaction):
+    async def delete(self, interaction: discord.Interaction, _):
         await interaction.message.delete()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -28,7 +28,6 @@ class WelcomeView(discord.ui.View):
 
 
 class ArrivalAndCleanup(EventsBase):
-
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
         await self.bot.db.execute('DELETE FROM prefixes WHERE guild_id = $1', guild.id)
@@ -49,9 +48,9 @@ class ArrivalAndCleanup(EventsBase):
         if not channels:
             return None
         channel = (
-                discord.utils.get(channels, name='general') or
-                discord.utils.find(lambda c: 'general' in c.name, channels) or
-                discord.utils.find(lambda c: c == guild.system_channel, channels)
+            discord.utils.get(channels, name='general')
+            or discord.utils.find(lambda c: 'general' in c.name, channels)
+            or discord.utils.find(lambda c: c == guild.system_channel, channels)
         )
         if not channel:
             public_channels = [c for c in channels if c.permissions_for(guild.default_role).send_messages]
@@ -63,23 +62,25 @@ class ArrivalAndCleanup(EventsBase):
         channel = self.get_delivery_channel(guild)
         if not channel:
             return
-        embed = discord.Embed(timestamp=discord.utils.utcnow(), color=0xF8DA94,
-                              description="Thanks for adding me to your server!"
-                                          "\n**My default prefix is `db.`**, but you can"
-                                          "\nchange it by running the command"
-                                          "\n`db.prefix add <prefix>`. I can have"
-                                          "\nmultiple prefixes, for convenience."
-                                          "\n\n**For help, simply do `db.help`.**"
-                                          "\nA list of all my commmands is [here](https://github.com/leoCx1000/discord-bots/#readme)"
-                                          "\n\n**For suggestions, run the `db.suggest`"
-                                          "\ncommand, and for other issues, DM"
-                                          "\nme or join my support server!**"
-                                          "\n\n⭐ **Tip:** Set up logging!"
-                                          "\ndo `db.log auto-setup`"
-                                          "\n⭐ **Tip:** Vote! `db.vote`")
+        embed = discord.Embed(
+            timestamp=discord.utils.utcnow(),
+            color=0xF8DA94,
+            description="Thanks for adding me to your server!"
+            "\n**My default prefix is `db.`**, but you can"
+            "\nchange it by running the command"
+            "\n`db.prefix add <prefix>`. I can have"
+            "\nmultiple prefixes, for convenience."
+            "\n\n**For help, simply do `db.help`.**"
+            "\nA list of all my commmands is [here](https://github.com/leoCx1000/discord-bots/#readme)"
+            "\n\n**For suggestions, run the `db.suggest`"
+            "\ncommand, and for other issues, DM"
+            "\nme or join my support server!**"
+            "\n\n⭐ **Tip:** Set up logging!"
+            "\ndo `db.log auto-setup`"
+            "\n⭐ **Tip:** Vote! `db.vote`",
+        )
         embed.set_author(name='Thanks for adding me!', icon_url=self.bot.user.display_avatar.url)
-        embed.set_footer(icon_url='https://cdn.discordapp.com/emojis/907399757146767371.png?size=44',
-                         text='thank you!')
+        embed.set_footer(icon_url='https://cdn.discordapp.com/emojis/907399757146767371.png?size=44', text='thank you!')
         await channel.send(embed=embed, view=WelcomeView())
 
     @commands.Cog.listener('on_ready')

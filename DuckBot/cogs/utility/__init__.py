@@ -14,9 +14,10 @@ class Utility(Afk, EmojiUtils, MessageUtils, MiscUtils, ServerInfo, TodoList, Us
     """
     💬 Text and utility commands, mostly to display information about a server.
     """
-    select_emoji = '💬'
-    select_brief = 'Utility And General Information Commands.'
+
+    select_emoji = "💬"
+    select_brief = "Utility And General Information Commands."
 
 
-def setup(bot):
-    bot.add_cog(Utility(bot))
+async def setup(bot):
+    await bot.add_cog(Utility(bot))

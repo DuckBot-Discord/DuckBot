@@ -25,8 +25,7 @@ class Apis(FunBase):
 
             res = await r.json()
 
-        embed = discord.Embed(title='Here is a duck!',
-                              color=random.randint(0, 0xFFFFFF))
+        embed = discord.Embed(title='Here is a duck!', color=random.randint(0, 0xFFFFFF))
         embed.set_image(url=res["url"])
         embed.set_footer(text='by random-d.uk', icon_url='https://avatars2.githubusercontent.com/u/38426912')
         return await ctx.send(embed=embed)
@@ -43,11 +42,9 @@ class Apis(FunBase):
 
             res = await r.text()
 
-        embed = discord.Embed(title='An inspirational image...',
-                              color=random.randint(0, 0xFFFFFF))
+        embed = discord.Embed(title='An inspirational image...', color=random.randint(0, 0xFFFFFF))
         embed.set_image(url=res)
-        embed.set_footer(text='by inspirobot.me',
-                         icon_url='https://inspirobot.me/website/images/inspirobot-dark-green.png')
+        embed.set_footer(text='by inspirobot.me', icon_url='https://inspirobot.me/website/images/inspirobot-dark-green.png')
         return await ctx.send(embed=embed)
 
     @commands.command(name='urban', aliases=['ud'])
@@ -72,15 +69,16 @@ class Apis(FunBase):
         text = urllib.parse.quote(str(text))
         await ctx.trigger_typing()
         try:
-            async with self.bot.session.get(f'https://api.cool-img-api.ml/achievement?text={text}',
-                                            allow_redirects=True) as r:
+            async with self.bot.session.get(
+                f'https://api.cool-img-api.ml/achievement?text={text}', allow_redirects=True
+            ) as r:
                 return await ctx.send(r.url)
         except aiohttp.ClientConnectionError:
             raise commands.BadArgument('Failed to connect to the API. Try again later?')
 
     @commands.command(aliases=['wiki'])
     async def wikipedia(self, ctx, *, search: str):
-        """ Searches on wikipedia, and shows the 10 best returns """
+        """Searches on wikipedia, and shows the 10 best returns"""
         async with ctx.typing():
             async with aiowiki.Wiki.wikipedia('en') as w:
                 hyperlinked_titles = [f"[{p.title}]({(await p.urls()).view})" for p in (await w.opensearch(search))]
@@ -91,11 +89,11 @@ class Apis(FunBase):
                 enumerated_titles.append(f"{iterations}) {title_hyperlink}")
                 iterations += 1
 
-            embed = discord.Embed(description='\n'.join(enumerated_titles),
-                                  colour=discord.Colour.random())
-            embed.set_author(icon_url="https://upload.wikimedia.org/wikipedia/en/thumb/8/80/"
-                                      "Wikipedia-logo-v2.svg/512px-Wikipedia-logo-v2.svg.png",
-                             name="Here are the top 10 Wikipedia results:",
-                             url="https://en.wikipedia.org/")
+            embed = discord.Embed(description='\n'.join(enumerated_titles), colour=discord.Colour.random())
+            embed.set_author(
+                icon_url="https://upload.wikimedia.org/wikipedia/en/thumb/8/80/"
+                "Wikipedia-logo-v2.svg/512px-Wikipedia-logo-v2.svg.png",
+                name="Here are the top 10 Wikipedia results:",
+                url="https://en.wikipedia.org/",
+            )
             return await ctx.send(embed=embed)
-

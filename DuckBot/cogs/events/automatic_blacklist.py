@@ -8,12 +8,15 @@ from ._base import EventsBase
 
 
 class AutoBlacklist(EventsBase):
-
     @commands.Cog.listener('on_command')
     async def on_command(self, ctx: CustomContext):
         await self.bot.db.execute(
             "INSERT INTO commands (guild_id, user_id, command, timestamp) VALUES ($1, $2, $3, $4)",
-            getattr(ctx.guild, 'id', None), ctx.author.id, ctx.command.qualified_name, ctx.message.created_at)
+            getattr(ctx.guild, 'id', None),
+            ctx.author.id,
+            ctx.command.qualified_name,
+            ctx.message.created_at,
+        )
 
         bucket = self.bot.global_mapping.get_bucket(ctx.message)
         current = ctx.message.created_at.timestamp()
@@ -48,10 +51,16 @@ class AutoBlacklist(EventsBase):
         channel = self.bot.get_channel(904797860841812050)
         await channel.send(embed=embed)
 
-    async def add_to_blacklist(self, user_id, reason: str = 'spamming commands (automatic action).'
-                                                            '\nJoin the support server if at my bio to appeal'):
+    async def add_to_blacklist(
+        self,
+        user_id,
+        reason: str = 'spamming commands (automatic action).' '\nJoin the support server if at my bio to appeal',
+    ):
         self.bot.blacklist[user_id] = True
         await self.bot.db.execute(
             "INSERT INTO blacklist(user_id, is_blacklisted, reason) VALUES ($1, $2, $3) "
             "ON CONFLICT (user_id) DO UPDATE SET is_blacklisted = $2, reason = $3",
-            user_id, True, reason)
+            user_id,
+            True,
+            reason,
+        )

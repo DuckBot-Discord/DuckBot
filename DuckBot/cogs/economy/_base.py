@@ -61,4 +61,3 @@ class EconomyBase(commands.Cog):
             return 1
         else:
             return 0
-

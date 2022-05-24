@@ -32,17 +32,16 @@ class FieldFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
 
 class FooterFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     text: str
-    icon: verify_link = discord.Embed.Empty
+    icon: verify_link = None
 
 
 class AuthorFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     name: str
-    icon: verify_link = discord.Embed.Empty
-    url: verify_link = discord.Embed.Empty
+    icon: verify_link = None
+    url: verify_link = None
 
 
 class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
-
     @classmethod
     async def convert(cls, ctx: CustomContext, argument: str):
         argument = strip_codeblock(argument).replace(' —', ' --')
@@ -50,9 +49,9 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
         # a regular double-dash for ease of use.
         return await super().convert(ctx, argument)
 
-    title: str = discord.Embed.Empty
-    description: str = discord.Embed.Empty
-    color: discord.Color = discord.Embed.Empty
+    title: str = None
+    description: str = None
+    color: discord.Color = None
     field: typing.List[FieldFlags] = None
     footer: FooterFlags = None
     image: verify_link = None
@@ -61,7 +60,6 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
 
 
 class EmbedMaker(FunBase):
-
     @commands.command(brief='Sends an embed using flags')
     async def embed(self, ctx: commands.Context, *, flags: EmbedFlags):
         """
@@ -131,7 +129,7 @@ class EmbedMaker(FunBase):
             embed.set_author(name=flags.author.name, url=flags.author.url, icon_url=flags.author.icon)
 
         if flags.footer:
-            embed.set_footer(text=flags.footer.text, icon_url=flags.footer.icon or discord.Embed.Empty)
+            embed.set_footer(text=flags.footer.text, icon_url=flags.footer.icon or None)
 
         if embed:
             if len(embed) > 6000:

@@ -30,9 +30,7 @@ def strip(obj: typing.Any) -> str:
     Like markdown formatting, etc."""
     if obj is None:
         return ''
-    return discord.utils.escape_mentions(
-        discord.utils.escape_markdown(str(obj))
-    )
+    return discord.utils.escape_mentions(discord.utils.escape_markdown(str(obj)))
 
 
 class ModLogs(LoggingBase):
@@ -61,17 +59,26 @@ class ModLogs(LoggingBase):
         ch_id = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", guild.id)
         if ch_id is None:
             return None
-        return guild.get_channel(ch_id)
+        return guild.get_channel(ch_id)  # type: ignore
 
-    def build_embed(self, action: str, offender: discord.abc.User, case_id: int,
-                    role: discord.Role = None, log_date: datetime.datetime = None,
-                    moderator: discord.abc.User = None, reason: str = None) -> discord.Embed:
+    def build_embed(
+        self,
+        action: str,
+        offender: discord.abc.User,
+        case_id: int,
+        role: Optional[discord.Role] = None,
+        log_date: Optional[datetime.datetime] = None,
+        moderator: Optional[discord.abc.User] = None,
+        reason: Optional[str] = None,
+    ) -> discord.Embed:
         """
         Builds an embed for the modlog
         """
-        embed = discord.Embed(color=colors.get(action, Col.dark_grey()),
-                              title=f"{format_action(action)} | Case #{case_id}",
-                              timestamp=log_date or discord.utils.utcnow())
+        embed = discord.Embed(
+            color=colors.get(action, Col.dark_grey()),
+            title=f"{format_action(action)} | Case #{case_id}",
+            timestamp=log_date or discord.utils.utcnow(),
+        )
 
         information = [f"**Offender**: {strip(offender)} ({offender.id})"]
 
@@ -92,32 +99,47 @@ class ModLogs(LoggingBase):
         return embed
 
     async def log_action(
-            self,
-            action: str,
-            guild: discord.Guild,
-            offender: discord.abc.User,
-            role: discord.Role = None,
-            moderator: discord.abc.User = None,
-            reason: str = None,
+        self,
+        action: str,
+        guild: discord.Guild,
+        offender: discord.abc.User,
+        role: discord.Role = None,
+        moderator: discord.abc.User = None,
+        reason: str = None,
     ) -> None:
-        """ Logs an action to the Mod Log """
+        """Logs an action to the Mod Log"""
         if not (modlog := await self.get_modlog(guild)):
             return
         now_date = discord.utils.utcnow()
-        args = ["INSERT INTO modlogs.modlogs_{} (action, reason, offender, role_id, moderator, log_date) "
-                "VALUES ($1, $2, $3, $4, $5, $6) RETURNING case_id".format(guild.id), action, reason, offender.id,
-                getattr(role, "id", None), getattr(moderator, "id", None), now_date]
+        args = [
+            "INSERT INTO modlogs.modlogs_{} (action, reason, offender, role_id, moderator, log_date) "
+            "VALUES ($1, $2, $3, $4, $5, $6) RETURNING case_id".format(guild.id),
+            action,
+            reason,
+            offender.id,
+            getattr(role, "id", None),
+            getattr(moderator, "id", None),
+            now_date,
+        ]
         try:
             case_id = await self.bot.db.fetchval(*args)
         except asyncpg.UndefinedTableError:
             await self.bot.db.execute(self.base_query.format(guild.id))
             case_id = await self.bot.db.fetchval(*args)
 
-        embed = self.build_embed(action=action, offender=offender, case_id=case_id, role=role,
-                                 log_date=now_date, moderator=moderator, reason=reason)
+        embed = self.build_embed(
+            action=action,
+            offender=offender,
+            case_id=case_id,
+            role=role,
+            log_date=now_date,
+            moderator=moderator,
+            reason=reason,
+        )
         message = await modlog.send(embed=embed)
         await self.bot.db.execute(
-            "UPDATE modlogs.modlogs_{} SET message_id = $1 WHERE case_id = $2".format(guild.id), message.id, case_id)
+            "UPDATE modlogs.modlogs_{} SET message_id = $1 WHERE case_id = $2".format(guild.id), message.id, case_id
+        )
 
     async def try_user(self, u_id):
         try:
@@ -131,17 +153,24 @@ class ModLogs(LoggingBase):
         """
         if not (modlog := await self.get_modlog(guild)):
             return
-        case = await self.bot.db.fetchrow("SELECT action, reason, offender, role_id, moderator, message_id, log_date FROM modlogs.modlogs_774561547930304536 WHERE case_id = $1".format(guild.id), case_id)
+        case = await self.bot.db.fetchrow(
+            "SELECT action, reason, offender, role_id, moderator, message_id, log_date FROM modlogs.modlogs_774561547930304536 WHERE case_id = $1".format(
+                guild.id
+            ),
+            case_id,
+        )
         if not case:
             return
         action, reason, offender, role_id, moderator, message_id, log_date = case
-        embed = self.build_embed(action=action,
-                                 offender=await self.try_user(offender),
-                                 case_id=case_id,
-                                 role=guild.get_role(role_id),
-                                 log_date=log_date,
-                                 moderator=await self.try_user(moderator),
-                                 reason=reason)
+        embed = self.build_embed(
+            action=action,
+            offender=await self.try_user(offender),
+            case_id=case_id,
+            role=guild.get_role(role_id),
+            log_date=log_date,
+            moderator=await self.try_user(moderator),
+            reason=reason,
+        )
         try:
             await modlog.get_partial_message(message_id).edit(embed=embed)
         except discord.HTTPException:
@@ -160,30 +189,27 @@ class ModLogs(LoggingBase):
         if not await self.is_guild_logged(before.guild):
             return
 
-        if before.communication_disabled_until != after.communication_disabled_until:
-            print(before.communication_disabled_until, '\n', after.communication_disabled_until)
+        if before.timed_out_until != after.timed_out_until:
+            print(before.timed_out_until, '\n', after.timed_out_until)
 
-            if before.communication_disabled_until is None and after.communication_disabled_until is not None:
+            if before.timed_out_until is None and after.timed_out_until is not None:
                 action = 'timeout_grant'
-            elif before.communication_disabled_until is not None and after.communication_disabled_until is None:
+            elif before.timed_out_until is not None and after.timed_out_until is None:
                 action = 'timeout_remove'
             else:
                 action = 'timeout_update'
 
             moderator = reason = None
             async for entry in before.guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update):
-                if hasattr(entry.before, 'communication_disabled_until') and \
-                        hasattr(entry.after, 'communication_disabled_until') \
-                        and entry.target == after:
+                if (
+                    hasattr(entry.before, 'timed_out_until')
+                    and hasattr(entry.after, 'timed_out_until')
+                    and entry.target == after
+                ):
                     moderator = entry.user
                     reason = entry.reason
 
-            await self.log_action(
-                action=action,
-                guild=before.guild,
-                offender=after,
-                moderator=moderator,
-                reason=reason)
+            await self.log_action(action=action, guild=before.guild, offender=after, moderator=moderator, reason=reason)
 
         if before.roles != after.roles:
             special_roles = await self.bot.db.fetch("SELECT special_roles FROM prefixes")
@@ -195,35 +221,25 @@ class ModLogs(LoggingBase):
                 if role.id in special_roles:
                     action = 'role_remove'
                     moderator = reason = None
-                    async for entry in before.guild.audit_logs(limit=4,
-                                                               action=discord.AuditLogAction.member_role_update):
+                    async for entry in before.guild.audit_logs(limit=4, action=discord.AuditLogAction.member_role_update):
                         if hasattr(entry.before, 'roles') and hasattr(entry.after, 'roles') and entry.target == after:
                             if role in entry.before.roles:
                                 moderator = entry.user
                                 reason = entry.reason
                                 break
                     await self.log_action(
-                        action=action,
-                        guild=before.guild,
-                        offender=after,
-                        role=role,
-                        moderator=moderator,
-                        reason=reason)
+                        action=action, guild=before.guild, offender=after, role=role, moderator=moderator, reason=reason
+                    )
             for role in removed_roles:
                 if role.id in special_roles:
                     action = 'role_add'
                     moderator = reason = None
-                    async for entry in before.guild.audit_logs(limit=4,
-                                                               action=discord.AuditLogAction.member_role_update):
+                    async for entry in before.guild.audit_logs(limit=4, action=discord.AuditLogAction.member_role_update):
                         if hasattr(entry.before, 'roles') and hasattr(entry.after, 'roles') and entry.target == after:
                             if role in entry.after.roles:
                                 moderator = entry.user
                                 reason = entry.reason
                                 break
                     await self.log_action(
-                        action=action,
-                        guild=before.guild,
-                        offender=after,
-                        role=role,
-                        moderator=moderator,
-                        reason=reason)
+                        action=action, guild=before.guild, offender=after, role=role, moderator=moderator, reason=reason
+                    )

@@ -128,15 +128,15 @@ class TicTacToe(discord.ui.View):
 
 
 class TicTacToeCommand(FunBase):
-
     @commands.max_concurrency(1, commands.BucketType.user, wait=False)
     @commands.command(aliases=['ttt', 'tic'])
     async def tictactoe(self, ctx: CustomContext, to_invite: discord.Member = None):
         """Starts a tic-tac-toe game."""
         player1 = ctx.author
         if not to_invite:
-            embed = discord.Embed(description=f'🔎 | **{ctx.author.display_name}**'
-                                              f'\n👀 | User is looking for someone to play **Tic-Tac-Toe**')
+            embed = discord.Embed(
+                description=f'🔎 | **{ctx.author.display_name}**' f'\n👀 | User is looking for someone to play **Tic-Tac-Toe**'
+            )
             embed.set_thumbnail(url=constants.SPINNING_MAG_GLASS)
             embed.set_author(name='Tic-Tac-Toe', icon_url='https://i.imgur.com/SrRrarG.png')
             view = LookingToPlay(timeout=120)

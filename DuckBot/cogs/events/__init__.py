@@ -11,14 +11,25 @@ from .blackout_mode import BlackoutMode
 from .tasks import Tasks
 
 
-class Handler(AfkHandler, ArrivalAndCleanup, AutoBlacklist,
-              WelcomeMessages, ErrorHandler, MutedMembers, PrivateEvents,
-              ReactionHandling, SuggestionChannels, Tasks, BlackoutMode):
+class Handler(
+    AfkHandler,
+    ArrivalAndCleanup,
+    AutoBlacklist,
+    WelcomeMessages,
+    ErrorHandler,
+    MutedMembers,
+    PrivateEvents,
+    ReactionHandling,
+    SuggestionChannels,
+    Tasks,
+    BlackoutMode,
+):
     """
     This class is the event handler for the bot.
     """
+
     pass
 
 
-def setup(bot):
-    bot.add_cog(Handler(bot))
+async def setup(bot):
+    await bot.add_cog(Handler(bot))

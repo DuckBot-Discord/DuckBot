@@ -19,11 +19,7 @@ async def get_wh(channel: discord.TextChannel):
             if w.user == channel.guild.me:
                 return w.url
         else:
-            return (
-                await channel.create_webhook(
-                    name="DuckBot Logging", avatar=await channel.guild.me.avatar.read()
-                )
-            ).url
+            return (await channel.create_webhook(name="DuckBot Logging", avatar=await channel.guild.me.avatar.read())).url
     else:
         raise commands.BadArgument("Cannot create webhook!")
 
@@ -46,9 +42,7 @@ class ChannelsView(discord.ui.View):
         ]
 
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji="♾", row=0)
-    async def default(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def default(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.lock.locked():
             return await interaction.response.defer()
 
@@ -58,9 +52,7 @@ class ChannelsView(discord.ui.View):
                 child.disabled = True
             await interaction.response.edit_message(view=self)
             to_delete = []
-            m = await self.ctx.send(
-                "Please send a channel to change the **Message Events Channel**"
-            )
+            m = await self.ctx.send("Please send a channel to change the **Message Events Channel**")
             to_delete.append(m)
 
             def check(msg: discord.Message):
@@ -70,16 +62,12 @@ class ChannelsView(discord.ui.View):
                 return False
 
             while True:
-                message: discord.Message = await self.bot.wait_for(
-                    "message", check=check
-                )
+                message: discord.Message = await self.bot.wait_for("message", check=check)
                 if message.content == "cancel":
                     break
                 else:
                     try:
-                        channel = await commands.TextChannelConverter().convert(
-                            self.ctx, message.content
-                        )
+                        channel = await commands.TextChannelConverter().convert(self.ctx, message.content)
                         break
                     except commands.ChannelNotFound:
                         pass
@@ -102,57 +90,43 @@ class ChannelsView(discord.ui.View):
                     pass
                 except (commands.BadArgument, discord.Forbidden):
                     await self.ctx.send(
-                        "Could not create a webhook in that channel!\n"
-                        "Do i have **Manage Webhooks** permissions there?"
+                        "Could not create a webhook in that channel!\n" "Do i have **Manage Webhooks** permissions there?"
                     )
                 except discord.HTTPException:
-                    await self.ctx.send(
-                        "Something went wrong while creating a webhook..."
-                    )
+                    await self.ctx.send("Something went wrong while creating a webhook...")
             await self.update_message()
             try:
-                await self.ctx.channel.delete_messages(to_delete)
+                await self.ctx.channel.delete_messages(to_delete)  # type: ignore
             except:
                 pass
 
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji="📨", row=0)
-    async def message(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def message(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.lock.locked():
             return await interaction.response.defer()
 
         async with self.lock:
             button.style = discord.ButtonStyle.green
             for child in self.children:
-                child.disabled = True
+                child.disabled = True  # type: ignore
             await interaction.response.edit_message(view=self)
             to_delete = []
-            m = await self.ctx.send(
-                "Please send a channel to change the **Message Events Channel**"
-            )
+            m = await self.ctx.send("Please send a channel to change the **Message Events Channel**")
             to_delete.append(m)
 
             def check(message: discord.Message):
-                if (
-                    message.channel == self.ctx.channel
-                    and message.author == self.ctx.author
-                ):
+                if message.channel == self.ctx.channel and message.author == self.ctx.author:
                     to_delete.append(message)
                     return True
                 return False
 
             while True:
-                message: discord.Message = await self.bot.wait_for(
-                    "message", check=check
-                )
+                message: discord.Message = await self.bot.wait_for("message", check=check)
                 if message.content == "cancel":
                     break
                 else:
                     try:
-                        channel = await commands.TextChannelConverter().convert(
-                            self.ctx, message.content
-                        )
+                        channel = await commands.TextChannelConverter().convert(self.ctx, message.content)
                         break
                     except commands.ChannelNotFound:
                         pass
@@ -175,13 +149,10 @@ class ChannelsView(discord.ui.View):
                     pass
                 except (commands.BadArgument, discord.Forbidden):
                     await self.ctx.send(
-                        "Could not create a webhook in that channel!\n"
-                        "Do i have **Manage Webhooks** permissions there?"
+                        "Could not create a webhook in that channel!\n" "Do i have **Manage Webhooks** permissions there?"
                     )
                 except discord.HTTPException:
-                    await self.ctx.send(
-                        "Something went wrong while creating a webhook..."
-                    )
+                    await self.ctx.send("Something went wrong while creating a webhook...")
             await self.update_message()
             try:
                 await self.ctx.channel.delete_messages(to_delete)
@@ -189,9 +160,7 @@ class ChannelsView(discord.ui.View):
                 pass
 
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji="👋", row=1)
-    async def join_leave(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def join_leave(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.lock.locked():
             return await interaction.response.defer()
 
@@ -201,31 +170,22 @@ class ChannelsView(discord.ui.View):
                 child.disabled = True
             await interaction.response.edit_message(view=self)
             to_delete = []
-            m = await self.ctx.send(
-                "Please send a channel to change the **Join and Leave Events Channel**"
-            )
+            m = await self.ctx.send("Please send a channel to change the **Join and Leave Events Channel**")
             to_delete.append(m)
 
             def check(message: discord.Message):
-                if (
-                    message.channel == self.ctx.channel
-                    and message.author == self.ctx.author
-                ):
+                if message.channel == self.ctx.channel and message.author == self.ctx.author:
                     to_delete.append(message)
                     return True
                 return False
 
             while True:
-                message: discord.Message = await self.bot.wait_for(
-                    "message", check=check
-                )
+                message: discord.Message = await self.bot.wait_for("message", check=check)
                 if message.content == "cancel":
                     break
                 else:
                     try:
-                        channel = await commands.TextChannelConverter().convert(
-                            self.ctx, message.content
-                        )
+                        channel = await commands.TextChannelConverter().convert(self.ctx, message.content)
                         break
                     except commands.ChannelNotFound:
                         pass
@@ -248,13 +208,10 @@ class ChannelsView(discord.ui.View):
                     pass
                 except (commands.BadArgument, discord.Forbidden):
                     await self.ctx.send(
-                        "Could not create a webhook in that channel!\n"
-                        "Do i have **Manage Webhooks** permissions there?"
+                        "Could not create a webhook in that channel!\n" "Do i have **Manage Webhooks** permissions there?"
                     )
                 except discord.HTTPException:
-                    await self.ctx.send(
-                        "Something went wrong while creating a webhook..."
-                    )
+                    await self.ctx.send("Something went wrong while creating a webhook...")
             await self.update_message()
             try:
                 await self.ctx.channel.delete_messages(to_delete)
@@ -262,7 +219,7 @@ class ChannelsView(discord.ui.View):
                 pass
 
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji="👤", row=0)
-    async def member(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def member(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.lock.locked():
             return await interaction.response.defer()
 
@@ -272,31 +229,22 @@ class ChannelsView(discord.ui.View):
                 child.disabled = True
             await interaction.response.edit_message(view=self)
             to_delete = []
-            m = await self.ctx.send(
-                'Please send a channel to change the **Member Events Channel**\nSend "cancel" to cancel'
-            )
+            m = await self.ctx.send('Please send a channel to change the **Member Events Channel**\nSend "cancel" to cancel')
             to_delete.append(m)
 
             def check(message: discord.Message):
-                if (
-                    message.channel == self.ctx.channel
-                    and message.author == self.ctx.author
-                ):
+                if message.channel == self.ctx.channel and message.author == self.ctx.author:
                     to_delete.append(message)
                     return True
                 return False
 
             while True:
-                message: discord.Message = await self.bot.wait_for(
-                    "message", check=check
-                )
+                message: discord.Message = await self.bot.wait_for("message", check=check)
                 if message.content == "cancel":
                     break
                 else:
                     try:
-                        channel = await commands.TextChannelConverter().convert(
-                            self.ctx, message.content
-                        )
+                        channel = await commands.TextChannelConverter().convert(self.ctx, message.content)
                         break
                     except commands.ChannelNotFound:
                         pass
@@ -319,13 +267,10 @@ class ChannelsView(discord.ui.View):
                     pass
                 except (commands.BadArgument, discord.Forbidden):
                     await self.ctx.send(
-                        "Could not create a webhook in that channel!\n"
-                        "Do i have **Manage Webhooks** permissions there?"
+                        "Could not create a webhook in that channel!\n" "Do i have **Manage Webhooks** permissions there?"
                     )
                 except discord.HTTPException:
-                    await self.ctx.send(
-                        "Something went wrong while creating a webhook..."
-                    )
+                    await self.ctx.send("Something went wrong while creating a webhook...")
             await self.update_message()
             try:
                 await self.ctx.channel.delete_messages(to_delete)
@@ -333,7 +278,7 @@ class ChannelsView(discord.ui.View):
                 pass
 
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji="⚙", row=1)
-    async def server(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def server(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.lock.locked():
             return await interaction.response.defer()
 
@@ -343,31 +288,22 @@ class ChannelsView(discord.ui.View):
                 child.disabled = True
             await interaction.response.edit_message(view=self)
             to_delete = []
-            m = await self.ctx.send(
-                "Please send a channel to change the **Server Events Channel**"
-            )
+            m = await self.ctx.send("Please send a channel to change the **Server Events Channel**")
             to_delete.append(m)
 
             def check(message: discord.Message):
-                if (
-                    message.channel == self.ctx.channel
-                    and message.author == self.ctx.author
-                ):
+                if message.channel == self.ctx.channel and message.author == self.ctx.author:
                     to_delete.append(message)
                     return True
                 return False
 
             while True:
-                message: discord.Message = await self.bot.wait_for(
-                    "message", check=check
-                )
+                message: discord.Message = await self.bot.wait_for("message", check=check)
                 if message.content == "cancel":
                     break
                 else:
                     try:
-                        channel = await commands.TextChannelConverter().convert(
-                            self.ctx, message.content
-                        )
+                        channel = await commands.TextChannelConverter().convert(self.ctx, message.content)
                         break
                     except commands.ChannelNotFound:
                         pass
@@ -390,13 +326,10 @@ class ChannelsView(discord.ui.View):
                     pass
                 except (commands.BadArgument, discord.Forbidden):
                     await self.ctx.send(
-                        "Could not create a webhook in that channel!\n"
-                        "Do i have **Manage Webhooks** permissions there?"
+                        "Could not create a webhook in that channel!\n" "Do i have **Manage Webhooks** permissions there?"
                     )
                 except discord.HTTPException:
-                    await self.ctx.send(
-                        "Something went wrong while creating a webhook..."
-                    )
+                    await self.ctx.send("Something went wrong while creating a webhook...")
             await self.update_message()
             try:
                 await self.ctx.channel.delete_messages(to_delete)
@@ -404,7 +337,7 @@ class ChannelsView(discord.ui.View):
                 pass
 
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji="🎙", row=1)
-    async def voice(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def voice(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.lock.locked():
             return await interaction.response.defer()
 
@@ -415,31 +348,23 @@ class ChannelsView(discord.ui.View):
             await interaction.response.edit_message(view=self)
             to_delete = []
             m = await self.ctx.send(
-                "Please send a channel to change the **Voice Events Channel**"
-                '\n_Send "cancel" to cancel_'
+                "Please send a channel to change the **Voice Events Channel**" '\n_Send "cancel" to cancel_'
             )
             to_delete.append(m)
 
             def check(message: discord.Message):
-                if (
-                    message.channel == self.ctx.channel
-                    and message.author == self.ctx.author
-                ):
+                if message.channel == self.ctx.channel and message.author == self.ctx.author:
                     to_delete.append(message)
                     return True
                 return False
 
             while True:
-                message: discord.Message = await self.bot.wait_for(
-                    "message", check=check
-                )
+                message: discord.Message = await self.bot.wait_for("message", check=check)
                 if message.content == "cancel":
                     break
                 else:
                     try:
-                        channel = await commands.TextChannelConverter().convert(
-                            self.ctx, message.content
-                        )
+                        channel = await commands.TextChannelConverter().convert(self.ctx, message.content)
                         break
                     except commands.ChannelNotFound:
                         pass
@@ -462,13 +387,10 @@ class ChannelsView(discord.ui.View):
                     pass
                 except (commands.BadArgument, discord.Forbidden):
                     await self.ctx.send(
-                        "Could not create a webhook in that channel!\n"
-                        "Do i have **Manage Webhooks** permissions there?"
+                        "Could not create a webhook in that channel!\n" "Do i have **Manage Webhooks** permissions there?"
                     )
                 except discord.HTTPException:
-                    await self.ctx.send(
-                        "Something went wrong while creating a webhook..."
-                    )
+                    await self.ctx.send("Something went wrong while creating a webhook...")
             await self.update_message()
             try:
                 await self.ctx.channel.delete_messages(to_delete)
@@ -476,13 +398,9 @@ class ChannelsView(discord.ui.View):
                 pass
 
     @discord.ui.button(style=discord.ButtonStyle.red, label="stop", row=2)
-    async def stop_button(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.lock.locked():
-            return await interaction.response.send_message(
-                "Can't do that while waiting for a message!", ephemeral=True
-            )
+            return await interaction.response.send_message("Can't do that while waiting for a message!", ephemeral=True)
         await interaction.response.defer()
         await self.on_timeout()
 
@@ -499,15 +417,11 @@ class ChannelsView(discord.ui.View):
             self.ctx.author.id,
         ):
             return True
-        await interaction.response.send_message(
-            f"This menu belongs to **{self.ctx.author}**, sorry! 💖", ephemeral=True
-        )
+        await interaction.response.send_message(f"This menu belongs to **{self.ctx.author}**, sorry! 💖", ephemeral=True)
         return False
 
     async def update_message(self, edit: bool = True):
-        channels = await self.bot.db.fetchrow(
-            "SELECT * FROM log_channels WHERE guild_id = $1", self.ctx.guild.id
-        )
+        channels = await self.bot.db.fetchrow("SELECT * FROM log_channels WHERE guild_id = $1", self.ctx.guild.id)
         embed = discord.Embed(
             title="Logging Channels",
             colour=discord.Colour.blurple(),
@@ -598,9 +512,7 @@ class EventToggle(discord.ui.Button["AllEvents"]):
             self.view.ctx.guild.id,
         )
         if not q:
-            await interaction.response.send_message(
-                "For some reason logging is not set up anymore."
-            )
+            await interaction.response.send_message("For some reason logging is not set up anymore.")
             self.view.stop()
             return
         self.style = styles[self.enabled]
@@ -611,9 +523,7 @@ class EventToggle(discord.ui.Button["AllEvents"]):
             self.enabled,
         )
         setattr(self.view.events, self.event, self.enabled)
-        await interaction.response.edit_message(
-            embed=await self.view.async_update_event(), view=self.view
-        )
+        await interaction.response.edit_message(embed=await self.view.async_update_event(), view=self.view)
 
 
 class AllEvents(discord.ui.View):
@@ -637,14 +547,10 @@ class AllEvents(discord.ui.View):
         }
         for event, emoji in events.items():
             self.select_category.options.append(
-                discord.SelectOption(
-                    label=f"{event.title()} events", value=event, emoji=emoji
-                )
+                discord.SelectOption(label=f"{event.title()} events", value=event, emoji=emoji)
             )
         option = "message"
-        options: typing.List[str, bool] = [
-            o for o, v in getattr(LoggingEventsFlags, option)() if v is True
-        ]
+        options: typing.List[str, bool] = [o for o, v in getattr(LoggingEventsFlags, option)() if v is True]
         opts = {k: v for k, v in self.events if k in options}
         for option, value in opts.items():
             self.add_item(EventToggle(option, value))
@@ -673,23 +579,15 @@ class AllEvents(discord.ui.View):
                 join_leave_events.append("⚠ Invite Create" "\n╰ Manage Channels")
                 subtract += 1
             else:
-                join_leave_events.append(
-                    ctx.default_tick(events.invite_create, "Invite Create")
-                )
+                join_leave_events.append(ctx.default_tick(events.invite_create, "Invite Create"))
             if events.invite_delete:
                 join_leave_events.append("⚠ Invite Delete" "\n╰ Manage Channels")
                 subtract += 1
             else:
-                join_leave_events.append(
-                    ctx.default_tick(events.invite_delete, "Invite Create")
-                )
+                join_leave_events.append(ctx.default_tick(events.invite_delete, "Invite Create"))
         else:
-            join_leave_events.append(
-                ctx.default_tick(events.invite_create, "Invite Create")
-            )
-            join_leave_events.append(
-                ctx.default_tick(events.invite_delete, "Invite Delete")
-            )
+            join_leave_events.append(ctx.default_tick(events.invite_create, "Invite Create"))
+            join_leave_events.append(ctx.default_tick(events.invite_delete, "Invite Delete"))
         embed.add_field(name="Join Leave Events", value="\n".join(join_leave_events))
         member_update_evetns = [
             ctx.default_tick(events.member_update, "Member Update"),
@@ -733,33 +631,24 @@ class AllEvents(discord.ui.View):
         return await self.ctx.bot.loop.run_in_executor(None, self.update_embed)
 
     @discord.ui.select(placeholder="Select an event category to view")
-    async def select_category(
-        self, select: discord.ui.Select, interaction: discord.Interaction
-    ):
+    async def select_category(self, interaction: discord.Interaction, select: discord.ui.Select):
         option = select.values[0]
-        options: typing.List[str, bool] = [
-            o for o, v in getattr(LoggingEventsFlags, option)() if v is True
-        ]
+        options: typing.List[str, bool] = [o for o, v in getattr(LoggingEventsFlags, option)() if v is True]
         opts = {k: v for k, v in self.events if k in options}  # type: ignore
         self.clear_items()
         self.add_item(select)
         self.add_item(self.delete)
         for option, value in opts.items():
             self.add_item(EventToggle(option, value))
-        await interaction.response.edit_message(
-            embed=await self.async_update_event(), view=self
-        )
+        await interaction.response.edit_message(embed=await self.async_update_event(), view=self)
 
     @discord.ui.button(label="Delete", style=discord.ButtonStyle.red, emoji="🗑", row=4)
-    async def delete(self, _, interaction: discord.Interaction):
+    async def delete(self, interaction: discord.Interaction, _):
         await interaction.message.delete()
         self.stop()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return (
-            interaction.user == self.ctx.author
-            and interaction.user.guild_permissions.manage_guild
-        )
+        return interaction.user == self.ctx.author and interaction.user.guild_permissions.manage_guild
 
 
 class Logging(ConfigBase):
@@ -806,13 +695,8 @@ class Logging(ConfigBase):
         _Note: This will not modify your enabled/disabled events, if any._"""
         if ctx.guild.id in self.bot.log_channels:
             raise commands.BadArgument("This server already has a logging enabled.")
-        if (
-            not channel.permissions_for(ctx.me).manage_webhooks
-            and not channel.permissions_for(ctx.me).send_messages
-        ):
-            raise commands.BadArgument(
-                f"I'm missing the Manage Webhooks permission in {channel.mention}"
-            )
+        if not channel.permissions_for(ctx.me).manage_webhooks and not channel.permissions_for(ctx.me).send_messages:
+            raise commands.BadArgument(f"I'm missing the Manage Webhooks permission in {channel.mention}")
         await ctx.trigger_typing()
 
         try:
@@ -827,9 +711,7 @@ class Logging(ConfigBase):
                 break
         else:
             if len(webhooks) == 10:
-                raise commands.BadArgument(
-                    f"{channel.mention} has already the max number of webhooks! (10 webhooks)"
-                )
+                raise commands.BadArgument(f"{channel.mention} has already the max number of webhooks! (10 webhooks)")
             try:
                 w = await channel.create_webhook(
                     name="DuckBot logging",
@@ -846,8 +728,7 @@ class Logging(ConfigBase):
                     f"There was an unexpected error while creating a webhook in {channel.mention} (HTTP exception) - Perhaps try again?"
                 )
         await self.bot.db.execute(
-            "INSERT INTO prefixes (guild_id) VALUES ($1) "
-            "ON CONFLICT (guild_id) DO NOTHING",
+            "INSERT INTO prefixes (guild_id) VALUES ($1) " "ON CONFLICT (guild_id) DO NOTHING",
             ctx.guild.id,
         )
         await self.bot.db.execute(
@@ -898,9 +779,7 @@ class Logging(ConfigBase):
                 self.bot.log_channels.pop(ctx.guild.id)
             except KeyError:
                 pass
-            channels = await self.bot.db.fetchrow(
-                "DELETE FROM log_channels WHERE guild_id = $1 RETURNING *", ctx.guild.id
-            )
+            channels = await self.bot.db.fetchrow("DELETE FROM log_channels WHERE guild_id = $1 RETURNING *", ctx.guild.id)
 
             channel_ids = (
                 channels["default_chid"],
@@ -934,9 +813,7 @@ class Logging(ConfigBase):
         """Shows this server's logging channels"""
         if ctx.guild.id not in self.bot.log_channels:
             raise commands.BadArgument("This server doesn't have logging enabled.")
-        channels = await self.bot.db.fetchrow(
-            "SELECT * FROM log_channels WHERE guild_id = $1", ctx.guild.id
-        )
+        channels = await self.bot.db.fetchrow("SELECT * FROM log_channels WHERE guild_id = $1", ctx.guild.id)
         embed = discord.Embed(
             title="Logging Channels",
             colour=discord.Colour.blurple(),
@@ -978,18 +855,14 @@ class Logging(ConfigBase):
             raise commands.BadArgument("This server doesn't have logging enabled.")
         arg = getattr(self.bot.guild_loggings[ctx.guild.id], event, None)
         if arg is False:
-            raise commands.BadArgument(
-                f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already disabled!'
-            )
+            raise commands.BadArgument(f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already disabled!')
         await self.bot.db.execute(
             f"UPDATE logging_events SET {event} = $2 WHERE guild_id = $1",
             ctx.guild.id,
             False,
         )
         setattr(self.bot.guild_loggings[ctx.guild.id], event, False)
-        await ctx.send(
-            f'✅ **|** Successfully disabled **{str(event).replace("_", " ").title()} Events**'
-        )
+        await ctx.send(f'✅ **|** Successfully disabled **{str(event).replace("_", " ").title()} Events**')
 
     @log.command(name="enable-event", aliases=["enable_event", "ee"])
     @commands.has_permissions(manage_guild=True)
@@ -1005,18 +878,14 @@ class Logging(ConfigBase):
             raise commands.BadArgument("This server doesn't have logging enabled.")
         arg = getattr(self.bot.guild_loggings[ctx.guild.id], event, None)
         if arg is True:
-            raise commands.BadArgument(
-                f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already enabled!'
-            )
+            raise commands.BadArgument(f'❌ **|** **{str(event).replace("_", " ").title()} Events** are already enabled!')
         await self.bot.db.execute(
             f"UPDATE logging_events SET {event} = $2 WHERE guild_id = $1",
             ctx.guild.id,
             True,
         )
         setattr(self.bot.guild_loggings[ctx.guild.id], event, True)
-        await ctx.send(
-            f'✅ **|** Successfully enabled **{str(event).replace("_", " ").title()} Events**'
-        )
+        await ctx.send(f'✅ **|** Successfully enabled **{str(event).replace("_", " ").title()} Events**')
 
     @log.command(
         name="edit-channels",
@@ -1079,9 +948,7 @@ class Logging(ConfigBase):
         async with ctx.typing():
             try:
                 over = {
-                    ctx.guild.default_role: discord.PermissionOverwrite(
-                        read_messages=False
-                    ),
+                    ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                     ctx.me: discord.PermissionOverwrite(
                         read_messages=True,
                         send_messages=True,
@@ -1091,28 +958,16 @@ class Logging(ConfigBase):
                 }
                 avatar = await ctx.me.display_avatar.read()
                 cat = await ctx.guild.create_category(name="logging", overwrites=over)
-                join_leave_channel = await cat.create_text_channel(
-                    name="join-leave-log"
-                )
-                join_leave_webhook = await join_leave_channel.create_webhook(
-                    name="DuckBot logging", avatar=avatar
-                )
+                join_leave_channel = await cat.create_text_channel(name="join-leave-log")
+                join_leave_webhook = await join_leave_channel.create_webhook(name="DuckBot logging", avatar=avatar)
                 message_channel = await cat.create_text_channel(name="message-log")
-                message_webhook = await message_channel.create_webhook(
-                    name="DuckBot logging", avatar=avatar
-                )
+                message_webhook = await message_channel.create_webhook(name="DuckBot logging", avatar=avatar)
                 voice_channel = await cat.create_text_channel(name="voice-log")
-                voice_webhook = await voice_channel.create_webhook(
-                    name="DuckBot logging", avatar=avatar
-                )
+                voice_webhook = await voice_channel.create_webhook(name="DuckBot logging", avatar=avatar)
                 member_channel = await cat.create_text_channel(name="member-log")
-                member_webhook = await member_channel.create_webhook(
-                    name="DuckBot logging", avatar=avatar
-                )
+                member_webhook = await member_channel.create_webhook(name="DuckBot logging", avatar=avatar)
                 server_channel = await cat.create_text_channel(name="server-log")
-                server_webhook = await server_channel.create_webhook(
-                    name="DuckBot logging", avatar=avatar
-                )
+                server_webhook = await server_channel.create_webhook(name="DuckBot logging", avatar=avatar)
                 self.bot.log_channels[ctx.guild.id] = self.bot.log_webhooks(
                     join_leave=join_leave_webhook.url,
                     server=server_webhook.url,
@@ -1123,8 +978,7 @@ class Logging(ConfigBase):
                 )
                 self.bot.guild_loggings[ctx.guild.id] = LoggingEventsFlags.all()
                 await self.bot.db.execute(
-                    "INSERT INTO prefixes (guild_id) VALUES ($1) "
-                    "ON CONFLICT (guild_id) DO NOTHING",
+                    "INSERT INTO prefixes (guild_id) VALUES ($1) " "ON CONFLICT (guild_id) DO NOTHING",
                     ctx.guild.id,
                 )
                 await self.bot.db.execute(
@@ -1152,8 +1006,7 @@ class Logging(ConfigBase):
                     server_channel.id,
                 )
                 await self.bot.db.execute(
-                    "INSERT INTO logging_events(guild_id) VALUES ($1)"
-                    "ON CONFLICT (guild_id) DO NOTHING",
+                    "INSERT INTO logging_events(guild_id) VALUES ($1)" "ON CONFLICT (guild_id) DO NOTHING",
                     ctx.guild.id,
                 )
                 try:
