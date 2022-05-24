@@ -1,6 +1,7 @@
 import datetime
 import logging
 import typing
+import asyncio
 from typing import List, Optional
 
 import asyncpg
@@ -44,7 +45,8 @@ class ModLogs(LoggingBase):
         role_id    bigint,
         moderator  bigint,
         message_id bigint,
-        log_date   timestamp with time zone not null
+        log_date   timestamp with time zone not null,
+        until      timestamp with time zone
     )"""
 
     async def is_guild_logged(self, guild: discord.Guild) -> bool:
@@ -71,6 +73,7 @@ class ModLogs(LoggingBase):
         log_date: Optional[datetime.datetime] = None,
         moderator: Optional[discord.abc.User] = None,
         reason: Optional[str] = None,
+        until: Optional[datetime.datetime] = None,
     ) -> discord.Embed:
         """
         Builds an embed for the modlog
@@ -92,6 +95,12 @@ class ModLogs(LoggingBase):
         if role is not None:
             embed.add_field(name='Role:', value=f'{role}\n{role.mention}', inline=False)
 
+        if until:
+            embed.add_field(
+                name='Timeout Until:',
+                value=f'{discord.utils.format_dt(until)} ({discord.utils.format_dt(until, style="R")})',
+            )
+
         if reason:
             embed.add_field(name='Reason:', value=strip(reason).strip() or '\u200b', inline=False)
         else:
@@ -109,20 +118,22 @@ class ModLogs(LoggingBase):
         role: Optional[discord.Role] = None,
         moderator: Optional[discord.abc.User] = None,
         reason: Optional[str] = None,
+        until: Optional[datetime.datetime] = None,
     ) -> None:
         """Logs an action to the Mod Log"""
         if not (modlog := await self.get_modlog(guild)):
             return
         now_date = discord.utils.utcnow()
         args = [
-            "INSERT INTO modlogs.modlogs_{} (action, reason, offender, role_id, moderator, log_date) "
-            "VALUES ($1, $2, $3, $4, $5, $6) RETURNING case_id".format(guild.id),
+            "INSERT INTO modlogs.modlogs_{} (action, reason, offender, role_id, moderator, log_date, until) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING case_id".format(guild.id),
             action,
             reason,
             offender.id,
             getattr(role, "id", None),
             getattr(moderator, "id", None),
             now_date,
+            until,
         ]
         try:
             case_id = await self.bot.db.fetchval(*args)
@@ -138,6 +149,7 @@ class ModLogs(LoggingBase):
             log_date=now_date,
             moderator=moderator,
             reason=reason,
+            until=until,
         )
         message = await modlog.send(embed=embed)
         await self.bot.db.execute(
@@ -157,14 +169,14 @@ class ModLogs(LoggingBase):
         if not (modlog := await self.get_modlog(guild)):
             return
         case = await self.bot.db.fetchrow(
-            "SELECT action, reason, offender, role_id, moderator, message_id, log_date FROM modlogs.modlogs_774561547930304536 WHERE case_id = $1".format(
+            "SELECT action, reason, offender, role_id, moderator, message_id, log_date, until FROM modlogs.modlogs_774561547930304536 WHERE case_id = $1".format(
                 guild.id
             ),
             case_id,
         )
         if not case:
             return
-        action, reason, offender, role_id, moderator, message_id, log_date = case
+        action, reason, offender, role_id, moderator, message_id, log_date, until = case
         embed = self.build_embed(
             action=action,
             offender=await self.try_user(offender),  # type: ignore
@@ -173,6 +185,7 @@ class ModLogs(LoggingBase):
             log_date=log_date,
             moderator=await self.try_user(moderator),
             reason=reason,
+            until=until,
         )
         try:
             await modlog.get_partial_message(message_id).edit(embed=embed)
@@ -189,6 +202,7 @@ class ModLogs(LoggingBase):
             - Timeout remove
             - Timeout update
         """
+        await asyncio.sleep(0.5)
         if not await self.is_guild_logged(before.guild):
             return
 
@@ -202,7 +216,7 @@ class ModLogs(LoggingBase):
                 action = 'timeout_update'
 
             moderator = reason = None
-            async for entry in before.guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update):
+            async for entry in before.guild.audit_logs(limit=3, action=discord.AuditLogAction.member_update):
                 if (
                     hasattr(entry.before, 'timed_out_until')
                     and hasattr(entry.after, 'timed_out_until')
@@ -211,7 +225,14 @@ class ModLogs(LoggingBase):
                     moderator = entry.user
                     reason = entry.reason
 
-            await self.log_action(action=action, guild=before.guild, offender=after, moderator=moderator, reason=reason)
+            await self.log_action(
+                action=action,
+                guild=before.guild,
+                offender=after,
+                moderator=moderator,
+                reason=reason,
+                until=after.timed_out_until,
+            )
 
         if before.roles != after.roles:
             special_roles: List[int] = await self.bot.db.fetchval(
@@ -258,11 +279,12 @@ class ModLogs(LoggingBase):
         Logged actions:
             - Ban
         """
+        await asyncio.sleep(0.5)
         if not await self.is_guild_logged(guild):
             return
 
         moderator = reason = None
-        async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+        async for entry in guild.audit_logs(limit=3, action=discord.AuditLogAction.ban):
             if entry.target == user:
                 moderator = entry.user
                 reason = entry.reason
@@ -276,11 +298,12 @@ class ModLogs(LoggingBase):
         Logged actions:
             - Unban
         """
+        await asyncio.sleep(0.5)
         if not await self.is_guild_logged(guild):
             return
 
         moderator = reason = None
-        async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.unban):
+        async for entry in guild.audit_logs(limit=3, action=discord.AuditLogAction.unban):
             if entry.target == user:
                 moderator = entry.user
                 reason = entry.reason
@@ -294,6 +317,7 @@ class ModLogs(LoggingBase):
         Logged actions:
             - Kick
         """
+        await asyncio.sleep(0.5)
         if not await self.is_guild_logged(member.guild):
             return
 
