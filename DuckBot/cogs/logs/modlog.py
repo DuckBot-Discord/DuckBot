@@ -1,4 +1,5 @@
 import datetime
+import logging
 import typing
 from typing import List, Optional
 
@@ -92,7 +93,7 @@ class ModLogs(LoggingBase):
             embed.add_field(name='Role:', value=f'{role}\n{role.mention}', inline=False)
 
         if reason:
-            embed.add_field(name='Reason:', value=strip(reason).strip() or '\u200b')
+            embed.add_field(name='Reason:', value=strip(reason).strip() or '\u200b', inline=False)
         else:
             embed.add_field(
                 name='Reason: Not Found', value='Do `db.ml setreason <case_id> <reason>` to set it.', inline=False
@@ -146,7 +147,7 @@ class ModLogs(LoggingBase):
     async def try_user(self, u_id):
         try:
             return self.bot.get_user(u_id) or await self.bot.fetch_user(u_id)
-        except discord.NotFound:
+        except discord.HTTPException:
             return None
 
     async def update_message(self, guild: discord.Guild, case_id: int) -> None:
@@ -166,7 +167,7 @@ class ModLogs(LoggingBase):
         action, reason, offender, role_id, moderator, message_id, log_date = case
         embed = self.build_embed(
             action=action,
-            offender=await self.try_user(offender),
+            offender=await self.try_user(offender),  # type: ignore
             case_id=case_id,
             role=guild.get_role(role_id),
             log_date=log_date,
@@ -175,8 +176,8 @@ class ModLogs(LoggingBase):
         )
         try:
             await modlog.get_partial_message(message_id).edit(embed=embed)
-        except discord.HTTPException:
-            print("Failed to update message")
+        except discord.HTTPException as e:
+            logging.error('Failed to update message in modlog', exc_info=e)
 
     @commands.Cog.listener('on_member_update')
     async def member_update_modlog(self, before: discord.Member, after: discord.Member):
