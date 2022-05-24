@@ -203,7 +203,7 @@ class ModLogs(LoggingBase):
             - Timeout remove
             - Timeout update
         """
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.5)
         if not await self.is_guild_logged(before.guild):
             return
 
@@ -280,7 +280,7 @@ class ModLogs(LoggingBase):
         Logged actions:
             - Ban
         """
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.5)
         if not await self.is_guild_logged(guild):
             return
 
@@ -299,7 +299,7 @@ class ModLogs(LoggingBase):
         Logged actions:
             - Unban
         """
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.5)
         if not await self.is_guild_logged(guild):
             return
 
@@ -318,7 +318,7 @@ class ModLogs(LoggingBase):
         Logged actions:
             - Kick
         """
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.5)
         if not await self.is_guild_logged(member.guild):
             return
 
