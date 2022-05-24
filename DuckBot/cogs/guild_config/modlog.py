@@ -24,8 +24,8 @@ class ModLogs(ConfigBase):
                 )
                 if not r:
                     return
+            await self.bot.db.execute(f"DROP TABLE IF EXISTS modlogs.modlogs_{ctx.guild.id};")
             await self.bot.db.execute(
-                f"DROP TABLE IF EXISTS modlogs.modlogs_{ctx.guild.id};"
                 "INSERT INTO prefixes (guild_id, modlog) VALUES ($1, $2) "
                 "ON CONFLICT (guild_id) DO UPDATE SET modlog = $2;",
                 ctx.guild.id,
