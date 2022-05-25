@@ -120,7 +120,7 @@ async def get_user_badges(
 
     badges = await bot.pool.fetch(
         """
-        SELECT name, emoji FROM badges WHERE badge_id IN 
+        SELECT name, emoji FROM badges WHERE badge_id IN
         (SELECT badge_id FROM acknowledgements WHERE user_id = $1)
     """,
         user.id,
@@ -332,7 +332,7 @@ class UserInfo(DuckCog):
             If None is passed, it will get info about you.
         """
         user = user or ctx.author
-        ctx.bot.create_task(ctx.trigger_typing())
+        await ctx.typing()
         await UserInfoViewer(user, bot=ctx.bot, author=ctx.author, color=ctx.color).start(ctx)
 
 

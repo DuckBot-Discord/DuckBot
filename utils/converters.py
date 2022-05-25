@@ -142,7 +142,7 @@ class BanEntryConverter(discord.guild.BanEntry):
         :class:`~discord.guild.BanEntry`
             The converted target as specifying when defining the converter.
         """
-        await ctx.trigger_typing()
+        await ctx.typing()
 
         guild = ctx.guild
         if guild is None:
