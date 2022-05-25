@@ -10,7 +10,6 @@ from discord.ext import commands
 from jishaku.paginators import WrappedPaginator
 
 from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.cogs.guild_config import GuildConfig
 from DuckBot.helpers import constants, paginator
 from DuckBot.helpers import helper
 from ._base import UtilityBase
@@ -77,6 +76,8 @@ class GenerateChannels(discord.ui.Button['ServerInfoView']):
         self.ctx = ctx
 
     async def callback(self, interaction: discord.Interaction):
+        assert self.view is not None
+        assert self.view.message is not None
         self.disabled = True
         self.emoji = '<a:loading:747680523459231834>'
         self.label = 'Requesting... Please wait.'
@@ -121,7 +122,7 @@ class ServerInfoView(discord.ui.View):
         self.invite_embed: Optional[discord.Embed] = None
         self.members_embed: Optional[discord.Embed] = None
         self.channels_embed: Optional[discord.Embed] = None
-        self.is_on_mobile = self.ctx.author.is_on_mobile()
+        self.is_on_mobile = getattr(self.ctx.author, 'is_on_mobile', lambda: False)()
         self.emotes = {False: constants.statuses.IDLE_MOBILE, True: constants.statuses.IDLE}
         self.item_added = False
 
@@ -250,7 +251,6 @@ class ServerInfoView(discord.ui.View):
             name=f"{constants.INFORMATION_SOURCE} General Info:",
             value=f"🆔 {guild.id}"
             f"\n{constants.OWNER_CROWN} {guild.owner}"
-            f"\n🌐 Server Region:\n╰ {helper.get_server_region(guild)}"
             f"\n{constants.VERIFICATION_LEVEL[guild.verification_level]} "
             f"{str(guild.verification_level).replace('_', ' ').replace('none', 'no').title()} Verification Level"
             f"\n📁 File size limit: {humanize.naturalsize(guild.filesize_limit)}"
