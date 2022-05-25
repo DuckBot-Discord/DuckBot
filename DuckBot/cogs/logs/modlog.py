@@ -170,7 +170,7 @@ class ModLogs(LoggingBase):
         if not (modlog := await self.get_modlog(guild)):
             return
         case = await self.bot.db.fetchrow(
-            "SELECT action, reason, offender, role_id, moderator, message_id, log_date, until FROM modlogs.modlogs_774561547930304536 WHERE case_id = $1".format(
+            "SELECT action, reason, offender, role_id, moderator, message_id, log_date, until FROM modlogs.modlogs_{} WHERE case_id = $1".format(
                 guild.id
             ),
             case_id,
