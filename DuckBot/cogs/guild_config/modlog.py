@@ -139,11 +139,11 @@ class ModLogs(ConfigBase):
     @modlogs.command(name='removerole')
     async def removerole(self, ctx: CustomContext, role: discord.Role):
         """Removes a role from the mod-log entry"""
-        if not await ctx.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1"):
+        if not await ctx.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id):
             raise commands.BadArgument('This guild does not have a mod-log enabled!')
         await ctx.bot.db.fetchrow(
             "UPDATE prefixes SET special_roles = ARRAY_REMOVE(special_roles, $1) WHERE guild_id = $2 RETURNING *",
-            ctx.guild.id,
             role.id,
+            ctx.guild.id
         )
         await ctx.send(f'✅ | Removed {role.name} from the special roles list')

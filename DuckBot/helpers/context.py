@@ -282,7 +282,7 @@ class CustomContext(commands.Context):
         message = await self.send(message, view=view)
         await view.wait()
         if False in (delete_after_cancel, delete_after_confirm, delete_after_timeout):
-            view.children = [view.children[0]]
+            view._children = [view.children[0]]
             for c in view.children:
                 c.disabled = True
                 if view.value is False:
