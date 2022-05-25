@@ -697,7 +697,7 @@ class Logging(ConfigBase):
             raise commands.BadArgument("This server already has a logging enabled.")
         if not channel.permissions_for(ctx.me).manage_webhooks and not channel.permissions_for(ctx.me).send_messages:
             raise commands.BadArgument(f"I'm missing the Manage Webhooks permission in {channel.mention}")
-        await ctx.trigger_typing()
+        await ctx.typing()
 
         try:
             webhooks = await channel.webhooks()
@@ -908,7 +908,7 @@ class Logging(ConfigBase):
     async def log_all_events(self, ctx: CustomContext):
         if ctx.guild.id not in self.bot.log_channels:
             raise commands.BadArgument("This server doesn't have logging enabled.")
-        await ctx.trigger_typing()
+        await ctx.typing()
         events = self.bot.guild_loggings[ctx.guild.id]
         view = AllEvents(ctx, events)
         await view.start()

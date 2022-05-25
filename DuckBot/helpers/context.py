@@ -234,7 +234,7 @@ class CustomContext(commands.Context):
         embeds = [embed] if embed else (embeds or [])
 
         if gist and content and len(content) > 2000:
-            await self.trigger_typing()
+            await self.typing()
             content = await self.bot.create_gist(
                 filename=f"output.{extension}",
                 description="DuckBot send",
@@ -356,12 +356,12 @@ class CustomContext(commands.Context):
 
     async def trigger_typing(self) -> None:
         try:
-            await super().trigger_typing()
+            await super().typing()
         except (discord.Forbidden, discord.HTTPException):
             pass
 
     async def dagpi(self, target: target_type = None, *, feature: ImageFeatures, **kwargs) -> discord.File:
-        await self.trigger_typing()
+        await self.typing()
         try:
             return await self.bot.dagpi_request(self, target, feature=feature, **kwargs)
         except Exception as e:

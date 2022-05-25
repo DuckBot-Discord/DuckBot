@@ -81,7 +81,7 @@ class Counting(ConfigBase):
     async def ct_set_channel(self, ctx: CustomContext, channel: discord.TextChannel):
         """Sets this server's count channel"""
         try:
-            await ctx.trigger_typing()
+            await ctx.typing()
         except (discord.Forbidden, discord.HTTPException):
             pass
         try:

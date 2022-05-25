@@ -481,7 +481,7 @@ class ServerInfo(UtilityBase):
         """
         Shows the current server's information.
         """
-        await ctx.trigger_typing()
+        await ctx.typing()
         guild = guild if guild and (await self.bot.is_owner(ctx.author)) else ctx.guild
         view = ServerInfoView(ctx, guild=guild)
         await view.start()

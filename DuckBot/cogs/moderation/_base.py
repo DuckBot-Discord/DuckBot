@@ -11,7 +11,7 @@ from DuckBot.helpers.context import CustomContext
 
 class BannedMember(commands.Converter):
     async def convert(self, ctx: CustomContext, argument):  # noqa
-        await ctx.trigger_typing()
+        await ctx.typing()
         if argument.isdigit():
             member_id = int(argument, base=10)
             try:

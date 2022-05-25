@@ -67,7 +67,7 @@ class Apis(FunBase):
     @commands.command(name='achievement')
     async def minecraft_achievement(self, ctx: CustomContext, *, text: commands.clean_content):
         text = urllib.parse.quote(str(text))
-        await ctx.trigger_typing()
+        await ctx.typing()
         try:
             async with self.bot.session.get(
                 f'https://api.cool-img-api.ml/achievement?text={text}', allow_redirects=True

@@ -769,7 +769,7 @@ class About(commands.Cog):
         number = 0
 
         typing_start = time.monotonic()
-        await ctx.trigger_typing()
+        await ctx.typing()
         typing_end = time.monotonic()
         typing_ms = (typing_end - typing_start) * 1000
         pings.append(typing_ms)
