@@ -118,6 +118,7 @@ if __name__ == "__main__":
     sentry_sdk.init(
         get_or_fail("SENTRY_URL"),
         traces_sample_rate=1.0,
+        environment=os.getenv("SENTRY_ENV") or 'development',
     )
 
     async def user_blacklisted(ctx: CustomContext):
