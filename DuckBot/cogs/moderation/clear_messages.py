@@ -63,7 +63,7 @@ class RemovalCommands(ModerationBase):
     @commands.group(name="clean", aliases=['purge', 'delete', 'remove', 'clear'])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
-    async def remove(self, ctx, search: int = 100):
+    async def remove(self, ctx, search: typing.Optional[int] = 100):
         """
         Removes messages that meet a criteria.
 
