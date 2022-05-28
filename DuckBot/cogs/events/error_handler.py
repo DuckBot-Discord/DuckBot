@@ -226,7 +226,7 @@ class ErrorHandler(EventsBase):
             return await ctx.send(embed=embed)
 
         if isinstance(error, errors.NoQuotedMessage):
-            return await ctx.send(f"{constants.REPLY_BUTTON} Missing reply!")
+            return await ctx.send(f"{constants.REPLY_BUTTON} You did not reply to message!")
 
         if isinstance(error, errors.MuteRoleNotFound):
             return await ctx.send(

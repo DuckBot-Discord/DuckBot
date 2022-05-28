@@ -190,6 +190,7 @@ class RemovalCommands(ModerationBase):
 
     @remove.command(name='between')
     async def remove_between(self, ctx: CustomContext, limit: int = 2000):
+        """Reply to a message with this command, and it will remove all messages between the replied message and the message invoking the command."""
         if not ctx.reference:
             raise NoQuotedMessage
         await self.do_removal(ctx, limit=limit, predicate=lambda m: not m.pinned, after=ctx.reference.id)
