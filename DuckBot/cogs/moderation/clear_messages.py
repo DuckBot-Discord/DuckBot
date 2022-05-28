@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+from datetime import timedelta
 import re
 import shlex
 import typing
@@ -10,6 +11,7 @@ import discord
 from discord.ext import commands
 
 from DuckBot.helpers.context import CustomContext
+from DuckBot.errors import NoQuotedMessage
 from ._base import ModerationBase
 
 
@@ -20,9 +22,12 @@ class Arguments(argparse.ArgumentParser):
 
 class RemovalCommands(ModerationBase):
     @staticmethod
-    async def do_removal(ctx: CustomContext, limit: int, predicate, *, before=None, after=None, bulk: bool = True):
-        if limit > 2000:
+    async def do_removal(
+        ctx: CustomContext, limit: typing.Optional[int], predicate, *, before=None, after=None, bulk: bool = True
+    ):
+        if limit and limit > 2000:
             return await ctx.send(f'Too many messages to search given ({limit}/2000)')
+        assert isinstance(ctx.channel, (discord.abc.GuildChannel, discord.Thread))
 
         async with ctx.typing():
             if before is None:
@@ -58,7 +63,7 @@ class RemovalCommands(ModerationBase):
     @commands.group(name="clean", aliases=['purge', 'delete', 'remove', 'clear'])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
-    async def remove(self, ctx, search: typing.Optional[int] = 100):
+    async def remove(self, ctx, search: int = 100):
         """
         Removes messages that meet a criteria.
 
@@ -183,6 +188,12 @@ class RemovalCommands(ModerationBase):
 
             await ctx.send(f'Successfully removed {total_reactions} reactions.')
 
+    @remove.command(name='between')
+    async def remove_between(self, ctx: CustomContext):
+        if not ctx.reference:
+            raise NoQuotedMessage
+        await self.do_removal(ctx, limit=None, predicate=lambda m: not m.pinned, after=ctx.reference.id)
+
     @remove.command(
         name="custom",
         brief="A more advanced purge command, with a command line-like interface. "
@@ -232,7 +243,7 @@ class RemovalCommands(ModerationBase):
         parser.add_argument('--before', type=int)
 
         try:
-            args = parser.parse_args(shlex.split(args))
+            args: typing.Any = parser.parse_args(shlex.split(args))
         except Exception as e:
             await ctx.send(str(e))
             return

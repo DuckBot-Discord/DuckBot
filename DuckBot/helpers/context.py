@@ -370,7 +370,8 @@ class CustomContext(commands.Context):
 
     @property
     def reference(self) -> typing.Optional[discord.Message]:
-        return getattr(self.message.reference, "resolved", None)
+        message = getattr(self.message.reference, "resolved", None)
+        return isinstance(message, discord.Message) and message or None
 
     @property
     def referenced_user(self) -> typing.Optional[discord.abc.User]:
