@@ -189,10 +189,10 @@ class RemovalCommands(ModerationBase):
             await ctx.send(f'Successfully removed {total_reactions} reactions.')
 
     @remove.command(name='between')
-    async def remove_between(self, ctx: CustomContext):
+    async def remove_between(self, ctx: CustomContext, limit: int = 2000):
         if not ctx.reference:
             raise NoQuotedMessage
-        await self.do_removal(ctx, limit=None, predicate=lambda m: not m.pinned, after=ctx.reference.id)
+        await self.do_removal(ctx, limit=limit, predicate=lambda m: not m.pinned, after=ctx.reference.id)
 
     @remove.command(
         name="custom",
