@@ -191,28 +191,22 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
 
     async def do_rtfm(self, ctx, key, obj):
         page_types = {
+            "stable": "https://discordpy.readthedocs.io/en/stable"
             "latest": "https://discordpy.readthedocs.io/en/latest",
             "latest-jp": "https://discordpy.readthedocs.io/ja/latest",
             "python": "https://docs.python.org/3",
             "python-jp": "https://docs.python.org/ja/3",
-            "master": "https://discordpy.readthedocs.io/en/master",
-            "edpy": "https://enhanced-dpy.readthedocs.io/en/latest",
-            "chai": "https://chaidiscordpy.readthedocs.io/en/latest",
             "bing": "https://asyncbing.readthedocs.io/en/latest",
             "twitchio": "https://twitchio.readthedocs.io/en/latest/",
-            "pycord": "https://pycord.readthedocs.io/en/master",
             "pomice": "https://pomice.readthedocs.io/en/latest/",
         }
         embed_titles = {
-            "latest": "Documentation for `discord.py v1.7.3`",
-            "latest-jp": "Documentation for `discord.py v1.7.3` in Japanese",
+            "stable": "Documentation for `discord.py v1.7.3`",
+            "latest-jp": "Documentation for `discord.py v2.0.0a` in Japanese",
             "python": "Documentation for `python`",
             "python-jp": "Documentation for `python` in Japanese",
-            "master": "Documentation for `discord.py v2.0.0a`",
-            "edpy": "Documentation for `enhanced-dpy`",
-            "chai": "Documentation for `chaidiscord.py`",
+            "latest": "Documentation for `discord.py v2.0.0a`",
             "bing": "Documentation for `asyncbing`",
-            "pycord": "Documentation for `pycord`",
             "twitchio": "Documentation for `twitchio`",
             "pomice": "Documentation for `pomice`",
         }
@@ -257,9 +251,9 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
         Events, objects, and functions are all supported through
         a cruddy fuzzy algorithm.
 
-        https://discordpy.readthedocs.io/en/master
+        https://discordpy.readthedocs.io/en/stable
         """
-        await self.do_rtfm(ctx, "master", obj)
+        await self.do_rtfm(ctx, "stable", obj)
 
     @rtfm.command(name="jp")
     async def rtfm_jp(self, ctx, *, obj: str = None):
@@ -285,29 +279,13 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
         """
         await self.do_rtfm(ctx, "python-jp", obj)
 
-    @rtfm.command(name="master", aliases=["2.0"])
-    async def rtfm_master(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a discord.py entity (master branch)
-
-        https://discordpy.readthedocs.io/en/master
-        """
-        await self.do_rtfm(ctx, "master", obj)
-
-    @rtfm.command(name="latest", aliases=["1.7"])
+    @rtfm.command(name="latest", aliases=["2.0", "master"])
     async def rtfm_latest(self, ctx, *, obj: str = None):
         """Gives you a documentation link for a discord.py entity (master branch)
 
         https://discordpy.readthedocs.io/en/latest
         """
         await self.do_rtfm(ctx, "latest", obj)
-
-    @rtfm.command(name="enhanced-dpy", aliases=["edpy"])
-    async def rtfm_edpy(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a enhanced-discord.py entity
-
-        https://enhanced-dpy.readthedocs.io/en/latest
-        """
-        await self.do_rtfm(ctx, "edpy", obj)
 
     @rtfm.command(name="asyncbing", aliases=["bing"])
     async def rtfm_asyncbing(self, ctx, *, obj: str = None):
@@ -316,15 +294,6 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
         https://asyncbing.readthedocs.io/en/latest
         """
         await self.do_rtfm(ctx, "bing", obj)
-
-    @rtfm.command(name="pycord")
-    async def rtfm_pycord(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a pycord entity
-
-        https://pycord.readthedocs.io/en/master
-
-        """
-        await self.do_rtfm(ctx, "pycord", obj)
 
     @rtfm.command(name="twitchio")
     async def rtfm_twitchio(self, ctx, *, obj: str = None):
