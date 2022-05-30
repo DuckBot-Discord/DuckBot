@@ -197,9 +197,10 @@ class DuckContext(commands.Context, Generic[BotT]):
             new_kwargs = deepcopy(VALID_EDIT_KWARGS)
             new_kwargs['content'] = content
             new_kwargs.update(kwargs)
+            edit_kw = {k: v for k, v in new_kwargs.items() if k in VALID_EDIT_KWARGS}
 
             try:
-                m = await self._previous_message.edit(**new_kwargs)
+                m = await self._previous_message.edit(**edit_kw)
                 self._previous_message = m
                 self._message_count += 1
                 return m
