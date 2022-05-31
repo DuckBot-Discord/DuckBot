@@ -1,28 +1,18 @@
-import contextlib
 import io
 import json
-import logging
+import math
 import os
 import re
-import urllib
-import zlib
-from inspect import Parameter
-
-import math
-
-import asyncpg
-import discord
 import typing
-import yarl
-from discord.ext import commands
+import zlib
 
-import DuckBot.__main__
+import discord
+from discord.ext import commands, tasks
 from DuckBot import errors
 from DuckBot.__main__ import DuckBot
-from jishaku.paginators import WrappedPaginator
 from DuckBot.cogs.management import get_webhook
 from DuckBot.helpers.context import CustomContext
-
+from jishaku.paginators import WrappedPaginator
 
 url_regex = re.compile(r"^http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+$")
 DUCK_HIDEOUT = 774561547930304536
@@ -118,6 +108,12 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
 
     def __init__(self, bot):
         self.bot: DuckBot = bot
+
+    async def cog_load(self):
+        self.pleeease.start()
+
+    async def cog_unload(self) -> None:
+        self.pleeease.cancel()
 
     async def build_rtfm_lookup_table(self, page_types):
         cache = {}
@@ -555,3 +551,38 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
             destination = ctx.channel if send_in_channel else ctx.author
             embed = discord.Embed(description=p, color=discord.Color.blue())
             await destination.send(embed=embed)
+
+    @tasks.loop(hours=1)
+    async def pleeease(self):
+        byte = await self.bot.db.fetchval("SELECT image FROM emojis ORDER BY random() LIMIT 1;")
+        guild = self.bot.get_guild(981111600876511252)
+        if not guild:
+            return
+        await guild.edit(icon=byte)
+
+    @commands.command(name='plead', aliases=['please', '🥺'])
+    async def plead(self, ctx: CustomContext, emoji: str):
+        img_bytes = await self.bot.db.fetchval("SELECT image FROM emojis WHERE emoji = $1", emoji)
+        if not img_bytes:
+            raise commands.BadArgument('No plead??? 🥺')
+        await ctx.send(file=discord.File(io.BytesIO(img_bytes), filename='plead.png'))
+
+    @commands.command()
+    @commands.is_owner()
+    @commands.guild_only()
+    async def newicon(self, ctx: CustomContext, icon: typing.Optional[str]):
+        if ctx.guild.id != 981111600876511252:
+            return
+        if not icon:
+            new_icon = await self.bot.db.fetchval("SELECT image FROM emojis ORDER BY random() LIMIT 1;")
+        else:
+            new_icon = await self.bot.db.fetchval("SELECT image FROM emojis WHERE emoji = $1", icon)
+        if not new_icon:
+            raise commands.BadArgument('No plead??? 🥺')
+        await ctx.guild.edit(icon=new_icon)
+        await ctx.send(
+            embed=discord.Embed(title='new icon??? 🥺', color=discord.Color.blue()).set_thumbnail(
+                url='attachment://plead.png'
+            ),
+            file=discord.File(io.BytesIO(new_icon), filename='plead.png'),
+        )
