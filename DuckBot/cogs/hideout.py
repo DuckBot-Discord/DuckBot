@@ -529,6 +529,10 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
             return
         await guild.edit(icon=byte)
 
+    @pleeease.before_loop
+    async def before_pleeease(self):
+        await self.bot.wait_until_ready()
+
     @commands.command(name='plead', aliases=['please', '🥺'])
     async def plead(self, ctx: CustomContext, emoji: str):
         img_bytes = await self.bot.db.fetchval("SELECT image FROM emojis WHERE emoji = $1", emoji)
@@ -537,8 +541,7 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
         await ctx.send(file=discord.File(io.BytesIO(img_bytes), filename='plead.png'))
 
     @commands.command()
-    @commands.is_owner()
-    @commands.guild_only()
+    @commands.has_role(981146153854861312)
     async def newicon(self, ctx: CustomContext, icon: typing.Optional[str]):
         if ctx.guild.id != 981111600876511252:
             return
