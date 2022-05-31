@@ -8,6 +8,7 @@ import traceback
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
+from numpy import isin
 
 import DuckBot.errors as errors
 from DuckBot.__main__ import CustomContext
@@ -43,7 +44,8 @@ class ExceptionView(discord.ui.View):
     @discord.ui.button(emoji='🗑', style=discord.ButtonStyle.red)
     async def delete(self, interaction: discord.Interaction, _):
         if interaction.user and interaction.user.id == self.author_id:
-            return await interaction.message.delete()
+            if interaction.message:
+                return await interaction.message.delete()
         await interaction.response.defer()
 
 
@@ -131,13 +133,13 @@ class ErrorHandler(EventsBase):
             else:
                 return
 
-        if isinstance(error, discord.ext.commands.CheckAnyFailure):
+        if isinstance(error, commands.CheckAnyFailure):
             for e in error.errors:
                 if not isinstance(error, commands.NotOwner):
                     error = e
                     break
 
-        if isinstance(error, discord.ext.commands.BadUnionArgument):
+        if isinstance(error, commands.BadUnionArgument):
             if error.errors:
                 error = error.errors[0]
 
@@ -150,17 +152,17 @@ class ErrorHandler(EventsBase):
         if isinstance(error, commands.TooManyArguments):
             return await ctx.send(f"Too many arguments passed to the command!")
 
-        if isinstance(error, discord.ext.commands.MissingPermissions):
+        if isinstance(error, commands.MissingPermissions):
             missing = [(e.replace('_', ' ').replace('guild', 'server')).title() for e in error.missing_permissions]
             perms_formatted = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
             return await ctx.send(f"You're missing **{perms_formatted}** permissions!")
 
-        if isinstance(error, discord.ext.commands.BotMissingPermissions):
+        if isinstance(error, commands.BotMissingPermissions):
             missing = [(e.replace('_', ' ').replace('guild', 'server')).title() for e in error.missing_permissions]
             perms_formatted = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
             return await ctx.send(f"I'm missing **{perms_formatted}** permissions!")
 
-        if isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingRequiredArgument):
             missing = f"{error.param.name}"
             command = f"{ctx.clean_prefix}{ctx.command} {ctx.command.signature}"
             separator = ' ' * (len([item[::-1] for item in command[::-1].split(missing[::-1], 1)][::-1][0]) - 1)
@@ -176,7 +178,8 @@ class ErrorHandler(EventsBase):
 
         if isinstance(error, commands.errors.CommandOnCooldown):
             if error.type in (commands.BucketType.user, commands.BucketType.member) and await self.bot.is_owner(ctx.author):
-                ctx.command.reset_cooldown(ctx)
+                if ctx.command:
+                    ctx.command.reset_cooldown(ctx)
                 return await self.bot.process_commands(ctx.message)
             embed = discord.Embed(color=0xD7342A, description=f'Please try again in {round(error.retry_after, 2)} seconds')
             embed.set_author(name='Command is on cooldown!', icon_url='https://i.imgur.com/izRBtg9.png')
@@ -201,7 +204,7 @@ class ErrorHandler(EventsBase):
             embed.set_footer(text=f"cooldown: {error.cooldown.rate} per {error.cooldown.per}s {per}")
             return await ctx.send(embed=embed)
 
-        if isinstance(error, discord.ext.commands.errors.MaxConcurrencyReached):
+        if isinstance(error, commands.errors.MaxConcurrencyReached):
             embed = discord.Embed(color=0xD7342A, description=f"Please try again once you are done running the command")
             embed.set_author(name='Command is already running!', icon_url='https://i.imgur.com/izRBtg9.png')
 
@@ -239,9 +242,7 @@ class ErrorHandler(EventsBase):
             return await ctx.send("I couldn't find any emojis there.")
 
         if isinstance(error, commands.errors.MemberNotFound):
-            return await ctx.send(
-                f"I've searched far and wide, " f"but I couldn't find `{error.argument}` in this server..."
-            )
+            return await ctx.send(f"I've searched far and wide, but I couldn't find `{error.argument}` in this server...")
 
         if isinstance(error, commands.errors.UserNotFound):
             return await ctx.send(f"I've searched far and wide, but `{error.argument}` doesn't seem to be a discord user...")
@@ -261,6 +262,9 @@ class ErrorHandler(EventsBase):
 
         if isinstance(error, commands.NSFWChannelRequired):
             return await ctx.send('This commands only works in NSFW channels')
+
+        if isinstance(error, commands.CheckFailure):
+            return await ctx.send(f'You are not allowed to use this command!: {error}')
 
         error_channel = self.bot.get_channel(self.error_channel)
 
