@@ -1,4 +1,5 @@
 from __future__ import annotations
+from array import array
 from copy import deepcopy
 
 from typing import TYPE_CHECKING, Any, Dict, Generic, Tuple, Optional, TypeVar
@@ -198,6 +199,12 @@ class DuckContext(commands.Context, Generic[BotT]):
             new_kwargs['content'] = content
             new_kwargs.update(kwargs)
             edit_kw = {k: v for k, v in new_kwargs.items() if k in VALID_EDIT_KWARGS}
+            attachments = new_kwargs.pop('embeds', []) or (
+                [new_kwargs.pop('embed')] if new_kwargs.get('embed', None) else []
+            )
+            if attachments:
+                edit_kw['attachments'] = attachments
+                new_kwargs['files'] = attachments
 
             try:
                 m = await self._previous_message.edit(**edit_kw)
