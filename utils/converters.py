@@ -63,7 +63,7 @@ class TargetVerifier(commands.Converter[T]):
     @discord.utils.cached_slot_property('_cs_converter_mapping')
     def converter_mapping(self) -> Dict[Type[T], Type[commands.Converter]]:
         """Dict[Type[T], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
-        return {discord.Member: commands.MemberConverter, discord.User: commands.UserConverter}
+        return {discord.Member: commands.MemberConverter, discord.User: commands.UserConverter}  # type: ignore
 
     async def convert(self, ctx: DuckContext, argument: str) -> Union[discord.Member, discord.User]:
         """|coro|
@@ -254,7 +254,7 @@ class ChannelVerifier(metaclass=VerifyChannelMeta):
             # it's multiple arguments, we must manually convert and check.
             target = await commands.GuildChannelConverter().convert(ctx, argument)
             if not isinstance(target, self._targets):
-                if self._targets[-1] is discord.Thread:
+                if self._targets[-1] is discord.Thread:  # type: ignore
 
                     error = commands.ThreadNotFound
                 else:
@@ -330,7 +330,6 @@ class UntilFlag(Generic[FCT]):
         self.value = value
         self.flags = flags
         self._regex = self.flags.__commands_flag_regex__  # type: ignore
-        self._start = self.flags.__commands_flag_prefix__  # type: ignore
 
     def __class_getitem__(cls, item: Type[DCFlagConverter]) -> UntilFlag:
         return cls(value='...', flags=item())
@@ -358,7 +357,7 @@ class UntilFlag(Generic[FCT]):
             No value was given
         """
         stripped = argument.strip()
-        if not stripped or stripped.startswith(self._start):
+        if not stripped:
             raise commands.BadArgument(f'No body has been specified before the flags.')
         return True
 
