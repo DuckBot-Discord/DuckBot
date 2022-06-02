@@ -1,5 +1,4 @@
 from __future__ import annotations
-from array import array
 from copy import deepcopy
 
 from typing import TYPE_CHECKING, Any, Dict, Generic, Tuple, Optional, TypeVar
