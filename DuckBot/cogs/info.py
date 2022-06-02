@@ -909,7 +909,7 @@ class About(commands.Cog):
         global obj
         source_url = "https://github.com/LeoCx1000/discord-bots"
         branch = "master/DuckBot"
-        license_url = f"{source_url}/LICENSE"
+        license_url = f"{source_url}/blob/master/LICENSE"
         mpl_advice = (
             f"**This code is licensed under [MPL]({license_url})**"
             f"\nRemember that you must use the "
