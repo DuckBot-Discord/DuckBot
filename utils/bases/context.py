@@ -188,7 +188,7 @@ class DuckContext(commands.Context, Generic[BotT]):
         files = kwargs.pop("files", []) or ([kwargs.pop("file")] if kwargs.get("file", None) else [])
 
         kwargs['embeds'] = embeds
-        kwargs['embeds'] = files
+        kwargs['files'] = files
 
         if isinstance(content, int):
             content = await self.translate(content, *args, locale=locale)
