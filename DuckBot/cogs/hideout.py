@@ -341,41 +341,6 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
             pretty_data = json.dumps(data, indent=4)
             return await ctx.send(f"```json\n{pretty_data}\n```", reference=ctx.message, gist=True)
 
-    @commands.command()
-    async def credits(self, ctx: CustomContext):
-        embed = discord.Embed(
-            description="**You copied something from my bad source code?**"
-            "\nYou **don't need to credit me** in a command, don't"
-            "\nworry. Although if you wish to do so, you can"
-            "\nadd credits in the source code. ([Mozilla Public"
-            "\nLicense](https://github.com/LeoCx1000/discord-bots/blob"
-            "/master/LICENSE) btw one of the terms is to use the same for"
-            "\nyour project). Just add a comment or something in"
-            "\nthere saying where the code came from."
-            "\nThe latter also being optional, of course."
-            "\n(I don't know the legalities of the Mozilla Public "
-            "\nLicense so this is not legal advice in any way.)"
-            "\n"
-            "\n**As for why I don't have a proper credits command?**"
-            "\nI don't see the need to. I don't expect others to"
-            "\ngive me credits. It's all up to them, and well,"
-            "\nunder that same reasoning I don't add any credits"
-            "\nhere. It's also because I (the developer of DuckBot)"
-            "\nI'm an idiot, and I can't remember every person who"
-            "\nhelped me, so as to not offend anyone I'd rather"
-            "\njust not add a credits command."
-            "\nOf course if you want to get credit because you"
-            "\nhelped me, or because I took a snippet off your"
-            "\ncode, let me know and I will gladly add a note"
-            "\nin said command giving proper credits to your"
-            "\nrepository 😊 Just that I can't remember anyone."
-            "\n"
-            "\n(Some users will show a small acknowledgement in the"
-            "\nuser-info command if they did something remarkable)",
-            title="Why no credits?",
-        )
-        await ctx.send(embed=embed)
-
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         if not isinstance(channel, discord.VoiceChannel):
