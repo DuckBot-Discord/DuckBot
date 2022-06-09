@@ -136,7 +136,14 @@ class Test(commands.Cog):
                 fmt[-1] += ' (No Permissions)'
 
         NL = '\n'
+        if isinstance(ctx.author, discord.Member):
+            mobile = ctx.author.is_on_mobile()
+        else:
+            mobile = False
+
         await ctx.send(
             f"```\nOverwrites for channel #{channel}:\n{textwrap.indent(NL.join(fmt), '  ')}\n```",
-            maybe_attachment=True,
+            maybe_attachment=not mobile,
+            gist=mobile,
+            extension='txt',
         )
