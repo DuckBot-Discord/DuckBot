@@ -34,6 +34,7 @@ from typing import (
 )
 
 import asyncpg
+from asyncpg.pool import PoolConnectionProxy
 import cachetools
 import discord
 from discord import app_commands
@@ -89,6 +90,7 @@ initial_extensions: Tuple[str, ...] = (
     "cogs.owner",
     "cogs.information",
     "cogs.tags",
+    "cogs.role_menus",
 )
 
 
@@ -239,7 +241,7 @@ class DuckHelper(TimerManager):
         /,
         *args: Any,
         locale: str | discord.Locale | None,
-        db: asyncpg.Pool | Connection | None = None,
+        db: asyncpg.Pool | Connection | PoolConnectionProxy | None = None,
     ) -> str:
         """|coro|
         Handles translating a translation ID.
@@ -634,6 +636,11 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             base = set(cached_prefixes)
         else:
             base = self.command_prefix
+
+        if not base and raw:
+            base = {
+                'dbb.',
+            }
 
         # Note you have a type error here because of `self.command_prefix`.
         # This is because command_prefix is type hinted internally as both an iterable

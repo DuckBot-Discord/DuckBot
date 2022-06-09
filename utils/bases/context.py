@@ -1,16 +1,16 @@
 from __future__ import annotations
-from copy import deepcopy
 
-from typing import TYPE_CHECKING, Any, Dict, Generic, Tuple, Optional, TypeVar
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Tuple, TypeVar
 
 import discord
 from discord.ext import commands
 
-if TYPE_CHECKING:
-    from discord.message import Message
-    from bot import DuckBot
-
 from .translation_helpers import FormatString, TranslatedEmbed
+
+if TYPE_CHECKING:
+    from bot import DuckBot
+    from discord.message import Message
 
 
 __all__: Tuple[str, ...] = (
@@ -202,6 +202,10 @@ class DuckContext(commands.Context, Generic[BotT]):
             new_kwargs["attachments"] = files
             new_kwargs.update(kwargs)
             edit_kw = {k: v for k, v in new_kwargs.items() if k in VALID_EDIT_KWARGS}
+            attachments = new_kwargs.pop('files', []) or ([new_kwargs.pop('file')] if new_kwargs.get('file', None) else [])
+            if attachments:
+                edit_kw['attachments'] = attachments
+                new_kwargs['files'] = attachments
 
             try:
                 m = await self._previous_message.edit(**edit_kw)

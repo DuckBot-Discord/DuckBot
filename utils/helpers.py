@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 import io
 import logging
 import os
 import re
 import subprocess
 import time as time_lib
+from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, TypeVar, Callable, Awaitable, Union, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, Tuple, TypeVar, Union
 
 import aiohttp
 import discord
@@ -24,6 +24,8 @@ except ImportError:
 
 from utils.bases.errors import *
 
+if TYPE_CHECKING:
+    from bot import DuckBot
 
 T = TypeVar('T')
 P = ParamSpec('P')
@@ -46,6 +48,7 @@ __all__: Tuple[str, ...] = (
     'DeleteButton',
     'URLObject',
     'Shell',
+    'View',
 )
 
 
@@ -295,14 +298,14 @@ class DeleteButton(discord.ui.View):
                 pass
         try:
             self.bot.views.remove(self)  # type: ignore
-        except (AttributeError, ValueError):
+        except (AttributeError, ValueError, KeyError):
             pass
 
     def stop(self) -> None:
         """Stops the view."""
         try:
             self.bot.views.remove(self)  # type: ignore
-        except (AttributeError, ValueError):
+        except (AttributeError, ValueError, KeyError):
             pass
         finally:
             super().stop()
@@ -529,3 +532,13 @@ class Shell:
         self._command = command
         self._output.stdout = ""
         self._output.stderr = ""
+
+
+class View(discord.ui.View):
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item[Any]) -> None:
+        bot: DuckBot = interaction.client  # type: ignore
+        await bot.exceptions.add_error(error=error)
+        if interaction.response.is_done():
+            await interaction.followup.send(f"Sorry! something went wrong....", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Sorry! something went wrong....", ephemeral=True)

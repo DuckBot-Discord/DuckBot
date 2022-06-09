@@ -15,6 +15,7 @@ COGS_PATTERN = re.compile('cogs\\/\\w+\\/|cogs\\/\\w+\\.py')
 
 
 @dataclass()
+# It's a class that represents a module to be reloaded.
 class Module:
     path: str
     exception: Optional[Exception] = None
@@ -53,10 +54,34 @@ def wrap(text: str, language: str = 'py') -> List[str]:
 
 class ExtensionsManager(DuckCog):
     def find_modules_to_reload(self, output: str) -> List[Module]:
-        """Returns a dictionary of filenames to module names to reload."""
+        """Returns a dictionary of filenames to module names to reload.
+
+        Parameters
+        ----------
+        output : str
+            The output of the `git pull` command.
+
+        Returns
+        -------
+        List[Module]
+            A list of modules to reload.
+        """
         return [Module(path=m) for m in FILENAME_PATTERN.findall(output)]
 
-    async def try_reload(self, name: str):
+    async def try_reload(self, name: str) -> str:
+        '''It tries to reload an extension, and if it fails, it loads it
+
+        Parameters
+        ----------
+        name : str
+            The name of the extension to reload.
+
+        Returns
+        -------
+            The emoji representing the action taken.
+            If it reloads it will be clockwise arrows,
+            If it loads it will be an inbox tray.
+        '''
         try:
             await self.bot.reload_extension(name)
             return "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}"
@@ -64,7 +89,16 @@ class ExtensionsManager(DuckCog):
             await self.bot.load_extension(name)
             return "\N{INBOX TRAY}"
 
-    async def reload_to_page(self, extension, *, paginator: Paginator):
+    async def reload_to_page(self, extension: str, *, paginator: Paginator) -> None:
+        '''It reloads an extension and adds a line to a paginator
+
+        Parameters
+        ----------
+        extension
+            The name of the extension to reload.
+        paginator : Paginator
+            Paginator
+        '''
         try:
             emoji = await self.try_reload(extension)
             paginator.add_line(f'{emoji} `{extension}`')
@@ -78,6 +112,14 @@ class ExtensionsManager(DuckCog):
 
     @group(invoke_without_command=True)
     async def reload(self, ctx: DuckContext, *extensions: str):
+        '''|coro|
+        It reloads extensions
+
+        Parameters
+        ----------
+        extensions: str
+            The extensions to reload.
+        '''
         paginator = WrappedPaginator(prefix='', suffix='', force_wrap=True)
         for extension in extensions:
             await self.reload_to_page(extension, paginator=paginator)
