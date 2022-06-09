@@ -131,11 +131,12 @@ class Test(commands.Cog):
                     continue
                 perms.append(ctx.tick(value, name))
             if perms:
-                fmt.append(textwrap.indent('\n'.join(perms), ' '*len(header)))
+                fmt.append(textwrap.indent('\n'.join(perms), ' ' * len(header)))
             else:
                 fmt[-1] += ' (No Permissions)'
 
+        NL = '\n'
         await ctx.send(
-            f"```\nOverwrites for channel #{channel}:\n{textwrap.indent('\n'.join(fmt), '  ')}\n```",
+            f"```\nOverwrites for channel #{channel}:\n{textwrap.indent(NL.join(fmt), '  ')}\n```",
             maybe_attachment=True,
         )
