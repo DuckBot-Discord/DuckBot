@@ -240,12 +240,12 @@ class CustomContext(commands.Context):
                 description="DuckBot send",
                 content=cleanup_code(content),
             )
-            content = f"<{content}>"
+            content = f"Output too long:\n<{content}>"
 
         elif maybe_attachment and len(content) > 2000:
             _file = io.BytesIO(cleanup_code(content).encode())
             file = discord.File(_file, filename=f"output.{extension}")
-            content = None
+            content = 'Output too long...'
 
         if reminders:
             if len(embeds) < 10 and sum(len(e) for e in embeds) < 5800:

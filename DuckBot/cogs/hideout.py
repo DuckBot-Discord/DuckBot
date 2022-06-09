@@ -331,7 +331,7 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
     @commands.max_concurrency(1, commands.BucketType.user)
     async def raw_message(self, ctx: CustomContext, message: typing.Optional[discord.Message]):
         async with ctx.typing():
-            message: discord.Message = getattr(ctx.message.reference, "resolved", message)
+            message = message or ctx.reference
             if not message:
                 raise commands.BadArgument("You must specify a message, or quote (reply to) one.")
             try:
@@ -339,16 +339,7 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
             except discord.HTTPException:
                 raise commands.BadArgument("There was an error retrieving that message.")
             pretty_data = json.dumps(data, indent=4)
-            if len(pretty_data) > 1990:
-                gist = await self.bot.create_gist(
-                    filename="raw_message.json",
-                    description="Raw Message created by DuckBot",
-                    content=pretty_data,
-                )
-                to_send = f"**Output too long:**\n<{gist}>"
-            else:
-                to_send = f"```json\n{pretty_data}\n```"
-            return await ctx.send(to_send, reference=ctx.message)
+            return await ctx.send(f"```json\n{pretty_data}\n```", reference=ctx.message, gist=True)
 
     @commands.command()
     async def credits(self, ctx: CustomContext):
