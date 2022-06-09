@@ -141,6 +141,7 @@ class Confirm(discord.ui.View):
 class CustomContext(commands.Context):
     bot: DuckBot
     guild: discord.Guild
+    me: discord.Member
 
     @property
     def clean_prefix(self) -> str:

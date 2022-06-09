@@ -266,7 +266,7 @@ class ErrorHandler(EventsBase):
         if isinstance(error, commands.CheckFailure):
             return await ctx.send(f'You are not allowed to use this command!: {error}')
 
-        error_channel = self.bot.get_channel(self.error_channel)
+        error_channel: discord.TextChannel = self.bot.get_channel(self.error_channel)  # type: ignore
 
         await ctx.send(f"⚠ **An unexpected error occurred!**", view=ExceptionView(error, ctx.author.id))
 
@@ -276,7 +276,7 @@ class ErrorHandler(EventsBase):
                 f"by: {ctx.author.name} ({ctx.author.id})"
                 f"\ncommand: {ctx.message.content[0:1700]}"
                 f"\nguild_id: {ctx.guild.id} - channel_id: {ctx.channel.id}"
-                f"\nowner: {ctx.guild.owner.name} ({ctx.guild.owner.id})"
+                f"\nowner: {ctx.guild.owner} ({getattr(ctx.guild.owner, 'id', None)})"
                 f"\nbot admin: {ctx.default_tick(ctx.me.guild_permissions.administrator)} "
                 f"- role pos: {ctx.me.top_role.position}"
             )
@@ -291,16 +291,15 @@ class ErrorHandler(EventsBase):
             except (discord.Forbidden, discord.HTTPException):
                 sent_error = await error_channel.send(
                     f"```yaml\n{command_data}``````py Command: {ctx.command}" f"Raised the following error:\n```",
-                    file=discord.File(io.StringIO(traceback_string), filename='traceback.py'),
+                    file=discord.File(io.BytesIO(traceback_string.encode()), filename='traceback.py'),
                 )
         else:
             sent_error = await error_channel.send(
                 f"```yaml\n{command_data}``````py Command: {ctx.command}" f"Raised the following error:\n```",
-                file=discord.File(io.StringIO(traceback_string), filename='traceback.py'),
+                file=discord.File(io.BytesIO(traceback_string.encode()), filename='traceback.py'),
             )
         try:
             await sent_error.add_reaction('🗑')
         except (discord.HTTPException, discord.Forbidden):
             pass
-        for line in traceback_string.split('\n'):
-            logging.info(line)
+        logging.error('Unhandled Exception in command %s', ctx.command, exc_info=error)  # type: ignore

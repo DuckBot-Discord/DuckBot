@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import re
+import sys
 import traceback
 import typing
 from collections import defaultdict, deque
@@ -235,11 +236,12 @@ class BaseDuck(commands.AutoShardedBot):
         await self.process_commands(message)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
-        traceback_string = traceback.format_exc()
-        for line in traceback_string.split("\n"):
-            self.logger.error(line, exc_info=None)
+        traceback_string = ''.join(traceback.format_exception(*(einfo := sys.exc_info())))
+        self.logger.error('Unhandled exception in event %s', event_method, exc_info=einfo)
         await self.wait_until_ready()
+
         error_channel: discord.TextChannel = self.get_channel(880181130408636456)  # type: ignore # known ID
+
         to_send = f"```yaml\nAn error occurred in an {event_method} event``````py" f"\n{traceback_string}\n```"
         if len(to_send) < 2000:
             try:
@@ -250,7 +252,7 @@ class BaseDuck(commands.AutoShardedBot):
                 await error_channel.send(
                     f"```yaml\nAn error occurred in an {event_method} event``````py",
                     file=discord.File(
-                        io.StringIO(traceback_string),  # type: ignore
+                        io.BytesIO(traceback_string.encode()),
                         filename="traceback.py",
                     ),
                 )
@@ -258,7 +260,7 @@ class BaseDuck(commands.AutoShardedBot):
             await error_channel.send(
                 f"```yaml\nAn error occurred in an {event_method} event``````py",
                 file=discord.File(
-                    io.StringIO(traceback_string),  # type: ignore
+                    io.BytesIO(traceback_string.encode()),
                     filename="traceback.py",
                 ),
             )
