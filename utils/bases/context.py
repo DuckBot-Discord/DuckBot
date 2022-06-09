@@ -175,6 +175,8 @@ class DuckContext(commands.Context, Generic[BotT]):
 
         locale = kwargs.pop('locale', await self.get_locale())
 
+        files = kwargs.pop("files", []) or ([kwargs.pop("file")] if kwargs.get("file", None) else [])
+
         embeds = kwargs.pop('embeds', []) or ([kwargs.pop('embed')] if kwargs.get('embed', None) else [])
         if embeds:
             for i, embed in enumerate(embeds):
@@ -187,6 +189,7 @@ class DuckContext(commands.Context, Generic[BotT]):
                     embed.color = self.bot.color
 
         kwargs['embeds'] = embeds
+        kwargs['files'] = files
 
         if isinstance(content, int):
             content = await self.translate(content, *args, locale=locale)
@@ -196,6 +199,7 @@ class DuckContext(commands.Context, Generic[BotT]):
         if self._previous_message:
             new_kwargs = deepcopy(VALID_EDIT_KWARGS)
             new_kwargs['content'] = content
+            new_kwargs["attachments"] = files
             new_kwargs.update(kwargs)
             edit_kw = {k: v for k, v in new_kwargs.items() if k in VALID_EDIT_KWARGS}
             attachments = new_kwargs.pop('files', []) or ([new_kwargs.pop('file')] if new_kwargs.get('file', None) else [])
