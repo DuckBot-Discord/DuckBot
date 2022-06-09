@@ -1,4 +1,5 @@
 import itertools
+import os
 
 from discord.ext import tasks
 
@@ -19,6 +20,11 @@ class Tasks(EventsBase):
     async def do_member_count_update(self):
         if self.bot.user and self.bot.user.id == 788278464474120202:
             await self.bot.top_gg.post_guild_count(guild_count=len(self.bot.guilds))
+            await self.bot.session.put(
+                f'https://api.discordlist.gg/v0/bots/{self.bot.user.id}/guilds',
+                headers=dict(Authorization=f'Bearer {os.getenv("DLIST_TOKEN")}'),
+                params=dict(count=len(self.bot.guilds)),
+            )
         else:
             print('User is not DuckBot! Did not post data to Top.gg')
 
