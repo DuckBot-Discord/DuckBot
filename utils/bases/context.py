@@ -189,6 +189,7 @@ class DuckContext(commands.Context, Generic[BotT]):
                     embed.color = self.bot.color
 
         kwargs['embeds'] = embeds
+        kwargs['files'] = files
 
         if isinstance(content, int):
             content = await self.translate(content, *args, locale=locale)
