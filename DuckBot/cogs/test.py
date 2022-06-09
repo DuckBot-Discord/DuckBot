@@ -1,4 +1,6 @@
 import pprint
+import textwrap
+from typing import Any, List
 
 import discord
 from discord.ext import commands
@@ -49,7 +51,7 @@ class Test(commands.Cog):
         raise commands.NotOwner("You are not the bot owner.")
 
     @commands.command(name="osave")
-    async def _osave(self, ctx: CustomContext, *, channel: discord.abc.GuildChannel = None):
+    async def _osave(self, ctx: CustomContext, *, channel: discord.abc.GuildChannel):
         """
         saves the overwrites of the channel to the database
         """
@@ -57,7 +59,7 @@ class Test(commands.Cog):
 
         to_execute = []
         for target, overwrite in channel.overwrites.items():
-            base = [channel.guild.id, channel.id, target.id]
+            base: List[Any] = [channel.guild.id, channel.id, target.id]
 
             if isinstance(target, discord.Role):
                 base.append("role")
@@ -84,7 +86,7 @@ class Test(commands.Cog):
         await ctx.send("Saved.")
 
     @commands.command(name="osee")
-    async def _osee(self, ctx: CustomContext, *, channel: discord.abc.GuildChannel = None):
+    async def _osee(self, ctx: CustomContext, *, channel: discord.abc.GuildChannel):
         """
         gets an overwrite from the database
         """
@@ -102,8 +104,7 @@ class Test(commands.Cog):
         if not entries:
             raise commands.BadArgument(f"Overwrites for #{channel} are not in the database!")
 
-        overwrites = {}
-
+        fmt = []
         for entry in entries:
             target_id, target_type, allow, deny = entry
             method = ctx.guild.get_role if target_type == "role" else ctx.guild.get_member
@@ -116,11 +117,25 @@ class Test(commands.Cog):
 
             allow = discord.Permissions(allow)
             deny = discord.Permissions(deny)
-
             overwrite = discord.PermissionOverwrite.from_pair(allow, deny)
-            overwrites[target] = overwrite
+
+            if isinstance(target, discord.Member):
+                etype = 'member: '
+            else:
+                etype = 'role: '
+            header = f"{etype}{target}"
+            fmt.append(header)
+            perms = []
+            for name, value in overwrite:
+                if value is None:
+                    continue
+                perms.append(ctx.tick(value, name))
+            if perms:
+                fmt.append(textwrap.indent('\n'.join(perms), ' '*len(header)))
+            else:
+                fmt[-1] += ' (No Permissions)'
 
         await ctx.send(
-            f"```py\nOverwrites for #{channel}:\n{pprint.pformat(overwrites)}\n```",
+            f"```\nOverwrites for channel #{channel}:\n{textwrap.indent('\n'.join(fmt), '  ')}\n```",
             maybe_attachment=True,
         )
