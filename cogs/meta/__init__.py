@@ -5,10 +5,17 @@ from utils import DuckBotNotStarted
 from .reminders import Reminders
 from .app_commands import ApplicationMeta
 from .embed import EmbedMaker
+from .sauce import Sauce
 
 
 class Meta(
-    News, Reminders, ApplicationMeta, EmbedMaker, emoji="\N{INFORMATION SOURCE}", brief="Commands about the bot itself."
+    News,
+    Reminders,
+    ApplicationMeta,
+    EmbedMaker,
+    Sauce,
+    emoji="\N{INFORMATION SOURCE}",
+    brief="Commands about the bot itself.",
 ):
     """All commands about the bot itself. Such as news, reminders, information about the bot, etc."""
 
