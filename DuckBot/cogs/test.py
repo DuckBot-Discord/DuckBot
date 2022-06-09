@@ -129,7 +129,7 @@ class Test(commands.Cog):
             for name, value in overwrite:
                 if value is None:
                     continue
-                perms.append(ctx.tick(value, name))
+                perms.append(ctx.square_tick(value, name))
             if perms:
                 fmt.append(textwrap.indent('\n'.join(perms), ' ' * len(header)))
             else:
