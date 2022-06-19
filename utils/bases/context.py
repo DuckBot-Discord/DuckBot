@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Tuple, TypeVar, Union
 
 import discord
 from discord.ext import commands
@@ -100,11 +100,13 @@ class DuckContext(commands.Context, Generic[BotT]):
     if TYPE_CHECKING:
         bot: DuckBot
         guild: discord.Guild
+        user: Optional[Union[discord.User, discord.Member]]
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.is_error_handled = False
         self._message_count: int = 0
+        self.user = None
 
     @staticmethod
     @discord.utils.copy_doc(tick)

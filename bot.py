@@ -39,6 +39,7 @@ import cachetools
 import discord
 from discord import app_commands
 from discord.ext import commands
+from duckauth import TokenProvider
 
 from utils import (
     DuckBlacklistManager,
@@ -90,7 +91,6 @@ initial_extensions: Tuple[str, ...] = (
     "cogs.owner",
     "cogs.information",
     "cogs.tags",
-    "cogs.role_menus",
 )
 
 
@@ -274,7 +274,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         command_prefix: Set[str]
         cogs: Mapping[str, DuckCog]
 
-    def __init__(self, *, session: ClientSession, pool: Pool, **kwargs) -> None:
+    def __init__(self, *, session: ClientSession, pool: Pool, provider: TokenProvider, **kwargs) -> None:
         intents = discord.Intents.all()
         intents.typing = False
 
@@ -292,6 +292,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         )
         self.pool: Pool = pool
         self.session: ClientSession = session
+        self.provider: TokenProvider = provider
         self._context_cls: Type[commands.Context] = commands.Context
         self.prefix_cache: DefaultDict[int, Set[str]] = defaultdict(set)
         self.messages: cachetools.TTLCache[str, discord.Message] = cachetools.TTLCache(

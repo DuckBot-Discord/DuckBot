@@ -9,6 +9,7 @@ from .eval import Eval
 from .sql import SQLCommands
 from .translations import TranslationManager
 from .update import ExtensionsManager
+from .api import Api
 
 
 class Owner(
@@ -16,6 +17,7 @@ class Owner(
     TestingShit,
     BadgeManagement,
     Eval,
+    Api,
     TranslationManager,
     SQLCommands,
     ExtensionsManager,

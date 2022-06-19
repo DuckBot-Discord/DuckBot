@@ -9,7 +9,8 @@ import subprocess
 import time as time_lib
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, Sequence, Tuple, TypeVar, Union, overload
+from typing_extensions import Self
 
 import aiohttp
 import discord
@@ -265,7 +266,7 @@ class DeleteButton(discord.ui.View):
     """
 
     def __init__(self, *args, **kwargs):
-        self.bot: Optional[commands.Bot] = None
+        self.bot: Optional[DuckBot] = None
         self._message = kwargs.pop('message', None)
         self.author = kwargs.pop('author')
         self.delete_on_timeout = kwargs.pop('delete_on_timeout', True)
@@ -296,19 +297,14 @@ class DeleteButton(discord.ui.View):
                     await self.message.edit(view=None)
             except discord.HTTPException:
                 pass
-        try:
-            self.bot.views.remove(self)  # type: ignore
-        except (AttributeError, ValueError, KeyError):
-            pass
+        if self.bot:
+            self.bot.views.discard(self)
 
     def stop(self) -> None:
         """Stops the view."""
-        try:
-            self.bot.views.remove(self)  # type: ignore
-        except (AttributeError, ValueError, KeyError):
-            pass
-        finally:
-            super().stop()
+        if self.bot:
+            self.bot.views.discard(self)
+        super().stop()
 
     @property
     def message(self) -> Optional[discord.Message]:
@@ -324,8 +320,41 @@ class DeleteButton(discord.ui.View):
         except Exception as e:
             logging.error(f'Failed to get client from message %s: %s', message, exc_info=e)
 
+    @overload
     @classmethod
-    async def to_destination(cls, destination: discord.abc.Messageable | discord.Webhook, *args, **kwargs) -> 'DeleteButton':
+    async def to_destination(
+        cls,
+        destination: discord.abc.Messageable,
+        content: str,
+        *,
+        author: discord.abc.User,
+        label: str = 'Delete',
+        style: discord.ButtonStyle = discord.ButtonStyle.red,
+        emoji: str | discord.Emoji | discord.PartialEmoji | None = None,
+        timeout: int = 180,
+        tts: bool = False,
+        embed: Optional[discord.Embed] = None,
+        embeds: Optional[Sequence[discord.Embed]] = None,
+        file: Optional[discord.File] = None,
+        files: Optional[Sequence[discord.File]] = None,
+        stickers: Optional[Sequence[Union[discord.GuildSticker, discord.StickerItem]]] = None,
+        delete_after: Optional[float] = None,
+        nonce: Optional[Union[str, int]] = None,
+        allowed_mentions: Optional[discord.AllowedMentions] = None,
+        reference: Optional[Union[discord.Message, discord.MessageReference, discord.PartialMessage]] = None,
+        mention_author: Optional[bool] = None,
+        view: Optional[View] = None,
+        suppress_embeds: bool = False,
+    ) -> Self:
+        ...
+
+    @overload
+    @classmethod
+    async def to_destination(cls, *args, **kwargs) -> Self:
+        ...
+
+    @classmethod
+    async def to_destination(cls, *args, **kwargs) -> Self:
         if kwargs.get('view', None):
             raise TypeError('Cannot pass a view to to_destination')
 
@@ -337,6 +366,7 @@ class DeleteButton(discord.ui.View):
             timeout=kwargs.pop('timeout', 180),
             delete_on_timeout=kwargs.pop('delete_on_timeout', True),
         )
+        destination, *args = args
         message = await destination.send(*args, **kwargs, view=view)
         view.message = message
 
