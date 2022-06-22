@@ -46,7 +46,7 @@ class BlackListManagement(DuckCog):
             or_g = self.bot.get_guild(guild_id)
             meth = or_g.get_channel if isinstance(or_g, discord.Guild) else self.bot.get_channel
 
-            chan = f"{meth(entity_id) or 'Unknown Channel'} ({entity_id})"  # type: ignore
+            chan = f"{meth(entity_id) or 'Unknown Channel'} ({entity_id})"
             return f"[{time} | CHANNEL] {chan}" + (f" in guild: {guild}" if guild else '')
 
     @group(name='blacklist', aliases=['bl'], invoke_without_command=True)
@@ -82,12 +82,14 @@ class BlackListManagement(DuckCog):
             blacklisted = await self.bot.blacklist.add_user(entity, end_time=dt)
         elif isinstance(entity, discord.abc.GuildChannel):
             blacklisted = await self.bot.blacklist.add_channel(entity, end_time=dt)
-        etype = str(type(entity).__name__).split('.')[-1]
         await ctx.send(ctx.tick(blacklisted, ('added {}{}.' if blacklisted else '{} already blacklisted{}.').format(*args)))
 
     @blacklist.command(name='remove', aliases=['rm'])
     async def blacklist_remove(
-        self, ctx: DuckContext, entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel]
+        self,
+        ctx: DuckContext,
+        entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel],
+        guild: discord.Guild = None,  # type: ignore
     ) -> None:
         """|coro|
 
@@ -102,7 +104,7 @@ class BlackListManagement(DuckCog):
         if isinstance(entity, discord.Guild):
             removed = await self.bot.blacklist.remove_guild(entity)
         elif isinstance(entity, discord.User):
-            removed = await self.bot.blacklist.remove_user(entity)
+            removed = await self.bot.blacklist.remove_user(entity, guild)
         elif isinstance(entity, discord.abc.GuildChannel):
             removed = await self.bot.blacklist.remove_channel(entity)
         etype = str(type(entity).__name__).split('.')[-1]
