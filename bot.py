@@ -74,8 +74,6 @@ DCT = TypeVar("DCT", bound="DuckContext")
 T = TypeVar("T")
 P = ParamSpec("P")
 
-log = logging.getLogger("DuckBot.main")
-
 initial_extensions: Tuple[str, ...] = (
     # Helpers
     "utils.jishaku",
@@ -100,22 +98,27 @@ class SyncResult(NamedTuple):
 
 
 def _wrap_extension(func: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, Optional[T]]]:
-    async def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
+    async def log_extension(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
         fmt_args = 'on ext "{}"{}'.format(args[1], f" with kwargs {kwargs}" if kwargs else "")
         start = time.monotonic()
 
         try:
+            logger = args[0].logger  # type: ignore
+        except:
+            logger = logging
+
+        try:
             result = await func(*args, **kwargs)
         except Exception as exc:
-            log.warning(f"Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}", exc_info=exc)
+            logger.warning(f"Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}", exc_info=exc)
             raise
 
         fmt = f"{func.__name__} took {(time.monotonic() - start)*1000:.2f}ms {fmt_args}"
-        log.info(fmt)
+        logger.info(fmt)
 
         return result
 
-    return wrapped
+    return log_extension
 
 
 class DbTempContextManager(Generic[DBT]):
@@ -216,6 +219,14 @@ class DuckHelper(TimerManager):
         """
         for i in range(0, len(item), size):
             yield item[i : i + size]
+
+    @property
+    def logger(self):
+        return self.get_logger()
+
+    @classmethod
+    def get_logger(cls):
+        return logging.getLogger(f"{__name__}.{cls.__name__}")
 
     def validate_locale(self, locale: str | discord.Locale | None, default: str = "en_us") -> str:
         """Validate a locale.
@@ -334,12 +345,12 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         super(DuckHelper, self).__init__(bot=self)
 
         async def sync_with_logging():
-            log.info(f"%sSyncing commands to discord...", col(6))
+            self.logger.info(f"%sSyncing commands to discord...", col(6))
             guild = discord.Object(id=774561547930304536)
             try:
                 result = await self.try_syncing(guild=guild)
             except Exception as e:
-                log.error(
+                self.logger.error(
                     "%sFailed to sync commands with guild %s",
                     col(6),
                     guild.id,
@@ -347,19 +358,19 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
                 )
             else:
                 if result.synced is True:
-                    log.info(
+                    self.logger.info(
                         "%sSuccessfully synced %s commands to guild %s",
                         col(6),
                         len(result.commands),
                         guild.id,
                     )
                 else:
-                    log.info("%sCommands for guild %s were already synced", col(6), guild.id)
+                    self.logger.info("%sCommands for guild %s were already synced", col(6), guild.id)
 
         if not failed:
             self.create_task(sync_with_logging())
         else:
-            log.info("Not syncing commands. One or more cogs failed to load.")
+            self.logger.info("Not syncing commands. One or more cogs failed to load.")
 
     @classmethod
     def temporary_pool(cls: Type[DBT], *, uri: str) -> DbTempContextManager[DBT]:
@@ -407,7 +418,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
                 await old_init(con)
 
         pool = await asyncpg.create_pool(uri, init=init, **kwargs)
-        log.info(f"{col(2)}Successfully created connection pool.")
+        cls.get_logger().info(f"{col(2)}Successfully created connection pool.")
         assert pool is not None, "Pool is None"
         return pool
 
@@ -443,9 +454,9 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         await self.listener_connection.add_listener("update_prefixes", _create_or_update_event)
 
     async def dump_translations(self, filename: str) -> None:
-        log.info("%sDumping translations to %s", col(5), f"{filename!r}")
+        self.logger.info("%sDumping translations to %s", col(5), f"{filename!r}")
         translations = await self.pool.fetch("SELECT * FROM translations ORDER BY tr_id")
-        log.info(
+        self.logger.info(
             "%sDumping %s translations to locales %s%s",
             col(5),
             len(translations),
@@ -469,10 +480,10 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
     async def load_translations(self, filename: str) -> None:
         async with self.safe_connection() as conn:
-            log.info("%sLoading translations from %s", col(5), f"{filename!r}")
+            self.logger.info("%sLoading translations from %s", col(5), f"{filename!r}")
             with open(filename, "r") as f:
                 payload = load(f)
-            log.info(
+            self.logger.info(
                 "%sLoading %s translations from locales %s%s",
                 col(5),
                 len(payload) - 2,
@@ -486,7 +497,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             for tr_id, data in payload.items():
                 if not tr_id.isdigit():
                     continue
-                log.debug("%sLoading translation %s", col(3), tr_id)
+                self.logger.debug("%sLoading translation %s", col(3), tr_id)
                 for locale, translation in data.items():
                     if locale not in self.allowed_locales and locale != "note":
                         raise RuntimeError(f"Invalid locale {locale!r}")
@@ -498,7 +509,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
                         int(tr_id),
                         translation,
                     )
-            log.info("%sSuccessfully loaded %s translations", col(5), len(payload) - 2)
+            self.logger.info("%sSuccessfully loaded %s translations", col(5), len(payload) - 2)
 
     @property
     def start_time(self) -> datetime.datetime:
@@ -669,14 +680,14 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         Called when the bot connects to the gateway.
         """
-        log.info(f"{col(2)}Logged in as {self.user}! ({self.user.id})")
+        self.logger.info(f"{col(2)}Logged in as {self.user}! ({self.user.id})")
 
     async def on_shard_connect(self, shard_id: int):
         """|coro|
 
         Called when one of the shards connects to the gateway.
         """
-        log.info(f"{col(2)}Shard ID {shard_id} connected!")
+        self.logger.info(f"{col(2)}Shard ID {shard_id} connected!")
 
     async def on_disconnect(self):
         """|coro|
@@ -684,7 +695,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         Called when the client has disconnected from Discord,
         or a connection attempt to Discord has failed.
         """
-        log.info(f"{col(2)}Unexpectedly lost conection to Discord!")
+        self.logger.info(f"{col(2)}Unexpectedly lost conection to Discord!")
 
     async def on_shard_disconnect(self, shard_id: int):
         """|coro|
@@ -692,7 +703,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         Called when the a shard has disconnected from Discord,
         or a connection attempt to Discord has failed.
         """
-        log.info(f"{col(2)}Shard ID {shard_id} unexpectedly lost conection to Discord!")
+        self.logger.info(f"{col(2)}Shard ID {shard_id} unexpectedly lost conection to Discord!")
 
     async def on_ready(self):
         """|coro|
@@ -700,7 +711,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         Called when the internal cache of the bot is ready, and the bot is
         connected to the gateway.
         """
-        log.info(f"{col(2)}All guilds are chunked and ready to go!")
+        self.logger.info(f"{col(2)}All guilds are chunked and ready to go!")
         if not self._start_time:
             self._start_time = discord.utils.utcnow()
 
@@ -709,21 +720,21 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         Called when one of the bot's shards is ready.
         """
-        log.info(f"{col(2)}Shard ID {shard_id} is now ready!")
+        self.logger.info(f"{col(2)}Shard ID {shard_id} is now ready!")
 
     async def on_resumed(self):
         """|coro|
 
         Called when the gateway resumed it's connection to discord.
         """
-        log.info(f"{col(2)}Resumed connection to the gateway.")
+        self.logger.info(f"{col(2)}Resumed connection to the gateway.")
 
     async def on_shard_resumed(self, shard_id: int):
         """|coro|
 
         Called when one of the bot's shards resumed it's connection to discord.
         """
-        log.info(f"{col(2)}Shard ID {shard_id} resumed connection to the gateway.")
+        self.logger.info(f"{col(2)}Shard ID {shard_id} resumed connection to the gateway.")
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
         """|coro|
@@ -882,16 +893,16 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         """
         if verbose is False:
             _gw_log = logging.getLogger("discord.gateway")
-            _gw_log.disabled = True
+            _gw_log.setLevel(logging.INFO)
 
             _cl_log = logging.getLogger("discord.client")
-            _cl_log.disabled = True
+            _cl_log.setLevel(logging.INFO)
 
             _ht_log = logging.getLogger("discord.http")
-            _ht_log.disabled = True
+            _ht_log.setLevel(logging.INFO)
 
             _ds_log = logging.getLogger("discord.state")
-            _ds_log.disabled = True
+            _ds_log.setLevel(logging.INFO)
 
         await super().start(token, reconnect=reconnect)
 
@@ -905,13 +916,13 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             try:
                 await self.cleanup_views()
             except Exception as e:
-                log.error("Could not wait for view cleanups", exc_info=e)
+                self.logger.error("Could not wait for view cleanups", exc_info=e)
             try:
                 if self.listener_connection:
-                    log.info("Closing listener connection...")
+                    self.logger.info("Closing listener connection...")
                     await self.listener_connection.close()
             except Exception as e:
-                log.error(f"Failed to close listener connection", exc_info=e)
+                self.logger.error(f"Failed to close listener connection", exc_info=e)
         finally:
             await super().close()
 
@@ -920,7 +931,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         future = await asyncio.gather(*[v.on_timeout() for v in self.views], return_exceptions=True)
         for item in future:
             if isinstance(item, Exception):
-                log.debug("A view failed to clean up", exc_info=item)
+                self.logger.debug("A view failed to clean up", exc_info=item)
 
     @staticmethod
     async def get_or_fetch_member(guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:

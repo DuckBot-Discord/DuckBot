@@ -2,8 +2,8 @@ import asyncio
 import click
 import logging
 
-from utils import col
 from utils.bases.launcher import run_bot
+from utils import ColourFormatter
 
 
 @click.command()
@@ -14,16 +14,12 @@ from utils.bases.launcher import run_bot
 def run(dump, norun, load, brief):
     """Options to run the bot."""
 
-    if brief:
-        fmt = f'[{col(4)}%(name)s{col()}] %(message)s{col()}'
-    else:
-        fmt = (
-            f'{col()}[{col(7)}%(asctime)s{col()} | {col(4)}%(name)s{col()}:{col(3)}%(levelname)s{col()}] %(message)s{col()}'
-        )
+    handler = logging.StreamHandler()
+    handler.setFormatter(ColourFormatter(brief=brief))
 
     logging.basicConfig(
         level=logging.INFO,
-        format=fmt,
+        handlers=[handler],
     )
 
     asyncio.run(run_bot(to_dump=dump, to_load=load, run=(not norun if (not dump or not load) else False)))

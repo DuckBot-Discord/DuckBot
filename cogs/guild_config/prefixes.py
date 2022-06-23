@@ -42,7 +42,7 @@ class PrefixChanges(DuckCog):
         prefixes = await self.bot.pool.fetchval(
             """
             INSERT INTO guilds (guild_id, prefixes) VALUES ($1, ARRAY(
-            SELECT DISTINCT * FROM array_append($3::text[], $2::text)))
+            SELECT DISTINCT * FROM unnest(array_append($3::text[], $2::text))))
             ON CONFLICT (guild_id) DO UPDATE SET prefixes = ARRAY( 
             SELECT DISTINCT * FROM UNNEST( ARRAY_APPEND(
             CASE WHEN array_length(guilds.prefixes, 1) > 0 
@@ -56,7 +56,7 @@ class PrefixChanges(DuckCog):
 
         await ctx.send(f'✅ Added prefix {prefix}')
 
-    @prefix.command(name='clear', aliases=['wipe'])  # type: ignore
+    @prefix.command(name='clear', aliases=['wipe'])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def prefix_clear(self, ctx: DuckContext) -> Optional[discord.Message]:
@@ -67,14 +67,14 @@ class PrefixChanges(DuckCog):
         await self.bot.pool.execute("UPDATE guilds SET prefixes = ARRAY[]::TEXT[] WHERE guild_id = $1", ctx.guild.id)
         await ctx.send('✅ Reset prefixes to the default.')
 
-    @discord.utils.copy_doc(prefix)  # type: ignore
-    @prefix.command(name='add', aliases=['append'])  # type: ignore
+    @discord.utils.copy_doc(prefix)
+    @prefix.command(name='add', aliases=['append'])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def prefix_add(self, ctx: DuckContext, *, prefix: str) -> Optional[discord.Message]:
-        return await ctx.invoke(self.prefix, prefix=prefix)  # type: ignore
+        return await ctx.invoke(self.prefix, prefix=prefix)
 
-    @prefix.command(name='remove', aliases=['delete', 'del', 'rm'])  # type: ignore
+    @prefix.command(name='remove', aliases=['delete', 'del', 'rm'])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def prefix_remove(self, ctx: DuckContext, *, prefix: str) -> Optional[discord.Message]:
@@ -95,6 +95,6 @@ class PrefixChanges(DuckCog):
         )
         return await ctx.send(f'✅ Removed prefix {prefix}')
 
-    @prefix_remove.autocomplete('prefix')
+    @prefix_remove.autocomplete('prefix')  # type: ignore
     async def prefix_remove_autocomplete(self, ctx: DuckContext, value: str) -> List[str]:
         return list(await ctx.bot.get_prefix(ctx.message, raw=True))

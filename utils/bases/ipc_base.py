@@ -1,5 +1,6 @@
 import inspect
 from logging import getLogger
+import logging
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -20,8 +21,6 @@ else:
     from discord.ext.commands import Bot as DuckBot
 
 __all__: Tuple[str, ...] = ("IPCBase", "route")
-
-log = getLogger("DuckBot.ipc")
 
 FuncT = TypeVar("FuncT", bound="Callable[..., Any]")
 
@@ -48,6 +47,10 @@ def route(name: str, *, method: Literal["get", "post", "put", "patch", "delete"]
 
 
 class IPCBase:
+    @property
+    def logger(self):
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
     def __init__(self, bot: DuckBot):
         self.bot: DuckBot = bot
         self.routes: List[Route] = []
@@ -66,15 +69,15 @@ class IPCBase:
         self.app.add_routes([web.route(x.method, x.name, x.func) for x in self.routes])
 
     async def start(self, *, port: int):
-        log.debug('Starting IPC runner.')
+        self.logger.debug('Starting IPC runner.')
         await self._runner.setup()
-        log.debug('Starting IPC webserver.')
+        self.logger.debug('Starting IPC webserver.')
         self._webserver = web.TCPSite(self._runner, "localhost", port=port)
         await self._webserver.start()
 
     async def close(self):
-        log.debug('Cleaning up after IPCBase.')
+        self.logger.debug('Cleaning up after IPCBase.')
         await self._runner.cleanup()
         if self._webserver:
-            log.debug('Closing IPC webserver.')
+            self.logger.debug('Closing IPC webserver.')
             await self._webserver.stop()

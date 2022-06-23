@@ -11,7 +11,7 @@ async def setup(bot: DuckBot):
     try:
         await bot.ipc.start(port=4435)
     except:
-        log.info('failed to start IPC')
+        log.critical('failed to start IPC')
         raise
     else:
         log.info('Started IPC server.')

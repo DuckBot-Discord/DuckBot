@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from typing_extensions import Self
 
 import uuid
@@ -57,6 +58,10 @@ class DuckCog(commands.Cog):
             kwargs["bot"] = bot
 
         super().__init__(*args, **kwargs)
+
+    @property
+    def logger(self):
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_commands(self) -> List[DuckCommand[Self, ..., Any]]:
         return super().get_commands()  # type: ignore

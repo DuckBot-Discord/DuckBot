@@ -10,8 +10,9 @@ from .time import *
 from utils.bases.timer import *
 from utils.bases.blacklist import *
 from .cache import *
-from . import interactions  # type: ignore
+from . import interactions as interactions
 from .paginators import *
 from utils.bases.command import *
 from utils.bases.translation_helpers import *
 from utils.bases.ipc_base import *
+from .logging import *
