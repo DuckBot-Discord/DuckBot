@@ -75,8 +75,8 @@ def col(color=None, /, *, fmt=0, bg=False) -> str:
     return base.format(fmt=fmt, color=color)
 
 
-def mdr(entity: Any) -> str:
-    """Returns the string of an object with discord markdown removed.
+def mdr(entity: Any, escape: bool = False) -> str:
+    """Returns the string of an object with discord markdown removed`or escaped.
 
     Parameters
     ----------
@@ -88,7 +88,8 @@ def mdr(entity: Any) -> str:
     str
         The string of the object with markdown removed.
     """
-    return discord.utils.remove_markdown(discord.utils.escape_mentions(str(entity)))
+    meth = discord.utils.escape_markdown if escape else discord.utils.remove_markdown
+    return meth(discord.utils.escape_mentions(str(entity)))
 
 
 def cb(text: str, /, *, lang: str = 'py'):
@@ -565,6 +566,12 @@ class Shell:
 
 
 class View(discord.ui.View):
+    def __init__(self, *, timeout: Optional[float] = 180, bot: Optional[DuckBot] = None):
+        super().__init__(timeout=timeout)
+        self.bot: Optional[DuckBot] = bot
+        if bot:
+            bot.views.add(self)
+
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item[Any]) -> None:
         bot: DuckBot = interaction.client  # type: ignore
         await bot.exceptions.add_error(error=error)
@@ -572,3 +579,17 @@ class View(discord.ui.View):
             await interaction.followup.send(f"Sorry! something went wrong....", ephemeral=True)
         else:
             await interaction.response.send_message(f"Sorry! something went wrong....", ephemeral=True)
+
+    def stop(self) -> None:
+        if self.bot:
+            self.bot.views.discard(self)
+        return super().stop()
+
+    async def on_timeout(self) -> None:
+        if self.bot:
+            self.bot.views.discard(self)
+        return await super().on_timeout()
+
+    def __del__(self) -> None:
+        if self.bot:
+            self.bot.views.discard(self)
