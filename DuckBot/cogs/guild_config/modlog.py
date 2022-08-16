@@ -33,7 +33,7 @@ class ModLogs(ConfigBase):
             )
             await ctx.send(f'✅ | **ModLogs** will now be delivered in #{channel.mention}')
         else:
-            modlog = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+            modlog: int = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id) # type: ignore
             if modlog:
                 await ctx.send(f"ℹ | **ModLogs** are currently enabled in #{self.bot.get_channel(modlog) or modlog}")
             else:
@@ -51,7 +51,7 @@ class ModLogs(ConfigBase):
             await self.bot.db.execute("DROP TABLE IF EXISTS modlogs.modlogs_{}".format(ctx.guild.id))
             await ctx.send('✅ | **ModLogs** have been disabled')
 
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(ban_members=True, manage_messages=True)
     @modlogs.command(name='reason', aliases=['setreason', 'r'])
     async def modlogs_reason(self, ctx: CustomContext, case_id: int, *, reason: str):
         """Sets the reason for a mod-log entry"""
@@ -83,7 +83,7 @@ class ModLogs(ConfigBase):
                 await ctx.message.remove_reaction('🔃', ctx.guild.me)
                 await ctx.message.add_reaction('✅')
 
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(ban_members=True, manage_messages=True)
     @modlogs.command(name='setmod', aliases=['sm', 'mod'])
     async def setmod(self, ctx: CustomContext, case_id: int, *, user: discord.Member):
         """Sets the mod for a mod-log entry"""
@@ -116,7 +116,7 @@ class ModLogs(ConfigBase):
                 await ctx.message.remove_reaction('🔃', ctx.guild.me)
                 await ctx.message.add_reaction('✅')
 
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(ban_members=True, manage_messages=True)
     @modlogs.command(name='addrole')
     async def addrole(self, ctx: CustomContext, role: discord.Role):
         """Adds a role to the mod-log entry"""
@@ -135,7 +135,7 @@ class ModLogs(ConfigBase):
         )
         await ctx.send(f'✅ | Added {role.name} to the special roles list')
 
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(ban_members=True, manage_messages=True)
     @modlogs.command(name='removerole')
     async def removerole(self, ctx: CustomContext, role: discord.Role):
         """Removes a role from the mod-log entry"""
