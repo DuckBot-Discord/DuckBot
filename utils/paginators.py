@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import typing
 from typing import Any, Dict, Optional, Tuple
+from typing_extensions import Self
 
 import discord
 from discord.ext import menus
@@ -53,6 +54,15 @@ class ViewMenuPages(discord.ui.View):
         self.message: Optional[discord.Message] = None
         self.current_page: int = 0
         self.compact: bool = compact
+
+        self._showing_info = False
+        self._info_embed: Optional[discord.Embed] = None
+
+        self.clear_items()
+        self.fill_items()
+
+    def update_source(self, source: menus.PageSource):
+        self.source = source
         self.clear_items()
         self.fill_items()
 
@@ -76,6 +86,9 @@ class ViewMenuPages(discord.ui.View):
                 self.add_item(self.numbered_page)
             self.add_item(self.stop_pages)
 
+        if self._info_embed:
+            self.add_item(self._info_button)
+
     async def _get_kwargs_from_page(self, page: int) -> Dict[str, Any]:
         value = await discord.utils.maybe_coroutine(self.source.format_page, self, page)
         if isinstance(value, dict):
@@ -90,6 +103,7 @@ class ViewMenuPages(discord.ui.View):
             return {}
 
     async def show_page(self, interaction: discord.Interaction, page_number: int) -> None:
+        self._showing_info = False
         page = await self.source.get_page(page_number)
         self.current_page = page_number
         kwargs = await self._get_kwargs_from_page(page)
@@ -128,6 +142,7 @@ class ViewMenuPages(discord.ui.View):
                 self.go_to_previous_page.label = '…'
 
     async def show_checked_page(self, interaction: discord.Interaction, page_number: int) -> None:
+        self._showing_info = False
         max_pages = self.source.get_max_pages()
         try:
             if max_pages is None:
@@ -175,6 +190,22 @@ class ViewMenuPages(discord.ui.View):
         self._update_labels(0)
         self.message = await self.ctx.send(**kwargs, view=self)
         self.ctx.bot.views.add(self)
+
+    @property
+    def info_button(self):
+        return self._info_button
+
+    @info_button.setter
+    def info_button(self, new: discord.ui.Button):
+        self._info_button._underlying = new._underlying
+
+    def add_info(self, embed: discord.Embed, button: Optional[discord.ui.Button] = None) -> Self:
+        self._info_embed = embed
+        if button:
+            self.info_button = button
+        self.clear_items()
+        self.fill_items()
+        return self
 
     @discord.ui.button(label='≪', style=discord.ButtonStyle.grey)
     async def go_to_first_page(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -228,5 +259,13 @@ class ViewMenuPages(discord.ui.View):
     async def stop_pages(self, interaction: discord.Interaction, button: discord.ui.Button):
         """stops the pagination session."""
         await interaction.response.defer()
-        await interaction.delete_original_message()
+        await interaction.delete_original_response()
         self.stop()
+
+    @discord.ui.button(emoji='ℹ️')
+    async def _info_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self._showing_info:
+            await self.show_checked_page(interaction, self.current_page)
+        else:
+            self._showing_info = True
+            await interaction.response.edit_message(embed=self._info_embed)
