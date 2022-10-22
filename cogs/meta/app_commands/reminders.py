@@ -85,7 +85,7 @@ class ApplicationReminders(DuckCog):
         when = await converter.convert(interaction, when)
 
         await interaction.response.defer()
-        original = await interaction.original_message()
+        original = await interaction.original_response()
 
         timer = await bot.create_timer(
             when.dt, 'reminder', interaction.user.id, interaction.channel.id, when.arg, message_id=original.id, precise=False

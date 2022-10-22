@@ -9,7 +9,20 @@ import subprocess
 import time as time_lib
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, Sequence, Tuple, TypeVar, Union, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    overload,
+)
 from typing_extensions import Self
 
 import aiohttp
@@ -40,6 +53,7 @@ URL_REGEX = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|%[0-9a-f
 
 __all__: Tuple[str, ...] = (
     'col',
+    'async_enumerate',
     'mdr',
     'cb',
     'safe_reason',
@@ -75,13 +89,37 @@ def col(color=None, /, *, fmt=0, bg=False) -> str:
     return base.format(fmt=fmt, color=color)
 
 
-def mdr(entity: Any, escape: bool = False) -> str:
+async def async_enumerate(asequence, start=0):
+    """Asynchronously enumerate an async iterator from a given start value"""
+    n = start
+    async for elem in asequence:
+        yield n, elem
+        n += 1
+
+
+@overload
+def mdr(entity: Any, escape: bool = False, ctx: Literal[None] = None) -> str:
+    ...
+
+
+@overload
+def mdr(entity: Any, escape: bool = False, ctx: commands.Context = ...) -> Coroutine[None, None, str]:
+    ...
+
+
+def mdr(entity: Any, escape: bool = False, ctx: Optional[commands.Context] = None) -> str | Coroutine[None, None, str]:
     """Returns the string of an object with discord markdown removed`or escaped.
 
     Parameters
     ----------
     entity: Any
         The object to remove markdown from.
+    escape: bool
+        Wether to escape mentions.
+    ctx: Optional[:class:`commands.Context`]
+        Wether to use the context for better mention escape.
+        If this is passed, you will need to await this function.
+
 
     Returns
     -------
@@ -89,6 +127,9 @@ def mdr(entity: Any, escape: bool = False) -> str:
         The string of the object with markdown removed.
     """
     meth = discord.utils.escape_markdown if escape else discord.utils.remove_markdown
+    if ctx:
+        return commands.clean_content(remove_markdown=True).convert(ctx, entity)
+
     return meth(discord.utils.escape_mentions(str(entity)))
 
 

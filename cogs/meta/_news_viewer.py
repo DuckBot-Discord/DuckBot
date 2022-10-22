@@ -250,7 +250,7 @@ class NewsViewer(discord.ui.View):
         new = cls(interaction, news)
         new.update_labels()
         await interaction.response.send_message(embed=new.get_embed(new.news.current), view=new)
-        new.message = await interaction.original_message()
+        new.message = await interaction.original_response()
         new.bot.views.add(new)
         await new.wait()
         return new

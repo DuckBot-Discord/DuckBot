@@ -35,7 +35,7 @@ class PromptSelect(discord.ui.Select):
             return
 
         self.parent.item = selected[0]
-        await interaction.delete_original_message()
+        await interaction.delete_original_response()
         await interaction.message.delete()
 
         self.parent.stop()
