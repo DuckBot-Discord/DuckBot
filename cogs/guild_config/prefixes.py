@@ -15,7 +15,7 @@ class PrefixChanges(DuckCog):
     def __init__(self, bot: DuckBot) -> None:
         super().__init__(bot)
 
-    @group(name='prefix', aliases=['prefixes'], invoke_without_command=True)
+    @group(name='prefix', aliases=['prefixes', 'pre'], invoke_without_command=True)
     @commands.guild_only()
     async def prefix(self, ctx: DuckContext, *, prefix: Optional[str] = None) -> Optional[discord.Message]:
         """|coro|
