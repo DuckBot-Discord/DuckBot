@@ -3,10 +3,8 @@ from discord.errors import HTTPException
 from discord.ext import commands
 from discord.ext.commands.errors import UserNotFound
 
-from DuckBot import errors
 from DuckBot.__main__ import DuckBot
 from DuckBot.helpers import constants
-from DuckBot.helpers.context import CustomContext
 
 
 async def setup(bot):
@@ -76,7 +74,7 @@ class ModMail(commands.Cog):
         if not files and message.attachments:
             await message.author.send(
                 embed=discord.Embed(
-                    description="Some files couldn't be sent because they were over 8mb",
+                    description="Some files couldn't be sent because they were over 8MB.",
                     color=discord.Colour.red(),
                 )
             )
@@ -111,7 +109,7 @@ class ModMail(commands.Cog):
             user = self.bot.get_user(ID) or await self.bot.fetch_user(ID)
 
         except (HTTPException, UserNotFound):
-            return await channel.send("could not find user.")
+            return await channel.send("Couldn't find user.")
         else:
             files = [
                 await attachment.to_file(spoiler=attachment.is_spoiler())
@@ -119,10 +117,10 @@ class ModMail(commands.Cog):
                 if attachment.size < 8388600
             ]
             if not files and message.attachments:
-                await message.author.send("Some files couldn't be sent because they were over 8mb...")
+                await message.author.send("Some files couldn't be sent because they were over 8MB.")
 
             try:
-                await user.send(content=message.content, files=files)
+                await user.send(content=f"**{message.author}:** {message.content}", files=files)
             except (discord.Forbidden, discord.HTTPException):
                 return await message.add_reaction("⚠")
 
