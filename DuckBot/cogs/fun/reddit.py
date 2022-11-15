@@ -63,7 +63,9 @@ class Reddit(FunBase):
                     if iterations >= 9:
                         iterations = 1
 
-                embed = discord.Embed(color=discord.Color.random(), description='\n'.join(options), url=post)
+                embed = discord.Embed(
+                    color=discord.Color.random(), description='\n'.join(options), url=f"https://reddit.com{post.permalink}"
+                )
                 embed.set_footer(
                     icon_url='https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Reddit_icon.svg/2048px-Reddit_icon.svg.png',
                     text=f'From reddit.com/r/{srdt}',
