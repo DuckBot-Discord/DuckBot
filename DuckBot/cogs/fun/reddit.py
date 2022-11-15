@@ -1,6 +1,4 @@
-import logging
 import random
-import traceback
 import typing
 
 import discord
@@ -12,11 +10,24 @@ from ...helpers.context import CustomContext
 
 
 class Reddit(FunBase):
+    @typing.overload
     async def reddit(
-        self, subreddit: str, title: bool = False, embed_type: str = 'IMAGE'
+        self, srdt: str, title: bool = False, embed_type: typing.Literal['IMAGE'] = 'IMAGE'
+    ) -> discord.Embed:
+        ...
+
+    @typing.overload
+    async def reddit(
+        self, srdt: str, title: bool = False, embed_type: typing.Literal['POLL'] = 'POLL'
+    ) -> typing.Tuple[discord.Embed, typing.List[str]]:
+        ...
+
+
+    async def reddit(
+        self, srdt: str, title: bool = False, embed_type: typing.Literal['IMAGE', 'POLL'] = 'IMAGE'
     ) -> typing.Union[discord.Embed, typing.Tuple]:
         try:
-            subreddit = await self.bot.reddit.subreddit(subreddit)
+            subreddit = await self.bot.reddit.subreddit(srdt)
             post = await subreddit.random()
 
             if embed_type == 'IMAGE':
@@ -33,7 +44,7 @@ class Reddit(FunBase):
                 embed.set_image(url=post.url)
                 return embed
 
-            if embed_type == 'POLL':
+            elif embed_type == 'POLL':
                 while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18:
                     post = await (await self.bot.reddit.subreddit(subreddit)).random()
 
@@ -51,10 +62,8 @@ class Reddit(FunBase):
                 embed = discord.Embed(color=discord.Color.random(), description='\n'.join(options))
                 embed.title = post.title if title is True else None
                 return embed, emojis
-        except Exception as error:
-            for line in "".join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__)).split('\n'):
-                logging.info(line)
-            await self.bot.get_channel(880181130408636456).send('A reddit error occurred! Please check the console.')
+        except:
+            await self.bot.on_error('')
             return discord.Embed(description='Whoops! An unexpected error occurred')
 
     @commands.max_concurrency(1, commands.BucketType.user, wait=True)
