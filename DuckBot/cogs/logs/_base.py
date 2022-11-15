@@ -98,6 +98,8 @@ class LoggingBase(commands.Cog):
                                 print("Error during task!")
                                 print(e)
         except Exception as e:  # noqa
+            if isinstance(e, RuntimeError) and str(e) == str(RuntimeError('dictionary changed size during iteration')):
+                return
             try:
                 await self.bot.on_error("channel_logs")
             except Exception as e:
