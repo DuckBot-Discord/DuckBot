@@ -3,6 +3,7 @@ import typing
 
 import discord
 from discord.ext import commands
+import asyncpraw
 
 from ._base import FunBase
 from ...helpers import constants
@@ -11,9 +12,7 @@ from ...helpers.context import CustomContext
 
 class Reddit(FunBase):
     @typing.overload
-    async def reddit(
-        self, srdt: str, title: bool = False, embed_type: typing.Literal['IMAGE'] = 'IMAGE'
-    ) -> discord.Embed:
+    async def reddit(self, srdt: str, title: bool = False, embed_type: typing.Literal['IMAGE'] = 'IMAGE') -> discord.Embed:
         ...
 
     @typing.overload
@@ -22,17 +21,20 @@ class Reddit(FunBase):
     ) -> typing.Tuple[discord.Embed, typing.List[str]]:
         ...
 
-
     async def reddit(
         self, srdt: str, title: bool = False, embed_type: typing.Literal['IMAGE', 'POLL'] = 'IMAGE'
     ) -> typing.Union[discord.Embed, typing.Tuple]:
         try:
-            subreddit = await self.bot.reddit.subreddit(srdt)
+            subreddit: asyncpraw.reddit.Subreddit = await self.bot.reddit.subreddit(srdt)
             post = await subreddit.random()
+            if not post:
+                return discord.Embed(title='Could not find a post', color=discord.Color.red())
 
             if embed_type == 'IMAGE':
                 while 'i.redd.it' not in post.url or post.over_18:
                     post = await subreddit.random()
+                    if not post:
+                        return discord.Embed(title='Could not find a post', color=discord.Color.red())
 
                 embed = discord.Embed(
                     color=discord.Color.random(),
@@ -46,7 +48,9 @@ class Reddit(FunBase):
 
             elif embed_type == 'POLL':
                 while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18:
-                    post = await (await self.bot.reddit.subreddit(subreddit)).random()
+                    post: asyncpraw.reddit.Submission | None = await (await self.bot.reddit.subreddit(srdt)).random()
+                    if not post:
+                        return discord.Embed(title='Could not find a post', color=discord.Color.red())
 
                 iterations: int = 1
                 options = []
@@ -56,10 +60,14 @@ class Reddit(FunBase):
                     options.append(f"{num} {option.text}")
                     emojis.append(num)
                     iterations += 1
-                    if iterations > 9:
+                    if iterations >= 9:
                         iterations = 1
 
-                embed = discord.Embed(color=discord.Color.random(), description='\n'.join(options))
+                embed = discord.Embed(color=discord.Color.random(), description='\n'.join(options), url=post)
+                embed.set_footer(
+                    icon_url='https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Reddit_icon.svg/2048px-Reddit_icon.svg.png',
+                    text=f'From reddit.com/r/{srdt}',
+                )
                 embed.title = post.title if title is True else None
                 return embed, emojis
         except:
