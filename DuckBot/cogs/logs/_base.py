@@ -118,8 +118,10 @@ class LoggingBase(commands.Cog):
             "server",
         }:
             raise AttributeError("Improper delivery type passed")
-        chennel_ids = await self.bot.db.fetchrow(f"SELECT * FROM log_channels WHERE guild_id = $1", guild_id)
-        channel_id: int = chennel_ids[f"{deliver_type}_chid"]
+        channel_ids = await self.bot.db.fetchrow(f"SELECT * FROM log_channels WHERE guild_id = $1", guild_id)
+        if not channel_ids:
+            return
+        channel_id: int = channel_ids[f"{deliver_type}_chid"]
         channel: discord.TextChannel = self.bot.get_channel(channel_id)  # type: ignore
         if not channel and deliver_type != self.send_to.default:
             for e in embeds:
@@ -141,7 +143,7 @@ class LoggingBase(commands.Cog):
             else:
                 webhook = await channel.create_webhook(
                     name="DuckBot Logging",
-                    avatar=await self.bot.user.avatar.read(),
+                    avatar=await self.bot.user.display_avatar.read(),
                     reason="DuckBot Logging channel",
                 )
             # noinspection SqlResolve
