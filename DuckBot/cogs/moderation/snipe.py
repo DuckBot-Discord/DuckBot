@@ -104,6 +104,8 @@ class Snipe(ModerationBase):
 
     @commands.Cog.listener('on_message_delete')
     async def snipe_hook(self, message: discord.Message):
+        if not message.guild:
+            return
         if await self.bot.db.fetchval('SELECT snipe_enabled FROM prefixes WHERE guild_id = $1', message.guild.id):
             self.bot.snipes[message.guild.id][message.channel.id].append(SimpleMessage(message))
 
