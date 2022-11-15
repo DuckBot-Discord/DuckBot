@@ -94,6 +94,7 @@ class BaseDuck(commands.AutoShardedBot):
     PRE: tuple = ("db.",)
     logger = logging.getLogger("DuckBot.logging")
     _ext_log = logging.getLogger("DuckBot.extensions")
+    user: discord.ClientUser
 
     def __init__(self, pool: asyncpg.Pool, session: aiohttp.ClientSession) -> None:
         intents = discord.Intents.all()
@@ -147,7 +148,6 @@ class BaseDuck(commands.AutoShardedBot):
         self.constants = constants
 
         # Cache stuff
-        self.invites = None
         self.prefixes: Dict[int, Iterable[str]] = {}
         self.blacklist = {}
         self.afk_users = {}
@@ -168,6 +168,12 @@ class BaseDuck(commands.AutoShardedBot):
         )
 
         self.global_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.user)
+
+        self.invites: Dict[int, Dict[str, discord.Invite]] = {}
+        if TYPE_CHECKING:
+            self.expiring_invites = {}
+            self.shortest_invite: int = 0
+            self.last_update: int = 0
 
     async def setup_hook(self) -> None:
         await self.populate_cache()

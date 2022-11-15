@@ -21,26 +21,15 @@ https://github.com/cyrus01337/invites/
 """
 
 import asyncio
-import collections
 import contextlib
 import datetime
-import difflib
-import operator
-import random
 import time
-from types import SimpleNamespace
 from typing import Dict, Optional
-from collections import deque
 
-import asyncpg.exceptions
 import discord
-import tabulate
 from discord.ext import commands, tasks
 
-from DuckBot import errors
-from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.cogs.management import UnicodeEmoji
-from DuckBot.helpers.helper import LoggingEventsFlags
+from DuckBot.__main__ import DuckBot
 
 
 POLL_PERIOD = 25
@@ -51,9 +40,8 @@ class ConfigBase(commands.Cog):
         self.bot = bot
         self._invites_ready = asyncio.Event()
         self._dict_filled = asyncio.Event()
-        self.bot.invites = {}
-        self.bot.get_invite = self.get_invite
-        self.bot.wait_for_invites = self.wait_for_invites
+        self.bot.get_invite = self.get_invite  # type: ignore
+        self.bot.wait_for_invites = self.wait_for_invites  # type: ignore
 
         self.bot.loop.create_task(self.__ainit__())
 
@@ -68,7 +56,8 @@ class ConfigBase(commands.Cog):
             if "VANITY_URL" in guild.features:
                 with contextlib.suppress(discord.HTTPException):
                     vanity = await guild.vanity_invite()
-                    invites["VANITY"] = invites[vanity.code] = vanity
+                    if vanity:
+                        invites["VANITY"] = invites[vanity.code] = vanity
         self.update_invite_expiry.start()
         self.delete_expired.start()
 
@@ -105,7 +94,11 @@ class ConfigBase(commands.Cog):
         # get current posix time
         current = time.time()
         self.bot.expiring_invites = {
-            inv.max_age - int(current - inv.created_at.replace(tzinfo=datetime.timezone.utc).timestamp()): inv
+            inv.max_age
+            or 0
+            - int(
+                current - (inv.created_at or discord.utils.utcnow()).replace(tzinfo=datetime.timezone.utc).timestamp()
+            ): inv
             for inv in flattened
             if inv.max_age != 0
         }
@@ -149,8 +142,11 @@ class ConfigBase(commands.Cog):
             self._dict_filled.clear()
 
     def delete_invite(self, invite: discord.Invite) -> None:
+        if not invite.guild:
+            return
         entry_found = self.get_invites(invite.guild.id)
-        entry_found.pop(invite.code, None)
+        if entry_found:
+            entry_found.pop(invite.code, None)
 
     def get_invite(self, code: str) -> Optional[discord.Invite]:
         for invites in self.bot.invites.values():
@@ -190,6 +186,8 @@ class ConfigBase(commands.Cog):
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite) -> None:
+        if not invite.guild:
+            return
         cached = self.bot.invites.get(invite.guild.id, None)
         if cached:
             cached[invite.code] = invite
@@ -205,7 +203,7 @@ class ConfigBase(commands.Cog):
         if invites:
             for invite in list(invites.values()):
                 # changed to use id because of doc warning
-                if invite.channel.id == channel.id:
+                if invite.channel and invite.channel.id == channel.id:
                     invites.pop(invite.code)
 
     @commands.Cog.listener()
@@ -245,7 +243,7 @@ class ConfigBase(commands.Cog):
             # zipping is the easiest way to compare each in order, and
             # they should be the same size? if we do it properly
             for old, new in zip(cached, invites):
-                if old.uses < new.uses:
+                if old.uses and new.uses and old.uses < new.uses:
                     self.bot.invites[member.guild.id][old.code] = new
                     self.bot.dispatch("invite_update", member, new)
                     dispatched = True
