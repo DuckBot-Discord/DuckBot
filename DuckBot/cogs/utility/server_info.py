@@ -27,7 +27,9 @@ def get_sorted_mapping(
     for c in sorted(guild.categories, key=lambda c: c.position):
         mapping[c] = sorted(
             c.channels,
-            key=lambda c: c.position if not isinstance(c, discord.VoiceChannel) else c.position + len(guild.channels),
+            key=lambda c: c.position
+            if not isinstance(c, (discord.VoiceChannel, discord.ForumChannel))
+            else c.position + len(guild.channels),
         )
 
     return mapping
@@ -42,7 +44,7 @@ def get_channel_positions(ctx: CustomContext, guild: discord.Guild, member_count
             )
         for channel in channels:
             if member_counts:
-                if not isinstance(channel, discord.VoiceChannel):
+                if not isinstance(channel, (discord.VoiceChannel, discord.ForumChannel)):
                     sorted_channels.append(
                         (
                             f"📑 {channel}",
@@ -58,7 +60,7 @@ def get_channel_positions(ctx: CustomContext, guild: discord.Guild, member_count
                         )
                     )
             else:
-                if not isinstance(channel, discord.VoiceChannel):
+                if not isinstance(channel, (discord.VoiceChannel, discord.ForumChannel)):
                     sorted_channels.append(
                         (f"📑 {channel}", ('✅ ' if channel.permissions_for(ctx.author).view_channel else '❌ ') + f"N/A")
                     )
