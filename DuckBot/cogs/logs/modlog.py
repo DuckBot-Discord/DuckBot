@@ -90,7 +90,7 @@ class ModLogs(LoggingBase):
         if moderator is not None:
             embed.add_field(name='Moderator:', value=f"{strip(moderator)}\n{moderator and moderator.mention}")
         else:
-            embed.add_field(name='Moderator: Not Found', value='Do `db.ml setmod <case_id> <user>` to set it.')
+            embed.add_field(name='Moderator: Not Found.', value='Not Found.')
 
         if role is not None:
             embed.add_field(name='Role:', value=f'{role}\n{role.mention}', inline=False)
@@ -105,9 +105,7 @@ class ModLogs(LoggingBase):
         if reason:
             embed.add_field(name='Reason:', value=strip(reason).strip() or '\u200b', inline=False)
         else:
-            embed.add_field(
-                name='Reason: Not Found', value='Do `db.ml setreason <case_id> <reason>` to set it.', inline=False
-            )
+            embed.add_field(name='Reason: Not Found.', value='Not Found.', inline=False)
 
         return embed
 
