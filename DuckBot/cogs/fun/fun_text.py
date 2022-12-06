@@ -36,7 +36,7 @@ def fancify(text, *, style: list, normal: list = None):
     sub = dict(zip(normal, style))
     pattern = '|'.join(sorted(re.escape(k) for k in sub))
 
-    return re.sub(pattern, lambda m: sub.get(m.group(0)), text, flags=re.IGNORECASE)
+    return re.sub(pattern, lambda m: sub.get(m.group(0)) or sub.get(m.group(0).lower()) or m, text, flags=re.IGNORECASE)
 
 
 class FancyText(FunBase):
