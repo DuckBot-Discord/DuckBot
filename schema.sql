@@ -161,4 +161,11 @@ CREATE TABLE translations (
 CREATE TABLE user_settings (
     user_id BIGINT PRIMARY KEY,
     locale TEXT
-)
+);
+
+CREATE TABLE dm_flow (
+    user_id BIGINT PRIMARY KEY,
+    dms_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    dm_channel BIGINT NULL,
+    dm_webhook TEXT NULL
+);
