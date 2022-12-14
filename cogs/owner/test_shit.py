@@ -3,14 +3,12 @@ from dataclasses import dataclass, field
 from logging import getLogger
 from typing_extensions import Self
 import re
-import textwrap
-import tabulate
 
 import discord
 import asyncpg
 from discord.ext import commands
 
-from utils import DuckCog, command, DuckContext, cb
+from utils import DuckCog
 
 CATEGORY_ID = 993819813375914025
 
@@ -296,31 +294,3 @@ class TestingShit(DuckCog):
         else:
             new_message = discord.Message(state=self.bot._connection, channel=dm_message.channel, data=data.data)
             await staff_message.edit(content=new_message.content)
-
-    @command()
-    async def mayas(self, ctx: DuckContext):
-        '''Gets all Mayas
-
-        Parameters
-        ----------
-        ctx : DuckContext
-            The context for this command
-        '''
-        guild = self.bot.get_guild(336642139381301249)
-        if not guild:
-            raise commands.CommandError('d.py guild not found.')
-
-        mayas = {int(match.group(1)): m for m in guild.members if m.nick and (match := pattern.fullmatch(m.nick))}
-
-        fmt = []
-        msgsize = max(map(lambda m: len(m.nick or ''), mayas.values())) - 10
-        nsize = max(map(lambda m: len(str(m)), mayas.values())) - 5
-
-        for i in range(min(mayas.keys()), max(mayas.keys()) + 1):
-            maya = mayas.get(i)
-            if maya:
-                fmt.append((maya.nick, str(maya)))
-            else:
-                fmt.append((f"Maya {i}: {'-'*msgsize}", "-" * nsize))
-
-        await ctx.send(textwrap.indent(cb(tabulate.tabulate(fmt, tablefmt='plain'), lang=''), '> '))
