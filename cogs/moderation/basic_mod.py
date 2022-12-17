@@ -3,7 +3,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from DuckBot.helpers.context import CustomContext
+from helpers.context import CustomContext
 from ._base import ModerationBase, BannedMember
 
 

@@ -9,9 +9,9 @@ import tabulate
 from discord.ext import commands
 from jishaku.paginators import WrappedPaginator
 
-from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.helpers import constants, paginator
-from DuckBot.helpers import helper
+from bot import DuckBot, CustomContext
+from helpers import constants, paginator
+from helpers import helper
 from ._base import UtilityBase
 
 

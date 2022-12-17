@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import discord
 from discord.ext import commands
 
-from DuckBot.errors import (
+from errors import (
     CooldownType,
 )
 from ._base import EconomyBase
@@ -14,7 +14,7 @@ from .helper_classes import Wallet, DuckTrack
 from .helper_functions import require_setup, reset_cooldown, refresh
 
 if TYPE_CHECKING:
-    from DuckBot.helpers.context import CustomContext
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Context as CustomContext
 

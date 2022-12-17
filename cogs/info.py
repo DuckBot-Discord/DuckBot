@@ -17,10 +17,10 @@ from discord import Interaction
 from discord.ext import commands
 from jishaku.paginators import WrappedPaginator
 
-from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.helpers import paginator, constants, helper
-from DuckBot.helpers.helper import count_lines, count_others
-from DuckBot.helpers.paginator import InvSrc
+from bot import DuckBot, CustomContext
+from helpers import paginator, constants, helper
+from helpers.helper import count_lines, count_others
+from helpers.paginator import InvSrc
 
 suggestions_channel = 882634213516521473
 newline = "\n"
@@ -37,7 +37,7 @@ def format_commit(commit):
     commit_tz = datetime.timezone(datetime.timedelta(minutes=commit.commit_time_offset))
     commit_time = datetime.datetime.fromtimestamp(commit.commit_time).astimezone(commit_tz)
     offset = discord.utils.format_dt(commit_time, style="R")
-    return f"[`{short_sha2}`](https://github.com/LeoCx1000/discord-bots/commit/{commit.hex}) {short} ({offset})"
+    return f"[`{short_sha2}`](https://github.com/DuckBot-Discord/DuckBot/commit/{commit.hex}) {short} ({offset})"
 
 
 def get_latest_commits(limit: int = 5):
@@ -318,7 +318,7 @@ class HelpView(discord.ui.View):
             f"\nyour server, mess with some images and more! Check out "
             f"\nall my features using the dropdown below."
             f"\n\nI've been up since {discord.utils.format_dt(self.bot.uptime)}"
-            f"\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots)",
+            f"\nYou can also find my source code on {constants.GITHUB}[GitHub](https://github.com/DuckBot-Discord/DuckBot)",
         )
         embed.add_field(
             name="Support DuckBot",
@@ -901,14 +901,14 @@ class About(commands.Cog):
 
     @commands.command(aliases=["sourcecode", "code"], usage="[command|command.subcommand]")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def source(self, ctx, *, command: str = None):
+    async def source(self, ctx: CustomContext, *, command: str = None):
         """
         Links to the bots code, or a specific command's
         """
         # noinspection PyGlobalUndefined
         global obj
-        source_url = "https://github.com/LeoCx1000/discord-bots"
-        branch = "master/DuckBot"
+        source_url = ctx.bot.repo
+        branch = "master"
         license_url = f"{source_url}/blob/master/LICENSE"
         mpl_advice = (
             f"**This code is licensed under [MPL]({license_url})**"

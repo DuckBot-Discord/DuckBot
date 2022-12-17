@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 from discord import Interaction
 
 if TYPE_CHECKING:
-    from DuckBot.__main__ import DuckBot
-    from DuckBot.helpers.context import CustomContext
+    from bot import DuckBot
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Bot as DuckBot, BadArgument
     from discord.ext.commands import Context as CustomContext
@@ -22,15 +22,15 @@ import discord
 
 from discord.ext import commands
 
-from DuckBot.errors import (
+from errors import (
     AccountNotFound,
     AccountAlreadyExists,
     WalletInUse,
 )
 
 if TYPE_CHECKING:
-    from DuckBot.__main__ import DuckBot
-    from DuckBot.helpers.context import CustomContext
+    from bot import DuckBot
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Bot as DuckBot, BadArgument
     from discord.ext.commands import Context as CustomContext

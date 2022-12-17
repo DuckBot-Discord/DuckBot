@@ -5,8 +5,8 @@ from discord.ext import commands
 
 
 from ._base import ModerationBase
-from ...helpers.context import CustomContext
-from ...helpers.time_inputs import human_timedelta
+from helpers.context import CustomContext
+from helpers.time_inputs import human_timedelta
 
 
 def require_snipe(should_be: bool = True):

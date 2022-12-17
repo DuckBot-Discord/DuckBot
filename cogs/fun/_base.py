@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from DuckBot.__main__ import DuckBot
+from bot import DuckBot
 
 
 class FunBase(commands.Cog):

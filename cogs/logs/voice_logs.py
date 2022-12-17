@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 from ._base import LoggingBase
-from DuckBot.helpers import constants
+from helpers import constants
 
 
 class VoiceLogs(LoggingBase):

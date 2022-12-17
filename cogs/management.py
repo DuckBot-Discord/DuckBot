@@ -25,8 +25,8 @@ from jishaku.features.baseclass import Feature
 from jishaku.paginators import WrappedPaginator
 from jishaku.shim.paginator_200 import PaginatorInterface
 
-from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.helpers import paginator, constants
+from bot import DuckBot, CustomContext
+from helpers import paginator, constants
 
 RebootArg = typing.Optional[typing.Union[bool, typing.Literal["reboot", "restart", "r"]]]
 
@@ -179,7 +179,7 @@ class Management(commands.Cog, name="Bot Management"):
         embed = discord.Embed(color=ctx.me.color, description=f"⬇ {extension}")
         message = await ctx.send(embed=embed, footer=False)
         try:
-            self.bot.unload_extension("DuckBot.cogs.{}".format(extension))
+            self.bot.unload_extension("cogs.{}".format(extension))
             await asyncio.sleep(0.5)
             embed = discord.Embed(color=ctx.me.color, description=f"✅ {extension}")
             await message.edit(embed=embed)

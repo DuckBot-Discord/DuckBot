@@ -7,8 +7,8 @@ import discord
 from discord.ext import commands
 
 from ._base import FunBase
-from ...helpers.context import CustomContext
-from ...helpers.paginator import ViewPaginator, UrbanPageSource
+from helpers.context import CustomContext
+from helpers.paginator import ViewPaginator, UrbanPageSource
 
 
 class Apis(FunBase):

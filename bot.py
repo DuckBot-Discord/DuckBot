@@ -10,10 +10,10 @@ from asyncdagpi.image_features import ImageFeatures
 from discord.ext import commands
 import sentry_sdk
 
-from DuckBot import errors
-from DuckBot.cogs.economy.helper_classes import Wallet
-from DuckBot.helpers.bot_base import BaseDuck, col, get_or_fail
-from DuckBot.helpers.context import CustomContext
+import errors
+from cogs.economy.helper_classes import Wallet
+from helpers.bot_base import BaseDuck, col, get_or_fail
+from helpers.context import CustomContext
 
 logging.basicConfig(
     level=logging.INFO,

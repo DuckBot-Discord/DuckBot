@@ -1,5 +1,5 @@
 from discord.ext import commands
-from ...__main__ import DuckBot
+from bot import DuckBot
 
 
 class UtilityBase(commands.Cog):

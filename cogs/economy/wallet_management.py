@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 import discord
 from discord.ext import commands
 
-from DuckBot.helpers.time_inputs import human_timedelta
+from helpers.time_inputs import human_timedelta
 from ._base import EconomyBase
 from .helper_classes import Wallet
 from .helper_functions import require_setup, refresh
 
 if TYPE_CHECKING:
-    from DuckBot.helpers.context import CustomContext
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Context as CustomContext
 

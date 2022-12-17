@@ -2,8 +2,8 @@ import discord
 import typing
 from discord.ext import commands
 
-from DuckBot.__main__ import DuckBot
-from DuckBot.helpers.context import CustomContext
+from bot import DuckBot
+from helpers.context import CustomContext
 from asyncdagpi import ImageFeatures as dtype
 
 

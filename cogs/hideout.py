@@ -8,10 +8,10 @@ import zlib
 
 import discord
 from discord.ext import commands, tasks
-from DuckBot import errors
-from DuckBot.__main__ import DuckBot
-from DuckBot.cogs.management import get_webhook
-from DuckBot.helpers.context import CustomContext
+import errors
+from bot import DuckBot
+from cogs.management import get_webhook
+from helpers.context import CustomContext
 from jishaku.paginators import WrappedPaginator
 
 url_regex = re.compile(r"^http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+$")

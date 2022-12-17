@@ -11,7 +11,7 @@ from .helper_classes import ShopItem, OwnedItem
 from .helper_functions import require_setup, refresh
 
 if TYPE_CHECKING:
-    from DuckBot.helpers.context import CustomContext
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Context as CustomContext
 

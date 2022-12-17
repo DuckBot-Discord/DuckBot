@@ -4,8 +4,8 @@ import typing
 import discord
 from discord.ext import commands
 
-from DuckBot.__main__ import CustomContext
-from DuckBot.helpers import time_inputs as helpers
+from bot import CustomContext
+from helpers import time_inputs as helpers
 from ._base import ModerationBase
 
 

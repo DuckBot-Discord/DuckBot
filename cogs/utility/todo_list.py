@@ -3,8 +3,8 @@ import jishaku
 from discord.ext import commands
 from jishaku.paginators import WrappedPaginator
 
-from DuckBot.__main__ import CustomContext
-from DuckBot.helpers.paginator import PaginatedStringListPageSource, TodoListPaginator
+from bot import CustomContext
+from helpers.paginator import PaginatedStringListPageSource, TodoListPaginator
 from ._base import UtilityBase
 
 

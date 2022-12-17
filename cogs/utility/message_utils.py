@@ -8,9 +8,9 @@ from typing import Optional
 import discord
 from discord.ext import commands, menus
 
-from DuckBot import errors
-from DuckBot.__main__ import CustomContext
-from DuckBot.helpers import paginator
+import errors
+from bot import CustomContext
+from helpers import paginator
 from ._base import UtilityBase
 
 

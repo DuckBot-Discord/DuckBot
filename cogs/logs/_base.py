@@ -6,7 +6,7 @@ import discord
 import typing
 from discord.ext import commands, tasks
 
-from DuckBot.__main__ import DuckBot
+from bot import DuckBot
 
 guild_channels = typing.Union[
     discord.TextChannel,

@@ -71,7 +71,7 @@ class ArrivalAndCleanup(EventsBase):
             "\n`db.prefix add <prefix>`. I can have"
             "\nmultiple prefixes, for convenience."
             "\n\n**For help, simply do `db.help`.**"
-            "\nA list of all my commmands is [here](https://github.com/leoCx1000/discord-bots/#readme)"
+            "\nA list of all my commmands is [here](https://github.com/DuckBot-Discord/DuckBot/#readme)"
             "\n\n**For suggestions, run the `db.suggest`"
             "\ncommand, and for other issues, DM"
             "\nme or join my support server!**"

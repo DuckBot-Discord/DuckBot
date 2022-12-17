@@ -14,14 +14,14 @@ from discord import Interaction
 from discord.ext import commands
 from discord.ext.commands.errors import BadArgument
 
-from DuckBot.cogs.economy.helper_classes import Wallet
-from DuckBot.helpers import constants
+from cogs.economy.helper_classes import Wallet
+from helpers import constants
 from typing import Union, TYPE_CHECKING
 
 target_type = Union[discord.Member, discord.User, discord.PartialEmoji, discord.Guild, discord.Invite]
 
 if TYPE_CHECKING:
-    from DuckBot.__main__ import DuckBot
+    from bot import DuckBot
 else:
     from discord.ext.commands import Bot as DuckBot
 

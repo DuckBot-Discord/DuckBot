@@ -21,33 +21,33 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from discord.ext import commands
 
-from DuckBot.cogs.economy.helper_classes import Wallet
-from DuckBot.helpers import constants
-from DuckBot.helpers.context import CustomContext
-from DuckBot.helpers.helper import LoggingEventsFlags
+from cogs.economy.helper_classes import Wallet
+from helpers import constants
+from helpers.context import CustomContext
+from helpers.helper import LoggingEventsFlags
 
 if TYPE_CHECKING:
-    from ..cogs.moderation.snipe import SimpleMessage
+    from cogs.moderation.snipe import SimpleMessage
 else:
     SimpleMessage = None
 
 initial_extensions = ("jishaku",)
 
 extensions = (
-    "DuckBot.cogs.beta",
-    "DuckBot.cogs.logs",
-    "DuckBot.cogs.economy",
-    "DuckBot.cogs.events",
-    "DuckBot.cogs.fun",
-    "DuckBot.cogs.guild_config",
-    "DuckBot.cogs.hideout",
-    "DuckBot.cogs.image_manipulation",
-    "DuckBot.cogs.info",
-    "DuckBot.cogs.management",
-    "DuckBot.cogs.modmail",
-    "DuckBot.cogs.test",
-    "DuckBot.cogs.utility",
-    "DuckBot.cogs.moderation",
+    "cogs.beta",
+    "cogs.logs",
+    "cogs.economy",
+    "cogs.events",
+    "cogs.fun",
+    "cogs.guild_config",
+    "cogs.hideout",
+    "cogs.image_manipulation",
+    "cogs.info",
+    "cogs.management",
+    "cogs.modmail",
+    "cogs.test",
+    "cogs.utility",
+    "cogs.moderation",
 )
 load_dotenv()
 
@@ -92,8 +92,8 @@ class LoggingConfig:
 
 class BaseDuck(commands.AutoShardedBot):
     PRE: tuple = ("db.",)
-    logger = logging.getLogger("DuckBot.logging")
-    _ext_log = logging.getLogger("DuckBot.extensions")
+    logger = logging.getLogger("logging")
+    _ext_log = logging.getLogger("extensions")
     user: discord.ClientUser
 
     def __init__(self, pool: asyncpg.Pool, session: aiohttp.ClientSession) -> None:
@@ -103,7 +103,7 @@ class BaseDuck(commands.AutoShardedBot):
 
         super().__init__(
             intents=intents,
-            command_prefix=self.get_pre,
+            command_prefix=['test.'],
             case_insensitive=True,
             activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             strip_after_prefix=True,
@@ -136,7 +136,7 @@ class BaseDuck(commands.AutoShardedBot):
         )
         self.vote_top_gg = "https://top.gg/bot/788278464474120202"
         self.vote_bots_gg = "https://discord.bots.gg/bots/788278464474120202"
-        self.repo = "https://github.com/LeoCx1000/discord-bots"
+        self.repo = "https://github.com/DuckBot-Discord/DuckBot"
         self.maintenance = None
         self.noprefix = False
         self.persistent_views_added = False

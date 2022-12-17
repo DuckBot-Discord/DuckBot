@@ -7,8 +7,8 @@ from discord.ext import commands
 
 from ._base import FunBase
 from ._gamebase import RequestToPlayView, LookingToPlay
-from ...helpers import constants
-from ...helpers.context import CustomContext
+from helpers import constants
+from helpers.context import CustomContext
 
 
 class TicTacToeButton(discord.ui.Button['TicTacToe']):

@@ -9,9 +9,9 @@ from discord.ext import commands
 import async_timeout
 
 from ._base import FunBase
-from ... import errors
-from ...helpers import constants
-from ...helpers.context import CustomContext
+import errors
+from helpers import constants
+from helpers.context import CustomContext
 
 
 class TypeRace(FunBase):

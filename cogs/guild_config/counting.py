@@ -5,8 +5,8 @@ import asyncpg.exceptions
 import discord
 from discord.ext import commands
 
-from DuckBot.__main__ import CustomContext
-from DuckBot.cogs.management import UnicodeEmoji
+from bot import CustomContext
+from cogs.management import UnicodeEmoji
 from ._base import ConfigBase
 
 

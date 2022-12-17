@@ -7,8 +7,8 @@ from ._base import ModerationBase
 from discord.ext import commands
 from discord.ext.tasks import loop
 
-from ...helpers.context import CustomContext
-from ...helpers.time_inputs import ShortTime, human_timedelta
+from helpers.context import CustomContext
+from helpers.time_inputs import ShortTime, human_timedelta
 import discord
 
 

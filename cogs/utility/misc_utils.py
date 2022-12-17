@@ -4,8 +4,8 @@ import discord
 import tabulate
 from discord.ext import commands
 
-from DuckBot.__main__ import CustomContext
-from DuckBot.helpers import time_inputs
+from bot import CustomContext
+from helpers import time_inputs
 from ._base import UtilityBase
 
 

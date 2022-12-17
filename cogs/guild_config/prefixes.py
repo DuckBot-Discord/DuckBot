@@ -2,7 +2,7 @@ import discord
 import asyncpg
 from discord.ext import commands
 
-from DuckBot.__main__ import CustomContext
+from bot import CustomContext
 from ._base import ConfigBase
 
 

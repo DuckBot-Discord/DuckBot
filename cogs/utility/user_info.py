@@ -9,9 +9,9 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from DuckBot.__main__ import CustomContext
-from DuckBot.helpers import constants
-from DuckBot.helpers import helper
+from bot import CustomContext
+from helpers import constants
+from helpers import helper
 from ._base import UtilityBase
 
 
@@ -46,7 +46,7 @@ class UserInfoView(discord.ui.View):
         self.message = await self.ctx.send(embed=next(self.embeds), view=self)
 
     @discord.ui.button(style=discord.ButtonStyle.grey, emoji='🔁', label='Show Join Order')
-    async def next_embed(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def next_embed(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = next(self.embeds)
         button.label = next(self.labels)
         await interaction.response.edit_message(embed=embed, view=self)

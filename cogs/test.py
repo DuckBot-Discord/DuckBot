@@ -5,8 +5,8 @@ from typing import Any, List
 import discord
 from discord.ext import commands
 
-from DuckBot.__main__ import DuckBot
-from ..helpers.context import CustomContext
+from bot import DuckBot
+from helpers.context import CustomContext
 
 
 async def ensure_table(bot: DuckBot):

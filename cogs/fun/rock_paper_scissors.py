@@ -4,8 +4,8 @@ from discord.ext import commands
 
 from ._base import FunBase
 from ._gamebase import LookingToPlay, RequestToPlayView
-from ...helpers import constants
-from ...helpers.context import CustomContext
+from helpers import constants
+from helpers.context import CustomContext
 
 
 class RockPaperScissors(discord.ui.View):

@@ -6,9 +6,9 @@ import discord
 from discord.ext import commands
 from numpy import place
 
-from DuckBot import errors
-from DuckBot.__main__ import DuckBot, CustomContext
-from DuckBot.helpers.helper import LoggingEventsFlags
+import errors
+from bot import DuckBot, CustomContext
+from helpers.helper import LoggingEventsFlags
 from ._base import ConfigBase
 
 

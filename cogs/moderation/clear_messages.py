@@ -10,8 +10,8 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from DuckBot.helpers.context import CustomContext
-from DuckBot.errors import NoQuotedMessage
+from helpers.context import CustomContext
+from errors import NoQuotedMessage
 from ._base import ModerationBase
 
 

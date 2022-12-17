@@ -1,6 +1,6 @@
 import datetime
 from dateutil.relativedelta import relativedelta
-from DuckBot.helpers.time_formats import plural, human_join
+from helpers.time_formats import plural, human_join
 from discord.ext import commands
 import re
 

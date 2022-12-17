@@ -2,7 +2,7 @@ import discord
 import typing
 from discord.ext import commands
 
-from DuckBot.helpers import constants
+from helpers import constants
 from ._base import LoggingBase
 
 

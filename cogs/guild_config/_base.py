@@ -29,7 +29,7 @@ from typing import Dict, Optional
 import discord
 from discord.ext import commands, tasks
 
-from DuckBot.__main__ import DuckBot
+from bot import DuckBot
 
 
 POLL_PERIOD = 25

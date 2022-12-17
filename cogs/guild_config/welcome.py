@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import discord
 from discord.ext import commands
 
-from DuckBot import errors
-from DuckBot.__main__ import CustomContext
+import errors
+from bot import CustomContext
 from ._base import ConfigBase
 
 if TYPE_CHECKING:

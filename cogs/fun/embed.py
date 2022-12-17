@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from ._base import FunBase
-from ...helpers.context import CustomContext
+from helpers.context import CustomContext
 
 
 def strip_codeblock(content):

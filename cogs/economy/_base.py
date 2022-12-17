@@ -15,7 +15,7 @@ from discord import Interaction
 
 from discord.ext import commands
 
-from DuckBot.errors import (
+from errors import (
     EconomyNotSetup,
     AccountNotFound,
     AccountAlreadyExists,
@@ -24,11 +24,11 @@ from DuckBot.errors import (
     WalletInUse,
 )
 
-from DuckBot.helpers.time_inputs import human_timedelta
+from helpers.time_inputs import human_timedelta
 
 if TYPE_CHECKING:
-    from DuckBot.__main__ import DuckBot
-    from DuckBot.helpers.context import CustomContext
+    from bot import DuckBot
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Bot as DuckBot, BadArgument
     from discord.ext.commands import Context as CustomContext

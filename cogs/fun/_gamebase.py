@@ -1,7 +1,7 @@
 import discord
 from discord import Interaction
 
-from ...helpers.context import CustomContext
+from helpers.context import CustomContext
 
 
 class LookingForButton(discord.ui.Button):

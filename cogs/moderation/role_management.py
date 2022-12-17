@@ -5,7 +5,7 @@ import humanize.time
 from discord.ext import commands
 
 from ._base import ModerationBase
-from DuckBot.__main__ import CustomContext
+from bot import CustomContext
 
 
 class RoleManagementCommands(ModerationBase):

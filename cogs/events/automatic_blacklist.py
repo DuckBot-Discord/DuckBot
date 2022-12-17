@@ -3,7 +3,7 @@ import logging
 import discord
 from discord.ext import commands
 
-from DuckBot.__main__ import CustomContext
+from bot import CustomContext
 from ._base import EventsBase
 
 

@@ -5,7 +5,7 @@ import discord
 import typing
 from discord.ext import commands, tasks
 
-from DuckBot.__main__ import DuckBot
+from bot import DuckBot
 
 from ._base import LoggingBase
 

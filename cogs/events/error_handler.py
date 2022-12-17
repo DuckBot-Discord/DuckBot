@@ -10,10 +10,10 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 from numpy import isin
 
-import DuckBot.errors as errors
-from DuckBot.__main__ import CustomContext
-from DuckBot.helpers import constants
-from DuckBot.helpers import time_inputs
+import errors
+from bot import CustomContext
+from helpers import constants
+from helpers import time_inputs
 from ._base import EventsBase
 
 warned = []

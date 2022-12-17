@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 
-from DuckBot.__main__ import CustomContext
-from DuckBot.helpers import constants
+from bot import CustomContext
+from helpers import constants
 from ._base import UtilityBase
 
 

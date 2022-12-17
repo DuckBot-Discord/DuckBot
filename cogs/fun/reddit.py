@@ -6,8 +6,8 @@ from discord.ext import commands
 import asyncpraw
 
 from ._base import FunBase
-from ...helpers import constants
-from ...helpers.context import CustomContext
+from helpers import constants
+from helpers.context import CustomContext
 
 
 class Reddit(FunBase):

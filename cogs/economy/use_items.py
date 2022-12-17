@@ -12,7 +12,7 @@ from .helper_classes import OwnedItem
 from .helper_functions import require_setup
 
 if TYPE_CHECKING:
-    from DuckBot.helpers.context import CustomContext
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Context as CustomContext
 

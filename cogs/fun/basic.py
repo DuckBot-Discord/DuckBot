@@ -6,8 +6,8 @@ import typing
 from discord.ext import commands
 
 from ._base import FunBase
-from ...helpers import constants
-from ...helpers.context import CustomContext
+from helpers import constants
+from helpers.context import CustomContext
 
 
 _8ball_good = [

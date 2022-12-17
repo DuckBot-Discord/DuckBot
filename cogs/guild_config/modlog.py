@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from ._base import ConfigBase
 from ..logs import LoggingBackend
-from ...helpers.context import CustomContext
+from helpers.context import CustomContext
 
 
 class ModLogs(ConfigBase):
@@ -33,7 +33,7 @@ class ModLogs(ConfigBase):
             )
             await ctx.send(f'✅ | **ModLogs** will now be delivered in #{channel.mention}')
         else:
-            modlog: int = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id) # type: ignore
+            modlog: int = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id)  # type: ignore
             if modlog:
                 await ctx.send(f"ℹ | **ModLogs** are currently enabled in #{self.bot.get_channel(modlog) or modlog}")
             else:
@@ -144,6 +144,6 @@ class ModLogs(ConfigBase):
         await ctx.bot.db.fetchrow(
             "UPDATE prefixes SET special_roles = ARRAY_REMOVE(special_roles, $1) WHERE guild_id = $2 RETURNING *",
             role.id,
-            ctx.guild.id
+            ctx.guild.id,
         )
         await ctx.send(f'✅ | Removed {role.name} from the special roles list')

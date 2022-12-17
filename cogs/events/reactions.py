@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 
-from DuckBot.cogs.info import suggestions_channel
+from cogs.info import suggestions_channel
 from ._base import EventsBase
 
 

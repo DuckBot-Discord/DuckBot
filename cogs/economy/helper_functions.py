@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING
 
 from discord.ext import commands
 
-from DuckBot.errors import (
+from errors import (
     EconomyNotSetup,
     EconomyOnCooldown,
     CooldownType,
 )
 
 if TYPE_CHECKING:
-    from DuckBot.helpers.context import CustomContext
+    from helpers.context import CustomContext
 else:
     from discord.ext.commands import Context as CustomContext
 

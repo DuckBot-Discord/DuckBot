@@ -5,7 +5,7 @@ import aiofiles
 import discord
 from discord.flags import BaseFlags, fill_with_flags, flag_value
 
-from DuckBot.helpers import constants
+from helpers import constants
 
 
 def get_perms(permissions: discord.Permissions):

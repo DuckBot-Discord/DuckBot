@@ -12,8 +12,8 @@ from discord.ext import commands
 from discord.ext.commands import Paginator as CommandPaginator
 from discord.ext import menus
 
-from DuckBot.helpers import helper, constants
-from DuckBot.__main__ import CustomContext
+from helpers import helper, constants
+from bot import CustomContext
 
 sep = '\u200b '
 
@@ -52,7 +52,7 @@ class OzAd(discord.ui.View):
     @discord.ui.button(
         label='Advertisement', style=discord.ButtonStyle.gray, emoji=constants.MINECRAFT_LOGO, custom_id='OzSmpAd'
     )
-    async def advertisement(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def advertisement(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             description="\u200b"
             "\nWe’re not in Kansas anymore Toto. 🧙"
@@ -98,11 +98,11 @@ class InvSrc(discord.ui.View):
             )
         )
         self.add_item(
-            discord.ui.Button(emoji=constants.GITHUB, label='Source code', url="https://github.com/LeoCx1000/discord-bots")
+            discord.ui.Button(emoji=constants.GITHUB, label='Source code', url="https://github.com/DuckBot-Discord/DuckBot")
         )
 
     @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji=constants.TOP_GG, custom_id='BotVoteSites')
-    async def votes(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def votes(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             description=f"{constants.TOP_GG} **vote here!** {constants.TOP_GG}", color=discord.Colour.blurple()
         )
@@ -111,7 +111,7 @@ class InvSrc(discord.ui.View):
     @discord.ui.button(
         label='Support Server', style=discord.ButtonStyle.gray, emoji=constants.SERVERS_ICON, custom_id='ServerInvite'
     )
-    async def invite(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def invite(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             description=f"{constants.SERVERS_ICON} **Join my server!** {constants.SERVERS_ICON}"
             "\nNote that this **will not ask for consent** to join! "
@@ -262,32 +262,32 @@ class ViewPaginator(discord.ui.View):
             self.message = await start_message.edit(**kwargs, view=self)
 
     @discord.ui.button(label='≪', style=discord.ButtonStyle.grey)
-    async def go_to_first_page(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def go_to_first_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """go to the first page"""
         await self.show_page(interaction, 0)
 
     @discord.ui.button(label='◀', style=discord.ButtonStyle.blurple)
-    async def go_to_previous_page(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def go_to_previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """go to the previous page"""
         await self.show_checked_page(interaction, self.current_page - 1)
 
     @discord.ui.button(label='◽', style=discord.ButtonStyle.grey, disabled=True)
-    async def go_to_current_page(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def go_to_current_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
 
     @discord.ui.button(label='▶', style=discord.ButtonStyle.blurple)
-    async def go_to_next_page(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def go_to_next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """go to the next page"""
         await self.show_checked_page(interaction, self.current_page + 1)
 
     @discord.ui.button(label='≫', style=discord.ButtonStyle.grey)
-    async def go_to_last_page(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def go_to_last_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """go to the last page"""
         # The call here is safe because it's guarded by skip_if
         await self.show_page(interaction, self.source.get_max_pages() - 1)
 
     @discord.ui.button(label='Skip to page...', style=discord.ButtonStyle.grey)
-    async def numbered_page(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def numbered_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """lets you type a page number to go to"""
         if self.input_lock.locked():
             await interaction.response.send_message('Already waiting for your response...', ephemeral=True)
@@ -315,7 +315,7 @@ class ViewPaginator(discord.ui.View):
                 await self.show_checked_page(interaction, page - 1)
 
     @discord.ui.button(emoji='🗑', style=discord.ButtonStyle.red)
-    async def stop_pages(self,interaction: discord.Interaction, button: discord.ui.Button):
+    async def stop_pages(self, interaction: discord.Interaction, button: discord.ui.Button):
         """stops the pagination session."""
         await interaction.response.defer()
         await interaction.delete_original_message()

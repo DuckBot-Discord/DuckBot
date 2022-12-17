@@ -4,9 +4,9 @@ import random
 import discord
 from discord.ext import commands
 
-from DuckBot import errors
-from DuckBot.__main__ import DuckBot
-from DuckBot.helpers.context import CustomContext
+import errors
+from bot import DuckBot
+from helpers.context import CustomContext
 
 
 class BannedMember(commands.Converter):

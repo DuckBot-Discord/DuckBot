@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from jishaku.paginators import WrappedPaginator
 
-from DuckBot.helpers import time_inputs
+from helpers import time_inputs
 from ._base import EventsBase
 
 

@@ -5,9 +5,9 @@ import discord
 from discord.ext import commands
 
 from ._base import FunBase
-from ...__main__ import DuckBot
-from ...helpers import constants
-from ...helpers.context import CustomContext
+from bot import DuckBot
+from helpers import constants
+from helpers.context import CustomContext
 
 event_types = {
     # Credits to RemyK888
