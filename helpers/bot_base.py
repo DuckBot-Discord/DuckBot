@@ -103,7 +103,7 @@ class BaseDuck(commands.AutoShardedBot):
 
         super().__init__(
             intents=intents,
-            command_prefix=['test.'],
+            command_prefix=self.get_pre,
             case_insensitive=True,
             activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             strip_after_prefix=True,
