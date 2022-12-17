@@ -638,7 +638,7 @@ class HelpView(discord.ui.View):
             "and assisted by [NextChai](https://github.com/NextChai). You can use me to play games, moderate your server, mess with some images and more! "
             "Check out all my features using the dropdown below.\n\n"
             f"I've been online since {self.bot.uptime_timestamp}.\n"
-            f"You can find my source code on {GITHUB}[GitHub](https://github.com/LeoCx1000/discord-bots/tree/rewrite).",
+            f"You can find my source code on {GITHUB}[GitHub](https://github.com/DuckBot-Discord/DuckBot/tree/rewrite).",
             inline=False,
         )
         embed.add_field(

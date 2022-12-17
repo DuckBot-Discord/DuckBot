@@ -14,7 +14,7 @@ class Sauce(DuckCog):
         command: Optional[str]
             The command to display the source code for.
         """
-        source_url = 'https://github.com/LeoCx1000/discord-bots'
+        source_url = 'https://github.com/DuckBot-Discord/DuckBot'
         branch = 'rewrite'
         if command is None:
             return await ctx.send(f"<{source_url}>")
