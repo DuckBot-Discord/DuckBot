@@ -126,3 +126,6 @@ dmypy.json
 
 # vscode
 .vscode/
+
+# Dead projects
+cogs/role_menus.py

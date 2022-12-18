@@ -7,11 +7,8 @@ from utils import ColourFormatter
 
 
 @click.command()
-@click.option('--dump', default=None, help='Dump translations to file.')
-@click.option('--load', default=None, help='Load translations from file.')
-@click.option('--norun', is_flag=True, help='Add to not run the bot.')
 @click.option('--brief', is_flag=True, help='Brief logging output.')
-def run(dump, norun, load, brief):
+def run(brief):
     """Options to run the bot."""
 
     handler = logging.StreamHandler()
@@ -22,7 +19,7 @@ def run(dump, norun, load, brief):
         handlers=[handler],
     )
 
-    asyncio.run(run_bot(to_dump=dump, to_load=load, run=(not norun if (not dump or not load) else False)))
+    asyncio.run(run_bot())
 
 
 if __name__ == '__main__':

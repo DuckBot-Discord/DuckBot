@@ -16,6 +16,7 @@ reportFunctionMemberAccess = "error"
 reportDuplicateImport = "error"
 reportUntypedFunctionDecorator = "error"
 reportUnnecessaryTypeIgnoreComment = "warning"
+reportShadowedImports = "none"
 
 [tool.black]
 line-length = 125

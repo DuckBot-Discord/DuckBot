@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Tuple, TypeVar, 
 import discord
 from discord.ext import commands
 
-from .translation_helpers import FormatString, TranslatedEmbed
-
 if TYPE_CHECKING:
     from bot import DuckBot
     from discord.message import Message
@@ -132,35 +130,7 @@ class DuckContext(commands.Context, Generic[BotT]):
 
         return result
 
-    async def get_locale(self) -> str:
-        """|coro|
-        Gets the locale to use for the translation.
-        """
-        return self.bot.validate_locale(
-            await self.bot.pool.fetchval('SELECT locale FROM user_settings WHERE user_id = $1', self.author.id),
-            default=self.bot.validate_locale(
-                self.interaction.locale if self.interaction else None,
-                default=self.bot.validate_locale(self.guild.preferred_locale if self.guild else None, default='en_us'),
-            ),
-        )
-
-    async def translate(self, translation_id: int, /, *args: Any, locale: str | discord.Locale | None = None) -> str:
-        """|coro|
-        Handles translating a translation ID.
-
-        Parameters
-        ----------
-        translation_id: :class:`int`
-            The translation ID to translate.
-        args: :class:`Any`
-            The arguments to pass to the translation.
-        locale: Optional[:class:`str` | :class:`~discord.Locale`]
-            The locale to use for the translation.
-        """
-        locale = locale or await self.get_locale()
-        return await self.bot.translate(translation_id, *args, locale=locale)
-
-    async def send(self, content: int | str | FormatString | None = None, *args: Any, **kwargs: Any) -> Message:
+    async def send(self, content: str | None = None, *args: Any, **kwargs: Any) -> Message:
         """|coro|
 
         Sends a message to the invoking context's channel.
@@ -175,25 +145,16 @@ class DuckContext(commands.Context, Generic[BotT]):
         if kwargs.get('embed') and kwargs.get('embeds'):
             raise TypeError('Cannot mix embed and embeds keyword arguments.')
 
-        locale = kwargs.pop('locale', await self.get_locale())
 
         embeds = kwargs.pop('embeds', []) or ([kwargs.pop('embed')] if kwargs.get('embed', None) else [])
         if embeds:
-            for i, embed in enumerate(embeds):
-                if isinstance(embed, TranslatedEmbed):
-                    embed = await embed.translate(self.bot, locale)
-                    embeds[i] = embed
+            for embed in embeds:
                 if embed.color is None:
                     # Made this the bot's vanity colour, although we'll
                     # be keeping self.color for other stuff like userinfo
                     embed.color = self.bot.color
 
         kwargs['embeds'] = embeds
-
-        if isinstance(content, int):
-            content = await self.translate(content, *args, locale=locale)
-        elif isinstance(content, FormatString):
-            content = await self.translate(content.id, *content.args, locale=locale)
 
         if self._previous_message:
             new_kwargs = deepcopy(VALID_EDIT_KWARGS)

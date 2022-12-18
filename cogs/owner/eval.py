@@ -18,7 +18,7 @@ import discord
 from discord.ext import commands
 from import_expression import exec as e_exec
 
-from utils import DuckCog, DuckContext, DeleteButton, command, TranslatedEmbed, UntilFlag, FlagConverter, cb
+from utils import DuckCog, DuckContext, DeleteButton, command, UntilFlag, FlagConverter, cb
 from bot import DuckBot
 
 CODEBLOCK_REGEX = re.compile(r'`{3}(python\n|py\n|\n)?(?P<code>[^`]*)\n?`{3}')
@@ -156,8 +156,6 @@ class Eval(DuckCog):
         kwargs = {}
         if isinstance(ret, discord.File):
             kwargs['files'] = [ret]
-        elif isinstance(ret, (discord.Embed, TranslatedEmbed)):
-            kwargs['embeds'] = ret
         elif isinstance(ret, discord.Message):
             kwargs['content'] = f"{repr(ret)}"
         elif isinstance(ret, Exception):

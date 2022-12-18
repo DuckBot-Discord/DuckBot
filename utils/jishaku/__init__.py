@@ -17,22 +17,18 @@ import traceback
 from jishaku.modules import package_version
 from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
 from jishaku.features.python import PythonFeature
-from jishaku.features.root_command import RootCommand, natural_size
-from jishaku.features.management import ManagementFeature, ExtensionConverter
+from jishaku.features.root_command import RootCommand
+from jishaku.math import natural_size
+from jishaku.features.management import ManagementFeature
+from jishaku.modules import ExtensionConverter
 from jishaku.codeblocks import codeblock_converter
 from jishaku.exception_handling import ReplResponseReactor
 from jishaku.features.baseclass import Feature
 from jishaku.flags import Flags
 from jishaku.functools import AsyncSender
-from jishaku.repl import AsyncCodeExecutor, get_var_dict_from_ctx
+from jishaku.repl import AsyncCodeExecutor
+from jishaku.repl.repl_builtins import get_var_dict_from_ctx
 from jishaku.paginators import use_file_check, PaginatorInterface, WrappedPaginator
-
-from utils.bases.translation_helpers import TranslatedEmbed
-
-if TYPE_CHECKING:
-    pass
-else:
-    pass
 
 from utils.bases.context import DuckContext
 from .. import add_logging, DuckCog
@@ -52,7 +48,7 @@ class OverwrittenRootCommand(RootCommand):
     @Feature.Command(
         parent=None,
         name="jsk",
-        aliases=["jishaku", "jishacum"],  # type: ignore
+        aliases=["jishaku", "jishacum"],
         invoke_without_command=True,
     )
     async def jsk(self, ctx: DuckContext):
@@ -229,8 +225,8 @@ features.append(OverwrittenManagementFeature)
 
 class DuckBotJishaku(
     DuckCog,
-    *features,  # type: ignore
-    *OPTIONAL_FEATURES,  # type: ignore
+    *features,
+    *OPTIONAL_FEATURES,
     brief="Jishaku front end class.",
     emoji="\N{CONSTRUCTION WORKER}",
     hidden=True,
@@ -261,9 +257,6 @@ class DuckBotJishaku(
 
         elif isinstance(result, discord.File):
             return await ctx.send(file=result)
-
-        elif isinstance(result, (discord.Embed, TranslatedEmbed)):
-            return await ctx.send(embed=result)
 
         elif isinstance(result, PaginatorInterface):
             return await result.send_to(ctx)  # type: ignore

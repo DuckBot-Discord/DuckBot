@@ -7,7 +7,6 @@ from .test_shit import TestingShit
 from .badges import BadgeManagement
 from .eval import Eval
 from .sql import SQLCommands
-from .translations import TranslationManager
 from .update import ExtensionsManager
 from .api import Api
 
@@ -18,7 +17,6 @@ class Owner(
     BadgeManagement,
     Eval,
     Api,
-    TranslationManager,
     SQLCommands,
     ExtensionsManager,
     command_attrs=dict(hidden=True),

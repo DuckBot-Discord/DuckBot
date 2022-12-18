@@ -10,7 +10,6 @@ import re
 import sys
 import time
 from collections import defaultdict
-from json import dump, load
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -18,7 +17,6 @@ from typing import (
     Callable,
     Coroutine,
     DefaultDict,
-    Dict,
     Generator,
     Generic,
     List,
@@ -34,7 +32,6 @@ from typing import (
 )
 
 import asyncpg
-from asyncpg.pool import PoolConnectionProxy
 import cachetools
 import discord
 from discord import app_commands
@@ -48,7 +45,6 @@ from utils import (
     DuckExceptionManager,
     TimerManager,
     col,
-    human_join,
     human_timedelta,
     IPCBase,
 )
@@ -228,56 +224,6 @@ class DuckHelper(TimerManager):
     def get_logger(cls):
         return logging.getLogger(f"{__name__}.{cls.__name__}")
 
-    def validate_locale(self, locale: str | discord.Locale | None, default: str = "en_us") -> str:
-        """Validate a locale.
-
-        Parameters
-        ----------
-        locale: :class:`str`
-            The locale to validate.
-
-        Returns
-        -------
-        :class:`bool`
-            Whether or not the locale is valid.
-        """
-        locale = str(locale).lower().replace("-", "_")
-        if locale not in self.bot.allowed_locales:
-            locale = self.validate_locale(default)
-        return locale
-
-    async def translate(
-        self,
-        translation_id: int,
-        /,
-        *args: Any,
-        locale: str | discord.Locale | None,
-        db: asyncpg.Pool | Connection | PoolConnectionProxy | None = None,
-    ) -> str:
-        """|coro|
-        Handles translating a translation ID.
-
-        Parameters
-        ----------
-        translation_id: :class:`int`
-            The translation ID to translate.
-        args: :class:`Any`
-            The arguments to pass to the translation.
-        locale: Optional[:class:`str` | :class:`~discord.Locale`]
-            The locale to use for the translation.
-        connection: Optional[:class:`~asyncpg.Connection` | :class:`~asyncpg.Pool`]
-            The connection to use for the transaction.
-        """
-        connection = db or self.bot.pool
-        locale = self.validate_locale(locale)
-        translations = await connection.fetchrow("SELECT * FROM translations WHERE tr_id = $1", translation_id)
-        if not translations:
-            raise RuntimeError(f"Translation ID {translation_id} does not exist")
-
-        translation = translations[locale] or translations["en_us"]
-        return translation.format(*args)
-
-
 class DuckBot(commands.AutoShardedBot, DuckHelper):
     if TYPE_CHECKING:
         user: discord.ClientUser
@@ -452,64 +398,6 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         await self.listener_connection.add_listener("delete_prefixes", _delete_prefixes_event)
         await self.listener_connection.add_listener("update_prefixes", _create_or_update_event)
-
-    async def dump_translations(self, filename: str) -> None:
-        self.logger.info("%sDumping translations to %s", col(5), f"{filename!r}")
-        translations = await self.pool.fetch("SELECT * FROM translations ORDER BY tr_id")
-        self.logger.info(
-            "%sDumping %s translations to locales %s%s",
-            col(5),
-            len(translations),
-            col(3),
-            human_join(
-                list(self.allowed_locales),
-                final=f"{col(5)}and{col(3)}",
-                delim=f"{col(5)}, {col(3)}",
-            ),
-        )
-        payload: Dict[str, Any] = dict(
-            locales=list(self.allowed_locales),
-            last_updated=discord.utils.utcnow().isoformat(),
-        )
-        for translation in translations:
-            data = dict(translation)
-            del data["tr_id"]
-            payload[translation["tr_id"]] = data
-        with open(filename, "w+") as f:
-            dump(payload, f, indent=4)
-
-    async def load_translations(self, filename: str) -> None:
-        async with self.safe_connection() as conn:
-            self.logger.info("%sLoading translations from %s", col(5), f"{filename!r}")
-            with open(filename, "r") as f:
-                payload = load(f)
-            self.logger.info(
-                "%sLoading %s translations from locales %s%s",
-                col(5),
-                len(payload) - 2,
-                col(3),
-                human_join(
-                    payload["locales"],
-                    final=f"{col(5)}and{col(3)}",
-                    delim=f"{col(5)}, {col(3)}",
-                ),
-            )
-            for tr_id, data in payload.items():
-                if not tr_id.isdigit():
-                    continue
-                self.logger.debug("%sLoading translation %s", col(3), tr_id)
-                for locale, translation in data.items():
-                    if locale not in self.allowed_locales and locale != "note":
-                        raise RuntimeError(f"Invalid locale {locale!r}")
-                    await conn.execute(
-                        f"""
-                        INSERT INTO translations (tr_id, {locale}) VALUES ($1, $2) 
-                        ON CONFLICT (tr_id) DO UPDATE SET {locale} = $2
-                    """,
-                        int(tr_id),
-                        translation,
-                    )
-            self.logger.info("%sSuccessfully loaded %s translations", col(5), len(payload) - 2)
 
     @property
     def start_time(self) -> datetime.datetime:

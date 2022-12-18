@@ -24,17 +24,12 @@ URI = _get_or_fail('POSTGRES')
 ERROR_WH = _get_or_fail('ERROR_WEBHOOK_URL')
 
 
-async def run_bot(to_dump: str | None, to_load: str | None, run: bool) -> None:
+async def run_bot() -> None:
     async with aiohttp.ClientSession() as session, DuckBot.temporary_pool(uri=URI) as pool, TokenProvider(
         _get_or_fail('PROVIDER_URI')
     ) as provider, DuckBot(session=session, pool=pool, error_wh=ERROR_WH, provider=provider) as duck:
-        if to_dump:
-            await duck.dump_translations(to_dump)
-        elif to_load:
-            await duck.load_translations(to_load)
-        elif run:
-            await duck.start(TOKEN, reconnect=True, verbose=False)
+        await duck.start(TOKEN, reconnect=True, verbose=False)
 
 
 if __name__ == '__main__':
-    asyncio.run(run_bot(to_dump=None, to_load=None, run=True))
+    asyncio.run(run_bot())
