@@ -301,7 +301,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             chunk_guilds_at_startup=False,
             max_messages=4000,
         )
-        self.pool: Pool = pool
+        self.pool: Pool[asyncpg.Record] = pool
         self.session: ClientSession = session
         self.provider: TokenProvider = provider
         self._context_cls: Type[commands.Context] = commands.Context

@@ -38,8 +38,8 @@ class Owner(
         """Syncs commands."""
         msg = await ctx.send("Syncing...")
         ctx.bot.tree.copy_global_to(guild=ctx.guild)
-        cmds = await ctx.bot.tree.sync(guild=ctx.guild)
         async with HandleHTTPException(ctx):
+            cmds = await ctx.bot.tree.sync(guild=ctx.guild)
             await msg.edit(content=f"✅ Synced {len(cmds)} commands.")
 
 
