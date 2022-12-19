@@ -41,7 +41,7 @@ def format_commit(commit):
 
 
 def get_latest_commits(limit: int = 5):
-    repo = pygit2.Repository("../.git")
+    repo = pygit2.Repository("./.git")
     commits = list(itertools.islice(repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL), limit))
     return "\n".join(format_commit(c) for c in commits)
 
