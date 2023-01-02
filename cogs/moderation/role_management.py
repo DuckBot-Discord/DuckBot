@@ -27,7 +27,7 @@ class RoleManagementCommands(ModerationBase):
 
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    @role_group.group(name='remove')
+    @role_group.group(invoke_without_command=True, name='remove')
     async def role_remove(self, ctx: CustomContext, member: discord.Member, *, role: discord.Role):
         """Removes a role from a user."""
         if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author:
