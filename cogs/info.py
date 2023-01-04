@@ -763,7 +763,6 @@ class About(commands.Cog):
         await ctx.send(embed=embed, view=view)
 
     @commands.command(help="Checks the bot's ping to Discord")
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def ping(self, ctx):
         pings = []
         number = 0
@@ -812,10 +811,10 @@ class About(commands.Cog):
             )
         )
 
-    @commands.command(help="Shows info about the bot", aliases=["botinfo", "info", "bi"])
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def about(self, ctx):
+    @commands.hybrid_command(help="Shows info about the bot", aliases=["botinfo", "info", "bi"])
+    async def about(self, ctx: commands.Context):
         """Tells you information about the bot itself."""
+        await ctx.defer()
         information = await self.bot.application_info()
         embed = discord.Embed(
             description=f"{constants.GITHUB} [source]({self.bot.repo}) | "
@@ -824,7 +823,6 @@ class About(commands.Cog):
             f"{constants.BOTS_GG} [bots.gg]({self.bot.vote_bots_gg})"
             f"\n_ _╰ Try also `{ctx.prefix}source [command]`"
         )
-
         embed.add_field(name="Latest updates:", value=get_latest_commits(limit=5), inline=False)
 
         embed.set_author(
@@ -900,7 +898,6 @@ class About(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["sourcecode", "code"], usage="[command|command.subcommand]")
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def source(self, ctx: CustomContext, *, command: str = None):
         """
         Links to the bots code, or a specific command's
@@ -968,36 +965,30 @@ class About(commands.Cog):
             footer=False,
         )
 
-    @commands.command(description="hiii")
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.hybrid_command(name='privacy-policy', aliases=['privacy'])
     async def privacy(self, ctx):
         """
-        Shows duckbot's privacy policies
+        Shows our privacy policies
         """
         embed = discord.Embed(
             title=f"{ctx.me.name} Privacy Policy",
-            description=f"""
-> We store your `server id` for purpose of custom prefixes.
-
-> We store role_IDs for mute-role
-
-> We store user_IDs for AFK / temporary mutes
-
-> when a command error happens, we get the following data for troubleshooting purposes:
-```yaml
-The command executed
-The server id, and server owner id
-DuckBot's top role position
-# This data is disposed of once
-# the error has been fixed.
-```""",
+            description=(
+                "DuckBot ('We', 'us' or 'our') doesn't store any personal information."
+                "\nTo provide our service, we may store partial message content, or snowflake IDs "
+                "for the purporses of configuration, customization and analytics."
+                "\nAll partial information is deleted when our bot is removed from your server."
+                "\n\nData is not shared with any third-parties."
+            ),
             color=ctx.me.color,
         )
-        embed.set_footer(text="Privacy concerns, DM the bot.")
+        embed.add_field(
+            name="How do I request data deletion?", value="You can't, as we don't store any identifying information."
+        )
+        embed.set_footer(text="Privacy concerns? DM DuckBot to contact our team.")
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def suggest(self, ctx: CustomContext, *, suggestion):
+    async def suggest(self, ctx: CustomContext, *, suggestion: str):
         channel = self.bot.get_channel(suggestions_channel)
         embed = discord.Embed(colour=ctx.me.color, title="Suggestion successful!")
         embed.add_field(
@@ -1056,56 +1047,11 @@ DuckBot's top role position
         Shows the latest changes of the bot. ""
         """
         embed = discord.Embed(
-            title="📰 Latest News - <t:1636731000:d> (<t:1636731000:R>)",
-            colour=ctx.colour,
-            description=f"\u200b"
-            f"\n> **:hash: <t:1633210000:R> You're now able to play Tic-Tac-Toe**"
-            f"\n> Just run the `{ctx.clean_prefix}ttt` command. Other users will be able to join your game by "
-            f"pressing the 'Join this game!' button \🎫"
-            f"\n"
-            f"\n> **:v: <t:1633110000:R> You're now able to play Rock-Paper-Scissors**"
-            f"\n> Just run the `{ctx.clean_prefix}rps` command. Other users will be able to join your game by "
-            f"pressing the 'Join this game!' button \🎫"
-            f"\n"
-            f"\n> **:mute: <t:1633447880:R> New `multi-mute` and `multi-unmute` commands**"
-            f"\n> Mute multiple people at once: `{ctx.clean_prefix}multi-mute @u1 @u2 @u3... reason`"
-            f"\n"
-            f"\n> **:busts_in_silhouette: <t:1633642000:R> New `mutual-servers` command**"
-            f"\n"
-            f"\n> **:tada: <t:1633753000:R> Improved upon the invitestats command**"
-            f"\n"
-            f"\n> **:scroll: <t:1633848000:R> New `todo` command**"
-            f"\n> _save things for later! don't forget about anything anymore._"
-            f"\n"
-            f"\n>  **:no_entry: <t:1633908200:R> `block` and `unblock` commands**"
-            f"\n> Block troublesome people from messaging in your current channel"
-            f"\n"
-            f"\n> **:1234: <t:1634379000:R> NEW COUNTING GAME!!!**"
-            f"\n> Run `{ctx.clean_prefix}counting` for more info!"
-            f"\n"
-            f"\n> **:microphone: <t:1634654000:R> New `lyrics` command to search lyrics!**"
-            f"\n"
-            f"\n> **:keyboard: <t:1634660000:R> New `type-race` command!**"
-            f"\n> _See who of your friends can type the word the fastest. **No copy paste!**_"
-            f"\n"
-            f"\n> **:camera_with_flash: <t:1635068000:R> New image manipulation commands!**"
-            f"\n> do `{ctx.clean_prefix}help image` for more information"
-            f"\n"
-            f"\n> **:scroll: <t:1635314000:R> __NEW logging module__**"
-            f"\n> Log all your server's events! Do `{ctx.clean_prefix} log` for more info."
-            f"\n"
-            f"\n> **:scroll: <t:1635359000:R> auto logging setup command**"
-            f"\n> Creates all the logging channels for you: do `{ctx.clean_prefix} log auto-setup`"
-            f"\n"
-            f"\n> **:notes: <t:1636421000:R> music commands overhauled**"
-            f"\n> Music commands should be better and music quality should be superior."
-            f"\n"
-            f"\n> **:mag_right: <t:1636731000:R> New search options when enqueueing tracks**"
-            f"\n> Commands for music added: `search`, `search-now`, `search-next`",
+            title="Service Unavailable.", colour=ctx.colour, description="News is temporarily unavailable."
         )
         if return_embed is True:
             return embed
-        await ctx.send(embed=embed, footer=None)
+        await ctx.send(embed=embed, footer=False)
 
     @commands.command(hidden=True)
     async def oz_ad(self, ctx):
@@ -1127,12 +1073,12 @@ DuckBot's top role position
 
         await ctx.send("Here are the mutual servers:", view=Ephemeral(ctx, embed))
 
-    @commands.command(name="commands")
+    @commands.hybrid_command(name="commands")
     async def _commands(self, ctx: CustomContext) -> discord.Message:
         """
-        Shows all the bot commands, even the ones you can't run.
+        Lists the bot's commands.
         """
-
+        await ctx.defer()
         ignored_cogs = ("Bot Management", "Jishaku")
 
         def divide_chunks(str_list, n):
@@ -1152,10 +1098,10 @@ DuckBot's top role position
             )
         )
 
-    @commands.command()
-    async def vote(self, ctx):
-        embed = discord.Embed(title="Here's some buttons:")
-        await ctx.send(embed=embed, view=InvSrc())
+    @commands.hybrid_command()
+    async def vote(self, ctx: CustomContext):
+        """Shows where to vote for DuckBot."""
+        await ctx.send(f"<:DuckBotLove:960298037186535424> **You can vote, and see other info:**", view=InvSrc())
 
     # This is all Danny / Rapptz code:
     # https://github.com/Rapptz/RoboDanny

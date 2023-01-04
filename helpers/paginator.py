@@ -103,22 +103,15 @@ class InvSrc(discord.ui.View):
 
     @discord.ui.button(label='Vote', style=discord.ButtonStyle.gray, emoji=constants.TOP_GG, custom_id='BotVoteSites')
     async def votes(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            description=f"{constants.TOP_GG} **vote here!** {constants.TOP_GG}", color=discord.Colour.blurple()
+        await interaction.response.send_message(
+            f"{constants.TOP_GG} **vote here!** {constants.TOP_GG}", ephemeral=True, view=InviteButtons()
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=InviteButtons())
 
     @discord.ui.button(
         label='Support Server', style=discord.ButtonStyle.gray, emoji=constants.SERVERS_ICON, custom_id='ServerInvite'
     )
     async def invite(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            description=f"{constants.SERVERS_ICON} **Join my server!** {constants.SERVERS_ICON}"
-            "\nNote that this **will not ask for consent** to join! "
-            "\nIt will just yoink you into the server",
-            color=discord.Colour.blurple(),
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=ServerInvite())
+        await interaction.response.send_message("https://discord.gg/TdRfGKg8Wh", ephemeral=True)
 
 
 class ViewPaginator(discord.ui.View):
