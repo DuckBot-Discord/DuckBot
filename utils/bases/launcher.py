@@ -6,7 +6,6 @@ import asyncio
 
 from bot import DuckBot
 from dotenv import load_dotenv
-from duckauth import TokenProvider
 
 load_dotenv('utils/.env')
 # (jsk flags are now in the .env)
@@ -25,9 +24,7 @@ ERROR_WH = _get_or_fail('ERROR_WEBHOOK_URL')
 
 
 async def run_bot() -> None:
-    async with aiohttp.ClientSession() as session, DuckBot.temporary_pool(uri=URI) as pool, TokenProvider(
-        _get_or_fail('PROVIDER_URI')
-    ) as provider, DuckBot(session=session, pool=pool, error_wh=ERROR_WH, provider=provider) as duck:
+    async with aiohttp.ClientSession() as session, DuckBot.temporary_pool(uri=URI) as pool, DuckBot(session=session, pool=pool, error_wh=ERROR_WH) as duck:
         await duck.start(TOKEN, reconnect=True, verbose=False)
 
 
