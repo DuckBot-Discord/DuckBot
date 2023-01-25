@@ -412,10 +412,7 @@ class ChannelsView(discord.ui.View):
         self.stop()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user and interaction.user.id in (
-            self.ctx.bot.owner_id,
-            self.ctx.author.id,
-        ):
+        if interaction.user == self.ctx.author:
             return True
         await interaction.response.send_message(f"This menu belongs to **{self.ctx.author}**, sorry! 💖", ephemeral=True)
         return False

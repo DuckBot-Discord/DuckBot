@@ -111,10 +111,7 @@ class Confirm(discord.ui.View):
         )
 
     async def interaction_check(self, interaction: Interaction) -> bool:
-        if interaction.user and interaction.user.id in (
-            self.ctx.bot.owner_id,
-            self.ctx.author.id,
-        ):
+        if interaction.user == self.ctx.author:
             return True
         messages = [
             "Oh no you can't do that! This belongs to **{user}**",

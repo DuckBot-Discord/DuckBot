@@ -22,7 +22,7 @@ class AutoBlacklist(EventsBase):
         current = ctx.message.created_at.timestamp()
         retry_after = bucket.update_rate_limit(current)
         author_id = ctx.author.id
-        if retry_after and author_id != self.bot.owner_id:
+        if retry_after and not await self.bot.is_owner(ctx.author):
             self._auto_spam_count[author_id] += 1
             if self._auto_spam_count[author_id] >= 5:
                 await self.add_to_blacklist(author_id)

@@ -124,7 +124,6 @@ class BaseDuck(commands.AutoShardedBot):
             password=get_or_fail("ASYNC_PRAW_PA"),
         )
 
-        self.owner_id = 349373972103561218
 
         # noinspection PyProtectedMember
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()

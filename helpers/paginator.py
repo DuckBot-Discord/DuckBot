@@ -216,7 +216,7 @@ class ViewPaginator(discord.ui.View):
             pass
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user and interaction.user.id in (self.ctx.bot.owner_id, self.ctx.author.id):
+        if interaction.user == self.ctx.author:
             return True
         await interaction.response.send_message(f'This menu belongs to **{self.ctx.author}**, sorry! 💖', ephemeral=True)
         return False
@@ -225,8 +225,10 @@ class ViewPaginator(discord.ui.View):
         if self.message:
             await self.message.edit(view=None)
 
-    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        if interaction.user.id in self.ctx.bot.owner_ids:
+    async def on_error(
+        self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction[commands.Bot]
+    ) -> None:
+        if await interaction.client.is_owner(interaction.user):
             await self.ctx.reply(
                 '```py' + ''.join(traceback.format_exception(etype=None, value=error, tb=error.__traceback__) + '\n```')
             )
