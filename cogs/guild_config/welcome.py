@@ -134,14 +134,14 @@ class Welcome(ConfigBase):
         Send it without the channel
         """
         channel = new_channel
-        query = """ INSERT INTO prefixes(guild_id, welcome_channel) VALUES ($1, $2)
+        query = """ INSERT INTO guilds(guild_id, welcome_channel) VALUES ($1, $2)
                     ON CONFLICT (guild_id) DO UPDATE SET welcome_channel = $2 """
         if channel:
             if not channel.permissions_for(ctx.author).send_messages:
                 raise commands.BadArgument("You can't send messages in that channel!")
             await self.bot.db.execute(query, ctx.guild.id, channel.id)
             self.bot.welcome_channels[ctx.guild.id] = channel.id
-            message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+            message = await self.bot.db.fetchval("SELECT welcome_message FROM guilds WHERE guild_id = $1", ctx.guild.id)
             await ctx.send(
                 f"Done! Welcome channel updated to {channel.mention} \n"
                 f"{'also, you can customize the welcome message with the `welcome message` command.' if not message else ''}"
@@ -184,7 +184,7 @@ class Welcome(ConfigBase):
         """
         message: str
         query = """
-                INSERT INTO prefixes(guild_id, welcome_message) VALUES ($1, $2)
+                INSERT INTO guilds(guild_id, welcome_message) VALUES ($1, $2)
                 ON CONFLICT (guild_id) DO UPDATE SET welcome_message = $2
                 """
 
@@ -224,7 +224,7 @@ class Welcome(ConfigBase):
     async def welcome_message_test(self, ctx: CustomContext):
         """Sends a fake welcome message to test the one set using the `welcome message` command."""
         member = ctx.author
-        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", member.guild.id)
+        message = await self.bot.db.fetchval("SELECT welcome_message FROM guilds WHERE guild_id = $1", member.guild.id)
         message = message or default_message
         invite = SimpleNamespace(
             url='https://discord.gg/TdRfGKg8Wh', code='discord-api', inviter=random.choice(ctx.guild.members)
@@ -257,9 +257,7 @@ class Welcome(ConfigBase):
             channel = await self.bot.get_welcome_channel(member)
         except errors.NoWelcomeChannel:
             return
-        message: str = await self.bot.db.fetchval(
-            "SELECT welcome_message FROM prefixes WHERE guild_id = $1", member.guild.id
-        )
+        message: str = await self.bot.db.fetchval("SELECT welcome_message FROM guilds WHERE guild_id = $1", member.guild.id)
         message = message or default_message
 
         to_format = {

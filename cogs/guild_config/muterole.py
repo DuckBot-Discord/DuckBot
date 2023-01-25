@@ -20,7 +20,7 @@ class MuteRole(ConfigBase):
         if ctx.invoked_subcommand is None:
             if new_role:
                 await self.bot.db.execute(
-                    "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+                    "INSERT INTO guilds(guild_id, muted_id) VALUES ($1, $2) "
                     "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
                     ctx.guild.id,
                     new_role.id,
@@ -30,7 +30,7 @@ class MuteRole(ConfigBase):
                     f"Updated the muted role to {new_role.mention}!", allowed_mentions=discord.AllowedMentions().none()
                 )
 
-            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', ctx.guild.id)
 
             if not mute_role:
                 raise errors.MuteRoleNotFound
@@ -54,7 +54,7 @@ class MuteRole(ConfigBase):
         If you want to delete it, do "%PRE%muterole delete" instead
         """
         await self.bot.db.execute(
-            "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) " "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+            "INSERT INTO guilds(guild_id, muted_id) VALUES ($1, $2) " "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
             ctx.guild.id,
             None,
         )
@@ -67,7 +67,7 @@ class MuteRole(ConfigBase):
     async def muterole_create(self, ctx: CustomContext):
         starting_time = time.monotonic()
 
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', ctx.guild.id)
 
         if mute_role:
             mute_role = ctx.guild.get_role(mute_role)
@@ -88,7 +88,7 @@ class MuteRole(ConfigBase):
                 reason=f"DuckBot mute-role creation. Requested " f"by {ctx.author} ({ctx.author.id})",
             )
             await self.bot.db.execute(
-                "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+                "INSERT INTO guilds(guild_id, muted_id) VALUES ($1, $2) "
                 "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
                 ctx.guild.id,
                 role.id,
@@ -125,14 +125,14 @@ class MuteRole(ConfigBase):
         Deletes the server's mute role if it exists.
         # If you want to keep the role but not
         """
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', ctx.guild.id)
         if not mute_role:
             raise errors.MuteRoleNotFound
 
         role = ctx.guild.get_role(int(mute_role))
         if not isinstance(role, discord.Role):
             await self.bot.db.execute(
-                "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) "
+                "INSERT INTO guilds(guild_id, muted_id) VALUES ($1, $2) "
                 "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
                 ctx.guild.id,
                 None,
@@ -156,7 +156,7 @@ class MuteRole(ConfigBase):
         except discord.HTTPException:
             return await ctx.send("Something went wrong while deleting the muted role!")
         await self.bot.db.execute(
-            "INSERT INTO prefixes(guild_id, muted_id) VALUES ($1, $2) " "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
+            "INSERT INTO guilds(guild_id, muted_id) VALUES ($1, $2) " "ON CONFLICT (guild_id) DO UPDATE SET muted_id = $2",
             ctx.guild.id,
             None,
         )
@@ -168,7 +168,7 @@ class MuteRole(ConfigBase):
     async def muterole_fix(self, ctx: CustomContext):
         async with ctx.typing():
             starting_time = time.monotonic()
-            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', ctx.guild.id)
 
             if not mute_role:
                 raise errors.MuteRoleNotFound

@@ -30,14 +30,14 @@ class WelcomeView(discord.ui.View):
 class ArrivalAndCleanup(EventsBase):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
-        await self.bot.db.execute('DELETE FROM prefixes WHERE guild_id = $1', guild.id)
+        await self.bot.db.execute('DELETE FROM guilds WHERE guild_id = $1', guild.id)
         await self.bot.db.execute('DELETE FROM temporary_mutes WHERE guild_id = $1', guild.id)
         for channel in guild.text_channels:
             await self.bot.db.execute('DELETE FROM suggestions WHERE channel_id = $1', channel.id)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
-        await self.bot.db.execute('DELETE FROM prefixes WHERE guild_id = $1', guild.id)
+        await self.bot.db.execute('DELETE FROM guilds WHERE guild_id = $1', guild.id)
         await self.bot.db.execute('DELETE FROM temporary_mutes WHERE guild_id = $1', guild.id)
         for channel in guild.text_channels:
             await self.bot.db.execute('DELETE FROM suggestions WHERE channel_id = $1', channel.id)

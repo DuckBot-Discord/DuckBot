@@ -86,7 +86,7 @@ class Counting(ConfigBase):
             pass
         try:
             await self.bot.db.execute(
-                'INSERT INTO prefixes (guild_id) VALUES ($1) ' 'ON CONFLICT (guild_id) DO NOTHING', ctx.guild.id
+                'INSERT INTO guilds (guild_id) VALUES ($1) ' 'ON CONFLICT (guild_id) DO NOTHING', ctx.guild.id
             )
             await self.bot.db.execute(
                 'INSERT INTO count_settings (guild_id, channel_id) VALUES ($1, $2)', ctx.guild.id, channel.id
@@ -112,7 +112,7 @@ class Counting(ConfigBase):
                 )
                 if confirm[0] is True:
                     await self.bot.db.execute(
-                        'INSERT INTO prefixes (guild_id) VALUES ($1) ' 'ON CONFLICT (guild_id) DO NOTHING', ctx.guild.id
+                        'INSERT INTO guilds (guild_id) VALUES ($1) ' 'ON CONFLICT (guild_id) DO NOTHING', ctx.guild.id
                     )
                     await self.bot.db.execute(
                         'INSERT INTO count_settings (guild_id, channel_id, current_number) VALUES ($1, $2, 1)'

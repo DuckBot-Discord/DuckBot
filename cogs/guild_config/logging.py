@@ -725,7 +725,7 @@ class Logging(ConfigBase):
                     f"There was an unexpected error while creating a webhook in {channel.mention} (HTTP exception) - Perhaps try again?"
                 )
         await self.bot.db.execute(
-            "INSERT INTO prefixes (guild_id) VALUES ($1) " "ON CONFLICT (guild_id) DO NOTHING",
+            "INSERT INTO guilds (guild_id) VALUES ($1) " "ON CONFLICT (guild_id) DO NOTHING",
             ctx.guild.id,
         )
         await self.bot.db.execute(
@@ -975,7 +975,7 @@ class Logging(ConfigBase):
                 )
                 self.bot.guild_loggings[ctx.guild.id] = LoggingEventsFlags.all()
                 await self.bot.db.execute(
-                    "INSERT INTO prefixes (guild_id) VALUES ($1) " "ON CONFLICT (guild_id) DO NOTHING",
+                    "INSERT INTO guilds (guild_id) VALUES ($1) " "ON CONFLICT (guild_id) DO NOTHING",
                     ctx.guild.id,
                 )
                 await self.bot.db.execute(

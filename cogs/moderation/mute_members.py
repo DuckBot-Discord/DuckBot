@@ -18,7 +18,7 @@ def ensure_muterole(*, required: bool = True):
             raise commands.BadArgument('Only servers can have mute roles')
         if not required:
             return True
-        if not (role := await ctx.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)):
+        if not (role := await ctx.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', ctx.guild.id)):
             raise commands.BadArgument('This server has no mute role set')
         if not (role := ctx.guild.get_role(role)):
             raise commands.BadArgument("It seems like I could not find this server's mute role. Was it deleted?")
@@ -32,7 +32,7 @@ def ensure_muterole(*, required: bool = True):
 async def muterole(ctx) -> discord.Role:
     if not ctx.guild:
         raise commands.BadArgument('Only servers can have mute roles')
-    if not (role := await ctx.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', ctx.guild.id)):
+    if not (role := await ctx.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', ctx.guild.id)):
         raise commands.BadArgument('This server has no mute role set')
     if not (role := ctx.guild.get_role(role)):
         raise commands.BadArgument("It seems like I could not find this server's mute role. Was it deleted?")
@@ -61,9 +61,7 @@ class MuteCommands(ModerationBase):
         guild: discord.Guild = self.bot.get_guild(next_task['guild_id'])
 
         if guild:
-            mute_role = await self.bot.db.fetchval(
-                'SELECT muted_id FROM prefixes WHERE guild_id = $1', next_task['guild_id']
-            )
+            mute_role = await self.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', next_task['guild_id'])
             if mute_role:
                 role = guild.get_role(int(mute_role))
                 if isinstance(role, discord.Role):
@@ -416,7 +414,7 @@ class MuteCommands(ModerationBase):
         """
         if not channel.permissions_for(channel.guild.me).manage_channels:
             return
-        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM prefixes WHERE guild_id = $1', channel.guild.id)
+        mute_role = await self.bot.db.fetchval('SELECT muted_id FROM guilds WHERE guild_id = $1', channel.guild.id)
         if not mute_role:
             return
         role = channel.guild.get_role(int(mute_role))

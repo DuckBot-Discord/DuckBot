@@ -53,13 +53,13 @@ class ModLogs(LoggingBase):
         """
         Checks if a guild is logged
         """
-        return await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", guild.id) is not None
+        return await self.bot.db.fetchval("SELECT modlog FROM guilds WHERE guild_id = $1", guild.id) is not None
 
     async def get_modlog(self, guild: discord.Guild) -> Optional[discord.TextChannel]:
         """
         Gets the modlog channel for a guild
         """
-        ch_id = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", guild.id)
+        ch_id = await self.bot.db.fetchval("SELECT modlog FROM guilds WHERE guild_id = $1", guild.id)
         if ch_id is None:
             return None
         return guild.get_channel(ch_id)  # type: ignore
@@ -235,7 +235,7 @@ class ModLogs(LoggingBase):
 
         if before.roles != after.roles:
             special_roles: List[int] = await self.bot.db.fetchval(
-                "SELECT special_roles FROM prefixes WHERE guild_id = $1", before.guild.id
+                "SELECT special_roles FROM guilds WHERE guild_id = $1", before.guild.id
             )
 
             if special_roles:

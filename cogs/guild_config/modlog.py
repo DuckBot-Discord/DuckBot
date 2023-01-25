@@ -16,7 +16,7 @@ class ModLogs(ConfigBase):
     async def modlogs(self, ctx: CustomContext, channel: discord.TextChannel = None):  # type: ignore
         """Enables mod-logs"""
         if channel:
-            confirm = bool(await ctx.bot.db.fetchval('SELECT modlog FROM prefixes WHERE guild_id = $1', ctx.guild.id))
+            confirm = bool(await ctx.bot.db.fetchval('SELECT modlog FROM guilds WHERE guild_id = $1', ctx.guild.id))
             if confirm:
                 r = await ctx.confirm(
                     f'Mod-logs are already enabled in {channel.mention}. Do you want to overwrite it?\n'
@@ -26,14 +26,13 @@ class ModLogs(ConfigBase):
                     return
             await self.bot.db.execute(f"DROP TABLE IF EXISTS modlogs.modlogs_{ctx.guild.id};")
             await self.bot.db.execute(
-                "INSERT INTO prefixes (guild_id, modlog) VALUES ($1, $2) "
-                "ON CONFLICT (guild_id) DO UPDATE SET modlog = $2;",
+                "INSERT INTO guilds (guild_id, modlog) VALUES ($1, $2) " "ON CONFLICT (guild_id) DO UPDATE SET modlog = $2;",
                 ctx.guild.id,
                 channel.id,
             )
             await ctx.send(f'✅ | **ModLogs** will now be delivered in #{channel.mention}')
         else:
-            modlog: int = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id)  # type: ignore
+            modlog: int = await self.bot.db.fetchval("SELECT modlog FROM guilds WHERE guild_id = $1", ctx.guild.id)  # type: ignore
             if modlog:
                 await ctx.send(f"ℹ | **ModLogs** are currently enabled in #{self.bot.get_channel(modlog) or modlog}")
             else:
@@ -43,11 +42,11 @@ class ModLogs(ConfigBase):
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def modlogs_disable(self, ctx: CustomContext):
-        modlog = await self.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+        modlog = await self.bot.db.fetchval("SELECT modlog FROM guilds WHERE guild_id = $1", ctx.guild.id)
         if not modlog:
             await ctx.send('ℹ | **ModLogs** are already disabled')
         else:
-            await self.bot.db.execute("UPDATE prefixes SET modlog = null WHERE guild_id = $1", ctx.guild.id)
+            await self.bot.db.execute("UPDATE guilds SET modlog = null WHERE guild_id = $1", ctx.guild.id)
             await self.bot.db.execute("DROP TABLE IF EXISTS modlogs.modlogs_{}".format(ctx.guild.id))
             await ctx.send('✅ | **ModLogs** have been disabled')
 
@@ -120,14 +119,14 @@ class ModLogs(ConfigBase):
     @modlogs.command(name='addrole')
     async def addrole(self, ctx: CustomContext, role: discord.Role):
         """Adds a role to the mod-log entry"""
-        if not await ctx.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id):
+        if not await ctx.bot.db.fetchval("SELECT modlog FROM guilds WHERE guild_id = $1", ctx.guild.id):
             raise commands.BadArgument('This guild does not have a mod-log enabled!')
         await ctx.bot.db.execute(
             """
-                INSERT INTO prefixes (guild_id, special_roles) VALUES ($1::BIGINT, $3::BIGINT[])
+                INSERT INTO guilds (guild_id, special_roles) VALUES ($1::BIGINT, $3::BIGINT[])
                 ON CONFLICT (guild_id) DO UPDATE SET special_roles = ARRAY( 
                 SELECT DISTINCT * FROM UNNEST( ARRAY_APPEND(
-                prefixes.special_roles::BIGINT[], $2::BIGINT)))
+                guilds.special_roles::BIGINT[], $2::BIGINT)))
             """,
             ctx.guild.id,
             role.id,
@@ -139,10 +138,10 @@ class ModLogs(ConfigBase):
     @modlogs.command(name='removerole')
     async def removerole(self, ctx: CustomContext, role: discord.Role):
         """Removes a role from the mod-log entry"""
-        if not await ctx.bot.db.fetchval("SELECT modlog FROM prefixes WHERE guild_id = $1", ctx.guild.id):
+        if not await ctx.bot.db.fetchval("SELECT modlog FROM guilds WHERE guild_id = $1", ctx.guild.id):
             raise commands.BadArgument('This guild does not have a mod-log enabled!')
         await ctx.bot.db.fetchrow(
-            "UPDATE prefixes SET special_roles = ARRAY_REMOVE(special_roles, $1) WHERE guild_id = $2 RETURNING *",
+            "UPDATE guilds SET special_roles = ARRAY_REMOVE(special_roles, $1) WHERE guild_id = $2 RETURNING *",
             role.id,
             ctx.guild.id,
         )

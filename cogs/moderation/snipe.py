@@ -11,7 +11,7 @@ from helpers.time_inputs import human_timedelta
 
 def require_snipe(should_be: bool = True):
     async def predicate(ctx: CustomContext) -> bool:
-        snipe = await ctx.bot.db.fetchval('SELECT snipe_enabled FROM prefixes WHERE guild_id = $1', ctx.guild.id)
+        snipe = await ctx.bot.db.fetchval('SELECT snipe_enabled FROM guilds WHERE guild_id = $1', ctx.guild.id)
         if bool(snipe) is should_be:
             return True
         else:
@@ -89,7 +89,7 @@ class Snipe(ModerationBase):
     @snipe.command(name='enable')
     async def snipe_enable(self, ctx):
         await self.bot.db.execute(
-            'INSERT INTO prefixes (guild_id, snipe_enabled) VALUES ($1, TRUE) ON CONFLICT (guild_id) DO UPDATE SET snipe_enabled = TRUE',
+            'INSERT INTO guilds (guild_id, snipe_enabled) VALUES ($1, TRUE) ON CONFLICT (guild_id) DO UPDATE SET snipe_enabled = TRUE',
             ctx.guild.id,
         )
         await ctx.send('✅ **snipe** has been enabled!')
@@ -98,7 +98,7 @@ class Snipe(ModerationBase):
     @commands.check_any(*snipe_checks)
     @snipe.command(name='disable')
     async def snipe_disable(self, ctx):
-        await self.bot.db.execute("UPDATE prefixes SET snipe_enabled = FALSE WHERE guild_id = $1", ctx.guild.id)
+        await self.bot.db.execute("UPDATE guilds SET snipe_enabled = FALSE WHERE guild_id = $1", ctx.guild.id)
         await ctx.send('❌ **snipe** has been disabled!')
         await self.snipe_guild_remove(ctx.guild)
 
@@ -106,7 +106,7 @@ class Snipe(ModerationBase):
     async def snipe_hook(self, message: discord.Message):
         if not message.guild:
             return
-        if await self.bot.db.fetchval('SELECT snipe_enabled FROM prefixes WHERE guild_id = $1', message.guild.id):
+        if await self.bot.db.fetchval('SELECT snipe_enabled FROM guilds WHERE guild_id = $1', message.guild.id):
             self.bot.snipes[message.guild.id][message.channel.id].append(SimpleMessage(message))
 
     @commands.Cog.listener('on_guild_channel_delete')

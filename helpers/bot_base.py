@@ -124,7 +124,6 @@ class BaseDuck(commands.AutoShardedBot):
             password=get_or_fail("ASYNC_PRAW_PA"),
         )
 
-
         # noinspection PyProtectedMember
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()
 
@@ -290,7 +289,7 @@ class BaseDuck(commands.AutoShardedBot):
         for value in values:
             self.blacklist[value["user_id"]] = value["is_blacklisted"] or False
 
-        values = await self.db.fetch("SELECT guild_id, welcome_channel FROM prefixes")
+        values = await self.db.fetch("SELECT guild_id, welcome_channel FROM guilds")
         for value in values:
             self.welcome_channels[value["guild_id"]] = value["welcome_channel"] or None
 
