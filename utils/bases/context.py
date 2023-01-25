@@ -145,7 +145,6 @@ class DuckContext(commands.Context, Generic[BotT]):
         if kwargs.get('embed') and kwargs.get('embeds'):
             raise TypeError('Cannot mix embed and embeds keyword arguments.')
 
-
         embeds = kwargs.pop('embeds', []) or ([kwargs.pop('embed')] if kwargs.get('embed', None) else [])
         if embeds:
             for embed in embeds:

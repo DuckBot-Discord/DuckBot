@@ -1,12 +1,6 @@
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import logging
-import math
-from typing import (
-    Optional,
-)
 
 import discord
 from discord.ext import commands

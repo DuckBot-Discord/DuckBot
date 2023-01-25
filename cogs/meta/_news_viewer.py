@@ -215,7 +215,7 @@ class NewsViewer(discord.ui.View):
         previous_page_num = self.news.max_pages - self.news.news.index(self.news.previous)
         self.next.disabled = previous_page_num == 1
 
-        self.current.label = self.news.max_pages - self.news.current_index
+        self.current.label = self.news.max_pages - self.news.current_index  # type: ignore
 
         next_page_num = self.news.max_pages - self.news.news.index(self.news.next)
         self.previous.disabled = next_page_num == self.news.max_pages

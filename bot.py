@@ -181,10 +181,10 @@ class DbContextManager(Generic[DBT]):
         return await self.__aexit__(None, None, None)
 
     async def __aenter__(self) -> Connection:
-        self._conn = conn = await self._pool.acquire(timeout=self.timeout)
+        self._conn = conn = await self._pool.acquire(timeout=self.timeout)  # type: ignore
         self._tr = conn.transaction()
         await self._tr.start()
-        return conn
+        return conn  # type: ignore
 
     async def __aexit__(self, exc_type, exc, tb):
         if exc and self._tr:
@@ -222,6 +222,7 @@ class DuckHelper(TimerManager):
     @classmethod
     def get_logger(cls):
         return logging.getLogger(f"{__name__}.{cls.__name__}")
+
 
 class DuckBot(commands.AutoShardedBot, DuckHelper):
     if TYPE_CHECKING:

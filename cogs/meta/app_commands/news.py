@@ -14,4 +14,4 @@ class ApplicationNews(DuckCog):
         if not news:
             return await interaction.response.send_message("No news has been posted yet.")
 
-        await NewsViewer.from_interaction(interaction, news=news)
+        await NewsViewer.from_interaction(interaction, news=news)  # type: ignore

@@ -24,7 +24,9 @@ ERROR_WH = _get_or_fail('ERROR_WEBHOOK_URL')
 
 
 async def run_bot() -> None:
-    async with aiohttp.ClientSession() as session, DuckBot.temporary_pool(uri=URI) as pool, DuckBot(session=session, pool=pool, error_wh=ERROR_WH) as duck:
+    async with aiohttp.ClientSession() as session, DuckBot.temporary_pool(uri=URI) as pool, DuckBot(
+        session=session, pool=pool, error_wh=ERROR_WH
+    ) as duck:
         await duck.start(TOKEN, reconnect=True, verbose=False)
 
 

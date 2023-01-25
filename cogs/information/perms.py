@@ -92,7 +92,9 @@ class PermsEmbed(discord.Embed):
 
 
 class SimpleOverwrite:
-    def __init__(self, entity: typing.Union[discord.Member, discord.Role], overwrite: discord.PermissionOverwrite, pos):
+    def __init__(
+        self, entity: typing.Union[discord.Member, discord.Role, discord.Object], overwrite: discord.PermissionOverwrite, pos
+    ):
         self.entity = entity
         self.overwrite = overwrite
         self.position = pos
@@ -107,7 +109,7 @@ class SimpleOverwrite:
 
     @property
     def color(self):
-        return self.entity.color
+        return getattr(self.entity, 'color', discord.Color.default())
 
     def __str__(self):
         return f"{self.entity}"
@@ -199,7 +201,7 @@ class GuildPermsViewer(discord.ui.View):
     async def from_overwrites(
         cls,
         ctx: DuckContext,
-        overwrites: typing.Dict[typing.Union[discord.Member, discord.Role], discord.PermissionOverwrite],
+        overwrites: typing.Dict[typing.Union[discord.Member, discord.Role, discord.Object], discord.PermissionOverwrite],
     ) -> None:
         """|coro|
 

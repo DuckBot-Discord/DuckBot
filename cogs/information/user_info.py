@@ -146,7 +146,7 @@ class UserInfoViewer(discord.ui.View):
         /,
         *,
         bot: DuckBot,
-        author: discord.User,
+        author: typing.Union[discord.Member, discord.User],
         color: discord.Colour | None = None,
     ):
         super().__init__()
@@ -156,17 +156,16 @@ class UserInfoViewer(discord.ui.View):
         self.color = color or bot.color
         self.message: typing.Optional[discord.Message] = None
         self.fetched: typing.Optional[discord.User | bool] = None
-        self._main_embed: typing.Optional[typing.List[discord.Embed]] = None
+        self._main_embed: typing.Optional[typing.List[BaseEmbed]] = None
         self._perms_embed: typing.Optional[typing.List[PermsEmbed]] = None
 
-    async def make_main_embed(self) -> typing.List[discord.Embed]:
+    async def make_main_embed(self) -> typing.List[BaseEmbed]:
         if self._main_embed is not None:
             return self._main_embed
 
         user = self.user
         embed = BaseEmbed(title='\N{SCROLL} User Info Main Page', color=self.color, user=user)
         is_member = isinstance(user, discord.Member)
-        is_avatar_animated = user.avatar.is_animated() if user.avatar else False or user.display_avatar.is_animated()
 
         if not user.bot and self.fetched is None:
             try:
@@ -320,7 +319,7 @@ class UserInfoViewer(discord.ui.View):
 
 class UserInfo(DuckCog):
     @command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
-    async def user_info(self, ctx: DuckContext, *, user: typing.Union[discord.Member, discord.User] = None):
+    async def user_info(self, ctx: DuckContext, *, user: typing.Union[discord.Member, discord.User] = None):  # type: ignore
         """|coro|
 
         Displays information about a user or member
