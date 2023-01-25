@@ -252,12 +252,14 @@ class Welcome(ConfigBase):
         await ctx.send(message.format(**to_format), allowed_mentions=discord.AllowedMentions.none())
 
     @commands.Cog.listener()
-    async def on_invite_update(self, member, invite):
+    async def on_invite_update(self, member: discord.Member, invite: discord.Invite):
         try:
             channel = await self.bot.get_welcome_channel(member)
         except errors.NoWelcomeChannel:
             return
-        message = await self.bot.db.fetchval("SELECT welcome_message FROM prefixes WHERE guild_id = $1", member.guild.id)
+        message: str = await self.bot.db.fetchval(
+            "SELECT welcome_message FROM prefixes WHERE guild_id = $1", member.guild.id
+        )
         message = message or default_message
 
         to_format = {
@@ -270,13 +272,11 @@ class Welcome(ConfigBase):
             'code': (str(invite.code) if invite else 'N/A'),
             'full-code': (f"discord.gg/{invite.code}" if invite else 'N/A'),
             'full-url': (str(invite) if invite else 'N/A'),
-            'inviter': str(
-                ((member.guild.get_member(invite.inviter.id).display_name) or invite.inviter.name)
-                if invite and invite.inviter
-                else 'N/A'
-            ),
+            'inviter': str(((invite.inviter.display_name) or invite.inviter.name) if invite and invite.inviter else 'N/A'),
             'full-inviter': str(invite.inviter if invite and invite.inviter else 'N/A'),
             'inviter-mention': str(invite.inviter.mention if invite and invite.inviter else 'N/A'),
         }
 
-        await channel.send(message.format(**to_format))
+        await channel.send(
+            message.format(**to_format), allowed_mentions=discord.AllowedMentions(users=True, roles=True, everyone=False)
+        )

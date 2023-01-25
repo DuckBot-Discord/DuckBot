@@ -62,7 +62,7 @@ class DuckBot(BaseDuck):
             raise errors.NoWelcomeChannel
 
         welcome_channel = member.guild.get_channel(channel) or (await member.guild.fetch_channel(channel))
-        if not welcome_channel:
+        if not isinstance(welcome_channel, discord.TextChannel):
             self.welcome_channels[member.guild.id] = None
             raise errors.NoWelcomeChannel
         return welcome_channel
