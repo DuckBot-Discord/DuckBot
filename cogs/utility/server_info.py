@@ -492,7 +492,7 @@ class ServerInfo(UtilityBase):
     async def hoisters(self, ctx: CustomContext):
         """Shows a sorted list of members that have a nicknname"""
         members = sorted([m for m in ctx.guild.members if m.nick], key=lambda mem: mem.display_name)
-        source = paginator.SimplePageSource(
+        source = paginator.NicksPageSource(
             [f"`{m.id}` <:separator:902081402831523850> {discord.utils.escape_markdown(m.nick)}" for m in members],
             per_page=10,
         )

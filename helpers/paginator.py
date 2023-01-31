@@ -356,7 +356,7 @@ class TextPageSource(menus.ListPageSource):
         return content
 
 
-class SimplePageSource(menus.ListPageSource):
+class NicksPageSource(menus.ListPageSource):
     def __init__(self, entries, *, per_page):
         super().__init__(entries, per_page=per_page)
         self.embed = discord.Embed(
@@ -374,6 +374,19 @@ class SimplePageSource(menus.ListPageSource):
         self.embed.description = '\n'.join(pages)
         return self.embed
 
+class SimplePageSource(menus.ListPageSource):
+    async def format_page(self, menu, entries):
+        pages = []
+        for index, entry in enumerate(entries, start=menu.current_page * self.per_page):
+            pages.append(f'{index + 1}. {entry}')
+
+        maximum = self.get_max_pages()
+        if maximum > 1:
+            footer = f'Page {menu.current_page + 1}/{maximum} ({len(self.entries)} entries)'
+            menu.embed.set_footer(text=footer)
+
+        menu.embed.description = '\n'.join(pages)
+        return menu.embed
 
 class EnumeratedPageSource(menus.ListPageSource):
     def __init__(self, entries, *, per_page, embed_title: str = None):
@@ -757,12 +770,3 @@ class QueueMenu(menus.ListPageSource):
         embed.description = '\n'.join(queue)
 
         return embed
-
-class SimplePages(ViewPaginator):
-    """A simple pagination session reminiscent of the old Pages interface.
-    Basically an embed with some normal formatting.
-    """
-
-    def __init__(self, entries, *, ctx: CustomContext, per_page: int = 12):
-        super().__init__(SimplePageSource(entries, per_page=per_page), ctx=ctx)
-        self.embed = discord.Embed(colour=discord.Colour.blurple())
