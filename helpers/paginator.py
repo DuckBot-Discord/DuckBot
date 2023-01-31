@@ -313,7 +313,7 @@ class ViewPaginator(discord.ui.View):
     async def stop_pages(self, interaction: discord.Interaction, button: discord.ui.Button):
         """stops the pagination session."""
         await interaction.response.defer()
-        await interaction.delete_original_message()
+        await interaction.delete_original_response()
         self.stop()
 
 
@@ -700,7 +700,7 @@ class StopButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await interaction.delete_original_message()
+        await interaction.delete_original_response()
         self.view.stop()
 
 
@@ -755,3 +755,12 @@ class QueueMenu(menus.ListPageSource):
         embed.description = '\n'.join(queue)
 
         return embed
+
+class SimplePages(ViewPaginator):
+    """A simple pagination session reminiscent of the old Pages interface.
+    Basically an embed with some normal formatting.
+    """
+
+    def __init__(self, entries, *, ctx: CustomContext, per_page: int = 12):
+        super().__init__(SimplePageSource(entries, per_page=per_page), ctx=ctx)
+        self.embed = discord.Embed(colour=discord.Colour.blurple())

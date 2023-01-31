@@ -34,6 +34,15 @@ target_type = Union[
 
 
 class DuckBot(BaseDuck):
+    async def get_or_fetch_member(self, guild: discord.Guild, id: int) -> Union[discord.Member, None]:
+        member = guild.get_member(id)
+        if not member:
+            try:
+                return await guild.fetch_member(id)
+            except discord.HTTPException:
+                return
+        return member
+
     async def create_gist(self, *, filename: str, description: str, content: str, public: bool = False):
         headers = {
             "Accept": "application/vnd.github.v3+json",
