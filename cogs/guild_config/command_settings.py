@@ -10,6 +10,7 @@ from __future__ import annotations
 from discord.ext import commands, menus
 from helpers.paginator import ViewPaginator, SimplePages
 from helpers import cache
+from ._base import ConfigBase
 
 from collections import defaultdict
 from typing import TYPE_CHECKING, AsyncIterator, Iterable, Optional, Union
@@ -173,15 +174,12 @@ class ResolvedCommandPermissions:
         return self._is_command_blocked(ctx.command.qualified_name, ctx.channel.id)  # type: ignore
 
 
-class Config(commands.Cog):
+class CommandConfigs(ConfigBase):
     """Handles the bot's configuration system.
 
     This is how you disable or enable certain commands
     for your server or block certain channels or members.
     """
-
-    def __init__(self, bot: DuckBot):
-        self.bot: DuckBot = bot
 
     @property
     def display_emoji(self) -> discord.PartialEmoji:
@@ -530,7 +528,3 @@ class Config(commands.Cog):
         disabled = list(resolved.get_blocked_commands(channel_id))
         pages = SimplePages(disabled, ctx=ctx, per_page=15)
         await pages.start(content=f'In <#{channel_id}> the following commands are disabled')
-
-
-async def setup(bot):
-    await bot.add_cog(Config(bot))

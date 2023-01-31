@@ -6,7 +6,7 @@ from .prefixes import Prefixes
 from .suggestions import Suggestions
 from .welcome import Welcome
 from .modlog import ModLogs
-
+from .command_settings import CommandConfigs
 
 async def setup(bot):
     await bot.add_cog(GuildConfig(bot))

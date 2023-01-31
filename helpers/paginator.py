@@ -242,7 +242,7 @@ class ViewPaginator(discord.ui.View):
                     child.disabled = True
                 await self.message.edit(view=self)
 
-    async def start(self, *, start_message: discord.Message = None) -> None:
+    async def start(self, *, start_message: discord.Message = None, content: Optional[str] = None) -> None:
         if self.check_embeds and not self.ctx.channel.permissions_for(self.ctx.me).embed_links:
             await self.ctx.send('Bot does not have embed links permission in this channel.')
             return
@@ -250,6 +250,8 @@ class ViewPaginator(discord.ui.View):
         await self.source._prepare_once()
         page = await self.source.get_page(0)
         kwargs = await self._get_kwargs_from_page(page)
+        if content:
+            kwargs['content'] = content
         self._update_labels(0)
         if not start_message:
             self.message = await self.ctx.send(**kwargs, view=self)
