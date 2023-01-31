@@ -21,6 +21,7 @@ class GuildConfig(
     Suggestions,
     Welcome,
     ModLogs,
+    CommandConfigs,
     name="Server Settings",
 ):
     select_emoji = "⚙"
