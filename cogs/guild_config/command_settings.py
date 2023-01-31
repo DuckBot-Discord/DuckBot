@@ -11,6 +11,7 @@ from discord.ext import commands, menus
 from helpers.paginator import ViewPaginator, SimplePages
 from helpers import cache
 from ._base import ConfigBase
+import errors
 
 from collections import defaultdict
 from typing import TYPE_CHECKING, AsyncIterator, Iterable, Optional, Union
@@ -239,7 +240,9 @@ class CommandConfigs(ConfigBase):
             ctx.guild.id, ctx.author.id, channel=ctx.channel, check_bypass=False
         )
 
-        return not is_plonked
+        if not is_plonked:
+            return True
+        raise errors.NoHideout # A silently-ignored error.
 
     @cache.cache()
     async def get_command_permissions(
@@ -260,7 +263,9 @@ class CommandConfigs(ConfigBase):
             return True
 
         resolved = await self.get_command_permissions(ctx.guild.id)
-        return not resolved.is_blocked(ctx)
+        if not resolved.is_blocked(ctx):
+            return True
+        raise errors.NoHideout  # A silently-ignored error. 
 
     async def _bulk_ignore_entries(self, ctx: CustomContext, entries: Iterable[discord.abc.Snowflake]) -> None:
         async with ctx.db.acquire() as con:
