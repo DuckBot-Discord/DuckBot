@@ -254,7 +254,7 @@ class BaseDuck(commands.AutoShardedBot):
             except (discord.Forbidden, discord.HTTPException):
 
                 await error_channel.send(
-                    f"```yaml\nAn error occurred in an {event_method} event```y",
+                    f"```yaml\nAn error occurred in an {event_method} event```",
                     file=discord.File(
                         io.BytesIO(traceback_string.encode()),
                         filename="traceback.py",
