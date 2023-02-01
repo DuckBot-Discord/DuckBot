@@ -41,6 +41,8 @@ class PrivateEvents(EventsBase):
     @commands.Cog.listener('on_guild_remove')
     async def server_leave_message(self, guild: discord.Guild):
         channel = self.bot.get_channel(904797860841812050)
+        if channel is None: # smh leo
+            return
         embed = discord.Embed(
             title='Left Server',
             colour=discord.Colour.red(),
