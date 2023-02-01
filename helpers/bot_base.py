@@ -246,7 +246,7 @@ class BaseDuck(commands.AutoShardedBot):
 
         error_channel: discord.TextChannel = self.get_channel(880181130408636456)  # type: ignore # known ID
 
-        to_send = f"```yaml\nAn error occurred in an {event_method} event``````py" f"\n{traceback_string}\n```"
+        to_send = f"```yaml\nAn error occurred in an {event_method} event``` ```py" f"\n{traceback_string}\n```"
         if len(to_send) < 2000:
             try:
                 await error_channel.send(to_send)
@@ -254,7 +254,7 @@ class BaseDuck(commands.AutoShardedBot):
             except (discord.Forbidden, discord.HTTPException):
 
                 await error_channel.send(
-                    f"```yaml\nAn error occurred in an {event_method} event``````py",
+                    f"```yaml\nAn error occurred in an {event_method} event```y",
                     file=discord.File(
                         io.BytesIO(traceback_string.encode()),
                         filename="traceback.py",
@@ -262,7 +262,7 @@ class BaseDuck(commands.AutoShardedBot):
                 )
         else:
             await error_channel.send(
-                f"```yaml\nAn error occurred in an {event_method} event``````py",
+                f"```yaml\nAn error occurred in an {event_method} event```",
                 file=discord.File(
                     io.BytesIO(traceback_string.encode()),
                     filename="traceback.py",
