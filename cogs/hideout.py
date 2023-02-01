@@ -197,11 +197,11 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
             "pomice": "https://pomice.readthedocs.io/en/latest/",
         }
         embed_titles = {
-            "stable": "Documentation for `discord.py v1.7.3`",
-            "latest-jp": "Documentation for `discord.py v2.0.0a` in Japanese",
+            "stable": "Documentation for `discord.py v2.1.0`",
+            "latest-jp": "Documentation for `discord.py v2.1.0a` in Japanese",
             "python": "Documentation for `python`",
             "python-jp": "Documentation for `python` in Japanese",
-            "latest": "Documentation for `discord.py v2.0.0a`",
+            "latest": "Documentation for `discord.py v2.2.0a`",
             "bing": "Documentation for `asyncbing`",
             "twitchio": "Documentation for `twitchio`",
             "pomice": "Documentation for `pomice`",
