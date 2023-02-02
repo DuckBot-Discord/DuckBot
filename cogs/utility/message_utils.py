@@ -35,7 +35,7 @@ class MessageUtils(UtilityBase):
         await menu.start(ctx)
 
     @commands.command(aliases=['s', 'send'], help="Speak as if you were me. # URLs/Invites not allowed!")
-    @commands.check_any(commands.bot_has_permissions(send_messages=True), commands.is_owner())
+    @commands.check_any(commands.bot_has_guild_permissions(send_messages=True), commands.is_owner())
     async def say(self, ctx: CustomContext, *, msg: str) -> Optional[discord.Message]:
 
         results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+", msg)  # HTTP/HTTPS URL regex
