@@ -4,7 +4,6 @@ import typing
 
 import discord
 from discord.ext import commands
-from numpy import place
 
 import errors
 from bot import DuckBot, CustomContext

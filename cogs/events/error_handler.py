@@ -8,7 +8,6 @@ import traceback
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
-from numpy import isin
 
 import errors
 from bot import CustomContext
