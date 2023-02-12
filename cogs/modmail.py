@@ -158,7 +158,7 @@ class ModMail(commands.Cog):
             manager = await self.get_manager()
             webhook = await manager.get_webhook(thread.id)
             if self.NO_CHAT in thread._applied_tags:
-                await message.author.send(
+                return await message.author.send(
                     embed=discord.Embed(description='You are blocked from DMing DuckBot.', color=discord.Color.red())
                 )
             await webhook.send(message=message, thread=thread)
