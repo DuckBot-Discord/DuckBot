@@ -215,7 +215,10 @@ class ConfigBase(commands.Cog):
     async def on_guild_available(self, guild: discord.Guild) -> None:
         # reload all invites in case they changed during
         # the time that the guilds were unavailable
-        self.bot.invites[guild.id] = await self.fetch_invites(guild) or {}
+        try:
+            self.bot.invites[guild.id] = await self.fetch_invites(guild) or {}
+        except asyncio.TimeoutError:
+            self.bot.logger.error('Failed to cache invites for guild %s (on_guild_available)', guild.name)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
