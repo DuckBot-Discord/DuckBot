@@ -217,16 +217,16 @@ class Management(commands.Cog, name="Bot Management"):
             )
             # noinspection PyBroadException
             try:
-                method(extension)
+                await method(extension)
                 pages.add_line(f"{icon} `{extension}`")
             except Exception:
                 first_reload_failed_extensions.append(extension)
 
         error_keys = {
-            discord.ext.commands.ExtensionNotFound: "Not found",
-            discord.ext.commands.NoEntryPointError: "No setup function",
-            discord.ext.commands.ExtensionNotLoaded: "Not loaded",
-            discord.ext.commands.ExtensionAlreadyLoaded: "Already loaded",
+            commands.ExtensionNotFound: "Not found",
+            commands.NoEntryPointError: "No setup function",
+            commands.ExtensionNotLoaded: "Not loaded",
+            commands.ExtensionAlreadyLoaded: "Already loaded",
         }
 
         for extension in first_reload_failed_extensions:
@@ -239,16 +239,14 @@ class Management(commands.Cog, name="Bot Management"):
                 else (self.bot.load_extension, "\N{INBOX TRAY}")
             )
             try:
-                method(extension)
+                await method(extension)
                 pages.add_line(f"{icon} `{extension}`")
 
             except tuple(error_keys.keys()) as exc:
                 pages.add_line(f"{icon}❌ `{extension}` - {error_keys[type(exc)]}")
 
-            except discord.ext.commands.ExtensionFailed as e:
-                traceback_string = (
-                    f"```py" f"\n{''.join(traceback.format_exception(etype=None, value=e, tb=e.__traceback__))}" f"\n```"
-                )
+            except commands.ExtensionFailed as e:
+                traceback_string = f"```py" f"\n{''.join(traceback.format_exception(e))}" f"\n```"
                 pages.add_line(f"{icon}❌ `{extension}` - Execution error")
                 to_dm = f"❌ {extension} - Execution error - Traceback:"
 
@@ -263,24 +261,23 @@ class Management(commands.Cog, name="Bot Management"):
     @commands.command(name="mreload", aliases=["mload", "mrl", "rlm"])
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def reload_module(self, ctx, *extensions: jishaku.modules.ExtensionConverter):
+    async def reload_module(self, ctx, *modules: jishaku.modules.ExtensionConverter):
         """
         Reloads one or multiple extensions
         """
         pages = WrappedPaginator(prefix="", suffix="")
 
-        if not extensions:
+        if not modules:
             extensions = [
-                await jishaku.modules.ExtensionConverter.convert(
-                    self, ctx, os.getenv("COGS_PATH").replace("cogs", "helpers") + ".*"
+                await jishaku.modules.ExtensionConverter().convert(
+                    ctx, str(os.getenv("COGS_PATH", 'cogs')).replace("cogs", "helpers") + ".*"
                 )
             ]
+        else:
+            extensions: list[list[str]] = modules  # type: ignore
 
         for extension in itertools.chain(*extensions):
-            method, icon = (
-                None,
-                "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}",
-            )
+            icon = "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}"
 
             try:
                 module = importlib.import_module(extension)
@@ -296,6 +293,7 @@ class Management(commands.Cog, name="Bot Management"):
             else:
                 pages.add_line(f"{icon} `{extension}`")
 
+        pages.add_line('Remember to reload extensions that use this module!')
         for page in pages.pages:
             await ctx.send(page)
 
