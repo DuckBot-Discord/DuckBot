@@ -193,7 +193,6 @@ class CustomContext(commands.Context):
         maybe_attachment: bool = False,
         **kwargs,
     ) -> discord.Message:
-
         if gist is True and maybe_attachment is True:
             raise ValueError("You can't use both gist and attachment")
 
@@ -297,7 +296,6 @@ class CustomContext(commands.Context):
                     c.style = discord.ButtonStyle.gray
         view.stop()
         if view.value is None:
-
             try:
                 if return_message is False:
                     (await message.edit(view=view)) if delete_after_timeout is False else (await message.delete())
@@ -306,7 +304,6 @@ class CustomContext(commands.Context):
             return (None, message) if delete_after_timeout is False and return_message is True else None
 
         elif view.value:
-
             try:
                 if return_message is False:
                     (await message.edit(view=view)) if delete_after_confirm is False else (await message.delete())
@@ -315,7 +312,6 @@ class CustomContext(commands.Context):
             return (True, message) if delete_after_confirm is False and return_message is True else True
 
         else:
-
             try:
                 if return_message is False:
                     (await message.edit(view=view)) if delete_after_cancel is False else (await message.delete())
@@ -397,7 +393,7 @@ class CustomContext(commands.Context):
         message,
         *,
         timeout: int = 60,
-        delete_after: bool = False,
+        delete_after: bool | None = False,
         return_message: bool = False,
     ):
         """Prompts the user for text input."""
@@ -424,15 +420,16 @@ class CustomContext(commands.Context):
             else:
                 return message
         finally:
-            to_do = []
-            if isinstance(usermessage, discord.Message):
-                if delete_after:
-                    to_do.append(bot_message.delete())
-                    if message and self.channel.permissions_for(self.me).manage_messages:
-                        to_do.append(usermessage.delete())
+            if delete_after is None:
+                to_do = []
+                if isinstance(usermessage, discord.Message):
+                    if delete_after:
+                        to_do.append(bot_message.delete())
+                        if message and self.channel.permissions_for(self.me).manage_messages:
+                            to_do.append(usermessage.delete())
+                        else:
+                            to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
                     else:
                         to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
-                else:
-                    to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
 
-                [self.bot.loop.create_task(to_do_item) for to_do_item in to_do]
+                    [self.bot.loop.create_task(to_do_item) for to_do_item in to_do]
