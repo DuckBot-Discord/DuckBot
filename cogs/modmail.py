@@ -167,7 +167,7 @@ class ModMail(commands.Cog):
 
     async def process_reply(self, message: ThreadMessage):
         if self.NO_CHAT in message.channel._applied_tags:
-            await message.delete()
+            await message.add_reaction('\N{WARNING SIGN}')
             await message.channel.send('❌ This thread has chatting disabled through a tag.', delete_after=5)
             return
         user_id: Optional[int] = await self.bot.db.fetchval(
