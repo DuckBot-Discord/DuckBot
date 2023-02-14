@@ -9,7 +9,7 @@ from utils import (
     DuckContext,
     DuckCog,
     HandleHTTPException,
-    TargetVerifier,
+    VerifiedUser,
     UserFriendlyTime,
     safe_reason,
     mdr,
@@ -29,7 +29,7 @@ class TemporaryCommands(DuckCog):
     async def tempban(
         self,
         ctx: DuckContext,
-        member: TargetVerifier(discord.Member, discord.User, fail_if_not_upgrade=False),  # type: ignore
+        member: discord.Member | discord.User = VerifiedUser,
         *,
         when: UserFriendlyTime(commands.clean_content, default='...'),  # type: ignore
     ) -> None:

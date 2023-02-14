@@ -5,13 +5,14 @@ import math
 import asyncpg
 import discord
 from typing import List, Optional, Union
+from discord.ext import commands
 
 
 from utils import DuckCog, DuckContext, ShortTime, mdr, format_date, human_timedelta, group
 
 
 class BlackListManagement(DuckCog):
-    async def format_entry(self, entry: asyncpg.Record) -> Optional[str]:
+    async def format_entry(self, entry: asyncpg.Record) -> str:
         """Formats an entry from the blacklist.
 
         Parameters
@@ -48,6 +49,8 @@ class BlackListManagement(DuckCog):
 
             chan = f"{meth(entity_id) or 'Unknown Channel'} ({entity_id})"
             return f"[{time} | CHANNEL] {chan}" + (f" in guild: {guild}" if guild else '')
+        else:
+            return "..."
 
     @group(name='blacklist', aliases=['bl'], invoke_without_command=True)
     async def blacklist(
@@ -89,7 +92,7 @@ class BlackListManagement(DuckCog):
         self,
         ctx: DuckContext,
         entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel],
-        guild: discord.Guild = None,  # type: ignore
+        guild: discord.Guild = commands.param(default=None),
     ) -> None:
         """|coro|
 
@@ -171,13 +174,13 @@ class BlackListManagement(DuckCog):
         )
         count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM blacklist")
 
-        rows: List[Optional[str]] = [await self.format_entry(row) for row in result]
+        rows: List[str] = [await self.format_entry(row) for row in result]
 
         if not rows:
             await ctx.send(ctx.tick(False, 'no entries'))
             return
 
-        formatted = '```\n' + '\n'.join(rows) + '\n```'  # type: ignore
+        formatted = '```\n' + '\n'.join(rows) + '\n```'
         pages = math.ceil(count / 10)
 
         message = (

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import discord
 from discord import (
     Interaction,
@@ -15,7 +17,6 @@ from . import errors
 from ..bases import errors as base_errors
 
 if TYPE_CHECKING:
-
     from bot import DuckBot
 
 
@@ -87,7 +88,7 @@ async def can_execute_action(
 
 
 async def has_permissions(
-    interaction: discord.Interaction,
+    interaction: discord.Interaction[DuckBot],
     **perms: bool,
 ) -> None:
     """|coro|
@@ -95,12 +96,12 @@ async def has_permissions(
     Checks permissions of the invoking interaction user.
 
     """
-    if interaction.channel:
+    if interaction.channel and isinstance(interaction.user, discord.Member):
         permissions = interaction.channel.permissions_for(interaction.user)
     elif isinstance(interaction.user, discord.Member):
         permissions = interaction.user.guild_permissions
     else:
-        permissions = discord.Permissions.none()
+        permissions = discord.Permissions.general()
 
     missing_p = {perm: value for perm, value in perms.items() if getattr(permissions, perm) != value}
 
@@ -111,7 +112,7 @@ async def has_permissions(
 
 
 async def bot_has_permissions(
-    interaction: discord.Interaction,
+    interaction: discord.Interaction[DuckBot],
     **perms: bool,
 ) -> None:
     """|coro|

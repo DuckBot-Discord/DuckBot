@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
 import discord
 from discord.ext import commands
@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 
 __all__: Tuple[str, ...] = (
     'DuckContext',
+    'DuckGuildContext',
     'tick',
 )
 
-BotT = TypeVar('BotT', bound='DuckBot')
 
 VALID_EDIT_KWARGS: Dict[str, Any] = {
     'content': None,
@@ -60,7 +60,7 @@ class ConfirmationView(discord.ui.View):
         self.message: discord.Message | None = None
         self.ctx.bot.views.add(self)
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         return interaction.user == self.ctx.author
 
     async def on_timeout(self) -> None:
@@ -76,7 +76,7 @@ class ConfirmationView(discord.ui.View):
         super().stop()
 
     @discord.ui.button(label='Confirm', style=discord.ButtonStyle.primary)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def confirm(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
         assert interaction.message is not None
 
         self.value = True
@@ -84,7 +84,7 @@ class ConfirmationView(discord.ui.View):
         await interaction.message.delete()
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def cancel(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
         assert interaction.message is not None
 
         self.value = False
@@ -92,7 +92,7 @@ class ConfirmationView(discord.ui.View):
         await interaction.message.delete()
 
 
-class DuckContext(commands.Context, Generic[BotT]):
+class DuckContext(commands.Context['DuckBot']):
     """The subclassed Context to allow some extra functionality."""
 
     if TYPE_CHECKING:
@@ -229,6 +229,10 @@ class DuckContext(commands.Context, Generic[BotT]):
         elif self.interaction:
             return f'<utils.DuckContext bound to interaction {self.interaction}>'
         return super().__repr__()
+
+
+class DuckGuildContext(DuckContext):
+    author: discord.Member
 
 
 async def setup(bot: DuckBot) -> None:

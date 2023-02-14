@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from numpydoc.docscrape import NumpyDocString as process_doc, Parameter
 from typing import (
-    TYPE_CHECKING,
     Awaitable,
     Callable,
     Dict,
@@ -26,9 +25,6 @@ from discord.utils import MISSING
 from .autocomplete import AutoComplete
 from .context import DuckContext
 from utils.time import human_join
-
-if TYPE_CHECKING:
-    from bot import DuckBot
 
 T = TypeVar('T')
 P = ParamSpec('P')
@@ -101,7 +97,7 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
             if isinstance(value, list) and isinstance(value[0], Parameter):
                 fmt = []
                 for item in value:
-                    fmt.append('- `{0}`: {1}'.format(item.name, ' '.join(item.desc)))
+                    fmt.append('- `{0}`: {1}'.format(item.name, ' '.join(item.desc)))  # type: ignore
 
                 value = '\n'.join(fmt)
             elif isinstance(value, list):
@@ -182,11 +178,11 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
         .. code-block:: python3
 
             @commands.command()
-            async def foo(self, ctx: DuckContext[DuckBot], argument: str) -> None:
+            async def foo(self, ctx: DuckContext, argument: str) -> None:
                 return await ctx.send(f'You selected {argument!}')
 
             @foo.autocomplete('argument')
-            async def foo_autocomplete(ctx: DuckContext[DuckBot], value: str) -> Iterable[str]:
+            async def foo_autocomplete(ctx: DuckContext, value: str) -> Iterable[str]:
                 data: Tuple[str, ...] = await self.bot.get_some_data(ctx.guild.id)
                 return data
 
@@ -202,7 +198,7 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
 
         return decorator
 
-    async def invoke(self, ctx: DuckContext[DuckBot], /) -> None:
+    async def invoke(self, ctx: DuckContext, /) -> None:
         """|coro|
 
         An internal helper used to invoke the command under a given context. This should
@@ -269,7 +265,7 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
         ctx.invoked_subcommand = None
         ctx.subcommand_passed = None
         injected = hooked_wrapped_callback(self, ctx, self.callback)
-        await injected(*ctx.args, **ctx.kwargs)  # type: ignore
+        await injected(*ctx.args, **ctx.kwargs)
 
 
 # Due to autocomplete, we can't directly inherit from `commands.Group`
@@ -354,7 +350,7 @@ class DuckGroup(commands.GroupMixin[CogT], DuckCommand[CogT, P, T]):
         return wrapped
 
     @discord.utils.copy_doc(DuckCommand.invoke)
-    async def invoke(self, ctx: DuckContext[DuckBot], /) -> None:
+    async def invoke(self, ctx: DuckContext, /) -> None:
         ctx.invoked_subcommand = None
         ctx.subcommand_passed = None
         early_invoke = not self.invoke_without_command
@@ -372,7 +368,7 @@ class DuckGroup(commands.GroupMixin[CogT], DuckCommand[CogT, P, T]):
 
         if early_invoke:
             injected = hooked_wrapped_callback(self, ctx, self.callback)
-            await injected(*ctx.args, **ctx.kwargs)  # type: ignore
+            await injected(*ctx.args, **ctx.kwargs)
 
         ctx.invoked_parents.append(ctx.invoked_with)  # type: ignore
 
@@ -386,7 +382,7 @@ class DuckGroup(commands.GroupMixin[CogT], DuckCommand[CogT, P, T]):
             await super().invoke(ctx)
 
     @discord.utils.copy_doc(DuckCommand.reinvoke)
-    async def reinvoke(self, ctx: DuckContext[DuckBot], /, *, call_hooks: bool = False) -> None:
+    async def reinvoke(self, ctx: DuckContext, /, *, call_hooks: bool = False) -> None:
         ctx.invoked_subcommand = None
         early_invoke = not self.invoke_without_command
         if early_invoke:
@@ -407,7 +403,7 @@ class DuckGroup(commands.GroupMixin[CogT], DuckCommand[CogT, P, T]):
 
         if early_invoke:
             try:
-                await self.callback(*ctx.args, **ctx.kwargs)  # type: ignore
+                await self.callback(*ctx.args, **ctx.kwargs)
             except:
                 ctx.command_failed = True
                 raise

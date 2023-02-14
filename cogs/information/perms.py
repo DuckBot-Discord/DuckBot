@@ -10,6 +10,7 @@ from discord import Permissions, PermissionOverwrite, Member, Role
 from utils import DuckContext, DuckCog, DeleteButton, command
 from utils.types import constants
 from discord.utils import as_chunks
+from bot import DuckBot
 
 # These are just for making it look nicer,
 # I know it looks ugly, but I prefer it.
@@ -143,7 +144,7 @@ class GuildPermsViewer(discord.ui.View):
         return [discord.SelectOption(label=f"{r.position + 1}) {get_type(r).__name__} @{r}", value=str(r.id)) for r in roles]
 
     @discord.ui.select()
-    async def select_role(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def select_role(self, interaction: discord.Interaction[DuckBot], select: discord.ui.Select):
         role_id: int = int(select.values[0])
         role = discord.utils.get(self.chunks[self.current_page], id=role_id)
         if not role:
@@ -154,19 +155,19 @@ class GuildPermsViewer(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='<')
-    async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def previous_page(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         self.current_page = max(0, self.current_page - 1)
         self.update_components()
         await interaction.response.edit_message(view=self)
 
     @discord.ui.button(label='>')
-    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def next_page(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         self.current_page = min(self.max_pages, self.current_page + 1)
         self.update_components()
         await interaction.response.edit_message(view=self)
 
     @discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
-    async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def exit(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         self.stop()
         (await interaction.message.delete()) if interaction.message else None
         with contextlib.suppress(discord.HTTPException):
@@ -223,7 +224,7 @@ class GuildPermsViewer(discord.ui.View):
         await message.edit(content=None, view=new)
         new.ctx.bot.views.add(new)
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         return interaction.user == self.ctx.author
 
     async def on_timeout(self) -> None:

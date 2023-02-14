@@ -43,7 +43,7 @@ QUESTION_MARK = "\N{BLACK QUESTION MARK ORNAMENT}"
 HOME = "\N{HOUSE BUILDING}"
 NON_MARKDOWN_INFORMATION_SOURCE = "\N{INFORMATION SOURCE}"
 
-InteractionCheckCallback = Callable[[discord.ui.View, discord.Interaction], Awaitable[bool]]
+InteractionCheckCallback = Callable[[discord.ui.View, discord.Interaction[DuckBot]], Awaitable[bool]]
 
 log = logging.getLogger("Duckbot.utils.help")
 
@@ -89,7 +89,7 @@ def _find_bot(parentable: ParentType) -> DuckBot:
         if db := getattr(parentable, "bot", None):
             return db
 
-        parentable = parentable.parent  # type: ignore # Can not use isinstance for DuckBot so we have to ignore this
+        parentable = parentable.parent  # type: ignore
 
     raise DuckNotFound(f"Could not find DuckBot from base parentable {base}, {repr(base)}.")
 
@@ -130,10 +130,10 @@ def _find_author_from_parent(
     return author
 
 
-async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction) -> Optional[bool]:
+async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction[DuckBot]) -> Optional[bool]:
     """An internal helper used to check if the interaction is valid."""
     # Let's find the original author of the help command
-    author = _find_author_from_parent(view)  # type: ignore
+    author = _find_author_from_parent(view)
     if not author:
         raise ValueError("Could not find author from parentable.")
 
@@ -163,7 +163,7 @@ class Stop(discord.ui.Button):
             label="Stop",
         )
 
-    async def callback(self, interaction: discord.Interaction) -> None:
+    async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
         """|coro|
 
         When called, will respond to the interaction by editing the message
@@ -171,7 +171,7 @@ class Stop(discord.ui.Button):
 
         Parameters
         ----------
-        interaction: :class:`discord.Interaction`
+        interaction: :class:`discord.Interaction[DuckBot]`
             The interaction that was created by interacting with the button.
         """
         for child in self.parent.children:
@@ -208,19 +208,17 @@ class GoHome(discord.ui.Button):
 
     # noinspection PyProtectedMember
     async def _get_help_from_parent(self) -> HelpView:
-        main_parent: Optional[DuckHelp] = discord.utils.find(lambda p: isinstance(p, DuckHelp), _walk_through_parents(self.parent))  # type: ignore
+        main_parent: Optional[DuckHelp] = discord.utils.find(
+            lambda p: isinstance(p, DuckHelp), _walk_through_parents(self.parent)
+        )  # type: ignore
         if main_parent:
-            clean_mapping = await main_parent._filter_mapping(
-                {  # type: ignore # We're gonna pretend we're using TS today
-                    cog: cog.get_commands() for cog in self.bot.cogs.values()
-                }
-            )
+            clean_mapping = await main_parent._filter_mapping({cog: cog.get_commands() for cog in self.bot.cogs.values()})
         else:
             clean_mapping = {cog: None for cog in self.bot.cogs.values()}
 
         return HelpView(parent=self.parent, cogs=clean_mapping.keys(), author=_find_author_from_parent(self.parent))  # type: ignore
 
-    async def callback(self, interaction: discord.Interaction) -> None:
+    async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
         """|coro|
 
         When called, will respond to the interaction by finding the root
@@ -229,7 +227,7 @@ class GoHome(discord.ui.Button):
 
         Parameters
         ----------
-        interaction: :class:`discord.Interaction`
+        interaction: :class:`discord.Interaction[DuckBot]`
             The interaction that was created by interacting with the button.
         """
         # We need to find the base parent
@@ -264,14 +262,14 @@ class GoBack(discord.ui.Button):
         super().__init__(label="Go Back")
         self.parent: discord.ui.View = parent
 
-    async def callback(self, interaction: discord.Interaction) -> None:
+    async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
         """|coro|
 
         When called, will respond to the interaction by editing the message with the previous parent.
 
         Parameters
         ----------
-        interaction: :class:`discord.Interaction`
+        interaction: :class:`discord.Interaction[DuckBot]`
             The interaction that was created by interacting with the button.
         """
         return await interaction.response.edit_message(embed=self.parent.embed, view=self.parent)  # type: ignore
@@ -308,7 +306,7 @@ class CommandSelecter(discord.ui.Select):
             ],
         )
 
-    async def callback(self, interaction: discord.Interaction) -> None:
+    async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
         """|coro|
 
         When called, will respond to the interaction by editing th emessage with
@@ -316,7 +314,7 @@ class CommandSelecter(discord.ui.Select):
 
         Parameters
         ----------
-        interaction: :class:`discord.Interaction`
+        interaction: :class:`discord.Interaction[DuckBot]`
             The interaction that was created by interacting with the button.
         """
         selected = self.values
@@ -327,7 +325,7 @@ class CommandSelecter(discord.ui.Select):
         if isinstance(command, DuckGroup):
             view = HelpGroup(parent=self.parent, group=command)
         else:
-            view = HelpCommand(parent=self.parent, command=command)  # type: ignore
+            view = HelpCommand(parent=self.parent, command=command)
 
         return await interaction.response.edit_message(embed=view.embed, view=view)
 
@@ -369,13 +367,13 @@ class HelpGroup(discord.ui.View):
         self.bot: DuckBot = _find_bot(parent)
         self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
 
-        group_commands = list(group.commands)
+        group_commands: List[DuckCommand] = list(group.commands)  # type: ignore
         for command in group_commands:
             if isinstance(command, DuckGroup):
-                group_commands.extend(command.commands)
+                group_commands.extend(command.commands)  # type: ignore
 
-        for chunk in self.bot.chunker(group_commands, size=20):
-            self.add_item(CommandSelecter(parent=self, cmds=chunk))  # type: ignore
+        for chunk in discord.utils.as_chunks(group_commands, max_size=20):
+            self.add_item(CommandSelecter(parent=self, cmds=chunk))
 
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
@@ -487,8 +485,8 @@ class HelpCog(discord.ui.View):
         self.bot: DuckBot = _find_bot(parent)
         self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
 
-        for item in self.bot.chunker(cog.get_commands(), size=20):
-            self.add_item(CommandSelecter(parent=self, cmds=list(item)))  # type: ignore
+        for item in discord.utils.as_chunks(cog.get_commands(), max_size=20):
+            self.add_item(CommandSelecter(parent=self, cmds=list(item)))
 
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
@@ -547,14 +545,14 @@ class HelpSelect(discord.ui.Select):
             ],
         )
 
-    async def callback(self, interaction: discord.Interaction) -> None:
+    async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
         """|coro|
 
         When called, this will create a new view representing the selected cog.
 
         Parameters
         ----------
-        interaction: :class:`discord.Interaction`
+        interaction: :class:`discord.Interaction[DuckBot]`
             The interaction that was used to select this option.
         """
         selected = self.values
@@ -658,7 +656,7 @@ class DuckHelp(commands.HelpCommand):
     """
 
     if TYPE_CHECKING:
-        context: DuckContext[DuckBot]
+        context: DuckContext
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs, verify_checks=False)
@@ -693,7 +691,7 @@ class DuckHelp(commands.HelpCommand):
             else:
                 cogs[key].append(command)
 
-        return cogs  # type: ignore
+        return cogs
 
     async def send_bot_help(self, mapping: Mapping[Optional[DuckCog], List[DuckCommand]]) -> discord.Message:
         """|coro|
@@ -795,9 +793,7 @@ class DuckHelp(commands.HelpCommand):
         matches.extend(c.qualified_name for c in self.bot.cogs.values())
 
         maybe_found = await self.bot.wrap(process.extractOne, string, matches)
-        return (
-            f'The command / group called "{string}" was not found. Maybe you meant `{self.context.prefix}{maybe_found[0]}`?'
-        )
+        return f'The command / group called "{string}" was not found. Maybe you meant `{self.context.prefix}{maybe_found and maybe_found[0] or "..."}`?'
 
     async def subcommand_not_found(self, command: DuckCommand[Any, ..., Any], string: str, /) -> str:
         """|coro|
@@ -821,7 +817,7 @@ class DuckHelp(commands.HelpCommand):
         fmt = [f'There was no subcommand named "{string}" found on that command.']
         if isinstance(command, DuckGroup):
             maybe_found = await self.bot.wrap(process.extractOne, string, [c.qualified_name for c in command.commands])
-            fmt.append(f"Maybe you meant `{maybe_found[0]}`?")
+            fmt.append(f"Maybe you meant `{maybe_found and maybe_found[0] or '...'}`?")
 
         return "".join(fmt)
 

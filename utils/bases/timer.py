@@ -12,7 +12,6 @@ from typing import (
     Union,
     Dict,
     Any,
-    List,
 )
 
 import discord
@@ -30,7 +29,6 @@ log = logging.getLogger('DuckBot.utils.timer')
 
 
 if TYPE_CHECKING:
-
     JSONValue = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
     JSONType = Union[JSONValue, Dict[str, JSONValue], List[JSONValue]]
 
@@ -177,7 +175,7 @@ class TimerManager:
         """
 
         if isinstance(error, commands.BadArgument):
-            return await ctx.send(error)
+            return await ctx.send(str(error))
         if isinstance(error, commands.TooManyArguments):
             return await ctx.send(
                 f'You called the {(ctx.command and ctx.command.name) or ""} command with too many arguments.'
@@ -346,7 +344,8 @@ class TimerManager:
             # cancel the task and re-run it
             self._task.cancel()
             self._task = self.bot.loop.create_task(self.dispatch_timers())
-
+        if not row:
+            raise RuntimeError('Record not found')
         timer = Timer(record=row)
         return timer
 

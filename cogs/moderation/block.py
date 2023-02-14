@@ -12,7 +12,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import DuckContext, DuckCog, ActionNotExecutable, HandleHTTPException, mdr, FutureTime, TargetVerifier, command
+from utils import DuckContext, DuckCog, ActionNotExecutable, HandleHTTPException, mdr, FutureTime, command, VerifiedMember
 
 from utils.interactions import (
     HandleHTTPException as InterHandleHTTPException,
@@ -22,6 +22,7 @@ from utils.interactions import (
 )
 
 from utils import TimerNotFound, Timer
+from bot import DuckBot
 
 log = logging.getLogger('DuckBot.moderation.block')
 
@@ -29,7 +30,7 @@ log = logging.getLogger('DuckBot.moderation.block')
 class Block(DuckCog):
     async def toggle_block(
         self,
-        channel: discord.TextChannel,
+        channel: discord.abc.MessageableChannel,
         member: discord.Member,
         blocked: bool = True,
         update_db: bool = True,
@@ -55,13 +56,18 @@ class Block(DuckCog):
         if isinstance(channel, discord.abc.PrivateChannel):
             raise commands.NoPrivateMessage()
 
+        if isinstance(channel, discord.PartialMessageable):
+            raise ActionNotExecutable('This channel is somehow unavailable to me...')
+
         if isinstance(channel, discord.Thread):
-            channel = channel.parent  # type: ignore
-            if not channel:
+            _channel = channel.parent
+            if not _channel:
                 raise ActionNotExecutable("Couldn't block! This thread has no parent channel... somehow.")
+        else:
+            _channel = channel
 
         val = False if blocked else None
-        overwrites = channel.overwrites_for(member)
+        overwrites = _channel.overwrites_for(member)
 
         overwrites.update(
             send_messages=val,
@@ -71,7 +77,7 @@ class Block(DuckCog):
             send_messages_in_threads=val,
         )
         try:
-            await channel.set_permissions(member, reason=reason, overwrite=overwrites)
+            await _channel.set_permissions(member, reason=reason, overwrite=overwrites)
         finally:
             if update_db:
                 if blocked:
@@ -83,7 +89,7 @@ class Block(DuckCog):
                     query = "DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3"
 
                 async with self.bot.safe_connection() as conn:
-                    await conn.execute(query, channel.guild.id, channel.id, member.id)
+                    await conn.execute(query, _channel.guild.id, _channel.id, member.id)
 
     async def format_block(self, guild: discord.Guild, user_id: int, channel_id: Optional[int] = None):
         """|coro|
@@ -119,7 +125,7 @@ class Block(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def block(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)):  # type: ignore
+    async def block(self, ctx: DuckContext, *, member: discord.Member = VerifiedMember):
         """|coro|
 
         Blocks a user from your channel.
@@ -144,7 +150,7 @@ class Block(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def tempblock(self, ctx: DuckContext[discord.TextChannel], time: FutureTime, *, member: TargetVerifier(discord.Member)):  # type: ignore
+    async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: discord.Member = VerifiedMember):
         """|coro|
 
         Temporarily blocks a user from your channel.
@@ -170,7 +176,7 @@ class Block(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def unblock(self, ctx: DuckContext, *, member: TargetVerifier(discord.Member)):  # type: ignore
+    async def unblock(self, ctx: DuckContext, *, member: discord.Member = VerifiedMember):
         """|coro|
 
         Unblocks a user from your channel.
@@ -357,7 +363,7 @@ class Block(DuckCog):
     @app_commands.describe(user='The user you wish to block.')
     async def app_block_user(
         self,
-        interaction: discord.Interaction,
+        interaction: discord.Interaction[DuckBot],
         user: discord.Member,
     ):
         """Blocks a user from your channel."""
@@ -382,7 +388,7 @@ class Block(DuckCog):
     @app_commands.describe(user='The user you wish to block.')
     async def app_unblock_user(
         self,
-        interaction: discord.Interaction,
+        interaction: discord.Interaction[DuckBot],
         user: discord.Member,
     ):
         """Unblocks a user from your channel."""
@@ -393,7 +399,7 @@ class Block(DuckCog):
         assert interaction.channel is not None
 
         await interaction.response.defer()
-        bot: DuckBot = interaction.client  # type: ignore
+        bot: DuckBot = interaction.client
         await bot.pool.execute(
             """
             DELETE FROM timers WHERE event = 'tempblock'

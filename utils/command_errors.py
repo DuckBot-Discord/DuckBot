@@ -39,8 +39,6 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
 
     if isinstance(error, ignored):
         return
-    elif isinstance(error, errors.StringTranslatedCommandError):
-        await ctx.send(error.translation_id, *error.args)
     elif isinstance(error, commands.BadUnionArgument):
         es = str(error) + '\n\n' + '\n'.join(str(e) for e in error.errors)
         await ctx.send(es)

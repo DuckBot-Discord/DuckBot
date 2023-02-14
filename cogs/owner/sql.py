@@ -3,11 +3,11 @@ import io
 
 import time
 from tabulate import tabulate
-from typing import List
+from typing import List, Annotated
 
 from import_expression import eval
 from discord import File
-from discord.ext.commands import FlagConverter, Flag, Converter
+from discord.ext.commands import FlagConverter, flag, Converter
 from utils import DuckCog, DuckContext, command, UntilFlag
 
 from .eval import cleanup_code
@@ -32,12 +32,12 @@ class EvaluatedArg(Converter):
 
 
 class SqlCommandFlags(FlagConverter, prefix="--", delimiter=" ", case_insensitive=True):
-    args: List[str] = Flag(name='argument', aliases=['a', 'arg'], annotation=List[EvaluatedArg], default=[])  # type: ignore
+    args: List[str] = flag(name='argument', aliases=['a', 'arg'], converter=List[EvaluatedArg], default=[])
 
 
 class SQLCommands(DuckCog):
     @command()
-    async def sql(self, ctx: DuckContext, *, query: UntilFlag[SqlCommandFlags]):
+    async def sql(self, ctx: DuckContext, *, query: UntilFlag[Annotated[str, cleanup_code], SqlCommandFlags]):
         """|coro|
 
         Executes an SQL query
@@ -47,7 +47,6 @@ class SQLCommands(DuckCog):
         query: str
             The query to execute.
         """
-        query.value = cleanup_code(query.value)
         is_multistatement = query.value.count(';') > 1
         if is_multistatement:
             # fetch does not support multiple statements

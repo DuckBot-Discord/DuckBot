@@ -5,7 +5,6 @@ import io
 import pprint
 import random
 import re
-import types
 
 import aiohttp
 import textwrap
@@ -25,80 +24,18 @@ CODEBLOCK_REGEX = re.compile(r'`{3}(python\n|py\n|\n)?(?P<code>[^`]*)\n?`{3}')
 
 
 class EvalFlags(FlagConverter, prefix='--', delimiter='', case_insensitive=True):
-    wrap: bool = False
+    wrap: bool = commands.flag(aliases=['executor', 'exec'])
 
 
 def cleanup_code(content: str):
     """Automatically removes code blocks from the code."""
     # remove ```py\n```
+    content = textwrap.dedent(content).strip()
     if content.startswith('```') and content.endswith('```'):
         return '\n'.join(content.split('\n')[1:-1])
 
     # remove `foo`
     return content.strip('` \n')
-
-
-@discord.app_commands.context_menu(name='Evaluate Message')
-async def eval_message(interaction: discord.Interaction, message: discord.Message):
-    """Evaluates the message content."""
-    bot: DuckBot = interaction.client  # type: ignore
-
-    if not await bot.is_owner(interaction.user):
-        return await interaction.response.send_message('You are not the owner of this bot!', ephemeral=True)
-
-    if not message.content:
-        return await interaction.response.send_message('That message contained no content!', ephemeral=True)
-
-    await interaction.response.defer()
-
-    body = message.content
-
-    # Handling jishaku code
-    command_names: tuple = ('jishaku py ', 'jishaku python ', 'jsk py ', 'jsk python ')
-    if any(x in body for x in command_names):
-        body = re.split('|'.join(command_names), body, maxsplit=1)[-1]
-    else:
-        # Handling code blocks
-        found = CODEBLOCK_REGEX.search(body)
-        if found:
-            body = found.group('code')
-
-    followup: discord.Webhook = interaction.followup
-    eval_cog: Eval = bot._eval_cog  # noqa
-
-    env = {
-        'bot': bot,
-        'ctx': await bot.get_context(message),
-        'interaction': interaction,
-        'channel': interaction.channel,
-        '_c': interaction.channel,
-        'author': interaction.user,
-        '_a': interaction.user,
-        'guild': interaction.guild,
-        '_g': interaction.guild,
-        'message': message,
-        '_m': message,
-        '_': eval_cog._last_result,  # noqa
-        '_r': getattr(message.reference, 'resolved', None),
-        '_get': discord.utils.get,
-        '_find': discord.utils.find,
-        '_now': discord.utils.utcnow,
-    }
-
-    result = await eval_cog.eval(body, env)
-
-    if result:
-        await DeleteButton.to_destination(
-            **result, destination=followup, wait=True, author=interaction.user, delete_on_timeout=False
-        )
-    else:
-        await DeleteButton.to_destination(
-            content='Done! Code ran with no output...',
-            destination=followup,
-            author=interaction.user,
-            delete_on_timeout=False,
-            wait=True,
-        )
 
 
 class react(contextlib.AbstractAsyncContextManager):
@@ -139,17 +76,6 @@ class Eval(DuckCog):
         super().__init__(*args, **kwargs)
         self._last_result = None
         self._last_context_menu_input = None
-
-    async def cog_load(self) -> None:
-        self.bot.tree.add_command(eval_message)
-        self.bot._eval_cog = self
-
-    async def cog_unload(self) -> None:
-        self.bot.tree.remove_command(eval_message.name, type=discord.AppCommandType.message)
-        try:
-            del self.bot._eval_cog
-        except AttributeError:
-            pass
 
     @staticmethod
     def handle_return(ret: typing.Any, stdout: str | None = None) -> dict | None:
@@ -209,7 +135,6 @@ class Eval(DuckCog):
         """Evaluates arbitrary python code"""
         env.update(self.clean_globals())
 
-        body = cleanup_code(body)
         stdout = io.StringIO()
 
         if wrap:
@@ -244,7 +169,7 @@ class Eval(DuckCog):
             return self.handle_return(ret, stdout=value)
 
     @command(name='eval')
-    async def eval_command(self, ctx: DuckContext, *, body: UntilFlag[EvalFlags]):
+    async def eval_command(self, ctx: DuckContext, *, body: UntilFlag[typing.Annotated[str, cleanup_code], EvalFlags]):
         """Evaluates arbitrary python code"""
         env = {
             'ctx': ctx,

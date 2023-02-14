@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from fuzzywuzzy import process
-from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Tuple, Union, Awaitable
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, Awaitable, TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -26,7 +26,7 @@ class PromptSelect(discord.ui.Select):
         )
         self.parent: PromptView = parent
 
-    async def callback(self, interaction: discord.Interaction) -> None:
+    async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
         assert interaction.message is not None
 
         await interaction.response.defer(thinking=True)
@@ -45,13 +45,13 @@ class PromptView(discord.ui.View):
     def __init__(
         self,
         *,
-        ctx: DuckContext[DuckBot],
+        ctx: DuckContext,
         matches: List[Tuple[int, str]],
         param: inspect.Parameter,
         value: str,
     ) -> None:
         super().__init__()
-        self.ctx: DuckContext[DuckBot] = ctx
+        self.ctx: DuckContext = ctx
         self.matches: List[Tuple[int, str]] = matches
         self.param: inspect.Parameter = param
         self.value: str = value
@@ -59,7 +59,7 @@ class PromptView(discord.ui.View):
 
         self.add_item(PromptSelect(self, matches))
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         return interaction.user == self.ctx.author
 
     @property
@@ -80,7 +80,7 @@ class AutoComplete:
         self.param_name: str = param_name
 
     async def prompt_correct_input(
-        self, ctx: DuckContext[DuckBot], param: inspect.Parameter, /, *, value: str, constricted: Iterable[Any]
+        self, ctx: DuckContext, param: inspect.Parameter, /, *, value: str, constricted: Iterable[Any]
     ) -> str:
         assert ctx.command is not None
 
@@ -91,7 +91,7 @@ class AutoComplete:
         else:
             result = [(item, 0) for item in constricted]
 
-        view = PromptView(ctx=ctx, matches=result, param=param, value=value)
+        view = PromptView(ctx=ctx, matches=result, param=param, value=value)  # type: ignore
         await ctx.send(embed=view.embed, view=view)
         await view.wait()
 

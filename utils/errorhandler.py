@@ -162,7 +162,7 @@ class DuckExceptionManager:
         if embeds:
             await webhook.send(embeds=embeds, **kwargs)
 
-    async def add_error(self, *, error: Exception, ctx: Optional[DuckContext] = None) -> None:
+    async def add_error(self, *, error: BaseException, ctx: Optional[DuckContext] = None) -> None:
         """|coro|
 
         Add an error to the error manager. This will handle all cooldowns and internal cache management
@@ -177,7 +177,7 @@ class DuckExceptionManager:
         """
         log.info('Adding error "%s" to log.', str(error))
 
-        packet: DuckTraceback = {'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(), 'exception': error}
+        packet: DuckTraceback = {'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(), 'exception': error}  # type: ignore
 
         if ctx is not None:
             addons: _DuckTracebackOptional = {
@@ -293,7 +293,6 @@ class HandleHTTPException(AbstractAsyncContextManager, AbstractContextManager):
         exc_tb: Optional[TracebackType] = None,
     ) -> bool:
         if exc_val is not None and isinstance(exc_val, discord.HTTPException) and exc_type:
-
             embed = discord.Embed(
                 title=self.message or 'An unexpected error occurred!',
                 description=f'{exc_type.__name__}: {exc_val.text}',

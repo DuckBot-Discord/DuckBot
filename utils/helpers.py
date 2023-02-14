@@ -223,6 +223,7 @@ async def can_execute_action(
     target: Union[discord.Member, discord.User],
     *,
     fail_if_not_upgrade: bool = True,
+    should_upgrade: bool = True,
 ) -> Optional[bool]:
     """|coro|
 
@@ -255,13 +256,14 @@ async def can_execute_action(
     if guild is None or not isinstance(ctx.author, discord.Member):
         raise commands.NoPrivateMessage('This command cannot be used in private messages.')
 
-    if isinstance(target, discord.User):
-        upgraded = await ctx.bot.get_or_fetch_member(guild, target)
-        if upgraded is None:
-            if fail_if_not_upgrade:
-                raise ActionNotExecutable('That user is not a member of this server.')
-        else:
-            target = upgraded
+    if should_upgrade:
+        if isinstance(target, discord.User):
+            upgraded = await ctx.bot.get_or_fetch_member(guild, target)
+            if upgraded is None:
+                if fail_if_not_upgrade:
+                    raise ActionNotExecutable('That user is not a member of this server.')
+            else:
+                target = upgraded
 
     if ctx.author == target:
         raise ActionNotExecutable('You cannot execute this action on yourself!')
@@ -271,7 +273,7 @@ async def can_execute_action(
     if isinstance(target, discord.Member):
         if guild.me.top_role <= target.top_role:
             raise HierarchyException(target)
-        if guild.owner == ctx.author:
+        if guild.owner_id == ctx.author.id:
             return
         if ctx.author.top_role <= target.top_role:
             raise HierarchyException(target, author_error=True)
@@ -280,7 +282,7 @@ async def can_execute_action(
 class DeleteButtonCallback(discord.ui.Button['DeleteButton']):
     """Internal."""
 
-    async def callback(self, interaction: discord.Interaction) -> Any:
+    async def callback(self, interaction: discord.Interaction[DuckBot]) -> Any:
         try:
             if interaction.message:
                 await interaction.message.delete()
@@ -325,7 +327,7 @@ class DeleteButton(discord.ui.View):
         if isinstance(self.bot, commands.Bot):
             self.bot.views.add(self)
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         """Checks if the user is the right one."""
         return interaction.user == self.author
 
@@ -414,7 +416,7 @@ class DeleteButton(discord.ui.View):
 
         if isinstance(view.bot, commands.Bot):
             try:
-                view.bot.views.add(view)  # type: ignore
+                view.bot.views.add(view)
             except (AttributeError, ValueError):
                 pass
 
@@ -613,8 +615,10 @@ class View(discord.ui.View):
         if bot:
             bot.views.add(self)
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item[Any]) -> None:
-        bot: DuckBot = interaction.client  # type: ignore
+    async def on_error(
+        self, interaction: discord.Interaction[DuckBot], error: Exception, item: discord.ui.Item[Any]
+    ) -> None:
+        bot: DuckBot = interaction.client
         await bot.exceptions.add_error(error=error)
         if interaction.response.is_done():
             await interaction.followup.send(f"Sorry! something went wrong....", ephemeral=True)

@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from bot import DuckBot
 from utils import DuckCog, DuckContext, cache, Strategy, group
 
 from typing import (
@@ -44,5 +43,5 @@ class CommandConfig(DuckCog):
 
         Ignores a member, channel or role.
         """
-        async with ctx.bot.safe_connection() as conn:
-            pass
+        async with ctx.bot.safe_connection() as conn:  # type: ignore # TODO
+            ...  # TODO

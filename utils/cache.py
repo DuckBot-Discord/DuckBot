@@ -47,7 +47,7 @@ class ExpiringCache(dict):
     def __verify_cache_integrity(self):
         # Have to do this in two steps...
         current_time = time.monotonic()
-        to_remove = [k for (k, (v, t)) in self.items() if current_time > (t + self.__ttl)]
+        to_remove = [k for (k, (_, t)) in self.items() if current_time > (t + self.__ttl)]
         for k in to_remove:
             del self[k]
 
@@ -150,11 +150,11 @@ def cache(maxsize=128, strategy=Strategy.lru, ignore_kwargs=False):
                 except KeyError:
                     continue
 
-        wrapper.cache = _internal_cache
-        wrapper.get_key = lambda *args, **kwargs: _make_key(args, kwargs)
-        wrapper.invalidate = _invalidate
-        wrapper.get_stats = _stats
-        wrapper.invalidate_containing = _invalidate_containing
+        wrapper.cache = _internal_cache  # type: ignore
+        wrapper.get_key = lambda *args, **kwargs: _make_key(args, kwargs)  # type: ignore
+        wrapper.invalidate = _invalidate  # type: ignore
+        wrapper.get_stats = _stats  # type: ignore
+        wrapper.invalidate_containing = _invalidate_containing  # type: ignore
         return wrapper
 
     return decorator

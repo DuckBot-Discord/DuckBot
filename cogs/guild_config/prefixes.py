@@ -5,7 +5,7 @@ from typing import List, Optional, TYPE_CHECKING
 import discord
 from discord.ext import commands
 
-from utils import DuckCog, DuckContext, group
+from utils import DuckCog, DuckGuildContext, group
 
 if TYPE_CHECKING:
     from bot import DuckBot
@@ -17,7 +17,7 @@ class PrefixChanges(DuckCog):
 
     @group(name='prefix', aliases=['prefixes', 'pre'], invoke_without_command=True)
     @commands.guild_only()
-    async def prefix(self, ctx: DuckContext, *, prefix: Optional[str] = None) -> Optional[discord.Message]:
+    async def prefix(self, ctx: DuckGuildContext, *, prefix: Optional[str] = None) -> Optional[discord.Message]:
         """|coro|
 
         Adds a prefix for this server (you can have up to 25 prefixes).
@@ -59,7 +59,7 @@ class PrefixChanges(DuckCog):
     @prefix.command(name='clear', aliases=['wipe'])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def prefix_clear(self, ctx: DuckContext) -> Optional[discord.Message]:
+    async def prefix_clear(self, ctx: DuckGuildContext) -> Optional[discord.Message]:
         """|coro|
 
         Clears all prefixes from this server, restting them to default.
@@ -71,13 +71,13 @@ class PrefixChanges(DuckCog):
     @prefix.command(name='add', aliases=['append'])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def prefix_add(self, ctx: DuckContext, *, prefix: str) -> Optional[discord.Message]:
+    async def prefix_add(self, ctx: DuckGuildContext, *, prefix: str) -> Optional[discord.Message]:
         return await ctx.invoke(self.prefix, prefix=prefix)
 
     @prefix.command(name='remove', aliases=['delete', 'del', 'rm'])
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def prefix_remove(self, ctx: DuckContext, *, prefix: str) -> Optional[discord.Message]:
+    async def prefix_remove(self, ctx: DuckGuildContext, *, prefix: str) -> Optional[discord.Message]:
         """|coro|
 
         Removes a prefix from the bots prefixes.
@@ -96,5 +96,5 @@ class PrefixChanges(DuckCog):
         return await ctx.send(f'✅ Removed prefix {prefix}')
 
     @prefix_remove.autocomplete('prefix')  # type: ignore
-    async def prefix_remove_autocomplete(self, ctx: DuckContext, value: str) -> List[str]:
+    async def prefix_remove_autocomplete(self, ctx: DuckGuildContext, value: str) -> List[str]:
         return list(await ctx.bot.get_prefix(ctx.message, raw=True))

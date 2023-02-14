@@ -7,7 +7,17 @@ from typing import (
 import discord
 from discord.ext import commands
 
-from utils import DuckContext, HandleHTTPException, TargetVerifier, BanEntryConverter, DuckCog, safe_reason, mdr, command
+from utils import (
+    DuckContext,
+    HandleHTTPException,
+    VerifiedMember,
+    VerifiedUser,
+    BanEntryConverter,
+    DuckCog,
+    safe_reason,
+    mdr,
+    command,
+)
 from utils.helpers import can_execute_action
 
 
@@ -21,7 +31,7 @@ class StandardModeration(DuckCog):
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
     async def kick(
-        self, ctx: DuckContext, member: TargetVerifier(discord.Member), *, reason: str = '...'  # type: ignore
+        self, ctx: DuckContext, member: discord.Member = VerifiedMember, *, reason: str = '...'
     ) -> Optional[discord.Message]:
         """
         Kick a member from the server.
@@ -49,7 +59,7 @@ class StandardModeration(DuckCog):
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(
-        self, ctx: DuckContext, user: discord.User, *, delete_days: Optional[int], reason: str = '...'
+        self, ctx: DuckContext, user: discord.User = VerifiedUser, *, delete_days: Optional[int], reason: str = '...'
     ) -> Optional[discord.Message]:
         """|coro|
 
@@ -64,7 +74,6 @@ class StandardModeration(DuckCog):
         reason: Optional[:class:`str`]
             The reason for banning the member. Defaults to 'being a jerk!'.
         """
-        await can_execute_action(ctx, user, fail_if_not_upgrade=False)
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
             await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))

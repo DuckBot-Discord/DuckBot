@@ -2,36 +2,31 @@ from __future__ import annotations
 
 import contextlib
 import io
+import itertools
 import sys
 import time
-import discord
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Optional,
-    TypeVar,
-)
-import itertools
 import traceback
+from typing import TYPE_CHECKING, Annotated, Any, Optional, TypeVar
 
-from jishaku.modules import package_version
-from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
-from jishaku.features.python import PythonFeature
-from jishaku.features.root_command import RootCommand
-from jishaku.math import natural_size
-from jishaku.features.management import ManagementFeature
-from jishaku.modules import ExtensionConverter
-from jishaku.codeblocks import codeblock_converter
+import discord
+from jishaku.codeblocks import Codeblock, codeblock_converter
+from jishaku.cog import OPTIONAL_FEATURES, STANDARD_FEATURES
 from jishaku.exception_handling import ReplResponseReactor
 from jishaku.features.baseclass import Feature
+from jishaku.features.management import ManagementFeature
+from jishaku.features.python import PythonFeature
+from jishaku.features.root_command import RootCommand
 from jishaku.flags import Flags
 from jishaku.functools import AsyncSender
+from jishaku.math import natural_size
+from jishaku.modules import ExtensionConverter, package_version
+from jishaku.paginators import PaginatorInterface, WrappedPaginator, use_file_check
 from jishaku.repl import AsyncCodeExecutor
 from jishaku.repl.repl_builtins import get_var_dict_from_ctx
-from jishaku.paginators import use_file_check, PaginatorInterface, WrappedPaginator
 
 from utils.bases.context import DuckContext
-from .. import add_logging, DuckCog
+
+from .. import DuckCog, add_logging
 
 try:
     import psutil
@@ -191,30 +186,6 @@ class OverwrittenManagementFeature(ManagementFeature):
         for page in paginator.pages:
             await ctx.send(page)
 
-    @Feature.Command(parent="jsk", name="sync")
-    async def jsk_sync(self, ctx: DuckContext, sync_globally: Optional[bool], *guild_ids: int):
-        """
-        Sync global or guild application commands to Discord.
-        """
-        guild_ids = guild_ids or (() if sync_globally else ((ctx.guild.id,) if ctx.guild else ()))
-
-        paginator = WrappedPaginator(prefix="", suffix="")
-
-        if not guild_ids:
-            synced = await self.bot.tree.sync()
-            paginator.add_line(f"\N{SATELLITE ANTENNA} Synced {len(synced)} global commands")
-        else:
-            for guild_id in guild_ids:
-                try:
-                    synced = await self.bot.tree.sync(guild=discord.Object(guild_id))
-                except discord.HTTPException as exc:
-                    paginator.add_line(f"\N{WARNING SIGN} `{guild_id}`: {exc.text}")
-                else:
-                    paginator.add_line(f"\N{SATELLITE ANTENNA} `{guild_id}` Synced {len(synced)} guild commands")
-
-        for page in paginator.pages:
-            await ctx.send(page)
-
 
 features = list(STANDARD_FEATURES)
 features.remove(RootCommand)
@@ -227,9 +198,6 @@ class DuckBotJishaku(
     DuckCog,
     *features,
     *OPTIONAL_FEATURES,
-    brief="Jishaku front end class.",
-    emoji="\N{CONSTRUCTION WORKER}",
-    hidden=True,
 ):
     """
     The main frontend class for JIshaku.
@@ -251,7 +219,7 @@ class DuckBotJishaku(
         *,
         start_time: Optional[float] = None,
         redirect_stdout: Optional[str] = None,
-    ) -> Optional[discord.Message]:
+    ):
         if isinstance(result, discord.Message):
             return await ctx.send(f"<Message <{result.jump_url}>>")
 
@@ -259,7 +227,10 @@ class DuckBotJishaku(
             return await ctx.send(file=result)
 
         elif isinstance(result, PaginatorInterface):
-            return await result.send_to(ctx)  # type: ignore
+            return await result.send_to(ctx)
+
+        elif isinstance(result, discord.Embed):
+            return await ctx.send(embed=result)
 
         if not isinstance(result, str):
             result = repr(result)
@@ -302,7 +273,7 @@ class DuckBotJishaku(
 
     @discord.utils.copy_doc(PythonFeature.jsk_python)
     @Feature.Command(parent="jsk", name="py", aliases=["python"])
-    async def jsk_python(self, ctx: DuckContext, *, argument: codeblock_converter) -> None:
+    async def jsk_python(self, ctx: DuckContext, *, argument: Annotated[Codeblock, codeblock_converter]) -> None:
         """|coro|
 
         The subclassed jsk python command to implement some more functionality and features.
@@ -319,23 +290,30 @@ class DuckBotJishaku(
         """
 
         arg_dict = get_var_dict_from_ctx(ctx, Flags.SCOPE_PREFIX)
-        arg_dict["add_logging"] = add_logging
-        arg_dict["self"] = self
-        arg_dict["_"] = self.last_result
+        arg_dict.update(
+            add_logging=add_logging,
+            self=self,
+            _=self.last_result,
+            _r=getattr(ctx.message.reference, 'resolved', None),
+            _a=ctx.author,
+            _m=ctx.message,
+            _now=discord.utils.utcnow,
+            _g=ctx.guild,
+        )
 
-        scope = self.scope
+        scope = self.scope  # type: ignore
         printed = io.StringIO()
 
         try:
             async with ReplResponseReactor(ctx.message):
-                with self.submit(ctx):
+                with self.submit(ctx):  # type: ignore
                     with contextlib.redirect_stdout(printed):
                         executor = AsyncCodeExecutor(argument.content, scope, arg_dict=arg_dict)
                         start = time.perf_counter()
 
                         # Absolutely a garbage lib that I have to fix jesus christ.
                         # I have to rewrite this lib holy jesus its so bad.
-                        async for send, result in AsyncSender(executor):
+                        async for send, result in AsyncSender(executor):  # type: ignore
                             self.last_result = result
 
                             value = printed.getvalue()

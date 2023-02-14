@@ -40,7 +40,7 @@ class DuckBotIPC(IPCBase):
                     "name": g.name,
                     "member_count": g.member_count,
                 }
-                for g in sorted(self.bot.guilds, key=lambda g: g.member_count, reverse=True)[0:10]  # type: ignore
+                for g in sorted(self.bot.guilds, key=lambda g: g.member_count or 0, reverse=True)[0:10]
             ]
         )
 

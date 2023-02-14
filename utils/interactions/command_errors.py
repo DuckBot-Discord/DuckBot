@@ -12,19 +12,18 @@ import logging
 
 
 async def on_app_command_error(
-    interaction: discord.Interaction,
+    interaction: discord.Interaction[DuckBot],
     command: Optional[Union[app_commands.ContextMenu, app_commands.Command]],
-    error: app_commands.AppCommandError,
+    error: Exception,
 ) -> None:
-    response: discord.InteractionResponse = interaction.response  # type: ignore
-    bot: DuckBot = interaction.client  # type: ignore
+    bot: DuckBot = interaction.client
 
     if isinstance(error, app_commands.CommandInvokeError):
         error = error.original
 
     if isinstance(error, app_commands.CommandNotFound):
-        if not response._responded:  # noqa
-            await response.send_message(
+        if not interaction.response.is_done():
+            await interaction.response.send_message(
                 '**Sorry, but somehow this application command does not exist anymore.**'
                 '\nIf you think this command should exist, please ask about it in our '
                 '[support server](https://discord.gg/TdRfGKg8Wh)!'
@@ -36,17 +35,17 @@ async def on_app_command_error(
         logging.debug(f'Ignoring silent command error raised in application command {command}', exc_info=False)
         return
     elif isinstance(error, (DuckBotException, UserInputError, errors.InteractionError)):
-        if not response._responded:  # noqa
-            await response.send_message(str(error), ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.send_message(str(error), ephemeral=True)
         else:
-            webhook: discord.Webhook = interaction.followup  # noqa
+            webhook: discord.Webhook = interaction.followup
             with contextlib.suppress(discord.HTTPException):
                 await webhook.send(content=str(error), ephemeral=True)
     elif isinstance(error, app_commands.CommandSignatureMismatch):
-        if not response._responded:  # noqa
+        if not interaction.response.is_done():
             await bot.exceptions.add_error(error=error)
             try:
-                await response.send_message(
+                await interaction.response.send_message(
                     f"**\N{WARNING SIGN} This command's signature is out of date!**\n"
                     f"i've warned the developers about this and it will "
                     f"be fixed as soon as possible",
@@ -56,7 +55,7 @@ async def on_app_command_error(
                 pass
 
         else:
-            webhook: discord.Webhook = interaction.followup  # noqa
+            webhook: discord.Webhook = interaction.followup
             try:
                 await webhook.send(
                     content=f"**\N{WARNING SIGN} This command's signature is out of date!**\n"
@@ -82,10 +81,9 @@ async def on_app_command_error(
             ' want help with this error!__\n_ _'
         )
 
-        if not response._responded:
-            await response.send_message(msg, ephemeral=True, embed=embed)
+        if not interaction.response.is_done():
+            await interaction.response.send_message(msg, ephemeral=True, embed=embed)
         else:
-
             await interaction.followup.send(msg, embed=embed, ephemeral=True)
 
 

@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import logging
 import pytz
-from typing import (
-    Optional,
-)
+from typing import Optional, Union
 
 import discord
 from discord.ext import commands
 
-from utils import DuckCog, group, DuckContext, UserFriendlyTime, TimerNotFound
+from utils import DuckCog, group, DuckContext, UserFriendlyTime, TimerNotFound, Timer
 
 log = logging.getLogger('DuckBot.cogs.meta.reminders')
 
@@ -24,9 +22,7 @@ class Reminders(DuckCog):
     """Used to create and manage reminders."""
 
     @group(name='remind', aliases=['remindme', 'reminder'], invoke_without_command=True)
-    async def remindme(
-        self, ctx: DuckContext, *, when: UserFriendlyTime(commands.clean_content, default='...')  # type: ignore
-    ) -> None:
+    async def remindme(self, ctx: DuckContext, *, when: UserFriendlyTime(commands.clean_content, default='...')) -> None:  # type: ignore
         """|coro|
 
         Reminds you of something in the future.
@@ -43,7 +39,7 @@ class Reminders(DuckCog):
 
             Times are in UTC.
         """
-        timer = await self.bot.create_timer(
+        await self.bot.create_timer(
             when.dt, 'reminder', ctx.author.id, ctx.channel.id, when.arg, message_id=ctx.message.id, precise=False
         )
         await ctx.send(f"Alright {ctx.author.mention}, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
@@ -116,7 +112,7 @@ class Reminders(DuckCog):
 
         user_id, channel_id, user_input = timer.args
 
-        channel: Union[discord.TextChannel, discord.Thread] = self.bot.get_channel(channel_id)  # type: ignore # Type checker hates me
+        channel: Union[discord.TextChannel, discord.Thread] = self.bot.get_channel(channel_id)  # type: ignore
         if channel is None:
             return log.warning('Discarding channel %s as it\'s not found in cache.', channel_id)
 

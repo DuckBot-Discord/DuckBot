@@ -122,7 +122,7 @@ class TempMute(DuckCog):
         ctx: DuckContext,
         member: discord.Member,
         *,
-        time: UserFriendlyTime(converter=ToLower, default='being a jerk!'),  # type: ignore # Pyright doesn't like class definitions in annotations
+        time: UserFriendlyTime(converter=ToLower, default='being a jerk!'),  # type: ignore
     ) -> Optional[discord.Message]:
         """|coro|
 
@@ -321,7 +321,7 @@ class TempMute(DuckCog):
             return
 
         async with self.bot.safe_connection() as conn:
-            mutes = await conn.fetchval('SELECT mutes FROM guilds WHERE guild_id = $1', after.guild.id)
+            mutes: List[int] = await conn.fetchval('SELECT mutes FROM guilds WHERE guild_id = $1', after.guild.id)
             if not mutes:
                 return
 

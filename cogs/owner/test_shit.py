@@ -9,6 +9,8 @@ import asyncpg
 from discord.ext import commands
 
 from utils import DuckCog
+from bot import DuckBot
+
 
 CATEGORY_ID = 993819813375914025
 
@@ -69,7 +71,7 @@ class Prompt(discord.ui.View):
         await newm.pin()
 
     @discord.ui.button(custom_id='allow-dms', style=discord.ButtonStyle.gray, label='Contact DuckBot\'s developer team')
-    async def allow_dms(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def allow_dms(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         await self.cog.bot.pool.execute('UPDATE dm_flow SET dms_enabled = TRUE WHERE user_id = $1', interaction.user.id)
         new = Prompt(self.cog)
         new.allow_dms.disabled = True
@@ -81,7 +83,7 @@ class Prompt(discord.ui.View):
     @discord.ui.button(
         custom_id='deny-dms', style=discord.ButtonStyle.red, label='Keep my DMs private! (you can change this later)', row=1
     )
-    async def deny_dms(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def deny_dms(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         await self.cog.bot.pool.execute('UPDATE dm_flow SET dms_enabled = FALSE WHERE user_id = $1', interaction.user.id)
         new = Prompt(self.cog)
         new.deny_dms.disabled = True
@@ -254,7 +256,7 @@ class TestingShit(DuckCog):
                     else:
                         dm = None
                 else:
-                    dm = await self.get_dm_object(channel)  # type: ignore  # how?
+                    dm = await self.get_dm_object(channel)  # type: ignore
                     cht = 1
 
         if not dm:

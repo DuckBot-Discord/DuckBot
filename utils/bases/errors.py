@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import logging
 import typing
-from typing import (
-    Tuple,
-)
+from typing import Tuple
 
 import discord
-from discord.ext.commands import CommandError, CheckFailure
+from discord.ext.commands import CheckFailure, CommandError
 
 log = logging.getLogger('Duckbot.utils.errors')
 
@@ -25,7 +23,6 @@ __all__: Tuple[str, ...] = (
     'MemberAlreadyMuted',
     'SilentCommandError',
     'EntityBlacklisted',
-    'StringTranslatedCommandError',
 )
 
 
@@ -148,14 +145,3 @@ class EntityBlacklisted(CheckFailure, DuckBotCommandError):
     ) -> None:
         self.entity = entity
         super().__init__(f'{entity} is blacklisted.')
-
-
-class StringTranslatedCommandError(DuckBotCommandError):
-    """Generic exception to raise, that will be translated in the error handler."""
-
-    __slots__: Tuple[str, ...] = ('translation_id', 'args')
-
-    def __init__(self, translation_id: int, *args: typing.Any) -> None:
-        self.translation_id: int = translation_id
-        self.args: typing.Any = args
-        super().__init__(f'<unprocessed translation: translation_id={translation_id}>')

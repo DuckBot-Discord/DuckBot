@@ -1,31 +1,18 @@
+from __future__ import annotations
+
 import typing
+from collections import defaultdict
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, DefaultDict, Literal, Optional, Set, Tuple
 
 import asyncpg
 import discord
 
-from typing import (
-    TYPE_CHECKING,
-    DefaultDict,
-    Set,
-    Tuple,
-    Optional,
-    Literal,
-    Any,
-)
-
-from collections import defaultdict
-from datetime import datetime
-
-
 if TYPE_CHECKING:
     from bot import DuckBot
     from utils.bases.context import DuckContext
-else:
-    from discord.ext.commands import Bot as DuckBot
-    from utils.bases.context import DuckContext
 
-from utils import EntityBlacklisted
-
+from utils.bases.errors import EntityBlacklisted
 
 __all__: Tuple[str, ...] = ("DuckBlacklistManager",)
 
@@ -208,7 +195,6 @@ class DuckBlacklistManager:
             self._guild_blacklisted_users[guild.id].add(user.id)
 
         if end_time is not None:  # Then, if the block is temporary, we create a new timer
-
             # We first delete all existing timers
             await self.bot.pool.fetch(
                 """DELETE FROM timers
@@ -332,7 +318,6 @@ class DuckBlacklistManager:
         self._blacklisted_channels[channel.guild.id].add(channel.id)
 
         if end_time is not None:  # Then, if the block is temporary, we create a new timer
-
             # We first delete all existing timers
             await self.bot.pool.execute(
                 """DELETE FROM timers

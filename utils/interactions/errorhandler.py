@@ -11,9 +11,9 @@ __all__: Tuple[str, ...] = ("HandleHTTPException",)
 class HandleHTTPException:
     __slots__: Tuple[str, ...] = ('webhook', 'message')
 
-    def __init__(self, webhook: discord.Webhook, title: str = None):
+    def __init__(self, webhook: discord.Webhook, title: Optional[str] = None):
         self.webhook: discord.Webhook = webhook
-        self.message: str = title
+        self.message: str = title or '...'
 
     async def __aenter__(self):
         return self

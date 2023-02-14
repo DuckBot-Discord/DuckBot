@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import contextlib
 import typing
-from typing import TYPE_CHECKING, List, Dict, Any, Optional, Tuple, Type, TypeVar
-
+from typing import TYPE_CHECKING, List, Optional, Tuple, Type, TypeVar
+import asyncpg
 import cachetools
 import discord
 from discord.ext import commands
@@ -44,8 +44,8 @@ class NewsFeed:
         '_current_page',
     )
 
-    def __init__(self, news: List[Dict[str, Any]]) -> None:
-        self.news: List[Page] = [Page(**n) for n in news]
+    def __init__(self, news: List[asyncpg.Record]) -> None:
+        self.news: List[Page] = [Page(**n) for n in news]  # type: ignore
         self.max_pages = len(news)
         self._current_page = 0
 
@@ -100,7 +100,7 @@ class NewsViewer(discord.ui.View):
         message: discord.Message
         ctx: Optional[DuckContext]
 
-    def __init__(self, obj: typing.Union[DuckContext, discord.Interaction], news: List[Dict[str, Any]]):
+    def __init__(self, obj: typing.Union[DuckContext, discord.Interaction[DuckBot]], news: List[asyncpg.Record]):
         super().__init__()
         if isinstance(obj, DuckContext):
             self.author = obj.author
@@ -109,10 +109,10 @@ class NewsViewer(discord.ui.View):
         else:
             self.ctx = None
             self.author = obj.user
-            self.bot: DuckBot = obj.client  # type: ignore
+            self.bot: DuckBot = obj.client
         self.news = NewsFeed(news)
 
-    async def interaction_check(self, interaction: discord.Interaction) -> Optional[bool]:
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> Optional[bool]:
         """|coro|
 
         Used to check if the interaction is valid. If it isn't the user that selected
@@ -155,7 +155,7 @@ class NewsViewer(discord.ui.View):
         return format_date(date)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, label='\u226a')
-    async def previous(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def previous(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
         """|coro|
 
         Used to go back to the previous page.
@@ -173,7 +173,7 @@ class NewsViewer(discord.ui.View):
         return await interaction.response.edit_message(embed=self.get_embed(page), view=self)
 
     @discord.ui.button(style=discord.ButtonStyle.red)
-    async def current(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def current(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
         """|coro|
 
         Used to stop the news viewer.
@@ -193,7 +193,7 @@ class NewsViewer(discord.ui.View):
                 await self.ctx.message.add_reaction(self.bot.done_emoji)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, label='\u226b')
-    async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def next(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         """|coro|
 
         Used to go to the next page.
@@ -215,13 +215,13 @@ class NewsViewer(discord.ui.View):
         previous_page_num = self.news.max_pages - self.news.news.index(self.news.previous)
         self.next.disabled = previous_page_num == 1
 
-        self.current.label = self.news.max_pages - self.news.current_index  # type: ignore
+        self.current.label = str(self.news.max_pages - self.news.current_index)
 
         next_page_num = self.news.max_pages - self.news.news.index(self.news.next)
         self.previous.disabled = next_page_num == self.news.max_pages
 
     @classmethod
-    async def start(cls: Type[NVT], ctx: DuckContext, news: List[Dict[str, Any]]) -> NVT:
+    async def start(cls: Type[NVT], ctx: DuckContext, news: List[asyncpg.Record]) -> NVT:
         """|coro|
 
         Used to start the view and build internal cache.
@@ -246,7 +246,7 @@ class NewsViewer(discord.ui.View):
         return new
 
     @classmethod
-    async def from_interaction(cls: Type[NVT], interaction: discord.Interaction, news: List[Dict[str, Any]]) -> NVT:
+    async def from_interaction(cls: Type[NVT], interaction: discord.Interaction[DuckBot], news: List[asyncpg.Record]) -> NVT:
         new = cls(interaction, news)
         new.update_labels()
         await interaction.response.send_message(embed=new.get_embed(new.news.current), view=new)

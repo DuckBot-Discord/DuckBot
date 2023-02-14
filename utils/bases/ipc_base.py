@@ -1,5 +1,4 @@
 import inspect
-from logging import getLogger
 import logging
 from typing import (
     TYPE_CHECKING,

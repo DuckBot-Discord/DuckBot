@@ -291,7 +291,7 @@ class UserInfoViewer(discord.ui.View):
             ),
         ]
     )
-    async def select(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def select(self, interaction: discord.Interaction[DuckBot], select: discord.ui.Select):
         value = select.values[0]
         if value == 'main':
             embeds = await self.make_main_embed()
@@ -300,7 +300,7 @@ class UserInfoViewer(discord.ui.View):
             embeds = await self.make_perm_embeds()
             await interaction.response.edit_message(embeds=embeds)
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         return interaction.user == self.author
 
     async def start(self, ctx):

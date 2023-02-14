@@ -33,7 +33,7 @@ class PermissionsError(InteractionError):
     The invoker does not have the required permissions.
     """
 
-    def __init__(self, missing: list = None, needed: list = None):
+    def __init__(self, missing: list[str] = [], needed: list[str] = []):
         self.missing: list = missing
         self.needed: list = needed
         message = "You"
@@ -52,7 +52,7 @@ class BotPermissionsError(InteractionError):
     The invoker does not have the required permissions.
     """
 
-    def __init__(self, missing: list = None, needed: list = None):
+    def __init__(self, missing: list[str] = [], needed: list[str] = []):
         self.missing: list = missing
         self.needed: list = needed
         message = "I"

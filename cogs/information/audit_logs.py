@@ -13,6 +13,7 @@ from utils.types import constants
 
 if TYPE_CHECKING:
     from discord.audit_logs import TargetType
+    from bot import DuckBot
 
 
 class MockInteraction:
@@ -24,7 +25,7 @@ class MockInteraction:
 
 class LoadingView(View):
     @discord.ui.button(disabled=True, label='loading results... please wait.', style=discord.ButtonStyle.green)
-    async def mock(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def mock(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         ...
 
 
@@ -261,12 +262,10 @@ class AuditLogViewer(DuckCog):
                     )
 
                 elif action == AA.member_update:
-
                     # Member timeout update:
                     before_timeout: Optional[datetime] = getattr(entry.before, 'timed_out_until', MISSING)
                     after_timeout: Optional[datetime] = getattr(entry.after, 'timed_out_until', MISSING)
                     if before_timeout is not MISSING and after_timeout is not MISSING:
-
                         # Timeout remove
                         if before_timeout and not after_timeout:
                             fields.append(
@@ -303,7 +302,6 @@ class AuditLogViewer(DuckCog):
                     after_nick: Optional[str] = getattr(entry.after, 'nick', MISSING)
 
                     if before_nick is not MISSING and after_nick is not MISSING:
-
                         # Nick remove
                         if before_nick and not after_nick:
                             fields.append(
@@ -383,7 +381,7 @@ class AuditLogViewer(DuckCog):
                     source = FieldsPageSource(fields, targeted_user=user)
                     if pages:
                         pages.update_source(source)
-                        await pages.show_page(MockInteraction(), page_number=pages.current_page)  # type: ignore
+                        await pages.show_page(MockInteraction(), page_number=pages.current_page)
                     else:
                         pages = paginators.ViewMenuPages(source, ctx=ctx).add_info(info_embed)
                         await typer.__aexit__(None, None, None)
@@ -398,6 +396,6 @@ class AuditLogViewer(DuckCog):
         elif pages:
             source = FieldsPageSource(fields, targeted_user=user)
             pages.update_source(source)
-            await pages.show_page(MockInteraction(), page_number=pages.current_page)  # type: ignore
+            await pages.show_page(MockInteraction(), page_number=pages.current_page)
         else:
             await ctx.send('no matching records found.')

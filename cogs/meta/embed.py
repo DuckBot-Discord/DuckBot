@@ -7,7 +7,7 @@ from utils import DuckContext, DuckCog, command, FlagConverter  # for `--inline`
 from cogs.tags import TagName
 
 try:
-    from utils.ignored import HORRIBLE_HELP_EMBED
+    from utils.ignored import HORRIBLE_HELP_EMBED  # type: ignore
 except ImportError:
     HORRIBLE_HELP_EMBED = discord.Embed(title='No information available...')
 
@@ -39,13 +39,13 @@ class FieldFlags(FlagConverter, prefix='--', delimiter='', case_insensitive=True
 
 class FooterFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     text: str
-    icon: verify_link = None  # type: ignore
+    icon: str = commands.flag(converter=verify_link, default=None)
 
 
 class AuthorFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
     name: str
-    icon: verify_link = None  # type: ignore
-    url: verify_link = None  # type: ignore
+    icon: str = commands.flag(converter=verify_link, default=None)
+    url: str = commands.flag(converter=verify_link, default=None)
 
 
 class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensitive=True):
@@ -56,15 +56,15 @@ class EmbedFlags(commands.FlagConverter, prefix='--', delimiter='', case_insensi
         # a regular double-dash for ease of use.
         return await super().convert(ctx, argument)
 
-    title: typing.Optional[str] = None
-    description: typing.Optional[str] = None
-    color: typing.Optional[discord.Color] = None
-    field: typing.List[FieldFlags] = None  # type: ignore
-    footer: typing.Optional[FooterFlags] = None
-    image: verify_link = None  # type: ignore
-    author: typing.Optional[AuthorFlags] = None
-    thumbnail: verify_link = None  # type: ignore
-    save: typing.Optional[TagName] = None
+    title: typing.Optional[str] = commands.flag(default=None)
+    description: typing.Optional[str] = commands.flag(default=None)
+    color: typing.Optional[discord.Color] = commands.flag(default=None)
+    field: typing.List[FieldFlags] = commands.flag(default=None)
+    footer: typing.Optional[FooterFlags] = commands.flag(default=None)
+    image: str = commands.flag(converter=verify_link, default=None)
+    author: typing.Optional[AuthorFlags] = commands.flag(default=None)
+    thumbnail: str = commands.flag(converter=verify_link, default=None)
+    save: typing.Optional[TagName] = commands.flag(default=None)
 
 
 class EmbedMaker(DuckCog):

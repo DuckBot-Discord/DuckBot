@@ -22,7 +22,8 @@ from __future__ import annotations
 import re
 import datetime
 
-import discord.utils
+import discord
+from discord import app_commands
 from dateutil.relativedelta import relativedelta
 import parsedatetime as pdt
 from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Tuple, Type, TypeVar, Union
@@ -31,9 +32,10 @@ from discord.ext import commands
 
 if TYPE_CHECKING:
     from utils.bases.context import DuckContext
+    from bot import DuckBot
 
 # Monkey patch mins and secs into the units
-units = pdt.pdtLocales['en_US'].units
+units = pdt.pdtLocales['en_US'].units  # type: ignore
 units['minutes'].append('mins')
 units['seconds'].append('secs')
 
@@ -111,7 +113,7 @@ class Time(HumanTime):
     def __init__(self, argument: str, *, now: Optional[datetime.datetime] = None) -> None:
         try:
             o = ShortTime(argument, now=now)
-        except Exception as e:
+        except Exception:
             super().__init__(argument)
         else:
             self.dt = o.dt
@@ -128,7 +130,7 @@ class FutureTime(Time):
             raise commands.BadArgument('this time is in the past')
 
 
-class UserFriendlyTime(commands.Converter):
+class UserFriendlyTime(commands.Converter, app_commands.Transformer):
     """That way quotes aren't absolutely necessary."""
 
     __slots__: Tuple[str, ...] = (
@@ -145,7 +147,7 @@ class UserFriendlyTime(commands.Converter):
         default: Optional[str] = None,
     ) -> None:
         if isinstance(converter, type) and issubclass(converter, commands.Converter):
-            converter = converter()  # type: ignore
+            converter = converter()
 
         if converter is not None and not isinstance(converter, commands.Converter):
             raise TypeError('commands.Converter subclass necessary.')
@@ -219,7 +221,7 @@ class UserFriendlyTime(commands.Converter):
             # foo date time
 
             # first the first two cases:
-            dt, status, begin, end, dt_string = elements[0]
+            dt, status, begin, end, _ = elements[0]
 
             if not status.hasDateOrTime:
                 raise commands.BadArgument('Invalid time provided, try e.g. "tomorrow" or "3 days".')
@@ -236,7 +238,7 @@ class UserFriendlyTime(commands.Converter):
                 dt = dt.replace(hour=now.hour, minute=now.minute, second=now.second, microsecond=now.microsecond)
 
             # if midnight is provided, just default to next day
-            if status.accuracy == pdt.pdtContext.ACU_HALFDAY:
+            if status.accuracy == pdt.pdtContext.ACU_HALFDAY:  # type: ignore
                 dt = dt.replace(day=now.day + 1)
 
             result.dt = dt.replace(tzinfo=datetime.timezone.utc)
@@ -263,6 +265,10 @@ class UserFriendlyTime(commands.Converter):
             traceback.print_exc()
             raise
 
+    async def transform(self, interaction: discord.Interaction[DuckBot], value: Any, /) -> Any:
+        context = await interaction.client.get_context(interaction)
+        return await self.convert(context, value)  # type: ignore
+
 
 class plural:
     def __init__(self, value: int) -> None:
@@ -270,7 +276,7 @@ class plural:
 
     def __format__(self, format_spec: str) -> str:
         v = self.value
-        singular, sep, plural = format_spec.partition('|')
+        singular, _, plural = format_spec.partition('|')
         plural = plural or f'{singular}s'
 
         if abs(v) != 1:

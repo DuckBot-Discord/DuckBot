@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import typing
+import re
 from typing import (
     List,
     Optional,
@@ -9,7 +9,7 @@ from typing import (
     Tuple,
     Dict,
     TypeVar,
-    overload,
+    TypeVarTuple,
     Generic,
 )
 
@@ -21,15 +21,29 @@ from .helpers import can_execute_action
 from utils.bases.context import DuckContext
 from .errorhandler import HandleHTTPException
 
+__all__: Tuple[str, ...] = (
+    'TargetVerifier',
+    'BanEntryConverter',
+    'UntilFlag',
+    'FlagConverter',
+    'ChannelVerifier',
+    'VerifiedUser',
+    'VerifiedMember',
+)
 
-BET = TypeVar('BET', bound='discord.guild.BanEntry')
+
 FCT = TypeVar('FCT', bound='DCFlagConverter')
+
+TTuple = TypeVarTuple('TTuple')
 T = TypeVar('T')
 
-__all__: Tuple[str, ...] = ('TargetVerifier', 'BanEntryConverter', 'ChannelVerifier', 'UntilFlag', 'FlagConverter')
+
+class ChannelVerifier:
+    def check_channel(self, channel: discord.abc.GuildChannel | discord.Thread) -> bool:
+        raise NotImplementedError
 
 
-class TargetVerifier(commands.Converter[T]):
+class TargetVerifier(Generic[*TTuple]):
     """Used to verify a traget is permitted to perform
     an action upon another target.
 
@@ -39,33 +53,27 @@ class TargetVerifier(commands.Converter[T]):
     .. code-block:: python3
 
         @commands.command()
-        async def ban(self, ctx: DuckContext, member: TargetVerifier(discord.Member, discord.User), *, reason: str = '...'):
+        async def ban(self, ctx: DuckContext, member: TargetVerifier[discord.Member, discord.User], *, reason: str = '...'):
             await member.ban(reason=reason)
-
-    Attributes
-    ----------
-    fail_if_not_upgrade: :class:`bool`
-        If ``True``, the command will fail if the target cannot be upgraded from
-        a :class:`~discord.User` to a :class:`~discord.Member`. For more information,
-        check out :meth:`can_execute_action`.
     """
 
-    __slots__: Tuple[str, ...] = (
-        '_targets',
-        'fail_if_not_upgrade',
-        '_cs_converter_mapping',
-    )
+    __slots__: Tuple[str, ...] = ('target', 'fail_if_not_upgrade', '_targets', '_converter')
 
-    def __init__(self, *targets: Type[T], fail_if_not_upgrade: bool = True) -> None:
-        self._targets: Tuple[Type[T], ...] = targets
-        self.fail_if_not_upgrade: bool = fail_if_not_upgrade
+    def __class_getitem__(cls, types: Tuple[*TTuple]):
+        if isinstance(types, tuple):
+            return cls(*types)
+        else:
+            return cls(types)
 
-    @discord.utils.cached_slot_property('_cs_converter_mapping')
-    def converter_mapping(self) -> Dict[Type[T], Type[commands.Converter]]:
-        """Dict[Type[T], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
-        return {discord.Member: commands.MemberConverter, discord.User: commands.UserConverter}  # type: ignore
+    def __init__(self, *targets: *TTuple) -> None:
+        self._targets = targets
+        if len(targets) > 2:
+            self._converter = targets[0]
+        else:
+            print(targets)
+            self._converter = Union[targets]  # type: ignore
 
-    async def convert(self, ctx: DuckContext, argument: str) -> Union[discord.Member, discord.User]:
+    async def convert(self, ctx: DuckContext, argument: str):
         """|coro|
 
         The main convert method of the converter. This will use the types given to transform the argument
@@ -83,26 +91,12 @@ class TargetVerifier(commands.Converter[T]):
         Union[discord.Member, discord.User]
             The converted target as specifying when defining the converter.
         """
-        # We need to determine what we're trying to upgrade to.
-        # To do that, let's check the targets attribute.
-        target = None
-        if len(self._targets) == 1:
-            converter = self.converter_mapping[self._targets[0]]
-            target = await converter().convert(ctx, argument)
-
-        else:
-            # We need to this manually. It's both discord.Member and discord.User
-            if ctx.guild:
-                try:
-                    target = await commands.MemberConverter().convert(ctx, argument)
-                except:
-                    pass
-
-            if not target:
-                target = await commands.UserConverter().convert(ctx, argument)
-
-        # Then check if the operation is legal
-        await can_execute_action(ctx, target, fail_if_not_upgrade=self.fail_if_not_upgrade)
+        target = await commands.run_converters(
+            ctx, converter=self._converter, argument=argument, param=ctx.current_parameter
+        )
+        print(self._converter is Union)
+        await can_execute_action(ctx, target, should_upgrade=self._converter is Union)
+        self.target = target
         return target
 
 
@@ -178,212 +172,91 @@ class BanEntryConverter(discord.guild.BanEntry):
         return '{0.user} ({0.user.id})'.format(self)
 
 
-# Lel so bad :weary:
-class VerifyChannelMeta(type):
-    @overload
-    def __getitem__(cls, item: Type[discord.abc.GuildChannel]) -> TargetVerifier:
-        ...
-
-    @overload
-    def __getitem__(cls, item: Type[Tuple[discord.abc.GuildChannel, ...]]) -> TargetVerifier:
-        ...
-
-    def __getitem__(cls, item) -> TargetVerifier:
-        return cls(item)
-
-
-class ChannelVerifier(metaclass=VerifyChannelMeta):
-    """Used to verify if a channel is accessible.
-
-    .. code-block:: python3
-
-        @commands.command()
-        async def send(self, ctx: DuckContext, channel: AccessibleChannel[discord.TextChannel, discord.VoiceChannel], *, text: str = '...'):
-            await channel.send(text)
-    """
-
-    __slots__: Tuple[str, ...] = (
-        '_targets',
-        '_cs_converter_mapping',
-    )
-
-    def __init__(
-        self,
-        targets: Type[Union[Union[discord.Member, discord.User], Tuple[Union[discord.Member, discord.User], ...]]],
-    ) -> None:
-        self._targets = targets
-
-    @discord.utils.cached_slot_property('_cs_converter_mapping')
-    def converter_mapping(self) -> Dict[Type[discord.abc.GuildChannel | discord.Thread], Type[commands.Converter]]:
-        """Dict[Type[Union[:class:`~discord.abc.GuildChannel`, :class:`~discord.Thread`], Type[:class:`commands.Converter`]]: A mapping of converters to use for conversion."""
-        return {
-            discord.abc.GuildChannel: commands.GuildChannelConverter,
-            discord.TextChannel: commands.TextChannelConverter,
-            discord.VoiceChannel: commands.VoiceChannelConverter,
-            discord.CategoryChannel: commands.CategoryChannelConverter,
-            discord.StageChannel: commands.StageChannelConverter,
-            discord.Thread: commands.ThreadConverter,
-        }
-
-    async def convert(self, ctx: DuckContext, argument: str) -> typing.Optional[discord.abc.GuildChannel]:
-        """|coro|
-
-        The main convert method of the converter. This will use the types given to transform the argument
-        to the given type, then verify that the target is permitted to perform the action.
-
-        Parameters
-        ----------
-        ctx: :class:`DuckContext`
-            The context of the command.
-        argument: :class:`str`
-            The argument to convert.
-
-        Returns
-        -------
-        Union[discord.Member, discord.User]
-            The converted target as specifying when defining the converter.
-        """
-        try:
-            if issubclass(self._targets, discord.abc.GuildChannel):
-                # We upgrade to a member or user based upon the guild in this case.
-                converter = self.converter_mapping[self._targets]
-            else:
-                # Something goofed here
-                raise RuntimeError(f'Invalid target type {self._targets} ({type(self._targets)})')
-        except TypeError:
-            # it's multiple arguments, we must manually convert and check.
-            target = await commands.GuildChannelConverter().convert(ctx, argument)
-            if not isinstance(target, self._targets):
-                if self._targets[-1] is discord.Thread:  # type: ignore
-
-                    error = commands.ThreadNotFound
-                else:
-                    error = commands.ChannelNotFound
-                raise error(argument)
-        else:
-            target = await converter().convert(ctx, argument)
-
-        # Then check if the operation is legal
-        verified = await discord.utils.maybe_coroutine(self.verify_target, ctx, target)
-        if verified is True:
-            return target
-        elif verified is None:
-            return None
-        raise commands.BadArgument(f'You are missing the required permissions do that in #{target}')
-
-    def verify_target(self, ctx: DuckContext, target: discord.abc.GuildChannel) -> bool:
-        """
-        Verify that the target is permitted to perform the action.
-        This function must return a :class:`bool`, `None`, or raise
-        an error. (It is recommended that this error be a subclass of
-        :class:`commands.BadArgument` or :class:`commands.CommandError`)
-
-        This function can be a coroutine.
-
-        Parameters
-        ----------
-        ctx: :class:`DuckContext`
-            The context of the command.
-        target: :class:`discord.abc.GuildChannel`
-            The target to verify.
-
-        Returns
-        -------
-        Optional[:class:`bool`]
-            If this method returns True, the object will be returned.
-            If this method returns None, it will return None.
-            If this method returns False, it will raise an error.
-        """
-        raise NotImplementedError('Derived classes need to implement this.')
-
-
-class UntilFlag(Generic[FCT]):
+class UntilFlag(Generic[T, FCT]):
     """A converter that will convert until a flag is reached.
-
     **Example**
-
     .. code-block:: python3
-
         from typing import Optional
-
         from discord.ext import commands
-
-        class SendFlags(commands.FlagConverter, prefix='--', delimiter=' '):
+        class SendFlags(commands.commands.FlagConverter, prefix='--', delimiter=' '):
             channel: Optional[discord.TextChannel] = None
             reply: Optional[discord.Message] = None
-
         @commands.command()
-        async def send(self, ctx: DuckContext, *, text: UntilFlag[SendFlags]):
+        async def send(self, ctx: HideoutContext, *, text: UntilFlag[SendFlags]):
             '''Send a message to a channel.'''
             channel = text.flags.channel or ctx.channel
             await channel.send(text.value)
-
     Attributes
     ----------
     value: :class:`str`
         The value of the converter.
-    flags: :class:`FlagConverter`
+    flags: :class:`commands.FlagConverter`
         The resolved flags.
     """
 
-    def __init__(self, value: str, flags: FCT) -> None:
+    def __init__(self, value: T, converter: Type[T], flags: FCT) -> None:
+        # fmt: off
         self.value = value
         self.flags = flags
-        self._regex = self.flags.__commands_flag_regex__  # type: ignore
 
-    def __class_getitem__(cls, item: Type[DCFlagConverter]) -> UntilFlag:
-        return cls(value='...', flags=item())
+        if hasattr(converter, '__metadata__'):
+            # Annotated[X, Y] can access Y via __metadata__
+            converter = converter.__metadata__[0]
+
+        self._converter = converter
+        self._regex: re.Pattern[str] = self.flags.__commands_flag_regex__  # pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false
+        self._start: str = (self.flags.__commands_flag_prefix__)  # pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false
+
+    def __class_getitem__(cls, item: Tuple[Type[T], Type[commands.FlagConverter]]) -> UntilFlag[T, FCT]:
+        converter, flags = item
+        return cls(value='...', flags=flags(), converter=converter)
 
     def validate_value(self, argument: str) -> bool:
         """Used to validate the parsed value without flags.
         Defaults to checking if the argument is a valid string.
-
         If overridden, this method should return a boolean or raise an error.
         Can be a coroutine
-
         Parameters
         ----------
         argument: :class:`str`
             The argument to validate.
-
         Returns
         -------
         :class:`str`
             Whether or not the argument is valid.
-
         Raises
         ------
         :class:`commands.BadArgument`
             No value was given
         """
         stripped = argument.strip()
-        if not stripped:
+        if not stripped or stripped.startswith(self._start):
             raise commands.BadArgument(f'No body has been specified before the flags.')
         return True
 
-    async def convert(self, ctx: DuckContext, argument: str) -> UntilFlag:
+    async def convert(self, ctx: DuckContext, argument: str) -> UntilFlag[T, FCT]:
         """|coro|
-
         The main convert method of the converter. This will take the given flag converter and
         use it to delimit the flags from the value.
-
         Parameters
         ----------
-        ctx: :class:`DuckContext`
+        ctx: :class:`HideoutContext`
             The context of the command.
         argument: :class:`str`
             The argument to convert.
-
         Returns
         -------
         :class:`UntilFlag`
             The converted argument.
         """
         value = self._regex.split(argument, maxsplit=1)[0]
+        converted_value: T = await commands.run_converters(ctx, self._converter, value, ctx.current_parameter)
+        commands.core
+        print(f"converted is ", converted_value)
         if not await discord.utils.maybe_coroutine(self.validate_value, argument):
             raise commands.BadArgument('Failed to validate argument preceding flags.')
         flags = await self.flags.convert(ctx, argument=argument[len(value) :])
-        return UntilFlag(value=value, flags=flags)
+        return UntilFlag(value=converted_value, flags=flags, converter=self._converter)
 
 
 class FlagConverter(DCFlagConverter):
@@ -444,3 +317,7 @@ class FlagConverter(DCFlagConverter):
 
         # Verification of values will come at a later stage
         return result
+
+
+VerifiedMember = commands.param(converter=TargetVerifier[discord.Member])
+VerifiedUser = commands.param(converter=TargetVerifier[discord.Member, discord.User])

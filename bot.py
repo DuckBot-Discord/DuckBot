@@ -22,7 +22,6 @@ from typing import (
     List,
     NamedTuple,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Type,
@@ -170,7 +169,7 @@ class DbContextManager(Generic[DBT]):
     def __init__(self, bot: DBT, *, timeout: float = 10.0) -> None:
         self.bot: DBT = bot
         self.timeout: float = timeout
-        self._pool: asyncpg.Pool = bot.pool
+        self._pool: asyncpg.Pool[asyncpg.Record] = bot.pool
         self._conn: Optional[Connection] = None
         self._tr: Optional[Transaction] = None
 
@@ -180,7 +179,7 @@ class DbContextManager(Generic[DBT]):
     async def release(self) -> None:
         return await self.__aexit__(None, None, None)
 
-    async def __aenter__(self) -> Connection:
+    async def __aenter__(self) -> Connection[asyncpg.Record]:
         self._conn = conn = await self._pool.acquire(timeout=self.timeout)  # type: ignore
         self._tr = conn.transaction()
         await self._tr.start()
@@ -202,7 +201,7 @@ class DuckHelper(TimerManager):
         super().__init__(bot=bot)
 
     @staticmethod
-    def chunker(item: Union[str, Sequence[T]], *, size: int = 2000) -> Generator[Union[str, Sequence[T]], None, None]:
+    def chunker(item: str, *, size: int = 2000) -> Generator[str, None, None]:
         """Split a string into chunks of a given size.
 
         Parameters
@@ -256,7 +255,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         )  # {repr(ctx): message(from ctx.send) }
         self.error_webhook_url: Optional[str] = kwargs.get("error_wh")
         self._start_time: Optional[datetime.datetime] = None
-        self.listener_connection: Optional[asyncpg.Connection] = None  # type: ignore
+        self.listener_connection: Optional[asyncpg.Connection] = None
         self.allowed_locales: Set[str] = {"en_us", "es_es", "it"}
 
         self.blacklist: DuckBlacklistManager = DuckBlacklistManager(self)
@@ -264,7 +263,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
         self.constants = constants
-        self.tree.error(self.on_tree_error)
+        self.tree.error(self.on_tree_error)  # type: ignore
 
         self.views: Set[discord.ui.View] = set()
         self._auto_spam_count: DefaultDict[int, int] = defaultdict(int)
@@ -384,15 +383,15 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         Registers listeners for database events.
         """
-        self.listener_connection: asyncpg.Connection = await self.pool.acquire()  # type: ignore
+        self.listener_connection = await self.pool.acquire()  # type: ignore
 
         async def _delete_prefixes_event(conn, pid, channel, payload):
-            payload = discord.utils._from_json(payload)  # noqa
+            payload = discord.utils._from_json(payload)
             with contextlib.suppress(Exception):
                 del self.prefix_cache[payload["guild_id"]]
 
         async def _create_or_update_event(conn, pid, channel, payload):
-            payload = discord.utils._from_json(payload)  # noqa
+            payload = discord.utils._from_json(payload)
             self.prefix_cache[payload["guild_id"]] = set(payload["prefixes"])
 
         await self.listener_connection.add_listener("delete_prefixes", _delete_prefixes_event)
@@ -530,7 +529,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         """
         meth = commands.when_mentioned_or if raw is False else lambda *pres: lambda _, __: list(pres)
 
-        cached_prefixes = self.prefix_cache.get((message.guild and message.guild.id), None)  # type: ignore
+        cached_prefixes = self.prefix_cache.get((message.guild and message.guild.id or 0), None)
         if cached_prefixes is not None:
             base = set(cached_prefixes)
         else:
@@ -547,7 +546,9 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         # but it's not the neatest thing, it's up to you :P
         return meth(*base)(self, message)
 
-    async def get_context(self, message: discord.Message, *, cls: Type[DCT] = None) -> Union[DuckContext, commands.Context]:
+    async def get_context(
+        self, message: discord.Message | discord.Interaction[DuckBot], *, cls: Type[DCT] = None
+    ) -> DuckContext | commands.Context[DuckBot]:
         """|coro|
 
         Used to get the invocation context from the message.
@@ -698,12 +699,12 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         if not error:
             raise
 
-        await self.exceptions.add_error(error=error)  # type: ignore
+        await self.exceptions.add_error(error=error)
         return await super().on_error(event, *args, **kwargs)
 
     async def on_tree_error(
         self,
-        interaction: discord.Interaction,
+        interaction: discord.Interaction[DuckBot],
         error: app_commands.AppCommandError,
     ) -> None:
         command = interaction.command
@@ -882,7 +883,10 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         try:
             bucket = self.global_mapping.get_bucket(ctx.message)
             current = ctx.message.created_at.timestamp()
-            retry_after = bucket.update_rate_limit(current)
+            if bucket:
+                retry_after = bucket.update_rate_limit(current)
+            else:
+                retry_after = 0
             author_id = ctx.author.id
             if retry_after and not await self.is_owner(ctx.author):
                 self._auto_spam_count[author_id] += 1
@@ -941,7 +945,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             inline=False,
         )
         embed.timestamp = discord.utils.utcnow()
-        channel: discord.abc.Messageable = self.bot.get_channel(904797860841812050)  # type: ignore
+        channel: discord.TextChannel = self.bot.get_channel(904797860841812050)  # type: ignore
 
         try:
             await channel.send(embed=embed)
@@ -988,7 +992,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         await self.wait_until_ready()
 
         guild_id = guild.id if guild else 0
-        all_cmds = self.bot.tree._get_all_commands(guild=guild)  # noqa F401  # private method kekw.
+        all_cmds = self.bot.tree._get_all_commands(guild=guild)  # private method kekw.
         payloads = [(guild_id, cmd.to_dict()) for cmd in all_cmds]
 
         databased = await self.pool.fetch("SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id)
