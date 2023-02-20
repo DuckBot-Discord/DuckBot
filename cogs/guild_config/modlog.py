@@ -24,9 +24,8 @@ class ModLogs(ConfigBase):
                 )
                 if not r:
                     return
-            await self.bot.db.execute(f"DROP TABLE IF EXISTS modlogs.modlogs_{ctx.guild.id};")
             await self.bot.db.execute(
-                "INSERT INTO guilds (guild_id, modlog) VALUES ($1, $2) " "ON CONFLICT (guild_id) DO UPDATE SET modlog = $2;",
+                "INSERT INTO guilds (guild_id, modlog) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET modlog = $2;",
                 ctx.guild.id,
                 channel.id,
             )
@@ -146,3 +145,15 @@ class ModLogs(ConfigBase):
             ctx.guild.id,
         )
         await ctx.send(f'✅ | Removed {role.name} from the special roles list')
+
+    @commands.has_guild_permissions(administrator=True)
+    @modlogs.command(name='clear')
+    async def modlogs_clear(self, ctx: CustomContext):
+        """Removes all the modlog entries from the database, starting back at 0"""
+        if await ctx.confirm(
+            'Are you sure you want to clear the logs? You will no longer be '
+            'able to set reasons/mods for previous entries, and count will start from 0 again.',
+            delete_after_confirm=True,
+        ):
+            await self.bot.db.execute(f"DROP TABLE IF EXISTS modlogs.modlogs_{ctx.guild.id};")
+            await ctx.send('Done.')
