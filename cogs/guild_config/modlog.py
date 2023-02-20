@@ -20,7 +20,7 @@ class ModLogs(ConfigBase):
             if confirm:
                 r = await ctx.confirm(
                     f'Mod-logs are already enabled in {channel.mention}. Do you want to overwrite it?\n'
-                    '**This will delete all previous mod-logs** This action cannot be undone.'
+                    '**if you want to clear the mod logs, run the `modlogs clear` command**'
                 )
                 if not r:
                     return
