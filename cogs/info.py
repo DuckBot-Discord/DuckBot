@@ -305,9 +305,10 @@ class HelpView(discord.ui.View):
         embed.add_field(
             name="Getting Support",
             inline=False,
-            value="To get help, you can join my support server."
-            f"\n{constants.SERVERS_ICON} <https://discord.gg/TdRfGKg8Wh>"
-            "\n📨 You can also send me a DM if you prefer to.",
+            value="To get help or __**suggest features**__, you can join my"
+            f"\nsupport server: **__<https://discord.gg/TdRfGKg8Wh>__**"
+            "\n📨 You can also DM me for help if you prefer to,"
+            "\nbut please join the support server for suggestions.",
         )
         embed.add_field(
             name="Who Am I?",
