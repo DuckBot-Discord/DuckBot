@@ -394,7 +394,6 @@ class HelpView(discord.ui.View):
             "DuckBot Hideout",
         ]
         for cog, cog_commands in mapping.items():
-
             if cog is None or cog.qualified_name in ignored_cogs:
                 continue
             command_signatures = [get_minimal_command_signature(self.ctx, c) for c in cog_commands]
@@ -458,7 +457,6 @@ class MyHelp(commands.HelpCommand):
 
     # !help
     async def send_bot_help(self, mapping):
-
         view = HelpView(self.context, data=mapping, help_command=self)
         await view.start()
 
@@ -988,56 +986,14 @@ class About(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def suggest(self, ctx: CustomContext, *, suggestion: str):
-        channel = self.bot.get_channel(suggestions_channel)
-        embed = discord.Embed(colour=ctx.me.color, title="Suggestion successful!")
-        embed.add_field(
-            name="Thank you!",
-            value="Your suggestion has been sent to the moderators of duckbot! "
-            "You will receive a Direct Message if your suggestion gets "
-            "approved. Keep your DMs with me open 💞",
+    async def suggest(self, ctx: CustomContext):
+        """Suggests a feature. This is no longer available."""
+        await ctx.send(
+            "Suggestions have been migrated to a forum channel in our support server. "
+            "If you wish to suggest a feature, join us at https://discord.gg/TdRfGKg8Wh "
+            "and open a post. Our team will be happy to talk to you and discuss the feature "
+            "you want to have added to DuckBot.\n_ _"
         )
-        embed.add_field(name="Your suggestion:", value=f"```\n{suggestion}\n```")
-        embed2 = discord.Embed(
-            colour=ctx.me.color,
-            title=f"Suggestion from {ctx.author}",
-            description=f"```\n{suggestion}\n```",
-        )
-        embed2.set_footer(text=f"Sender ID: {ctx.author.id}")
-
-        if ctx.message.attachments:
-            file = ctx.message.attachments[0]
-            spoiler = file.is_spoiler()
-            if not spoiler and file.url.lower().endswith(("png", "jpeg", "jpg", "gif", "webp")):
-                embed.set_image(url=file.url)
-                embed2.set_image(url=file.url)
-            elif spoiler:
-                embed.add_field(
-                    name="Attachment",
-                    value=f"||[{file.filename}]({file.url})||",
-                    inline=False,
-                )
-                embed2.add_field(
-                    name="Attachment",
-                    value=f"||[{file.filename}]({file.url})||",
-                    inline=False,
-                )
-            else:
-                embed.add_field(
-                    name="Attachment",
-                    value=f"[{file.filename}]({file.url})",
-                    inline=False,
-                )
-                embed2.add_field(
-                    name="Attachment",
-                    value=f"[{file.filename}]({file.url})",
-                    inline=False,
-                )
-
-        message = await channel.send(embed=embed2)
-        await ctx.send(embed=embed)
-        await message.add_reaction("🔼")
-        await message.add_reaction("🔽")
 
     @commands.command(usage=None)
     async def news(
