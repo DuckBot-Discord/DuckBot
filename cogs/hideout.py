@@ -339,9 +339,7 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
             except discord.HTTPException:
                 raise commands.BadArgument("There was an error retrieving that message.")
             pretty_data = json.dumps(data, indent=4)
-            return await ctx.send(
-                f"```json\n{pretty_data}\n```", reference=ctx.message, maybe_attachment=True, extension='json'
-            )
+            return await ctx.send(f"```json\n{pretty_data}\n```", reference=ctx.message, gist=True, extension='json')
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
