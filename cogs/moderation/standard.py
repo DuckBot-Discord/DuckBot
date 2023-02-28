@@ -63,7 +63,7 @@ class StandardModeration(DuckCog):
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(
-        self, ctx: DuckContext, user: discord.User = VerifiedUser, *, delete_days: Optional[int], reason: str = '...'
+        self, ctx: DuckContext, user: discord.User = VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
     ) -> Optional[discord.Message]:
         """|coro|
 
@@ -76,11 +76,38 @@ class StandardModeration(DuckCog):
         delete_days: Optional[:class:`int`]
             The number of days worth of messages to delete.
         reason: Optional[:class:`str`]
-            The reason for banning the member. Defaults to 'being a jerk!'.
+            The reason for banning the member. Defaults to '...'.
         """
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
             await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))
+
+        return await ctx.send(f'Banned **{user}** for: {reason}')
+
+    @command(name='softban')
+    @commands.bot_has_guild_permissions(ban_members=True)
+    @commands.has_guild_permissions(ban_members=True)
+    @commands.guild_only()
+    async def softban(
+        self, ctx: DuckContext, user: discord.User = VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
+    ) -> Optional[discord.Message]:
+        """|coro|
+
+        Ban a member from the server, then immediately unbans them, deleting all their messages in the process.
+
+        Parameters
+        ----------
+        user: :class:`discord.Member`
+            The member to softban.
+        delete_days: Optional[:class:`int`]
+            The number of days worth of messages to delete.
+        reason: Optional[:class:`str`]
+            The reason for softbanning the member. Defaults to '...'.
+        """
+
+        async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
+            await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))
+            await ctx.guild.unban(user, reason=safe_reason(ctx.author, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
 
