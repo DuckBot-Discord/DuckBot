@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .block import Block
+from .channel import ChannelModeration
 from .tempmute import TempMute
 from .standard import StandardModeration
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class Moderation(
     TempMute,
     StandardModeration,
-    Block,
+    ChannelModeration,
     emoji='\N{HAMMER AND PICK}',
     brief='Moderation commands!',
 ):

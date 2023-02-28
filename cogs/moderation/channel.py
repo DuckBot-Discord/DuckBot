@@ -27,7 +27,7 @@ from bot import DuckBot
 log = logging.getLogger('DuckBot.moderation.block')
 
 
-class Block(DuckCog):
+class ChannelModeration(DuckCog):
     async def toggle_block(
         self,
         channel: discord.abc.MessageableChannel,
