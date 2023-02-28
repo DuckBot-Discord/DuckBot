@@ -211,7 +211,3 @@ class StandardModeration(DuckCog):
             )
         except discord.HTTPException as e:
             self.logger.debug(f"Failed to unban {member_id} in {guild_id}.", exc_info=e)
-
-    @command()
-    async def test(self, ctx: DuckContext):
-        self.logger.info('cock')
