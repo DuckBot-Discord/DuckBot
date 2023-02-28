@@ -11,10 +11,12 @@ from typing import (
     TypeVar,
     TypeVarTuple,
     Generic,
+    Any,
 )
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.core import unwrap_function
 from discord.ext.commands import FlagConverter as DCFlagConverter, Flag, MissingFlagArgument
 
 from .helpers import can_execute_action
@@ -26,9 +28,9 @@ __all__: Tuple[str, ...] = (
     'BanEntryConverter',
     'UntilFlag',
     'FlagConverter',
-    'ChannelVerifier',
     'VerifiedUser',
     'VerifiedMember',
+    'require',
 )
 
 
@@ -38,9 +40,133 @@ TTuple = TypeVarTuple('TTuple')
 T = TypeVar('T')
 
 
+class MissingPermissionsIn(commands.BadArgument):
+    def __init__(self, channel: discord.abc.GuildChannel | discord.Thread, missing: list[str]) -> None:
+        missing = [perm.replace('_', ' ').replace('guild', 'server').title() for perm in missing]
+
+        if len(missing) > 2:
+            fmt = '{}, and {}'.format(', '.join(missing[:-1]), missing[-1])
+        else:
+            fmt = ' and '.join(missing)
+        message = f'You require {fmt} permission(s) in {channel.mention}.'
+        super().__init__(message)
+
+
+name_map: dict[str, str] = {
+    'GuildChannel': 'server',
+    'TextChannel': 'text channel',
+    'VoiceChannel': 'voice channel',
+    'StageChannel': 'stage channel',
+    'ForumChannel': 'forum channel',
+    'CategoryChannel': 'category',
+    'Forum': 'forum',
+}
+
+
+def friendly_name(_type: Any) -> str:
+    return name_map.get(_type.__name__, 'channel')
+
+
 class ChannelVerifier:
-    def check_channel(self, channel: discord.abc.GuildChannel | discord.Thread) -> bool:
-        raise NotImplementedError
+    """Used to verify a traget is permitted to perform
+    an action upon another target.
+
+    In this use case, the target is being checked by
+    :attr:`DuckBot.author` for an operation.
+
+    .. code-block:: python3
+
+        @commands.command()
+        async def ban(self, ctx: DuckContext, channel: discord.TextChannel = permissions(), *, reason: str = '...'):
+            await member.ban(reason=reason)
+    """
+
+    def __init__(self, **perms: bool) -> None:
+        invalid: set[str] = set(perms) - set(discord.Permissions.VALID_FLAGS)
+        if invalid:
+            raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
+
+        self.permissions = perms
+
+    def check_channel(self, ctx: DuckContext, channel: discord.abc.GuildChannel | discord.Thread):
+        if not isinstance(ctx.author, discord.Member):
+            raise commands.BadArgument(f'Could not verify permissions for you in {channel.mention}.')
+        permissions = channel.permissions_for(ctx.author)
+
+        missing = [perm for perm, value in self.permissions.items() if getattr(permissions, perm) != value]
+        if not missing:
+            return True
+
+        raise MissingPermissionsIn(channel, missing)
+
+    def get_parameter_annotation(self, ctx: DuckContext):
+        if not ctx.command:
+            raise AttributeError(f'In {type(self).__name__}, something went very wrong! ctx.command was None')
+
+        if not ctx.current_parameter:
+            raise AttributeError(f'In {type(self).__name__}, something went very wrong! ctx.current_parameter was None')
+
+        ann: Any = discord.abc.GuildChannel
+
+        unwrap = unwrap_function(ctx.command.callback)
+        for k, v in ctx.command.callback.__annotations__.items():
+            if k == ctx.current_parameter.name:
+                ann = discord.utils.evaluate_annotation(v, unwrap.__globals__, {}, {})
+
+        return ann
+
+    async def convert(self, ctx: DuckContext, argument: str) -> discord.abc.GuildChannel | discord.Thread:
+        """|coro|
+
+        This takes the annotation of the command, and then converts and verifies the channel.
+
+        Parameters
+        ----------
+        ctx: :class:`DuckContext`
+            The context of the command.
+        argument: :class:`str`
+            The argument to convert.
+
+        Returns
+        -------
+        Union[discord.abc.GuildChannel, discord.Thread]
+            The converted target as specied when defining the converter.
+        """
+        if not ctx.current_parameter:
+            raise AttributeError(f'In {type(self).__name__}, something went very wrong! ctx.current_parameter was None')
+
+        ann = self.get_parameter_annotation(ctx)
+
+        target: discord.abc.GuildChannel | discord.Thread = await commands.run_converters(
+            ctx, converter=ann, argument=argument, param=ctx.current_parameter
+        )
+        self.check_channel(ctx, target)
+        return target
+
+
+def require(*, default: bool = True, **perms: bool):
+    converter = ChannelVerifier(**perms)
+
+    kwargs: dict[str, Any] = dict(converter=converter)
+
+    if default:
+
+        def default_func(ctx: DuckContext):
+            if not ctx.current_parameter:
+                raise AttributeError('In require.default_func, something went very wrong! ctx.current_parameter was None')
+
+            _type = converter.get_parameter_annotation(ctx)
+            if not isinstance(ctx.channel, _type):
+                raise commands.MissingRequiredArgument(ctx.current_parameter)
+            converter.check_channel(ctx, ctx.channel)  # type: ignore
+            return ctx.channel
+
+        kwargs.update(default=default_func)
+
+    param = commands.parameter(**kwargs)
+    if default:
+        param._fallback = True
+    return param
 
 
 class TargetVerifier(Generic[*TTuple]):
@@ -70,7 +196,6 @@ class TargetVerifier(Generic[*TTuple]):
         if len(targets) > 2:
             self._converter = targets[0]
         else:
-            print(targets)
             self._converter = Union[targets]  # type: ignore
 
     async def convert(self, ctx: DuckContext, argument: str):
@@ -91,10 +216,13 @@ class TargetVerifier(Generic[*TTuple]):
         Union[discord.Member, discord.User]
             The converted target as specifying when defining the converter.
         """
+
+        if not ctx.current_parameter:
+            raise AttributeError(f'In {type(self).__name__}, something went very wrong! ctx.current_parameter was None')
+
         target = await commands.run_converters(
             ctx, converter=self._converter, argument=argument, param=ctx.current_parameter
         )
-        print(self._converter is Union)
         await can_execute_action(ctx, target, should_upgrade=self._converter is Union)
         self.target = target
         return target
@@ -201,11 +329,11 @@ class UntilFlag(Generic[T, FCT]):
 
         if hasattr(converter, '__metadata__'):
             # Annotated[X, Y] can access Y via __metadata__
-            converter = converter.__metadata__[0]
+            converter = converter.__metadata__[0]  # type: ignore
 
         self._converter = converter
-        self._regex: re.Pattern[str] = self.flags.__commands_flag_regex__  # pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false
-        self._start: str = (self.flags.__commands_flag_prefix__)  # pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false
+        self._regex: re.Pattern[str] = self.flags.__commands_flag_regex__  # type: ignore
+        self._start: str = (self.flags.__commands_flag_prefix__)  # type: ignore
 
     def __class_getitem__(cls, item: Tuple[Type[T], Type[commands.FlagConverter]]) -> UntilFlag[T, FCT]:
         converter, flags = item
@@ -249,10 +377,12 @@ class UntilFlag(Generic[T, FCT]):
         :class:`UntilFlag`
             The converted argument.
         """
+        if not ctx.current_parameter:
+            raise AttributeError(f'In {type(self).__name__}, something went very wrong! ctx.current_parameter was None')
+
         value = self._regex.split(argument, maxsplit=1)[0]
         converted_value: T = await commands.run_converters(ctx, self._converter, value, ctx.current_parameter)
         commands.core
-        print(f"converted is ", converted_value)
         if not await discord.utils.maybe_coroutine(self.validate_value, argument):
             raise commands.BadArgument('Failed to validate argument preceding flags.')
         flags = await self.flags.convert(ctx, argument=argument[len(value) :])
