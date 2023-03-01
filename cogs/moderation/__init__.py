@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .channel import ChannelModeration
-from .tempmute import TempMute
+from .mutes import TempMute
 from .standard import StandardModeration
 
 if TYPE_CHECKING:
