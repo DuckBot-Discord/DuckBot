@@ -105,10 +105,10 @@ class ChannelVerifier:
         if missing:
             raise MissingPermissionsIn(channel, missing)
 
-        bot_missing = [perm for perm, value in self.bot_permissions.items() if getattr(user_permissions, perm) != value]
+        bot_permissions = channel.permissions_for(ctx.guild.me)
+        bot_missing = [perm for perm, value in self.bot_permissions.items() if getattr(bot_permissions, perm) != value]
         if bot_missing:
             raise MissingPermissionsIn(channel, missing, bot=True)
-
         return True
 
     def get_parameter_annotation(self, ctx: DuckContext):
@@ -152,14 +152,13 @@ class ChannelVerifier:
         target: discord.abc.GuildChannel | discord.Thread = await commands.run_converters(
             ctx, converter=ann, argument=argument, param=ctx.current_parameter
         )
+        print('gotten target')
         self.check_channel(ctx, target)
         return target
 
 
 def require(*, default: bool = True, **perms: bool):
     converter = ChannelVerifier(**perms)
-
-    kwargs: dict[str, Any] = dict(converter=converter)
 
     if default:
 
@@ -173,12 +172,9 @@ def require(*, default: bool = True, **perms: bool):
             converter.check_channel(ctx, ctx.channel)  # type: ignore
             return ctx.channel
 
-        kwargs.update(default=default_func)
+        return commands.parameter(converter=converter, default=default_func)
 
-    param = commands.parameter(**kwargs)
-    if default:
-        param._fallback = True
-    return param
+    return commands.parameter(converter=converter)
 
 
 class TargetVerifier(Generic[*TTuple]):
