@@ -18,7 +18,7 @@ class Tasks(EventsBase):
 
     @tasks.loop(minutes=30)
     async def do_member_count_update(self):
-        if self.bot.user and self.bot.user.id == 788278464474120202:
+        if self.bot.user and self.bot.top_gg and self.bot.user.id == 788278464474120202:
             await self.bot.top_gg.post_guild_count(guild_count=len(self.bot.guilds))
             await self.bot.session.put(
                 f'https://api.discordlist.gg/v0/bots/{self.bot.user.id}/guilds',

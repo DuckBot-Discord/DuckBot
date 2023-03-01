@@ -268,11 +268,7 @@ class Management(commands.Cog, name="Bot Management"):
         pages = WrappedPaginator(prefix="", suffix="")
 
         if not modules:
-            extensions = [
-                await jishaku.modules.ExtensionConverter().convert(
-                    ctx, str(os.getenv("COGS_PATH", 'cogs')).replace("cogs", "helpers") + ".*"
-                )
-            ]
+            extensions = [await jishaku.modules.ExtensionConverter().convert(ctx, "helpers.*")]
         else:
             extensions: list[list[str]] = modules  # type: ignore
 

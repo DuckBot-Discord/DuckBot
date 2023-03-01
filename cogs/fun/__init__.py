@@ -2,11 +2,19 @@ from .apis import Apis
 from .basic import BasicFun
 from .embed import EmbedMaker
 from .fun_text import FancyText
-from .reddit import Reddit
 from .rock_paper_scissors import RockPaperScissorsCommand
 from .tictactoe import TicTacToeCommand
 from .typerace import TypeRace
 from .vc_games import DiscordActivities
+
+import os
+
+optional = []
+
+if os.getenv('ASYNC_PRAW_CID'):
+    from .reddit import Reddit
+
+    optional.append(Reddit)
 
 
 class Fun(
@@ -14,11 +22,11 @@ class Fun(
     BasicFun,
     EmbedMaker,
     FancyText,
-    Reddit,
     RockPaperScissorsCommand,
     TicTacToeCommand,
     TypeRace,
     DiscordActivities,
+    *optional,
 ):
     """
     🤪 General entertainment commands, and all other commands that don't fit within other categories.

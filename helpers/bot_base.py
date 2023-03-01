@@ -1,4 +1,4 @@
-import contextlib
+import os
 import datetime
 import io
 import logging
@@ -8,7 +8,7 @@ import sys
 import traceback
 import typing
 from collections import defaultdict, deque
-from typing import Dict, Iterable, List, Optional, Any, TYPE_CHECKING, Type
+from typing import Dict, Iterable, Optional, Any, TYPE_CHECKING, Type
 
 import aiohttp
 import aiohttp.web
@@ -33,7 +33,7 @@ else:
 
 initial_extensions = ("jishaku",)
 
-extensions = (
+extensions = [
     "cogs.beta",
     "cogs.logs",
     "cogs.economy",
@@ -41,15 +41,16 @@ extensions = (
     "cogs.fun",
     "cogs.guild_config",
     "cogs.hideout",
-    "cogs.image_manipulation",
     "cogs.info",
     "cogs.management",
     "cogs.modmail",
     "cogs.test",
     "cogs.utility",
     "cogs.moderation",
-)
+]
 load_dotenv()
+if os.getenv('DAGPI_TOKEN'):
+    extensions.append("cogs.image_manipulation")
 
 
 def col(color=None, /, *, fmt=0, bg=False):
@@ -139,7 +140,10 @@ class BaseDuck(commands.AutoShardedBot):
         self.noprefix = False
         self.persistent_views_added = False
         self.uptime = self.last_rall = datetime.datetime.utcnow()
-        self.top_gg = topgg.client.DBLClient(get_or_fail("TOPGG_TOKEN"))
+        if os.getenv("TOPGG_TOKEN"):
+            self.top_gg = topgg.client.DBLClient(get_or_fail("TOPGG_TOKEN"))
+        else:
+            self.top_gg = None
         self.dev_mode = True if os.getenv("DEV_MODE") == "yes" else False
         self.dagpi_cooldown = commands.CooldownMapping.from_cooldown(60, 60, commands.BucketType.default)
         self.dagpi_client = DagpiClient(get_or_fail("DAGPI_TOKEN"))
@@ -252,7 +256,6 @@ class BaseDuck(commands.AutoShardedBot):
                 await error_channel.send(to_send)
 
             except (discord.Forbidden, discord.HTTPException):
-
                 await error_channel.send(
                     f"```yaml\nAn error occurred in an {event_method} event```",
                     file=discord.File(
