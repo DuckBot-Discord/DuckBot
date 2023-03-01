@@ -54,21 +54,6 @@ class MissingPermissionsIn(commands.BadArgument):
         super().__init__(['You ', 'I '][bot] + message)
 
 
-name_map: dict[str, str] = {
-    'GuildChannel': 'server',
-    'TextChannel': 'text channel',
-    'VoiceChannel': 'voice channel',
-    'StageChannel': 'stage channel',
-    'ForumChannel': 'forum channel',
-    'CategoryChannel': 'category',
-    'Forum': 'forum',
-}
-
-
-def friendly_name(_type: Any) -> str:
-    return name_map.get(_type.__name__, 'channel')
-
-
 class ChannelVerifier:
     """Used to verify a channel is permitted to perform an action upon another target.
     You are not meant to create this class yourself, instead use the :func:`require`.
