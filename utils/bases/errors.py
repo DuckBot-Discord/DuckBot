@@ -58,17 +58,23 @@ class HierarchyException(DuckBotCommandError):
     """
 
     __slots__: Tuple[str, ...] = (
-        'member',
+        'target',
         'author_error',
     )
 
-    def __init__(self, member: discord.Member, *, author_error: bool = False) -> None:
-        self.member: discord.Member = member
+    def __init__(self, target: discord.Member | discord.Role, *, author_error: bool = False) -> None:
+        self.target: discord.Member | discord.Role = target
         self.author_error: bool = author_error
-        if author_error is False:
-            super().__init__(f'**{member}**\'s top role is higher than mine. I can\'t do that!')
+        if isinstance(target, discord.Member):
+            if author_error is False:
+                super().__init__(f'**{target}**\'s top role is higher than mine. I can\'t do that!')
+            else:
+                super().__init__(f'**{target}**\'s top role is higher than your top role. You can\'t do that!')
         else:
-            super().__init__(f'**{member}**\'s top role is higher than your top role. You can\'t do that!')
+            if author_error:
+                super().__init__(f'Role **{target}** is higher than your top role. You can\'t do that!')
+            else:
+                super().__init__(f'Role **{target}** is higher than your my role. I can\'t do that!')
 
 
 class ActionNotExecutable(DuckBotCommandError):

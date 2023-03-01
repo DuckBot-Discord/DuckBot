@@ -30,6 +30,8 @@ __all__: Tuple[str, ...] = (
     'FlagConverter',
     'VerifiedUser',
     'VerifiedMember',
+    'VerifiedRole',
+    'VerifiedRoleOptional',
     'require',
 )
 
@@ -41,15 +43,15 @@ T = TypeVar('T')
 
 
 class MissingPermissionsIn(commands.BadArgument):
-    def __init__(self, channel: discord.abc.GuildChannel | discord.Thread, missing: list[str]) -> None:
+    def __init__(self, channel: discord.abc.GuildChannel | discord.Thread, missing: list[str], bot: bool = False) -> None:
         missing = [perm.replace('_', ' ').replace('guild', 'server').title() for perm in missing]
 
         if len(missing) > 2:
             fmt = '{}, and {}'.format(', '.join(missing[:-1]), missing[-1])
         else:
             fmt = ' and '.join(missing)
-        message = f'You require {fmt} permission(s) in {channel.mention}.'
-        super().__init__(message)
+        message = f'require {fmt} permission(s) in {channel.mention}.'
+        super().__init__(['You ', 'I '][bot] + message)
 
 
 name_map: dict[str, str] = {
@@ -68,36 +70,46 @@ def friendly_name(_type: Any) -> str:
 
 
 class ChannelVerifier:
-    """Used to verify a traget is permitted to perform
-    an action upon another target.
+    """Used to verify a channel is permitted to perform an action upon another target.
+    You are not meant to create this class yourself, instead use the :func:`require`.
 
-    In this use case, the target is being checked by
-    :attr:`DuckBot.author` for an operation.
+    You can also prefix permissions with ``bot_`` to check bot permissions instead.
 
     .. code-block:: python3
 
         @commands.command()
-        async def ban(self, ctx: DuckContext, channel: discord.TextChannel = permissions(), *, reason: str = '...'):
-            await member.ban(reason=reason)
+        async def lock(self, ctx: DuckContext, channel: discord.TextChannel = require(manage_messages=True, bot_manage_roles=True)):
+            ...
     """
 
     def __init__(self, **perms: bool) -> None:
-        invalid: set[str] = set(perms) - set(discord.Permissions.VALID_FLAGS)
-        if invalid:
-            raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
+        user_perms = {p: v for p, v in perms.items() if not p.startswith('bot_')}
+        user_invalid: set[str] = set(user_perms) - set(discord.Permissions.VALID_FLAGS)
+        if user_invalid:
+            raise TypeError(f"Invalid permission(s): {', '.join(user_invalid)}")
 
-        self.permissions = perms
+        bot_perms: dict[str, bool] = {p.removeprefix('bot_'): v for p, v in perms.items() if p.startswith('bot_')}
+        bot_invalid: set[str] = set(bot_perms) - set(discord.Permissions.VALID_FLAGS)
+        if bot_invalid:
+            bot_invalid = {f'bot_{p}' for p in bot_invalid}
+            raise TypeError(f"Invalid permission(s): {', '.join(bot_invalid)}")
+
+        self.permissions = user_perms
+        self.bot_permissions = bot_perms
 
     def check_channel(self, ctx: DuckContext, channel: discord.abc.GuildChannel | discord.Thread):
         if not isinstance(ctx.author, discord.Member):
             raise commands.BadArgument(f'Could not verify permissions for you in {channel.mention}.')
-        permissions = channel.permissions_for(ctx.author)
+        user_permissions = channel.permissions_for(ctx.author)
+        missing = [perm for perm, value in self.permissions.items() if getattr(user_permissions, perm) != value]
+        if missing:
+            raise MissingPermissionsIn(channel, missing)
 
-        missing = [perm for perm, value in self.permissions.items() if getattr(permissions, perm) != value]
-        if not missing:
-            return True
+        bot_missing = [perm for perm, value in self.bot_permissions.items() if getattr(user_permissions, perm) != value]
+        if bot_missing:
+            raise MissingPermissionsIn(channel, missing, bot=True)
 
-        raise MissingPermissionsIn(channel, missing)
+        return True
 
     def get_parameter_annotation(self, ctx: DuckContext):
         if not ctx.command:
@@ -457,3 +469,5 @@ class FlagConverter(DCFlagConverter):
 
 VerifiedMember = commands.param(converter=TargetVerifier[discord.Member])
 VerifiedUser = commands.param(converter=TargetVerifier[discord.Member, discord.User])
+VerifiedRole = commands.param(converter=TargetVerifier[discord.Role])
+VerifiedRoleOptional = commands.param(converter=TargetVerifier[discord.Role], default=None)
