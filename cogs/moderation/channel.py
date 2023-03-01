@@ -19,7 +19,8 @@ from utils import (
     FutureTime,
     command,
     VerifiedMember,
-    VerifiedRoleOptional,
+    VerifiedRole,
+    DefaultRole,
     require,
 )
 
@@ -136,7 +137,7 @@ class ChannelModeration(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def block(self, ctx: DuckContext, *, member: discord.Member = VerifiedMember):
+    async def block(self, ctx: DuckContext, *, member: VerifiedMember):
         """|coro|
 
         Blocks a user from your channel.
@@ -161,7 +162,7 @@ class ChannelModeration(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: discord.Member = VerifiedMember):
+    async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: VerifiedMember):
         """|coro|
 
         Temporarily blocks a user from your channel.
@@ -187,7 +188,7 @@ class ChannelModeration(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def unblock(self, ctx: DuckContext, *, member: discord.Member = VerifiedMember):
+    async def unblock(self, ctx: DuckContext, *, member: VerifiedMember):
         """|coro|
 
         Unblocks a user from your channel.
@@ -440,7 +441,7 @@ class ChannelModeration(DuckCog):
         self,
         ctx: DuckContext,
         channel: LockableChannel = require(manage_roles=True, bot_manage_roles=True),
-        role: discord.Role | None = VerifiedRoleOptional,
+        role: VerifiedRole = DefaultRole,
     ):
         """
         Locks down a channel.
@@ -486,7 +487,7 @@ class ChannelModeration(DuckCog):
         self,
         ctx,
         channel: LockableChannel = require(manage_roles=True, bot_manage_roles=True),
-        role: discord.Role | None = VerifiedRoleOptional,
+        role: VerifiedRole = DefaultRole,
     ):
         """
         Unlocks the current channel.
@@ -498,7 +499,6 @@ class ChannelModeration(DuckCog):
         role: discord.Role
             The role to unlock for. Defaults to @everyone.
         """
-        role = role or ctx.guild.default_role
 
         perms = channel.overwrites_for(ctx.guild.default_role)
         perms.update(

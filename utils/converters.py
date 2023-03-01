@@ -12,6 +12,8 @@ from typing import (
     TypeVarTuple,
     Generic,
     Any,
+    TypeAlias,
+    Annotated,
 )
 
 import discord
@@ -31,7 +33,7 @@ __all__: Tuple[str, ...] = (
     'VerifiedUser',
     'VerifiedMember',
     'VerifiedRole',
-    'VerifiedRoleOptional',
+    'DefaultRole',
     'require',
 )
 
@@ -448,7 +450,11 @@ class FlagConverter(DCFlagConverter):
         return result
 
 
-VerifiedMember = commands.param(converter=TargetVerifier[discord.Member])
-VerifiedUser = commands.param(converter=TargetVerifier[discord.Member, discord.User])
-VerifiedRole = commands.param(converter=TargetVerifier[discord.Role])
-VerifiedRoleOptional = commands.param(converter=TargetVerifier[discord.Role], default=None)
+def _default_role(ctx: DuckContext):
+    return ctx.guild.default_role
+
+
+VerifiedMember: TypeAlias = Annotated[discord.Member, TargetVerifier[discord.Member]]
+VerifiedUser: TypeAlias = Annotated[discord.Member | discord.User, TargetVerifier[discord.Member, discord.User]]
+VerifiedRole: TypeAlias = Annotated[discord.Role, TargetVerifier[discord.Role]]
+DefaultRole = commands.param(converter=VerifiedRole, default=_default_role)

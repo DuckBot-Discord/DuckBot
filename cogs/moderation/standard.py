@@ -34,9 +34,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
-    async def kick(
-        self, ctx: DuckContext, member: discord.Member = VerifiedMember, *, reason: str = '...'
-    ) -> Optional[discord.Message]:
+    async def kick(self, ctx: DuckContext, member: VerifiedMember, *, reason: str = '...') -> Optional[discord.Message]:
         """
         Kick a member from the server.
 
@@ -63,7 +61,7 @@ class StandardModeration(DuckCog):
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(
-        self, ctx: DuckContext, user: discord.User = VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
+        self, ctx: DuckContext, user: VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
     ) -> Optional[discord.Message]:
         """|coro|
 
@@ -89,7 +87,7 @@ class StandardModeration(DuckCog):
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
     async def softban(
-        self, ctx: DuckContext, user: discord.User = VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
+        self, ctx: DuckContext, user: VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
     ) -> Optional[discord.Message]:
         """|coro|
 
@@ -175,7 +173,7 @@ class StandardModeration(DuckCog):
     async def tempban(
         self,
         ctx: DuckContext,
-        member: discord.Member | discord.User = VerifiedUser,
+        member: VerifiedUser,
         *,
         when: UserFriendlyTime(commands.clean_content, default='...'),  # type: ignore
     ) -> None:
