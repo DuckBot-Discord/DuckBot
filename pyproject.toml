@@ -1,7 +1,7 @@
 [tool.pyright]
 useLibraryCodeForTypes = true
 typeCheckingMode = "basic"
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 strictListInference = true
 strictDictionaryInference = true
 strictSetInference = true
