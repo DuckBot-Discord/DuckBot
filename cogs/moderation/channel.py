@@ -485,7 +485,7 @@ class ChannelModeration(DuckCog):
     async def unlock(
         self,
         ctx,
-        channel: discord.TextChannel = require(manage_messages=True),
+        channel: LockableChannel = require(manage_roles=True, bot_manage_roles=True),
         role: discord.Role | None = VerifiedRoleOptional,
     ):
         """
