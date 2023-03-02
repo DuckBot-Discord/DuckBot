@@ -9,6 +9,10 @@ First off, thanks for taking the time to contribute. It makes the library substa
 
 The following is a set of guidelines for contributing to the repository. These are guidelines, not hard rules.
 
+> **Warning**
+>
+> The production version of this code can be located at [`branch:master`](https://github.com/DuckBot-Discord/DuckBot/tree/master). If you're looking to commit a bugfix you found in the bot, target [`branch:master`](https://github.com/DuckBot-Discord/DuckBot/tree/master) instead.
+
 ## Good Bug Reports
 
 Please be aware of the following things when filing bug reports.
