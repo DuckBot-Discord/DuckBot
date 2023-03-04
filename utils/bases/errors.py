@@ -5,7 +5,8 @@ import typing
 from typing import Tuple
 
 import discord
-from discord.ext.commands import CheckFailure, CommandError
+from discord.ext import commands
+from discord.ext.commands import BadArgument, CheckFailure, CommandError
 
 log = logging.getLogger('Duckbot.utils.errors')
 
@@ -145,3 +146,15 @@ class EntityBlacklisted(CheckFailure, DuckBotCommandError):
     ) -> None:
         self.entity = entity
         super().__init__(f'{entity} is blacklisted.')
+
+
+class PartialMatchFailed(DuckBotCommandError, BadArgument):
+    """TODO"""
+
+    def __init__(self, argument: str, converters: Tuple[commands.Converter]):
+        self.argument = argument
+        self.converters = converters
+
+        types_as_str = ", ".join(converter.__name__ for converter in converters)
+
+        super().__init__(f'Could not find "{argument}" as: {types_as_str}')

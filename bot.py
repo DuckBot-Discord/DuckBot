@@ -83,6 +83,8 @@ initial_extensions: Tuple[str, ...] = (
     "cogs.owner",
     "cogs.information",
     "cogs.tags",
+    # TODO: Remove before merge
+    "cogs.testing",
 )
 
 

@@ -38,6 +38,7 @@ from discord.ext.commands import (
 from .helpers import can_execute_action
 from utils.bases.context import DuckContext
 from .errorhandler import HandleHTTPException
+from bases.errors import PartialMatchFailed
 
 __all__: Tuple[str, ...] = (
     'TargetVerifier',
@@ -418,8 +419,7 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
             converted_argument = await commands.run_converters(ctx, self.converter, argument, ctx.current_parameter)
 
             return converted_argument
-
-        except commands.BadArgument as error:
+        except (commands.BadArgument, commands.BadUnionArgument):
             for _type in self.types:
                 media_container_found = self.retrieve_media_container(ctx, _type)
 
@@ -431,7 +431,7 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
                 if partial_match_found:
                     return partial_match_found
 
-            raise error
+            raise PartialMatchFailed()
 
 
 VerifiedMember = commands.param(converter=TargetVerifier[discord.Member])
