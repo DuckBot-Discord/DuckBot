@@ -25,7 +25,7 @@ class ApplicationReminders(DuckCog):
         await interaction.response.defer()
         original = await interaction.original_response()
 
-        timer = await bot.create_timer(
+        await bot.create_timer(
             when.dt,
             'reminder',
             interaction.user.id,
@@ -34,7 +34,7 @@ class ApplicationReminders(DuckCog):
             message_id=original.id,
             precise=False,
         )
-        await interaction.followup.send(f"Alright, {discord.utils.format_dt(timer.dt, 'R')}: {when.arg}")
+        await interaction.followup.send(f"Alright, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
     @slash_reminder.command(name='delete')
     @app_commands.describe(id='The ID of the reminder you want to delete.')
