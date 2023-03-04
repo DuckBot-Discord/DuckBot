@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import pytz
+import datetime
 from typing import Optional, Union
 
 import discord
@@ -121,7 +121,7 @@ class Reminders(DuckCog):
         # We need to format_dt in utc so the user
         # can see the time in their local timezone. If not
         # the user will see the timestamp as 5 hours ahead.
-        aware = timer.created_at.replace(tzinfo=pytz.UTC)
+        aware = timer.created_at.replace(tzinfo=datetime.timezone.utc)
         msg = f'<@{user_id}>, {discord.utils.format_dt(aware, "R")}: {user_input}'
 
         view = discord.utils.MISSING
