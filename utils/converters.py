@@ -379,10 +379,24 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
                 return None
 
     def partially_match_medium(self, media_container: list[DiscordMedium], argument: str) -> DiscordMedium | None:
+        case_insensitive_argument = argument.lower()
+
         for medium in media_container:
-            argument_in_name = medium.name.startswith(argument) or argument in medium.name
+            case_insensitive_nickname: str = ''
+            case_insensitive_name = medium.name.lower()
+            argument_in_name = (
+                case_insensitive_name.startswith(case_insensitive_argument)
+                or case_insensitive_argument in case_insensitive_name
+            )
             nickname_found = getattr(medium, 'nickname', False)
-            argument_in_nickname = nickname_found and (nickname_found.startswith(argument) or argument in nickname_found)
+
+            if nickname_found:
+                case_insensitive_nickname = nickname_found.lower()
+
+            argument_in_nickname = nickname_found and (
+                case_insensitive_nickname.startswith(case_insensitive_argument)
+                or case_insensitive_argument in case_insensitive_nickname
+            )
 
             if not (argument_in_name or argument_in_nickname):
                 continue
