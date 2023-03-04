@@ -14,6 +14,7 @@ from typing import (
     TypeVarTuple,
     Generic,
     Callable,
+    Any,
 )
 
 import discord
@@ -29,6 +30,9 @@ from discord.ext.commands import (
     VoiceChannelConverter,
     CategoryChannelConverter,
     ThreadConverter,
+    GuildChannelConverter,
+    ForumChannelConverter,
+    StageChannelConverter,
 )
 
 from .helpers import can_execute_action
@@ -46,6 +50,7 @@ __all__: Tuple[str, ...] = (
     'VerifiedMember',
 )
 
+# TODO: Simplify
 DiscordMedium: TypeAlias = (
     discord.User
     | discord.Member
@@ -54,6 +59,9 @@ DiscordMedium: TypeAlias = (
     | discord.VoiceChannel
     | discord.CategoryChannel
     | discord.Thread
+    | discord.abc.GuildChannel
+    | discord.ForumChannel
+    | discord.StageChannel
 )
 PairOfConverters: TypeAlias = list[commands.IDConverter, Callable[[DuckContext, str], DiscordMedium | None]]
 FCT = TypeVar('FCT', bound='DCFlagConverter')
@@ -361,33 +369,11 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
         elif len(types) > 1:
             self.converter = Union[types]  # type: ignore
 
-    def __class_getitem__(cls, types: T | Tuple[*TTuple]) -> Callable[[DuckContext, str], DiscordMedium | T | None]:
+    def __class_getitem__(cls, types: T | Tuple[*TTuple]) -> Callable[[DuckContext, str], T]:
         if isinstance(types, tuple):
             return cls(*types)
 
         return cls(types)
-
-    def retrieve_original_converter(self, _type: T) -> commands.Converter[DiscordMedium] | T:
-        match _type.__name__:
-            case 'User':
-                return UserConverter()
-            case 'Member':
-                return MemberConverter()
-            case 'Role':
-                return RoleConverter()
-            case 'TextChannel':
-                return TextChannelConverter()
-            case 'VoiceChannel':
-                return VoiceChannelConverter()
-            case 'CategoryChannel':
-                return CategoryChannelConverter()
-            case 'Thread':
-                return ThreadConverter()
-            case _:
-                # if no sane converter can be found for the given type, it's
-                # safe to assume the type can be used as a converter, e.g. where
-                # `int` is passed
-                return _type
 
     def retrieve_media_container(self, ctx: DuckContext, _type: T) -> list[T] | None:
         match _type.__name__:
@@ -405,6 +391,12 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
                 return ctx.guild.categories
             case 'Thread':
                 return ctx.guild.threads
+            case 'GuildChannel':
+                return ctx.guild.channels
+            case 'ForumChannel':
+                return ctx.guild.forums
+            case 'StageChannel':
+                return ctx.guild.stage_channels
             case _:
                 return None
 
@@ -421,30 +413,25 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
 
         return None
 
-    async def convert(self, ctx: DuckContext, argument: str) -> DiscordMedium | None:
-        for _type in self.types:
-            original_converter = self.retrieve_original_converter(_type)
-            media_container_found = self.retrieve_media_container(ctx, _type)
-            argument_converted: DiscordMedium | None = None
+    async def convert(self, ctx: DuckContext, argument: str) -> DiscordMedium:
+        try:
+            converted_argument = await commands.run_converters(ctx, self.converter, argument, ctx.current_parameter)
 
-            try:
-                argument_converted = await original_converter.convert(ctx, argument)
-            except (TypeError, ValueError) as error:
+            return converted_argument
+
+        except commands.BadArgument as error:
+            for _type in self.types:
+                media_container_found = self.retrieve_media_container(ctx, _type)
+
                 if not media_container_found:
-                    raise error
-            except commands.BadArgument:
-                pass
+                    continue
 
-            match_found = (
-                argument_converted or media_container_found and self.partially_match_medium(media_container_found, argument)
-            )
+                partial_match_found = self.partially_match_medium(media_container_found, argument)
 
-            if not match_found:
-                continue
+                if partial_match_found:
+                    return partial_match_found
 
-            return match_found
-
-        raise commands.BadArgument()
+            raise error
 
 
 VerifiedMember = commands.param(converter=TargetVerifier[discord.Member])
