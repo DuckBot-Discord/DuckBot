@@ -14,7 +14,6 @@ from typing import (
     TypeVarTuple,
     Generic,
     Callable,
-    Any,
 )
 
 import discord
@@ -22,23 +21,14 @@ from discord.ext import commands
 from discord.ext.commands import (
     FlagConverter as DCFlagConverter,
     Flag,
-    MemberConverter,
     MissingFlagArgument,
-    RoleConverter,
-    UserConverter,
-    TextChannelConverter,
-    VoiceChannelConverter,
-    CategoryChannelConverter,
-    ThreadConverter,
-    GuildChannelConverter,
-    ForumChannelConverter,
-    StageChannelConverter,
 )
 
 from .helpers import can_execute_action
+from utils.types import DiscordMedium
 from utils.bases.context import DuckContext
 from .errorhandler import HandleHTTPException
-from bases.errors import PartialMatchFailed
+from utils.bases.errors import PartialMatchFailed
 
 __all__: Tuple[str, ...] = (
     'TargetVerifier',
@@ -51,19 +41,6 @@ __all__: Tuple[str, ...] = (
     'VerifiedMember',
 )
 
-# TODO: Simplify
-DiscordMedium: TypeAlias = (
-    discord.User
-    | discord.Member
-    | discord.Role
-    | discord.TextChannel
-    | discord.VoiceChannel
-    | discord.CategoryChannel
-    | discord.Thread
-    | discord.abc.GuildChannel
-    | discord.ForumChannel
-    | discord.StageChannel
-)
 PairOfConverters: TypeAlias = list[commands.IDConverter, Callable[[DuckContext, str], DiscordMedium | None]]
 FCT = TypeVar('FCT', bound='DCFlagConverter')
 
@@ -419,7 +396,7 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
             converted_argument = await commands.run_converters(ctx, self.converter, argument, ctx.current_parameter)
 
             return converted_argument
-        except (commands.BadArgument, commands.BadUnionArgument):
+        except (commands.BadArgument, commands.BadUnionArgument) as error:
             for _type in self.types:
                 media_container_found = self.retrieve_media_container(ctx, _type)
 
@@ -431,7 +408,9 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
                 if partial_match_found:
                     return partial_match_found
 
-            raise PartialMatchFailed()
+            new_error = PartialMatchFailed(argument, self.types)
+
+            raise new_error from error
 
 
 VerifiedMember = commands.param(converter=TargetVerifier[discord.Member])

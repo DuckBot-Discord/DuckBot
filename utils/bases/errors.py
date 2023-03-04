@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import logging
 import typing
-from typing import Tuple
+from typing import Tuple, Type
 
 import discord
-from discord.ext import commands
 from discord.ext.commands import BadArgument, CheckFailure, CommandError
+
+from utils.types import DiscordMedium
 
 log = logging.getLogger('Duckbot.utils.errors')
 
@@ -149,12 +150,12 @@ class EntityBlacklisted(CheckFailure, DuckBotCommandError):
 
 
 class PartialMatchFailed(DuckBotCommandError, BadArgument):
-    """TODO"""
+    """Raised when the PartiallyMatch converter fails"""
 
-    def __init__(self, argument: str, converters: Tuple[commands.Converter]):
+    def __init__(self, argument: str, types: Tuple[Type[DiscordMedium]]):
         self.argument = argument
-        self.converters = converters
+        self.converters = types
 
-        types_as_str = ", ".join(converter.__name__ for converter in converters)
+        types_as_str = ", ".join(_type.__name__ for _type in types)
 
         super().__init__(f'Could not find "{argument}" as: {types_as_str}')
