@@ -21,6 +21,7 @@ __all__: Tuple[str, ...] = (
     'MuteException',
     'MemberNotMuted',
     'MemberAlreadyMuted',
+    'NoMutedRole',
     'SilentCommandError',
     'EntityBlacklisted',
 )
@@ -124,6 +125,15 @@ class MemberAlreadyMuted(MuteException):
     def __init__(self, member: discord.Member) -> None:
         self.member: discord.Member = member
         super().__init__(f'{member} is already muted.')
+
+
+class NoMutedRole(MuteException):
+    """Raised when a guild does not have a muted role."""
+
+    __slots__: Tuple[str, ...] = tuple()
+
+    def __init__(self) -> None:
+        super().__init__('This server doesn\'t have a mute role configured. Run `db.muterole` for more info.')
 
 
 class SilentCommandError(DuckBotCommandError):
