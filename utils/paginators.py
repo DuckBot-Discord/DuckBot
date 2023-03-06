@@ -54,6 +54,7 @@ class ViewMenuPages(discord.ui.View):
         self.check_embeds: bool = check_embeds
         self.ctx: DuckContext = ctx
         self.message: Optional[discord.Message] = None
+        self.interaction: Optional[discord.Interaction] = None
         self.current_page: int = 0
         self.compact: bool = compact
 
@@ -112,6 +113,8 @@ class ViewMenuPages(discord.ui.View):
             if interaction.response.is_done():
                 if self.message:
                     await self.message.edit(**kwargs, view=self)
+                else:
+                    await interaction.edit_original_response(**kwargs, view=self)  # type: ignore
             else:
                 await interaction.response.edit_message(**kwargs, view=self)  # type: ignore
 
@@ -155,6 +158,7 @@ class ViewMenuPages(discord.ui.View):
             pass
 
     async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
+        self.interaction = interaction
         if interaction.user and interaction.user.id in (self.ctx.bot.owner_id, self.ctx.author.id):
             return True
         await interaction.response.send_message('This pagination menu cannot be controlled by you, sorry!', ephemeral=True)
@@ -166,6 +170,11 @@ class ViewMenuPages(discord.ui.View):
             try:
                 await self.message.edit(view=None)
             except discord.NotFound:
+                pass
+        elif self.interaction:
+            try:
+                await self.interaction.edit_original_response(view=None)
+            except discord.HTTPException:
                 pass
 
     def stop(self) -> None:
@@ -189,6 +198,15 @@ class ViewMenuPages(discord.ui.View):
         kwargs = await self._get_kwargs_from_page(page)
         self._update_labels(0)
         self.message = await self.ctx.send(**kwargs, view=self)
+        self.ctx.bot.views.add(self)
+
+    async def start_ephemeral(self, interaction: discord.Interaction):
+        await self.source._prepare_once()
+        page = await self.source.get_page(0)
+        kwargs = await self._get_kwargs_from_page(page)
+        self._update_labels(0)
+        await interaction.response.send_message(**kwargs, view=self, ephemeral=True)
+        self.interaction = interaction
         self.ctx.bot.views.add(self)
 
     @property
