@@ -133,6 +133,9 @@ class FutureTime(Time):
 class UserFriendlyTime(commands.Converter, app_commands.Transformer):
     """That way quotes aren't absolutely necessary."""
 
+    if TYPE_CHECKING:
+        dt: datetime.datetime
+
     __slots__: Tuple[str, ...] = (
         'converter',
         'dt',
