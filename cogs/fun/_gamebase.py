@@ -21,6 +21,7 @@ class LookingForButton(discord.ui.Button):
             return await interaction.response.send_message(
                 '**Congratulations, you played yourself!**\nWait... You can\'t...', ephemeral=True
             )
+        await interaction.response.defer()
         view.value = interaction.user
         view.stop()
 
