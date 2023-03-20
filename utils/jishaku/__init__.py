@@ -301,12 +301,12 @@ class DuckBotJishaku(
             _g=ctx.guild,
         )
 
-        scope = self.scope  # type: ignore
+        scope = self.scope
         printed = io.StringIO()
 
         try:
             async with ReplResponseReactor(ctx.message):
-                with self.submit(ctx):  # type: ignore
+                with self.submit(ctx):
                     with contextlib.redirect_stdout(printed):
                         executor = AsyncCodeExecutor(argument.content, scope, arg_dict=arg_dict)
                         start = time.perf_counter()
