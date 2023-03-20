@@ -24,7 +24,7 @@ CODEBLOCK_REGEX = re.compile(r'`{3}(python\n|py\n|\n)?(?P<code>[^`]*)\n?`{3}')
 
 
 class EvalFlags(FlagConverter, prefix='--', delimiter='', case_insensitive=True):
-    wrap: bool = commands.flag(aliases=['executor', 'exec'])
+    wrap: bool = commands.flag(aliases=['executor', 'exec'], default=False)
 
 
 def cleanup_code(content: str):
