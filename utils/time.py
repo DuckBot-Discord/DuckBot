@@ -133,6 +133,9 @@ class FutureTime(Time):
 class UserFriendlyTime(commands.Converter, app_commands.Transformer):
     """That way quotes aren't absolutely necessary."""
 
+    if TYPE_CHECKING:
+        dt: datetime.datetime
+
     __slots__: Tuple[str, ...] = (
         'converter',
         'dt',
@@ -285,7 +288,12 @@ class plural:
         return f'{v} {singular}'
 
 
-def human_join(seq: Sequence[str], delim=', ', final='or', spaces: bool = True) -> str:
+def human_join(
+    seq: Sequence[str], delim=', ', final='or', spaces: bool = True, fmt_key: Optional[Callable[[str], str]] = None
+) -> str:
+    if fmt_key:
+        seq = list(map(fmt_key, seq))
+
     size = len(seq)
     if size == 0:
         return ''
