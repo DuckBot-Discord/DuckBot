@@ -228,16 +228,15 @@ class TimerManager:
         """
         # Please note the return value in the doc is different than the one in the function.
         # This function actually only returns a Timer but pyright doesn't like typehinting that.
-        async with self.bot.safe_connection() as con:
-            timer = await self.get_active_timer(connection=con, days=days)
-            if timer is not None:
-                self._have_data.set()
-                return timer
+        timer = await self.get_active_timer(days=days)
+        if timer is not None:
+            self._have_data.set()
+            return timer
 
-            self._have_data.clear()
-            self._current_timer = None
-            await self._have_data.wait()
-            return await self.get_active_timer(connection=con, days=days)
+        self._have_data.clear()
+        self._current_timer = None
+        await self._have_data.wait()
+        return await self.get_active_timer(days=days)
 
     async def call_timer(self, timer: Timer) -> None:
         """Call an expired timer to dispatch it.

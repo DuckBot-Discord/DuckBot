@@ -656,7 +656,8 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         after: :class:`~discord.Message`
             The message after it was edited.
         """
-        await self.process_commands(after)
+        if before.content != after.content:
+            await self.process_commands(after)
 
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
         """|coro|

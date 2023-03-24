@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from types import UnionType
 from typing import (
     List,
     Optional,
@@ -8,12 +9,13 @@ from typing import (
     Union,
     Tuple,
     Dict,
+    TypeAlias,
     TypeVar,
     TypeVarTuple,
     Generic,
     Any,
-    TypeAlias,
     Annotated,
+    Callable,
 )
 
 import discord
@@ -21,22 +23,26 @@ from discord.ext import commands
 from discord.ext.commands.core import unwrap_function
 from discord.ext.commands import FlagConverter as DCFlagConverter, Flag, MissingFlagArgument
 
+
 from .helpers import can_execute_action
+from utils.types import DiscordMedium
 from utils.bases.context import DuckContext
 from .errorhandler import HandleHTTPException
+from utils.bases.errors import PartialMatchFailed
 
 __all__: Tuple[str, ...] = (
     'TargetVerifier',
     'BanEntryConverter',
     'UntilFlag',
     'FlagConverter',
+    'ChannelVerifier',
+    'PartiallyMatch',
     'VerifiedUser',
     'VerifiedMember',
     'VerifiedRole',
     'DefaultRole',
     'require',
 )
-
 
 FCT = TypeVar('FCT', bound='DCFlagConverter')
 
@@ -458,3 +464,95 @@ VerifiedMember: TypeAlias = Annotated[discord.Member, TargetVerifier[discord.Mem
 VerifiedUser: TypeAlias = Annotated[discord.Member | discord.User, TargetVerifier[discord.Member, discord.User]]
 VerifiedRole: TypeAlias = Annotated[discord.Role, TargetVerifier[discord.Role]]
 DefaultRole = commands.param(converter=VerifiedRole, default=_default_role)
+
+
+class PartiallyMatch(commands.Converter, Generic[*TTuple]):
+    def __init__(self, *types: *TTuple):
+        super().__init__()
+
+        self.types = types
+        self.converter: type | UnionType | None = None
+
+        if len(types) == 1:
+            self.converter = types[0]
+        elif len(types) > 1:
+            self.converter = Union[types]  # type: ignore
+
+    def __class_getitem__(cls, types: T | Tuple[*TTuple]) -> Callable[[DuckContext, str], T]:
+        if isinstance(types, tuple):
+            return cls(*types)
+
+        return cls(types)
+
+    def retrieve_media_container(self, ctx: DuckContext, _type: T) -> list[T] | None:
+        match _type.__name__:
+            case 'User':
+                return ctx.bot.users
+            case 'Member':
+                return ctx.guild.members
+            case 'Role':
+                return ctx.guild.roles
+            case 'TextChannel':
+                return ctx.guild.text_channels
+            case 'VoiceChannel':
+                return ctx.guild.voice_channels
+            case 'CategoryChannel':
+                return ctx.guild.categories
+            case 'Thread':
+                return ctx.guild.threads
+            case 'GuildChannel':
+                return ctx.guild.channels
+            case 'ForumChannel':
+                return ctx.guild.forums
+            case 'StageChannel':
+                return ctx.guild.stage_channels
+            case _:
+                return None
+
+    def partially_match_medium(self, media_container: list[DiscordMedium], argument: str) -> DiscordMedium | None:
+        case_insensitive_argument = argument.lower()
+
+        for medium in media_container:
+            case_insensitive_nickname: str = ''
+            case_insensitive_name = medium.name.lower()
+            argument_in_name = (
+                case_insensitive_name.startswith(case_insensitive_argument)
+                or case_insensitive_argument in case_insensitive_name
+            )
+            nickname_found = getattr(medium, 'nickname', False)
+
+            if nickname_found:
+                case_insensitive_nickname = nickname_found.lower()
+
+            argument_in_nickname = nickname_found and (
+                case_insensitive_nickname.startswith(case_insensitive_argument)
+                or case_insensitive_argument in case_insensitive_nickname
+            )
+
+            if not (argument_in_name or argument_in_nickname):
+                continue
+
+            return medium
+
+        return None
+
+    async def convert(self, ctx: DuckContext, argument: str) -> DiscordMedium:
+        try:
+            converted_argument = await commands.run_converters(ctx, self.converter, argument, ctx.current_parameter)
+
+            return converted_argument
+        except (commands.BadArgument, commands.BadUnionArgument) as error:
+            for _type in self.types:
+                media_container_found = self.retrieve_media_container(ctx, _type)
+
+                if not media_container_found:
+                    continue
+
+                partial_match_found = self.partially_match_medium(media_container_found, argument)
+
+                if partial_match_found:
+                    return partial_match_found
+
+            new_error = PartialMatchFailed(argument, self.types)
+
+            raise new_error from error
