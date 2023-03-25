@@ -9,11 +9,9 @@ from typing import (
     Union,
     Tuple,
     Dict,
-    TypeAlias,
     TypeVar,
     TypeVarTuple,
     Generic,
-    Callable,
 )
 
 import discord
@@ -41,7 +39,6 @@ __all__: Tuple[str, ...] = (
     'VerifiedMember',
 )
 
-PairOfConverters: TypeAlias = list[commands.IDConverter, Callable[[DuckContext, str], DiscordMedium | None]]
 FCT = TypeVar('FCT', bound='DCFlagConverter')
 
 TTuple = TypeVarTuple('TTuple')
@@ -54,7 +51,7 @@ class ChannelVerifier:
 
 
 class TargetVerifier(Generic[*TTuple]):
-    """Used to verify a traget is permitted to perform
+    """Used to verify a target is permitted to perform
     an action upon another target.
 
     In this use case, the target is being checked by
@@ -101,6 +98,7 @@ class TargetVerifier(Generic[*TTuple]):
         Union[discord.Member, discord.User]
             The converted target as specifying when defining the converter.
         """
+        assert ctx.current_parameter
         target = await commands.run_converters(
             ctx, converter=self._converter, argument=argument, param=ctx.current_parameter
         )
@@ -211,11 +209,11 @@ class UntilFlag(Generic[T, FCT]):
 
         if hasattr(converter, '__metadata__'):
             # Annotated[X, Y] can access Y via __metadata__
-            converter = converter.__metadata__[0]
+            converter = converter.__metadata__[0]  # type: ignore
 
         self._converter = converter
-        self._regex: re.Pattern[str] = self.flags.__commands_flag_regex__  # pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false
-        self._start: str = (self.flags.__commands_flag_prefix__)  # pyright: reportUnknownMemberType=false, reportGeneralTypeIssues=false
+        self._regex: re.Pattern[str] = self.flags.__commands_flag_regex__  # type: ignore
+        self._start: str = (self.flags.__commands_flag_prefix__)  # type: ignore
 
     def __class_getitem__(cls, item: Tuple[Type[T], Type[commands.FlagConverter]]) -> UntilFlag[T, FCT]:
         converter, flags = item
@@ -260,6 +258,7 @@ class UntilFlag(Generic[T, FCT]):
             The converted argument.
         """
         value = self._regex.split(argument, maxsplit=1)[0]
+        assert ctx.current_parameter
         converted_value: T = await commands.run_converters(ctx, self._converter, value, ctx.current_parameter)
         commands.core
         print(f"converted is ", converted_value)
@@ -343,19 +342,19 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
         self.converter: type | UnionType | None = None
 
         if len(types) == 1:
-            self.converter = types[0]
+            self.converter = types[0]  # type: ignore
         elif len(types) > 1:
             self.converter = Union[types]  # type: ignore
 
-    def __class_getitem__(cls, types: T | Tuple[*TTuple]) -> Callable[[DuckContext, str], T]:
+    def __class_getitem__(cls, types: Tuple[*TTuple]):
         if isinstance(types, tuple):
             return cls(*types)
 
         return cls(types)
 
-    def retrieve_media_container(self, ctx: DuckContext, _type: T) -> list[T] | None:
-        match _type.__name__:
-            case 'User':
+    def retrieve_media_container(self, ctx: DuckContext, _type: type):
+        match _type:
+            case discord.User:
                 return ctx.bot.users
             case 'Member':
                 return ctx.guild.members
@@ -388,7 +387,10 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
                 case_insensitive_name.startswith(case_insensitive_argument)
                 or case_insensitive_argument in case_insensitive_name
             )
-            nickname_found = getattr(medium, 'nickname', False)
+            try:
+                nickname_found = medium.nick  # type: ignore
+            except AttributeError:
+                nickname_found = False
 
             if nickname_found:
                 case_insensitive_nickname = nickname_found.lower()
@@ -407,22 +409,23 @@ class PartiallyMatch(commands.Converter, Generic[*TTuple]):
 
     async def convert(self, ctx: DuckContext, argument: str) -> DiscordMedium:
         try:
+            assert ctx.current_parameter
             converted_argument = await commands.run_converters(ctx, self.converter, argument, ctx.current_parameter)
 
             return converted_argument
         except (commands.BadArgument, commands.BadUnionArgument) as error:
             for _type in self.types:
-                media_container_found = self.retrieve_media_container(ctx, _type)
+                media_container_found = self.retrieve_media_container(ctx, _type)  # type: ignore
 
                 if not media_container_found:
                     continue
 
-                partial_match_found = self.partially_match_medium(media_container_found, argument)
+                partial_match_found = self.partially_match_medium(media_container_found, argument)  # type: ignore
 
                 if partial_match_found:
                     return partial_match_found
 
-            new_error = PartialMatchFailed(argument, self.types)
+            new_error = PartialMatchFailed(argument, self.types)  # type: ignore
 
             raise new_error from error
 
