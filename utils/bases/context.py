@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, overload, Literal
 
 import discord
 from discord.ext import commands
+
+from .errors import SilentCommandError
 
 if TYPE_CHECKING:
     from bot import DuckBot
@@ -53,12 +55,16 @@ def tick(opt: Optional[bool], label: Optional[str] = None) -> str:
 
 
 class ConfirmationView(discord.ui.View):
-    def __init__(self, ctx: DuckContext, *, timeout: int = 60) -> None:
+    def __init__(self, ctx: DuckContext, *, timeout: int = 60, labels: tuple[str, str] = ('Confirm', 'Cancel')) -> None:
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self.value = None
         self.message: discord.Message | None = None
         self.ctx.bot.views.add(self)
+
+        confirm, cancel = labels
+        self.confirm.label = confirm
+        self.cancel.label = cancel
 
     async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         return interaction.user == self.ctx.author
@@ -75,7 +81,7 @@ class ConfirmationView(discord.ui.View):
         self.ctx.bot.views.discard(self)
         super().stop()
 
-    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.primary)
+    @discord.ui.button(style=discord.ButtonStyle.primary)
     async def confirm(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
         assert interaction.message is not None
 
@@ -83,7 +89,7 @@ class ConfirmationView(discord.ui.View):
         self.stop()
         await interaction.message.delete()
 
-    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
+    @discord.ui.button(style=discord.ButtonStyle.danger)
     async def cancel(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
         assert interaction.message is not None
 
@@ -194,7 +200,26 @@ class DuckContext(commands.Context['DuckBot']):
         else:
             self.bot.messages.pop(repr(self), None)
 
-    async def confirm(self, content=None, /, *, timeout: int = 30, **kwargs) -> bool | None:
+    @overload
+    async def confirm(
+        self, content=None, /, *, timeout: int = 30, silent_on_timeout: Literal[False] = False, **kwargs
+    ) -> bool | None:
+        ...
+
+    @overload
+    async def confirm(self, content=None, /, *, timeout: int = 30, silent_on_timeout: Literal[True], **kwargs) -> bool:
+        ...
+
+    async def confirm(
+        self,
+        content=None,
+        /,
+        *,
+        timeout: int = 30,
+        silent_on_timeout: bool = False,
+        labels: tuple[str, str] = ('Confirm', 'Cancel'),
+        **kwargs,
+    ) -> bool | None:
         """|coro|
 
         Prompts a confirmation message that users can confirm or deny.
@@ -214,14 +239,18 @@ class DuckContext(commands.Context['DuckBot']):
             Whether the user confirmed or not.
             None if the view timed out.
         """
-        view = ConfirmationView(self, timeout=timeout)
+        view = ConfirmationView(self, timeout=timeout, labels=labels)
         try:
             view.message = await self.channel.send(content, **kwargs, view=view)
             await view.wait()
-            return view.value
+            value = view.value
         except discord.HTTPException:
             view.stop()
-            return None
+            value = None
+
+        if silent_on_timeout and value is None:
+            raise SilentCommandError('Timed out waiting for a response.')
+        return value
 
     def __repr__(self) -> str:
         if self.message:
