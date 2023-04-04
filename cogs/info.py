@@ -724,16 +724,16 @@ class About(commands.Cog):
         return discord.utils.oauth_url(**kwargs)
 
     @commands.command()
-    async def invite(self, ctx: CustomContext, bot: discord.Member = None):
+    async def invite(self, ctx: CustomContext, bot: discord.User = None):
         """
         Sends a link to invite the bot to your server.
         """
         if bot:
             if not bot.bot:
                 raise commands.BadArgument("That user is not a bot.")
-            c_id = bot.id
         else:
-            c_id = None
+            bot = self.bot.user  # type: ignore
+        c_id = bot.id
 
         embed = discord.Embed(
             title=f"Invite {bot or 'me'} to your server!",
@@ -743,7 +743,7 @@ class About(commands.Cog):
             f"\n• [Admin Permissions]({self.oauth(8, client_id=c_id)})"
             f"\n• [All Permissions]({self.oauth(549755813887, client_id=c_id)}) "
             f"<:certified_moderator:895393984308981930>",
-        ).set_thumbnail(url=self.bot.user.display_avatar.url)
+        ).set_thumbnail(url=bot.display_avatar.url)
         view = discord.ui.View(timeout=1)
         view.add_item(
             discord.ui.Button(
