@@ -1,6 +1,7 @@
 import asyncio
 import re
 import typing
+from io import BytesIO
 from inspect import Parameter
 
 import discord
@@ -10,6 +11,19 @@ import errors
 from bot import CustomContext
 from helpers import paginator, constants
 from ._base import UtilityBase
+
+async def render_with_rsvg(blob):
+    rsvg = 'rsvg-convert --width=1024'
+    proc = await asyncio.create_subprocess_shell(rsvg,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+    stdout, stderr = await proc.communicate(blob)
+    return BytesIO(stdout), stderr
+
+    converted, stderr = await renderWithRsvg()
+
+SVG_URL = 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{chars}.svg'
 
 
 class EmojiUtils(UtilityBase):
@@ -228,3 +242,18 @@ class EmojiUtils(UtilityBase):
         await ctx.send(
             f"{constants.EDIT_NICKNAME} | Successfully renamed {new_emoji} from `{server_emoji.name}` to `{new_emoji.name}`!"
         )
+
+    @commands.command()
+    async def svg(self, ctx, ipt):
+    	"""Enlargens a default emoji by rendeding it's SVG asset from the twemoji github repository"""
+        chars = '-'.join(f'{ord(c):x}' for c in ipt)
+
+        resp = await bot.session.get(SVG_URL.format(chars=chars))
+        if resp.status != 200:
+            return await ctx.send("not a valid unicode emoji.")
+        blob = await resp.read()
+
+        converted, stderr= await render_with_rsvg(blob)
+
+        file = discord.File(converted, filename="rendered.png")
+        await ctx.send(file=file)
