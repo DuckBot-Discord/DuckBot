@@ -245,7 +245,7 @@ class EmojiUtils(UtilityBase):
 
     @commands.command()
     async def svg(self, ctx, ipt):
-    	"""Enlargens a default emoji by rendeding it's SVG asset from the twemoji github repository"""
+        """Enlargens a default emoji by rendeding it's SVG asset from the twemoji github repository"""
         chars = '-'.join(f'{ord(c):x}' for c in ipt)
 
         resp = await self.bot.session.get(SVG_URL.format(chars=chars))
