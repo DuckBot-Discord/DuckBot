@@ -248,7 +248,7 @@ class EmojiUtils(UtilityBase):
     	"""Enlargens a default emoji by rendeding it's SVG asset from the twemoji github repository"""
         chars = '-'.join(f'{ord(c):x}' for c in ipt)
 
-        resp = await bot.session.get(SVG_URL.format(chars=chars))
+        resp = await self.bot.session.get(SVG_URL.format(chars=chars))
         if resp.status != 200:
             return await ctx.send("not a valid unicode emoji.")
         blob = await resp.read()
