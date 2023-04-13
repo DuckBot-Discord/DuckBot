@@ -244,16 +244,31 @@ class EmojiUtils(UtilityBase):
         )
 
     @commands.command()
-    async def svg(self, ctx, ipt):
-        """Enlargens a default emoji by rendeding it's SVG asset from the twemoji github repository"""
-        chars = '-'.join(f'{ord(c):x}' for c in ipt)
+    async def svg(self, ctx, ipt: str):
+        """Enlarges a default emoji by rendering it's SVG asset from the twemoji github repository"""
 
-        resp = await self.bot.session.get(SVG_URL.format(chars=chars))
-        if resp.status != 200:
-            return await ctx.send("not a valid unicode emoji.")
-        blob = await resp.read()
+
+        VS_16 = "\N{VARIATION SELECTOR-16}"
+
+        resp = None
+        blob = b''
+        while not resp or resp.status != 200:
+            chars = '-'.join(f'{ord(c):x}' for c in ipt)
+            async with self.bot.session.get(SVG_URL.format(chars=chars)) as resp:
+                if resp.status != 200:
+                    if VS_16 in ipt:
+                        new_ipt = ipt.removeprefix(VS_16)
+                        if new_ipt == ipt:
+                            new_ipt = ipt.replace(VS_16, "")
+                        ipt = new_ipt
+                        continue
+                    raise commands.BadArgument('Not a valid unicode emoji.')
+                blob = await resp.read()
 
         converted, stderr= await render_with_rsvg(blob)
+
+        if stderr:
+            raise Exception(stderr.decode())
 
         file = discord.File(converted, filename="rendered.png")
         await ctx.send(file=file)
