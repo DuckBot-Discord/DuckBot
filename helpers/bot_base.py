@@ -109,6 +109,7 @@ class BaseDuck(commands.AutoShardedBot):
             activity=discord.Streaming(name="db.help", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             strip_after_prefix=True,
             chunk_guilds_at_startup=False,
+            max_messages=30_000,
         )
 
         self.db = pool
