@@ -204,6 +204,8 @@ class ModMail(commands.Cog):
                         return
                 except:
                     return
+            if thread.archived:
+                await thread.edit(archived=False)
             await thread.edit(name=str(after))
 
 
