@@ -73,9 +73,13 @@ class MessageUtils(UtilityBase):
         if isinstance(channel, int) and self.bot.is_owner(ctx.author):
             channel = self.bot.get_channel(channel)
         if not channel:
-            raise commands.MissingRequiredArgument(Parameter(name='channel', kind=Parameter.POSITIONAL_ONLY))
+            raise commands.MissingRequiredArgument(
+                commands.Parameter(name='channel', kind=Parameter.POSITIONAL_ONLY)
+            )
         if not ctx.message.reference and not message_or_reply:
-            raise commands.MissingRequiredArgument(Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY))
+            raise commands.MissingRequiredArgument(
+                commands.Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY)
+            )
         elif ctx.message.reference:
             message_or_reply = ctx.message.reference.resolved.content
         return await channel.send(

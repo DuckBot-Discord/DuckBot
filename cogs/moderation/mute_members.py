@@ -281,7 +281,7 @@ class MuteCommands(ModerationBase):
 
         if not members:
             raise commands.MissingRequiredArgument(
-                inspect.Parameter(
+                commands.Parameter(
                     'members', annotation=commands.Greedy[discord.Member], kind=inspect.Parameter.POSITIONAL_OR_KEYWORD
                 )
             )
