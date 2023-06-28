@@ -37,7 +37,9 @@ class EmojiUtils(UtilityBase):
         _Note, this is a group, and has also more sub-commands_
         """
         if not custom_emojis:
-            raise commands.MissingRequiredArgument(Parameter(name='custom_emojis', kind=Parameter.POSITIONAL_ONLY))
+            raise commands.MissingRequiredArgument(
+                commands.Parameter(name='custom_emojis', kind=Parameter.POSITIONAL_ONLY)
+            )
 
         source = paginator.EmojiListPageSource(data=custom_emojis, ctx=ctx)
         menu = paginator.ViewPaginator(source=source, ctx=ctx, check_embeds=True)
@@ -57,7 +59,9 @@ class EmojiUtils(UtilityBase):
         # To unlock an emoji you can't access, use the `db.emoji unlock <emoji_name>` command
         """
         if not roles:
-            raise commands.MissingRequiredArgument(Parameter('role', Parameter.POSITIONAL_ONLY))
+            raise commands.MissingRequiredArgument(
+                commands.Parameter('role', Parameter.POSITIONAL_ONLY)
+            )
         if server_emoji.guild_id != ctx.guild.id:
             return await ctx.send("That emoji is from another server!")
         embed = discord.Embed(
@@ -163,7 +167,9 @@ class EmojiUtils(UtilityBase):
                 )
 
         if not server_emoji:
-            raise commands.MissingRequiredArgument(Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
+            raise commands.MissingRequiredArgument(
+                commands.Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY)
+            )
 
         file = await server_emoji.read()
         guild = ctx.guild
@@ -210,7 +216,9 @@ class EmojiUtils(UtilityBase):
         Deletes an emoji from this server.
         """
         if server_emoji.guild != ctx.guild:
-            raise commands.MissingRequiredArgument(Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
+            raise commands.MissingRequiredArgument(
+                commands.Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY)
+            )
         confirm = await ctx.confirm(f'❓ | Are you sure you want to delete {server_emoji}?', return_message=True)
 
         if confirm[0]:
@@ -229,7 +237,9 @@ class EmojiUtils(UtilityBase):
         """
         new_name: str
         if server_emoji.guild != ctx.guild:
-            raise commands.MissingRequiredArgument(Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY))
+            raise commands.MissingRequiredArgument(
+                commands.Parameter(name='server_emoji', kind=Parameter.POSITIONAL_ONLY)
+            )
         if len(new_name) > 32:
             raise commands.BadArgument('⚠ | **new_name** must be less than **32 characters** in long.')
         if server_emoji.name == new_name:
