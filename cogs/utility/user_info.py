@@ -213,7 +213,7 @@ class UserInfo(UtilityBase):
         """
         user: discord.User = member or ctx.author
         embed = discord.Embed(title=user, url=user.display_avatar.url)
-        if isinstance(user, discord.Member) and user.guild_avatar:
+        if ctx.guild and isinstance(user, discord.Member) and user.guild_avatar:
             embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
             embed.description = (
                 f"[avatar]({user.avatar.url if user.avatar else user.default_avatar.url}) | "
