@@ -14,7 +14,8 @@ This is DuckBot's source code. Invite me using the hyperlink above.
 > **Note**
 > Using a [virtual environment](https://docs.python.org/3/library/venv.html) is recommended.
 
-> **Warning**: lru-dict installation errors.
+> **Warning**
+> lru-dict installation errors.
 >
 > the `lru_dict` requirement may need you to install the `python-dev` package on linux (use the appropriate one for
 > your python version), or [Microsoft Visual C++](https://web3py.readthedocs.io/en/v5/troubleshooting.html?#why-am-i-getting-visual-c-or-cython-not-installed-error)
@@ -24,7 +25,8 @@ This is DuckBot's source code. Invite me using the hyperlink above.
 
 Thanks for taking an interest in contributing to DuckBot! Please check out [the contributing guidelines](/.github/contributing.md)!
 
-> **Note**: Rewrite code base (not production).
+> **Note**
+>  Rewrite code base (not production).
 >
 > The production code of this bot can be found in [`branch:master`](https://github.com/DuckBot-Discord/DuckBot/tree/master).
 > If you are looking to submit a pull request to fix a bug in the current version of DuckBot, check out that branch instead!
