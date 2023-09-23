@@ -63,11 +63,10 @@ class UserInfo(UtilityBase):
     @commands.command(aliases=['uinfo', 'ui', 'whois', 'userinfo'], name='user-info')
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
-    async def userinfo(self, ctx: CustomContext, *, member: typing.Optional[discord.Member]):
+    async def userinfo(self, ctx: CustomContext, *, member: discord.Member = commands.Author):
         """
         Shows a user's information. If not specified, shows your own.
         """
-        member = member or ctx.author
         fetched_user = await self.bot.fetch_user(member.id)
 
         embed = discord.Embed(color=member.color if member.color not in (None, discord.Color.default()) else ctx.color)
@@ -98,13 +97,19 @@ class UserInfo(UtilityBase):
             inline=False,
         )
 
+        try:
+            pos = sorted(ctx.guild.members, key=lambda m: m.joined_at or m.created_at).index(member) + 1
+        except ValueError:
+            pos = "Error."
+            if not member.guild.chunked:
+                self.bot.loop.create_task(member.guild.chunk())
+
         embed.add_field(
             name=f"{constants.JOINED_SERVER} Joined At",
             value=(
                 f"╰ {discord.utils.format_dt(member.joined_at, style='f')} "
                 f"({discord.utils.format_dt(member.joined_at, style='R')})"
-                f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** "
-                f"{sorted(ctx.guild.members, key=lambda m: m.joined_at or discord.utils.utcnow()).index(member) + 1}"
+                f"\n\u200b \u200b \u200b \u200b ╰ {constants.MOVED_CHANNELS} **Join Position:** {pos}"
             )
             if member.joined_at
             else "Could not get data",
