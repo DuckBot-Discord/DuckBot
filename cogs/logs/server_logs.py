@@ -94,7 +94,7 @@ class ServerLogs(LoggingBase):
                         )
                 if updated_perms:
                     perm_emb = discord.Embed(
-                        title=f'Permissions for {target} updated',
+                        title=f'Permissions for {target} in {after} updated',
                         colour=discord.Colour.blurple(),
                         timestamp=discord.utils.utcnow(),
                         description='\n'.join(updated_perms),
