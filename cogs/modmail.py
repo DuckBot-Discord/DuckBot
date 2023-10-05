@@ -107,6 +107,10 @@ class ModMail(commands.Cog):
         thread, _ = await self.forum.create_thread(
             name=str(message.author), content=f'DM with user of ID: {message.author.id}'
         )
+        try:
+            await thread.add_user(discord.Object(self.bot.owner_id or 0))
+        except:
+            pass
         await self.bot.db.execute(
             'INSERT INTO dm_modmail (user_id, thread_id) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET thread_id = $2',
             message.author.id,
