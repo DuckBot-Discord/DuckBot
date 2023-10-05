@@ -6,7 +6,7 @@ from .voice_logs import VoiceLogs
 from .modlog import ModLogs
 
 
-class LoggingBackend(JoinLeaveLogs, MemberLogs, MessageLogs, ServerLogs, ModLogs):
+class LoggingBackend(JoinLeaveLogs, MemberLogs, MessageLogs, ServerLogs, ModLogs, VoiceLogs):
     pass
 
 
