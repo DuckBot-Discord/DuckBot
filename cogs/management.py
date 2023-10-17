@@ -1044,16 +1044,21 @@ class Management(commands.Cog, name="Bot Management"):
             unclaimed = []
             text = (await ctx.reference.attachments[0].read()).decode("utf-8")
             parsed_tags = await self.parse_tags(text)
-            for tag_id, name, user_id, can_delete, is_alias in parsed_tags:
+            for tag_id, name, user_id, _, is_alias in parsed_tags:
                 print(user_id)
                 if not ctx.guild.get_member(user_id):
-                    unclaimed.append((name, str(self.bot.get_user(user_id) or user_id), is_alias))
+                    unclaimed.append((name, str(self.bot.get_user(user_id) or user_id), str(is_alias), str(tag_id)))
             if not unclaimed:
                 raise commands.BadArgument(f"No unclaimed tags found. searched {len(parsed_tags)} tags.")
-            table = tabulate.tabulate(sorted(unclaimed), headers=["Name", "User", "Alias"])
-            pages = WrappedPaginator(max_size=1985)
-            for line in table.splitlines():
-                pages.add_line(line)
+            pages = WrappedPaginator()
+
+            longest_user_name = max([x[1] for x in unclaimed])
+            longest_tag_id = max([x[4] for x in unclaimed])
+
+            for tag_name, user_name, is_alias, tag_id in unclaimed:
+                pages.add_line(
+                    f" {str(user_name).ljust(longest_user_name)} | {is_alias:<5} | {tag_id.ljust(longest_tag_id)} | {tag_name}"
+                )
             interface = PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx.author)
             await ctx.send(f"Delivering {len(unclaimed)} unclaimed tags to {ctx.author}'s DMs.")
