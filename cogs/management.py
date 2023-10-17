@@ -1055,7 +1055,7 @@ class Management(commands.Cog, name="Bot Management"):
             longest_user_name = max([len(x[1]) for x in unclaimed])
             longest_tag_id = max([len(x[3]) for x in unclaimed])
 
-            for tag_name, user_name, is_alias, tag_id in unclaimed:
+            for tag_name, user_name, is_alias, tag_id in sorted(unclaimed, key=lambda e: (e[0], len(e[0]))):
                 pages.add_line(
                     f" {str(user_name).ljust(longest_user_name)} | {is_alias:<5} | {tag_id.ljust(longest_tag_id)} | {tag_name}"
                 )
