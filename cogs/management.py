@@ -1052,8 +1052,8 @@ class Management(commands.Cog, name="Bot Management"):
                 raise commands.BadArgument(f"No unclaimed tags found. searched {len(parsed_tags)} tags.")
             pages = WrappedPaginator()
 
-            longest_user_name = max([x[1] for x in unclaimed])
-            longest_tag_id = max([x[3] for x in unclaimed])
+            longest_user_name = max([len(x[1]) for x in unclaimed])
+            longest_tag_id = max([len(x[3]) for x in unclaimed])
 
             for tag_name, user_name, is_alias, tag_id in unclaimed:
                 pages.add_line(
