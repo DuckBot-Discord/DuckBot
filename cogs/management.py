@@ -1053,7 +1053,7 @@ class Management(commands.Cog, name="Bot Management"):
             pages = WrappedPaginator()
 
             longest_user_name = max([x[1] for x in unclaimed])
-            longest_tag_id = max([x[4] for x in unclaimed])
+            longest_tag_id = max([x[3] for x in unclaimed])
 
             for tag_name, user_name, is_alias, tag_id in unclaimed:
                 pages.add_line(
