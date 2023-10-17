@@ -1016,7 +1016,7 @@ class Management(commands.Cog, name="Bot Management"):
             tags = await self.bot.loop.run_in_executor(
                 None,
                 re.findall,
-                r"^\| +(?P<id>[0-9]+) +\|(?P<name>.{102})\| +(?P<user_id>[0-9]{15,19}) \| +[0-9]+ +\| +(?P<can_delete>True|False)+ +\| +(?P<is_alias>True|False)+ +\|$",
+                r"^\| +(?P<id>[0-9]+) +\|(?P<name>.{102})\| +(?P<user_id>[0-9]{15,19}) +\| +[0-9]+ +\| +(?P<can_delete>True|False)+ +\| +(?P<is_alias>True|False)+ +\|$",
                 text,
                 re.MULTILINE,
             )
