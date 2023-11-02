@@ -4,10 +4,28 @@ import typing
 
 import aiofiles
 import discord
+from discord.ext import commands
+from discord.ext.commands.context import Context
 from discord.flags import BaseFlags, fill_with_flags, flag_value
 
 from helpers import constants
 
+class RoleConverter(commands.RoleConverter):
+    async def convert(self, ctx: Context, argument: str) -> discord.Role:
+        guild = ctx.guild
+        if not guild:
+            raise commands.NoPrivateMessage()
+
+        match = self._get_id_match(argument) or re.match(r'<@&([0-9]{15,20})>$', argument)
+        if match:
+            result = guild.get_role(int(match.group(1)))
+        else:
+            result = discord.utils.find(lambda r: r.name.lower() == argument.lower(), guild.roles)
+
+        if result is None:
+            raise commands.RoleNotFound(argument)
+        
+        return result
 
 def get_perms(permissions: discord.Permissions):
     if permissions.administrator:
