@@ -6,17 +6,20 @@ from discord.ext import commands
 
 from ._base import ModerationBase
 from bot import CustomContext
-
+from helpers.helper import RoleConverter
 
 class RoleManagementCommands(ModerationBase):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.group(invoke_without_command=True, name='role')
-    async def role_group(self, ctx: CustomContext, member: discord.Member, *, role: discord.Role):
+    async def role_group(self, ctx: CustomContext, member: discord.Member, *, argument: str):
         """
         Manages roles in your channel.
         """
-        if role >= ctx.author.top_role:
+
+        role = await RoleConverter().convert(ctx, argument)
+
+        if role >= ctx.author.top_role: # type: ignore # check in __init__.py file to insure guild only.
             raise commands.BadArgument('❌ **|** You cannot assign roles higher (or equal to) your own top role!')
         if not role.is_assignable():
             raise commands.BadArgument('❌ **|** I lack permissions to add that role!')
@@ -28,9 +31,14 @@ class RoleManagementCommands(ModerationBase):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @role_group.group(invoke_without_command=True, name='remove')
-    async def role_remove(self, ctx: CustomContext, member: discord.Member, *, role: discord.Role):
-        """Removes a role from a user."""
-        if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author:
+    async def role_remove(self, ctx: CustomContext, member: discord.Member, *, argument: str):
+        """
+        Removes a role from a user.
+        """
+
+        role = await RoleConverter().convert(ctx, argument)
+
+        if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author: # type: ignore # check in __init__.py file to insure guild only.
             raise commands.BadArgument('❌ **|** You cannot remove roles higher (or equal to) your own top role!')
         if not role.is_assignable():
             raise commands.BadArgument('❌ **|** I lack permissions to add that role!')
@@ -44,9 +52,14 @@ class RoleManagementCommands(ModerationBase):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @role_group.command(name='all')
-    async def role_all(self, ctx: CustomContext, *, role: discord.Role):
-        """Adds a role to all users."""
-        if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author:
+    async def role_all(self, ctx: CustomContext, *, argument: str):
+        """
+        Adds a role to all users.
+        """
+
+        role = await RoleConverter().convert(ctx, argument)
+
+        if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author: # type: ignore # check in __init__.py file to insure guild only.
             raise commands.BadArgument('❌ **|** You cannot assign roles higher (or equal to) your own top role!')
         if not role.is_assignable():
             raise commands.BadArgument('❌ **|** I lack permissions to add that role!')
@@ -71,9 +84,14 @@ class RoleManagementCommands(ModerationBase):
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @role_remove.command(name='all')
-    async def role_remove_all(self, ctx: CustomContext, *, role: discord.Role):
-        """Removes a role from all users."""
-        if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author:
+    async def role_remove_all(self, ctx: CustomContext, *, argument: str):
+        """
+        Removes a role from all users.
+        """
+
+        role = await RoleConverter().convert(ctx, argument)
+
+        if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author: # type: ignore # check in __init__.py file to insure guild only.
             raise commands.BadArgument('❌ **|** You cannot remove roles higher (or equal to) your own top role!')
         if not role.is_assignable():
             raise commands.BadArgument('❌ **|** I lack permissions to add that role!')
@@ -113,11 +131,13 @@ class RoleManagementCommands(ModerationBase):
     @commands.bot_has_permissions(manage_roles=True)
     @role_group.command(name='multi-give')
     async def role_multi_give(self, ctx: CustomContext, roles: commands.Greedy[discord.Role], *members: discord.Member):
-        """Gives multiple roles to multiple users."""
+        """
+        Gives multiple roles to multiple users.
+        """
         if not roles:
             raise commands.BadArgument('❌ **|** You must specify at least one role!')
         for role in roles:
-            if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author:
+            if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author: # type: ignore # check in __init__.py file to insure guild only.
                 raise commands.BadArgument(
                     f'❌ **|** Sorry but **you** can\'t add `@{role.name}` because its higher (or equal to) **your top role**!'
                 )
