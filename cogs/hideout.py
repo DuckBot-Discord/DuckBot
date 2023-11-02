@@ -489,12 +489,14 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
     async def before_pleeease(self):
         await self.bot.wait_until_ready()
 
-    @commands.command(name='plead', aliases=['please', '🥺'])
-    async def plead(self, ctx: CustomContext, emoji: str):
-        img_bytes = await self.bot.db.fetchval("SELECT image FROM emojis WHERE emoji = $1", emoji)
-        if not img_bytes:
-            raise commands.BadArgument('No plead??? 🥺')
-        await ctx.send(file=discord.File(io.BytesIO(img_bytes), filename='plead.png'))
+    @commands.command(name='plead', aliases=['please', '🥺', 'mashup'])
+    async def plead(self, ctx: CustomContext, emoji: str, base_emoji: str = '🥺'):
+        message = await ctx.send(f'Loading... please wait.')
+        async with self.bot.session.get(f"https://www.emoji.cooking/mashup/{base_emoji},{emoji}.png") as response:
+            if 200 < response.status < 300:
+                return await message.edit(content='Plead not found.')
+            img_bytes = await response.read()
+            await message.edit(content=None, attachments=[discord.File(io.BytesIO(img_bytes), filename='plead.png')])
 
     @commands.command()
     @commands.has_role(981146153854861312)
