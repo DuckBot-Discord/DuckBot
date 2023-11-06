@@ -104,7 +104,7 @@ class RoleManagementCommands(ModerationBase):
         for member in ctx.guild.members:
             if role in member.roles:
                 try:
-                    await member.remove_roles(role, reason=f'Bulk-removed added by {ctx.author} (ID: {ctx.author.id})')
+                    await member.remove_roles(role, reason=f'Bulk-removed role by {ctx.author} (ID: {ctx.author.id})')
                     await asyncio.sleep(1)
                 except discord.Forbidden:
                     raise commands.BadArgument('❌ **|** I do not have permission to remove this role!')
@@ -113,6 +113,40 @@ class RoleManagementCommands(ModerationBase):
 
         await ctx.send(
             f'✅ **|** Removed role **{role}** from all users!', allowed_mentions=discord.AllowedMentions.none(), reply=False
+        )
+
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @role_remove.command(name='add_all')
+    async def role_add_all(self, ctx: CustomContext, *, argument: str):
+        """
+        Adds a role to all users.
+        """
+
+        role = await RoleConverter().convert(ctx, argument)
+
+        if role >= ctx.author.top_role and not ctx.guild.owner == ctx.author: # type: ignore # check in __init__.py file to insure guild only.
+            raise commands.BadArgument('❌ **|** You cannot add roles higher (or equal to) your own top role!')
+        if not role.is_assignable():
+            raise commands.BadArgument('❌ **|** I lack permissions to add that role!')
+
+        await ctx.send(
+            f'⏳ **|** Adding role to all users... **ETA: in {humanize.time.precisedelta((ctx.guild.member_count - len(role.members)) * 1.2)}**',
+            reply=False,
+        )
+
+        for member in ctx.guild.members:
+            if role in member.roles:
+                try:
+                    await member.remove_roles(role, reason=f'Bulk-added role by {ctx.author} (ID: {ctx.author.id})')
+                    await asyncio.sleep(1)
+                except discord.Forbidden:
+                    raise commands.BadArgument('❌ **|** I do not have permission to add this role!')
+                except discord.HTTPException:
+                    raise commands.BadArgument('⚠ **|** Something went wrong !')
+
+        await ctx.send(
+            f'✅ **|** Added role **{role}** to all users!', allowed_mentions=discord.AllowedMentions.none(), reply=False
         )
 
     @commands.has_permissions(manage_roles=True)
