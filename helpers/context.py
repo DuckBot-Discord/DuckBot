@@ -183,7 +183,7 @@ class CustomContext(commands.Context):
         *,
         embed: discord.Embed = None,
         embeds: typing.List[discord.Embed] = None,
-        reply: bool = True,
+        reply: bool = False,
         footer: bool = True,
         reference: typing.Union[discord.Message, discord.MessageReference] = None,
         gist: bool = False,
