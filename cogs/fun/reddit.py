@@ -47,7 +47,7 @@ class Reddit(FunBase):
                 return embed
 
             elif embed_type == 'POLL':
-                while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18:
+                while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18 or post.title > 256:
                     post: asyncpraw.reddit.Submission | None = await (await self.bot.reddit.subreddit(srdt)).random()
                     if not post:
                         return discord.Embed(title='Could not find a post', color=discord.Color.red())
