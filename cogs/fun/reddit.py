@@ -47,7 +47,7 @@ class Reddit(FunBase):
                 return embed
 
             elif embed_type == 'POLL':
-                while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18 or post.title > 256:
+                while not hasattr(post, 'poll_data') or not post.poll_data or post.over_18:
                     post: asyncpraw.reddit.Submission | None = await (await self.bot.reddit.subreddit(srdt)).random()
                     if not post:
                         return discord.Embed(title='Could not find a post', color=discord.Color.red())
@@ -70,7 +70,7 @@ class Reddit(FunBase):
                     icon_url='https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Reddit_icon.svg/2048px-Reddit_icon.svg.png',
                     text=f'From reddit.com/r/{srdt}',
                 )
-                embed.title = post.title if title is True else None
+                embed.title = str(post.title)[:256] if title is True else None
                 return embed, emojis
         except:
             await self.bot.on_error('')
