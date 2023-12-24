@@ -27,7 +27,7 @@ class NewAccountGate(ModerationBase):
             await self.bot.db.execute('UPDATE GUILDS SET min_join_age = NULL WHERE guild_id = $1', ctx.guild.id)
             await ctx.send('Unset minimum account age')
         else:
-            seconds = (time.dt - discord.utils.utcnow()).total_seconds()
+            seconds = (time.dt - ctx.message.created_at).total_seconds()
             await self.bot.db.execute(
                 'INSERT INTO GUILDS (guild_id, min_join_age) VALUES ($1, $2)'
                 'ON CONFLICT (guild_id) DO UPDATE SET min_join_age = $2',
