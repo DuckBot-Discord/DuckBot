@@ -290,7 +290,8 @@ CREATE TABLE public.guilds (
     snipe_enabled boolean DEFAULT false,
     modlog bigint,
     special_roles bigint[] DEFAULT ARRAY[]::bigint[] NOT NULL,
-    until timestamp with time zone
+    until timestamp with time zone,
+    min_join_age BIGINT
 );
 
 

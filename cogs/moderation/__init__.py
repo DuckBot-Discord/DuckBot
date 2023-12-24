@@ -4,6 +4,7 @@ from .clear_messages import RemovalCommands
 from .mute_members import MuteCommands
 from .role_management import RoleManagementCommands
 from .snipe import Snipe
+from .new_account_gate import NewAccountGate
 from discord.ext.commands import NoPrivateMessage
 
 
@@ -14,6 +15,7 @@ class Moderation(
     MuteCommands,
     RoleManagementCommands,
     Snipe,
+    NewAccountGate,
 ):
     """
     🔨 Commands to facilitate server moderation, and all utilities for admins and mods.
