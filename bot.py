@@ -1012,3 +1012,5 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         else:
             return SyncResult(commands=[], synced=False)
+
+# Leo is a bitch -Hadock
