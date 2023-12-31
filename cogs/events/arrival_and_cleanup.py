@@ -52,10 +52,15 @@ class ArrivalAndCleanup(EventsBase):
             or discord.utils.find(lambda c: 'general' in c.name, channels)
             or discord.utils.find(lambda c: c == guild.system_channel, channels)
         )
-        if not channel:
-            public_channels = [c for c in channels if c.permissions_for(guild.default_role).send_messages]
-            return random.choice(public_channels) or random.choice(channels)
-        return channel
+
+        if channel:
+            return channel
+
+        public_channels = [c for c in channels if c.permissions_for(guild.default_role).send_messages]
+        if public_channels:
+            return random.choice(public_channels)
+
+        return random.choice(channels)
 
     @commands.Cog.listener("on_guild_join")
     async def on_bot_added(self, guild: discord.Guild):
