@@ -98,8 +98,6 @@ class VoiceLogs(LoggingBase):
             timestamp=discord.utils.utcnow(),
             description=f"**Channel** <#{stage_instance.channel_id}> ({stage_instance.channel_id})\n"
             f"**Topic:** {stage_instance.topic}\n"
-            f"**Public** {constants.DEFAULT_TICKS[stage_instance.is_public()]}\n"
-            f"**Discoverable:** {constants.DEFAULT_TICKS[stage_instance.discoverable_disabled]}\n",
         )
         embed.set_footer(text=f"Channel ID: {stage_instance.channel_id}")
         self.log(embed, guild=stage_instance.guild, send_to=self.send_to.voice)
