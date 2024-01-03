@@ -190,7 +190,7 @@ class UntilFlag(Generic[T, FCT]):
             channel: Optional[discord.TextChannel] = None
             reply: Optional[discord.Message] = None
         @commands.command()
-        async def send(self, ctx: HideoutContext, *, text: UntilFlag[SendFlags]):
+        async def send(self, ctx: HideoutContext, *, text: UntilFlag[str, SendFlags]):
             '''Send a message to a channel.'''
             channel = text.flags.channel or ctx.channel
             await channel.send(text.value)
