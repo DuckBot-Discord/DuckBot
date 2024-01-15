@@ -1,0 +1,3 @@
+[submodule "cogs/private"]
+	path = cogs/private
+	url = https://github.com/DuckBot-Discord/private

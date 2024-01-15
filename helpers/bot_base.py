@@ -47,6 +47,7 @@ extensions = [
     "cogs.test",
     "cogs.utility",
     "cogs.moderation",
+    "cogs.private",
 ]
 load_dotenv()
 if os.getenv('DAGPI_TOKEN'):
