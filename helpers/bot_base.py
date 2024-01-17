@@ -49,7 +49,7 @@ extensions = [
     "cogs.moderation",
     "cogs.private",
 ]
-load_dotenv()
+load_dotenv(override=True)
 if os.getenv('DAGPI_TOKEN'):
     extensions.append("cogs.image_manipulation")
 
