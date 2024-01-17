@@ -439,7 +439,7 @@ class MyHelp(commands.HelpCommand):
         mapping = {
             cog: cog.get_commands()
             for cog in sorted(bot.cogs.values(), key=lambda c: len(c.get_commands()), reverse=True)
-            if cog.qualified_name not in ignored_cogs
+            if cog.qualified_name not in ignored_cogs and not getattr(cog, "ignored", False)
         }
         return mapping
 
