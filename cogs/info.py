@@ -395,7 +395,7 @@ class HelpView(discord.ui.View):
             "DuckBot Hideout",
         ]
         for cog, cog_commands in mapping.items():
-            if cog is None or cog.qualified_name in ignored_cogs:
+            if cog is None or cog.qualified_name in ignored_cogs or getattr(cog, "ignored", False):
                 continue
             command_signatures = [get_minimal_command_signature(self.ctx, c) for c in cog_commands]
             if command_signatures:
