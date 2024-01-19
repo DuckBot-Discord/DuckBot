@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import random
 import typing
-from typing import TYPE_CHECKING, Annotated
+from logging import getLogger
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, Annotated
 
 import discord
 from discord.ext import commands
@@ -11,6 +12,7 @@ from discord.ext import commands
 import errors
 from bot import CustomContext
 from helpers.time_formats import human_join
+
 from ._base import ConfigBase
 
 if TYPE_CHECKING:
@@ -19,6 +21,9 @@ else:
     from discord.ext.commands import clean_content
 
 default_message = "**{inviter}** just added **{user}** to **{server}** (They're the **{count}** to join)"
+
+
+log = getLogger(__name__)
 
 
 def make_ordinal(n):
@@ -291,7 +296,7 @@ class Welcome(ConfigBase):
         await ctx.send(message.format(**to_format), allowed_mentions=discord.AllowedMentions.none())
 
     @commands.Cog.listener()
-    async def on_invite_update(self, member: discord.Member, invite: discord.Invite):
+    async def on_invite_update(self, member: discord.Member, invite: discord.Invite | None):
         try:
             channel = await self.bot.get_welcome_channel(member)
         except errors.NoWelcomeChannel:
@@ -314,6 +319,9 @@ class Welcome(ConfigBase):
             'inviter-mention': str(invite.inviter.mention if invite and invite.inviter else 'N/A'),
         }
 
-        await channel.send(
-            message.format(**to_format), allowed_mentions=discord.AllowedMentions(users=True, roles=True, everyone=False)
-        )
+        try:
+            await channel.send(
+                message.format(**to_format), allowed_mentions=discord.AllowedMentions(users=True, roles=True, everyone=False)
+            )
+        except discord.HTTPException:
+            log.info('Could not send welcome message to guild %s: %s', member.guild.id, to_format, exc_info=False)

@@ -38,7 +38,7 @@ class LoggingBase(commands.Cog):
         self,
         embed,
         *,
-        guild: typing.Union[discord.Guild, int],
+        guild: typing.Union[discord.Guild, discord.PartialInviteGuild, int],
         send_to: str = "default",
     ):
         guild_id = getattr(guild, "id", guild)
@@ -49,8 +49,7 @@ class LoggingBase(commands.Cog):
     async def deliver_logs(self):
         try:
             for guild_id, webhooks in self.bot.log_channels.items():
-                for deliver_type, cache in self.bot.log_cache[guild_id].items():
-
+                for deliver_type in self.bot.log_cache[guild_id].keys():
                     embeds = self.bot.log_cache[guild_id][deliver_type][:10]
                     self.bot.log_cache[guild_id][deliver_type] = self.bot.log_cache[guild_id][deliver_type][10:]
                     webhook_url = getattr(webhooks, deliver_type, None)

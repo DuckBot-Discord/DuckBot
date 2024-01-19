@@ -22,10 +22,10 @@ class JoinLeaveLogs(LoggingBase):
         if invite:
             embed.add_field(
                 name='Invited by: ',
-                value=f"{discord.utils.escape_markdown(str(invite.inviter))} ({invite.inviter.mention})"
+                value=f"{discord.utils.escape_markdown(str(invite.inviter))} ({invite.inviter.mention if invite.inviter else None})"
                 f"\n**Using invite code:** [{invite.code}]({invite.url})"
                 f"\n**Expires:** {discord.utils.format_dt(invite.expires_at) if invite.expires_at else 'Never'}"
-                f"\n**Uses:** {invite.uses}/{invite.max_uses if invite.max_uses > 0 else 'unlimited'}",
+                f"\n**Uses:** {invite.uses}/{invite.max_uses if (invite.max_uses or 0) > 0 else 'unlimited'}",
                 inline=False,
             )
         self.log(embed, guild=member.guild, send_to=self.send_to.join_leave)
@@ -50,6 +50,8 @@ class JoinLeaveLogs(LoggingBase):
 
     @commands.Cog.listener('on_invite_create')
     async def logger_on_invite_create(self, invite: discord.Invite):
+        if not invite.guild:
+            return
         if invite.guild.id not in self.bot.log_channels or not self.bot.guild_loggings[invite.guild.id].invite_create:
             return
         embed = discord.Embed(
@@ -59,7 +61,7 @@ class JoinLeaveLogs(LoggingBase):
             description=f"**Inviter:** {invite.inviter}{f' ({invite.inviter.id})' if invite.inviter else ''}\n"
             f"**Invite Code:** [{invite.code}]({invite.url})\n"
             f"**Expires:** {discord.utils.format_dt(invite.expires_at, style='R') if invite.expires_at else 'Never'}\n"
-            f"**Max Uses:** {invite.max_uses if invite.max_uses > 0 else 'Unlimited'}\n"
+            f"**Max Uses:** {invite.max_uses if (invite.max_uses or 0) > 0 else 'Unlimited'}\n"
             f"**Channel:** {invite.channel}\n"
             f"**Grants Temporary Membership:** {constants.DEFAULT_TICKS[invite.temporary]}",
         )
