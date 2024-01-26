@@ -17,7 +17,9 @@ class NewAccountGate(ModerationBase):
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     async def min_age(self, ctx: CustomContext, time: ShortTime = None):
-        """Sets up or un-sets the minimum account age for the server.
+        """Sets up or un-sets the minimum account age for the server. 
+
+        Joining members who's account age is smaller will be automatically kicked.
 
         Run with no argument to un-set the minimum account age.
         Example usage: `%PRE%min-age 1month2weeks1day` (no spaces!!!)
@@ -38,9 +40,9 @@ class NewAccountGate(ModerationBase):
 
     @commands.Cog.listener('on_member_join')
     async def ban_new_members(self, member: discord.Member):
-        """Bans joining members, as per the user-defined settings."""
-        if not member.guild.me.guild_permissions.ban_members:
-            return log.warn('For server %s could not auto-ban member %s (lack of permissions)', member.guild, member)
+        """kicks joining members, as per the user-defined settings."""
+        if not member.guild.me.guild_permissions.kick_members:
+            return
 
         threshold_seconds: int | None = await self.bot.db.fetchval(
             'SELECT min_join_age FROM guilds WHERE guild_id = $1', member.guild.id
@@ -51,4 +53,4 @@ class NewAccountGate(ModerationBase):
 
         if account_age_seconds < threshold_seconds:
             min_age = discord.utils.utcnow() + datetime.timedelta(seconds=threshold_seconds)
-            await member.ban(reason=f'Account too young. Did not exceed the *{human_timedelta(min_age)} old* threshold.')
+            await member.kick(reason=f'Account too young. Did not exceed the *{human_timedelta(min_age)} old* threshold.')
