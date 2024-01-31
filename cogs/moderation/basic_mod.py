@@ -109,7 +109,7 @@ class BasicModCommands(ModerationBase):
         if len(new) > 32:
             raise commands.BadArgument(f'Nickname too long. {len(new)}/32')
         self.bot_can_execute_action(ctx, member)
-        if not self.can_execute_action(ctx, ctx.author, member) and ctx.guild.id != 745059550998298756:
+        if not self.can_execute_action(ctx, ctx.author, member) and ctx.guild.id != 745059550998298756 and not ctx.author == member:
             raise commands.MissingPermissions(['role_hierarchy'])
 
         await member.edit(nick=new)
