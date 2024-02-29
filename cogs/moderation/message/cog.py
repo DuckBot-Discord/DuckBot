@@ -66,7 +66,6 @@ class MessagePurge(DuckCog):
 
         if search_argument:
             await search_argument.init(ctx)
-            return await ctx.send(repr(search_argument))
 
             predicate = search_argument.build_predicate()
 

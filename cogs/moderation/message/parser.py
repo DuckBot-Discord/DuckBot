@@ -86,8 +86,6 @@ class SearchResult:
                 else:
                     raise SomethingWentWrong('Something borked.')
 
-                print(current)
-
                 if current is Separator.AND:
                     meth = lambda x, y: x and y
                 else:
