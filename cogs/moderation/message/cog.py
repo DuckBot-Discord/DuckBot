@@ -7,12 +7,32 @@ from typing import Optional, Annotated
 import discord
 from discord.ext import commands
 
-from utils import DuckCog, DuckContext, group
+from utils import DuckCog, DuckContext, group, command
 from .parser import SearchResult, PurgeSearchConverter
 from .tokens import DateDeterminer
 
 
 class MessagePurge(DuckCog):
+    async def purge(self, ctx: commands.Context, search: int | None, predicate, **extra_kwargs):
+        if not isinstance(ctx.channel, discord.abc.GuildChannel):
+            return "..."
+
+        async with ctx.typing():
+            messages = await ctx.channel.purge(limit=search, check=predicate, **extra_kwargs)
+
+            spammers = Counter(str(m.author) for m in messages)
+            deletion_header = f"Deleted {len(messages)} message" + ('s.' if len(messages) != 1 else '.')
+
+            if spammers:
+                formatted_counts = '\n\n' + '\n'.join(
+                    f"**{k}:** {v}" for k, v in sorted(spammers.items(), key=lambda x: x[1], reverse=True)
+                )
+
+                if (len(deletion_header) + len(formatted_counts)) <= 2000:
+                    deletion_header += formatted_counts
+
+        return deletion_header
+
     @group(
         name='purge',
         aliases=['remove', 'clear', 'delete', 'clean'],
@@ -96,20 +116,33 @@ class MessagePurge(DuckCog):
             if not await ctx.confirm(f'Are you sure you want to search through {search} messages and delete matching ones?'):
                 return
 
-            async with ctx.typing():
-                messages = await ctx.channel.purge(limit=search, check=predicate, **extra_kwargs)
-
-                spammers = Counter(str(m.author) for m in messages)
-                deletion_header = f"Deleted {len(messages)} message" + ('s.' if len(messages) != 1 else '.')
-
-                if spammers:
-                    formatted_counts = '\n\n' + '\n'.join(
-                        f"**{k}:** {v}" for k, v in sorted(spammers.items(), key=lambda x: x[1], reverse=True)
-                    )
-
-                    if (len(deletion_header) + len(formatted_counts)) <= 2000:
-                        deletion_header += formatted_counts
-
+            deletion_header = await self.purge(ctx, search, predicate, **extra_kwargs)
             await ctx.send(deletion_header, delete_after=10)
         else:
             await ctx.send('Somehow this was ran in a DM?')
+
+    @command()
+    @commands.cooldown(1, 5.0, type=commands.BucketType.channel)
+    async def cleanup(self, ctx: DuckContext, search: int = 25):
+        """
+        Cleans up the bot's messages from the channel.
+
+        If a search number is specified, it searches that many messages to delete.
+        If the bot has Manage Messages permissions then it will try to delete
+        messages that look like they invoked the bot as well.
+
+        After the cleanup is completed, the bot will send you a message with
+        which people got their messages deleted and their count. This is useful
+        to see which users are spammers.
+
+        Members with Manage Messages can search up to 1000 messages.
+        Members without can search up to 25 messages.
+        """
+        if not ctx.permissions.manage_messages:
+            search = min(search, 25)
+        else:
+            search = min(search, 1000)
+        prefixes = tuple(await ctx.bot.get_prefix(ctx.message))
+        check = lambda m: (m.author == ctx.me or m.content.startswith(prefixes)) and not m.mentions
+        message = await self.purge(ctx, search, check)
+        await ctx.send(message, delete_after=10)
