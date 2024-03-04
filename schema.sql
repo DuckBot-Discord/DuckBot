@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS guilds (
     prefixes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     muted_role_id BIGINT,
     muted_role_mode INT DEFAULT 0,
+    min_join_age BIGINT,
     mutes BIGINT[] NOT NULL DEFAULT ARRAY[]::BIGINT[]
 );
 
