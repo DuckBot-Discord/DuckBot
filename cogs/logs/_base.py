@@ -20,8 +20,8 @@ invalidated_webhook = "https://canary.discord.com/api/webhooks/00000000000000000
 class LoggingBase(commands.Cog):
     def __init__(self, bot):
         self.bot: DuckBot = bot
-        self.deliver_logs.start()
         _nt_send_to = namedtuple("send_to", ["default", "message", "member", "join_leave", "voice", "server"])
+
         self.send_to = _nt_send_to(
             default="default",
             message="message",
@@ -30,79 +30,83 @@ class LoggingBase(commands.Cog):
             server="server",
             voice="voice",
         )
+        self.send_lock = asyncio.Lock()
+        self.deliver_logs.start()
 
     def cog_unload(self) -> None:
         self.deliver_logs.cancel()
 
-    def log(
+    async def log(
         self,
         embed,
         *,
         guild: typing.Union[discord.Guild, discord.PartialInviteGuild, int],
         send_to: str = "default",
     ):
-        guild_id = getattr(guild, "id", guild)
-        if guild_id in self.bot.log_channels:
-            self.bot.log_cache[guild_id][send_to].append(embed)
+        async with self.send_lock:
+            guild_id = getattr(guild, "id", guild)
+            if guild_id in self.bot.log_channels:
+                self.bot.log_cache[guild_id][send_to].append(embed)
 
     @tasks.loop(seconds=3)
     async def deliver_logs(self):
-        try:
-            for guild_id, webhooks in self.bot.log_channels.items():
-                for deliver_type in self.bot.log_cache[guild_id].keys():
-                    embeds = self.bot.log_cache[guild_id][deliver_type][:10]
-                    self.bot.log_cache[guild_id][deliver_type] = self.bot.log_cache[guild_id][deliver_type][10:]
-                    webhook_url = getattr(webhooks, deliver_type, None)
-                    if embeds:
-                        if webhook_url:
-                            webhook = discord.Webhook.from_url(
-                                webhook_url or invalidated_webhook,
-                                bot_token=self.bot.http.token,
-                                session=self.bot.session,
-                            )
-                            try:
-                                await webhook.send(embeds=embeds)
-                            except discord.NotFound:
-                                self.bot.loop.create_task(
-                                    self.create_and_deliver(
-                                        embeds=embeds,
-                                        deliver_type=deliver_type,
-                                        guild_id=guild_id,
-                                    )
-                                )
-                                await asyncio.sleep(1)
-                            except Exception as e:
-                                print("Error during task!")
-                                print(e)
-                        else:
-                            deliver_type = self.send_to.default
-                            webhook_url = webhooks.default
-                            webhook = discord.Webhook.from_url(
-                                webhook_url or invalidated_webhook,
-                                bot_token=self.bot.http.token,
-                                session=self.bot.session,
-                            )
-                            try:
-                                await webhook.send(embeds=embeds)
-                            except discord.NotFound:
-                                self.bot.loop.create_task(
-                                    self.create_and_deliver(
-                                        embeds=embeds,
-                                        deliver_type=deliver_type,
-                                        guild_id=guild_id,
-                                    )
-                                )
-                                await asyncio.sleep(1)
-                            except Exception as e:
-                                print("Error during task!")
-                                print(e)
-        except Exception as e:  # noqa
-            if isinstance(e, RuntimeError) and str(e) == str(RuntimeError('dictionary changed size during iteration')):
-                return
+        async with self.send_lock:
             try:
-                await self.bot.on_error("channel_logs")
-            except Exception as e:
-                logging.error("something happened while task was running", exc_info=e)
+                for guild_id, webhooks in self.bot.log_channels.items():
+                    for deliver_type in self.bot.log_cache[guild_id].keys():
+                        embeds = self.bot.log_cache[guild_id][deliver_type][:10]
+                        self.bot.log_cache[guild_id][deliver_type] = self.bot.log_cache[guild_id][deliver_type][10:]
+                        webhook_url = getattr(webhooks, deliver_type, None)
+                        if embeds:
+                            if webhook_url:
+                                webhook = discord.Webhook.from_url(
+                                    webhook_url or invalidated_webhook,
+                                    bot_token=self.bot.http.token,
+                                    session=self.bot.session,
+                                )
+                                try:
+                                    await webhook.send(embeds=embeds)
+                                except discord.NotFound:
+                                    self.bot.loop.create_task(
+                                        self.create_and_deliver(
+                                            embeds=embeds,
+                                            deliver_type=deliver_type,
+                                            guild_id=guild_id,
+                                        )
+                                    )
+                                    await asyncio.sleep(1)
+                                except Exception as e:
+                                    print("Error during task!")
+                                    print(e)
+                            else:
+                                deliver_type = self.send_to.default
+                                webhook_url = webhooks.default
+                                webhook = discord.Webhook.from_url(
+                                    webhook_url or invalidated_webhook,
+                                    bot_token=self.bot.http.token,
+                                    session=self.bot.session,
+                                )
+                                try:
+                                    await webhook.send(embeds=embeds)
+                                except discord.NotFound:
+                                    self.bot.loop.create_task(
+                                        self.create_and_deliver(
+                                            embeds=embeds,
+                                            deliver_type=deliver_type,
+                                            guild_id=guild_id,
+                                        )
+                                    )
+                                    await asyncio.sleep(1)
+                                except Exception as e:
+                                    print("Error during task!")
+                                    print(e)
+            except Exception as e:  # noqa
+                if isinstance(e, RuntimeError) and str(e) == str(RuntimeError('dictionary changed size during iteration')):
+                    return
+                try:
+                    await self.bot.on_error("channel_logs")
+                except Exception as e:
+                    logging.error("something happened while task was running", exc_info=e)
 
     @deliver_logs.before_loop
     async def wait(self):
@@ -131,7 +135,7 @@ class LoggingBase(commands.Cog):
                     or "" + f"\nCould not deliver to the {deliver_type} channel. Sent here instead!\n"
                     f"Please set or set the {deliver_type} channel. do `db.help log` for info."
                 )
-                self.log(e, guild=guild_id, send_to=self.send_to.default)
+                await self.log(e, guild=guild_id, send_to=self.send_to.default)
             return
         if not channel:
             return
@@ -169,7 +173,7 @@ class LoggingBase(commands.Cog):
                     or "" + f"\nCould not deliver to the {deliver_type} channel. Sent here instead!\n"
                     f"Please give me manage_webhooks permissions in #{channel.name}."
                 )
-                self.log(e, guild=guild_id, send_to=self.send_to.default)
+                await self.log(e, guild=guild_id, send_to=self.send_to.default)
         else:
             await channel.send(
                 f"An error occurred delivering the message to {channel.mention}!"

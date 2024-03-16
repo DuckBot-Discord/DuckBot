@@ -27,7 +27,7 @@ class ServerLogs(LoggingBase):
             timestamp=discord.utils.utcnow(),
         )
         embed.set_footer(text=f'Channel ID: {channel.id}')
-        self.log(embed, guild=channel.guild, send_to=self.send_to.server)
+        await self.log(embed, guild=channel.guild, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_channel_create')
     async def logger_on_guild_channel_create(self, channel: guild_channels):
@@ -51,7 +51,7 @@ class ServerLogs(LoggingBase):
             if perms:
                 embed.add_field(name=f'Permissions for {target}', value='\n'.join(perms), inline=False)
         embed.set_footer(text=f'Channel ID: {channel.id}')
-        self.log(embed, guild=channel.guild, send_to=self.send_to.server)
+        await self.log(embed, guild=channel.guild, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_channel_update')
     async def logger_on_guild_channel_update(self, before: guild_channels, after: guild_channels):
@@ -100,9 +100,9 @@ class ServerLogs(LoggingBase):
                         description='\n'.join(updated_perms),
                     )
                     perm_emb.set_footer(text=f'Object ID: {target.id}\nChannel ID: {after.id}')
-                    self.log(perm_emb, guild=after.guild, send_to=self.send_to.server)
+                    await self.log(perm_emb, guild=after.guild, send_to=self.send_to.server)
         if deliver:
-            self.log(embed, guild=after.guild, send_to=self.send_to.server)
+            await self.log(embed, guild=after.guild, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_update')
     async def logger_on_guild_update(self, before: discord.Guild, after: discord.Guild):
@@ -126,7 +126,7 @@ class ServerLogs(LoggingBase):
                     title='Server icon removed', timestamp=discord.utils.utcnow(), colour=discord.Colour.red()
                 )
                 embed.set_footer(text=f'Server ID: {after.id}')
-            self.log(embed, guild=after, send_to=self.send_to.server)
+            await self.log(embed, guild=after, send_to=self.send_to.server)
         if before.name != after.name:
             embed = discord.Embed(
                 title='Server Name Updated',
@@ -136,7 +136,7 @@ class ServerLogs(LoggingBase):
                 f"**After:** {discord.utils.escape_markdown(after.name)}",
             )
             embed.set_footer(text=f'Server id: {after.id}')
-            self.log(embed, guild=after, send_to=self.send_to.server)
+            await self.log(embed, guild=after, send_to=self.send_to.server)
         if before.owner != after.owner:
             embed = discord.Embed(
                 title='Server Owner Updated!',
@@ -145,7 +145,7 @@ class ServerLogs(LoggingBase):
                 description=f"**From:** {discord.utils.escape_markdown(str(before.owner))}\n"
                 f"**To:** {discord.utils.escape_markdown(str(after.owner))}",
             )
-            self.log(embed, guild=after, send_to=self.send_to.server)
+            await self.log(embed, guild=after, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_role_create')
     async def logger_on_guild_role_create(self, role: discord.Role):
@@ -168,7 +168,7 @@ class ServerLogs(LoggingBase):
         )
         embed.add_field(name='Permissions enabled:', value=enabled, inline=False)
         embed.set_footer(text=f'Role ID: {role.id}')
-        self.log(embed, guild=role.guild, send_to=self.send_to.server)
+        await self.log(embed, guild=role.guild, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_role_delete')
     async def logger_on_guild_role_delete(self, role: discord.Role):
@@ -193,7 +193,7 @@ class ServerLogs(LoggingBase):
         )
         embed.add_field(name='Permissions enabled:', value=enabled, inline=False)
         embed.set_footer(text=f'Role ID: {role.id}')
-        self.log(embed, guild=role.guild, send_to=self.send_to.server)
+        await self.log(embed, guild=role.guild, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_role_update')
     async def logger_on_guild_role_update(self, before: discord.Role, after: discord.Role):
@@ -273,7 +273,7 @@ class ServerLogs(LoggingBase):
 
         embed.description = role_update + hoist_update + ping_update + color_update + position_update
         if deliver:
-            self.log(embed, guild=after.guild, send_to=self.send_to.server)
+            await self.log(embed, guild=after.guild, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_emojis_update')
     async def logger_on_guild_emojis_update(
@@ -293,7 +293,7 @@ class ServerLogs(LoggingBase):
                 description=f"{emoji} - [{emoji.name}]({emoji.url})",
             )
             embed.set_footer(text=f"Emoji ID: {emoji.id}")
-            self.log(embed, guild=guild, send_to=self.send_to.server)
+            await self.log(embed, guild=guild, send_to=self.send_to.server)
         for emoji in removed:
             if not self.bot.guild_loggings[guild.id].emoji_delete:
                 break
@@ -305,7 +305,7 @@ class ServerLogs(LoggingBase):
                 f"\n**Created at:** {discord.utils.format_dt(emoji.created_at)} ({discord.utils.format_dt(emoji.created_at, style='R')})",
             )
             embed.set_footer(text=f"Emoji ID: {emoji.id}")
-            self.log(embed, guild=guild, send_to=self.send_to.server)
+            await self.log(embed, guild=guild, send_to=self.send_to.server)
 
         existant = set.union(set(after) - set(added), set(before) - set(removed))
         for emoji in existant:
@@ -340,7 +340,7 @@ class ServerLogs(LoggingBase):
             if removed:
                 removed_roles = f"\n**Removed:** {', '.join([r.mention for r in removed])}"
             embed.add_field(name='Roles updated', inline=False, value=added_roles + removed_roles)
-        self.log(embed, guild=guild, send_to=self.send_to.server)
+        await self.log(embed, guild=guild, send_to=self.send_to.server)
 
     @commands.Cog.listener('on_guild_stickers_update')
     async def logger_on_guild_stickers_update(
@@ -362,7 +362,7 @@ class ServerLogs(LoggingBase):
             if sticker.description:
                 embed.add_field(name='Description:', value=sticker.description, inline=False)
             embed.set_footer(text=f"Sticker ID: {sticker.id}")
-            self.log(embed, guild=guild, send_to=self.send_to.server)
+            await self.log(embed, guild=guild, send_to=self.send_to.server)
         for sticker in removed:
             if not self.bot.guild_loggings[guild.id].sticker_delete:
                 break
@@ -376,7 +376,7 @@ class ServerLogs(LoggingBase):
             if sticker.description:
                 embed.add_field(name='Description:', value=sticker.description, inline=False)
             embed.set_footer(text=f"Sticker ID: {sticker.id}")
-            self.log(embed, guild=guild, send_to=self.send_to.server)
+            await self.log(embed, guild=guild, send_to=self.send_to.server)
 
         existant = set.union(set(after) - set(added), set(before) - set(removed))
         for sticker in existant:
@@ -404,4 +404,4 @@ class ServerLogs(LoggingBase):
             embed.add_field(
                 name='Name updated:', inline=False, value=f"**Before:** {before.description}\n**After:** {after.description}"
             )
-        self.log(embed, guild=guild, send_to=self.send_to.server)
+        await self.log(embed, guild=guild, send_to=self.send_to.server)

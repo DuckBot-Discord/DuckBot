@@ -54,7 +54,7 @@ class MemberLogs(LoggingBase):
             )
             deliver = True
         if deliver:
-            self.log(embed, guild=after.guild, send_to=self.send_to.member)
+            await self.log(embed, guild=after.guild, send_to=self.send_to.member)
 
     @commands.Cog.listener('on_user_update')
     async def logger_on_user_update(self, before: discord.User, after: discord.User):
@@ -98,7 +98,7 @@ class MemberLogs(LoggingBase):
         if deliver:
             for g in guilds:
                 if self.bot.guild_loggings[g].member_update:
-                    self.log(embed, guild=g, send_to=self.send_to.member)
+                    await self.log(embed, guild=g, send_to=self.send_to.member)
 
     @commands.Cog.listener('on_member_ban')
     async def logger_on_member_ban(self, guild: discord.Guild, user: discord.User):
@@ -112,7 +112,7 @@ class MemberLogs(LoggingBase):
         )
         embed.set_author(name=str(user), icon_url=user.display_avatar.url)
         embed.set_footer(text=f"User ID: {user.id}")
-        self.log(embed, guild=guild, send_to=self.send_to.member)
+        await self.log(embed, guild=guild, send_to=self.send_to.member)
 
     @commands.Cog.listener('on_member_unban')
     async def logger_on_member_unban(self, guild: discord.Guild, user: discord.User):
@@ -126,4 +126,4 @@ class MemberLogs(LoggingBase):
         )
         embed.set_author(name=str(user), icon_url=user.display_avatar.url)
         embed.set_footer(text=f"User ID: {user.id}")
-        self.log(embed, guild=guild, send_to=self.send_to.member)
+        await self.log(embed, guild=guild, send_to=self.send_to.member)

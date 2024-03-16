@@ -27,7 +27,7 @@ class VoiceLogs(LoggingBase):
             )
             embed.set_author(name=str(member), icon_url=member.display_avatar.url)
             embed.set_footer(text=f"Member ID: {member.id}")
-            self.log(embed, guild=member.guild, send_to=self.send_to.voice)
+            await self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if not before.channel and after.channel and self.bot.guild_loggings[member.guild.id].voice_join:
             embed = discord.Embed(
                 title='Member joined a voice channel:',
@@ -37,7 +37,7 @@ class VoiceLogs(LoggingBase):
             )
             embed.set_author(name=str(member), icon_url=member.display_avatar.url)
             embed.set_footer(text=f"Member ID: {member.id}")
-            self.log(embed, guild=member.guild, send_to=self.send_to.voice)
+            await self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if before.channel and not after.channel and self.bot.guild_loggings[member.guild.id].voice_leave:
             embed = discord.Embed(
                 title='Member left a voice channel:',
@@ -47,7 +47,7 @@ class VoiceLogs(LoggingBase):
             )
             embed.set_author(name=str(member), icon_url=member.display_avatar.url)
             embed.set_footer(text=f"Member ID: {member.id}")
-            self.log(embed, guild=member.guild, send_to=self.send_to.voice)
+            await self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if not self.bot.guild_loggings[member.guild.id].voice_mod:
             return
         if before.deaf != after.deaf:
@@ -59,7 +59,7 @@ class VoiceLogs(LoggingBase):
                 )
                 embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
-                self.log(embed, guild=member.guild, send_to=self.send_to.voice)
+                await self.log(embed, guild=member.guild, send_to=self.send_to.voice)
             if before.deaf:
                 embed = discord.Embed(
                     title='Member Un-deafened by a Moderator',
@@ -68,7 +68,7 @@ class VoiceLogs(LoggingBase):
                 )
                 embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
-                self.log(embed, guild=member.guild, send_to=self.send_to.voice)
+                await self.log(embed, guild=member.guild, send_to=self.send_to.voice)
         if before.mute != after.mute:
             if after.mute:
                 embed = discord.Embed(
@@ -76,14 +76,14 @@ class VoiceLogs(LoggingBase):
                 )
                 embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
-                self.log(embed, guild=member.guild, send_to=self.send_to.voice)
+                await self.log(embed, guild=member.guild, send_to=self.send_to.voice)
             if before.mute:
                 embed = discord.Embed(
                     title='Member Un-muted by a Moderator', colour=discord.Colour.yellow(), timestamp=discord.utils.utcnow()
                 )
                 embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"Member ID: {member.id}")
-                self.log(embed, guild=member.guild, send_to=self.send_to.voice)
+                await self.log(embed, guild=member.guild, send_to=self.send_to.voice)
 
     @commands.Cog.listener('on_stage_instance_create')
     async def logger_on_stage_instance_create(self, stage_instance: discord.StageInstance):
@@ -97,10 +97,10 @@ class VoiceLogs(LoggingBase):
             colour=discord.Colour.teal(),
             timestamp=discord.utils.utcnow(),
             description=f"**Channel** <#{stage_instance.channel_id}> ({stage_instance.channel_id})\n"
-            f"**Topic:** {stage_instance.topic}\n"
+            f"**Topic:** {stage_instance.topic}\n",
         )
         embed.set_footer(text=f"Channel ID: {stage_instance.channel_id}")
-        self.log(embed, guild=stage_instance.guild, send_to=self.send_to.voice)
+        await self.log(embed, guild=stage_instance.guild, send_to=self.send_to.voice)
 
     @commands.Cog.listener('on_stage_instance_delete')
     async def logger_on_stage_instance_delete(self, stage_instance: discord.StageInstance):
@@ -117,7 +117,7 @@ class VoiceLogs(LoggingBase):
             f"**Topic:** {stage_instance.topic}\n",
         )
         embed.set_footer(text=f"Channel ID: {stage_instance.channel_id}")
-        self.log(embed, guild=stage_instance.guild, send_to=self.send_to.voice)
+        await self.log(embed, guild=stage_instance.guild, send_to=self.send_to.voice)
 
     @commands.Cog.listener('on_stage_instance_update')
     async def logger_on_stage_instance_update(self, before: discord.StageInstance, after: discord.StageInstance):

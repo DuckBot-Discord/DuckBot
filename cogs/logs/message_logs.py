@@ -35,7 +35,7 @@ class MessageLogs(LoggingBase):
                 )
             if message.stickers:
                 embed.add_field(name='Stickers:', value='\n'.join([a.name for a in message.stickers]), inline=False)
-            self.log(embed, guild=message.guild, send_to=self.send_to.message)
+            await self.log(embed, guild=message.guild, send_to=self.send_to.message)
 
     @commands.Cog.listener('on_raw_bulk_message_delete')
     async def logger_on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
@@ -69,7 +69,7 @@ class MessageLogs(LoggingBase):
         embed.description = '\n'.join(msgs)[0:4000]
         embed.add_field(name='Showing: ', value=f"{len(msgs)}/{len(payload.message_ids)} messages.", inline=False)
         embed.set_footer(text=f'Channel: {payload.channel_id}')
-        self.log(embed, guild=payload.guild_id, send_to=self.send_to.message)
+        await self.log(embed, guild=payload.guild_id, send_to=self.send_to.message)
 
     @commands.Cog.listener('on_message_edit')
     async def logger_on_message_edit(self, before: discord.Message, after: discord.Message):
@@ -109,4 +109,4 @@ class MessageLogs(LoggingBase):
                         attachments.append(f"[Removed] ~~{a.filename}~~")
                 embed.add_field(name='Attachments:', value='\n'.join(attachments), inline=False)
             embed.add_field(name='Jump:', value=f'[[Jump to message]]({after.jump_url})', inline=False)
-            self.log(embed, guild=before.guild, send_to=self.send_to.message)
+            await self.log(embed, guild=before.guild, send_to=self.send_to.message)

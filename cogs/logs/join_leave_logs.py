@@ -28,7 +28,7 @@ class JoinLeaveLogs(LoggingBase):
                 f"\n**Uses:** {invite.uses}/{invite.max_uses if (invite.max_uses or 0) > 0 else 'unlimited'}",
                 inline=False,
             )
-        self.log(embed, guild=member.guild, send_to=self.send_to.join_leave)
+        await self.log(embed, guild=member.guild, send_to=self.send_to.join_leave)
 
     @commands.Cog.listener('on_member_remove')
     async def logger_on_member_remove(self, member: discord.Member):
@@ -46,7 +46,7 @@ class JoinLeaveLogs(LoggingBase):
         roles = [r for r in member.roles if not r.is_default()]
         if roles:
             embed.add_field(name='Roles', value=', '.join([r.mention for r in roles]), inline=True)
-        self.log(embed, guild=member.guild, send_to=self.send_to.join_leave)
+        await self.log(embed, guild=member.guild, send_to=self.send_to.join_leave)
 
     @commands.Cog.listener('on_invite_create')
     async def logger_on_invite_create(self, invite: discord.Invite):
@@ -68,7 +68,7 @@ class JoinLeaveLogs(LoggingBase):
         if invite.inviter:
             embed.set_author(icon_url=invite.inviter.display_avatar.url, name=str(invite.inviter))
         embed.set_footer(text=f"Invite ID: {invite.id}")
-        self.log(embed, guild=invite.guild, send_to=self.send_to.join_leave)
+        await self.log(embed, guild=invite.guild, send_to=self.send_to.join_leave)
 
     @commands.Cog.listener('on_invite_delete')
     async def logger_on_invite_delete(self, invite: discord.Invite):
@@ -86,4 +86,4 @@ class JoinLeaveLogs(LoggingBase):
         if invite.inviter:
             embed.set_author(icon_url=invite.inviter.display_avatar.url, name=str(invite.inviter))
         embed.set_footer(text=f"Invite ID: {invite.id}")
-        self.log(embed, guild=invite.guild, send_to=self.send_to.join_leave)
+        await self.log(embed, guild=invite.guild, send_to=self.send_to.join_leave)
