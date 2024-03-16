@@ -18,36 +18,6 @@ from ._base import EventsBase
 warned = []
 
 
-class ExceptionView(discord.ui.View):
-    def __init__(self, exception: Exception, author_id: int):
-        super().__init__(timeout=None)
-        self.exception = exception
-        self.embed: discord.Embed = None  # type: ignore
-        self.author_id = author_id
-        self.add_item(
-            discord.ui.Button(emoji=constants.SERVERS_ICON, label='Support Server', url='https://discord.gg/TdRfGKg8Wh')
-        )
-
-    @discord.ui.button(label='View Error', style=discord.ButtonStyle.blurple)
-    async def view_error(self, interaction: discord.Interaction, _):
-        if not self.embed:
-            traceback_string = ''.join(
-                traceback.format_exception(type(self.exception), self.exception, self.exception.__traceback__)
-            )
-            to_send = f"```py\n{traceback_string}```"
-            if len(to_send) > 4096:
-                to_send = traceback_string[:4089] + '...\n```'
-            self.embed = discord.Embed(title='Error', description=to_send, color=discord.Color.red())
-        await interaction.response.send_message(embed=self.embed, ephemeral=True)
-
-    @discord.ui.button(emoji='🗑', style=discord.ButtonStyle.red)
-    async def delete(self, interaction: discord.Interaction, _):
-        if interaction.user and interaction.user.id == self.author_id:
-            if interaction.message:
-                return await interaction.message.delete()
-        await interaction.response.defer()
-
-
 class ErrorHandler(EventsBase):
     @commands.Cog.listener('on_command_error')
     async def error_handler(self, ctx: CustomContext, error):
@@ -267,38 +237,31 @@ class ErrorHandler(EventsBase):
 
         error_channel: discord.TextChannel = self.bot.get_channel(self.error_channel)  # type: ignore
 
-        await ctx.send(f"⚠ **An unexpected error occurred!**", view=ExceptionView(error, ctx.author.id))
+        await ctx.send(f"An unexpected error occurred. Perhaps, try again later? Our team has been notified.")
 
-        traceback_string = "".join(traceback.format_exception(type(error), error, error.__traceback__))  # type: ignore
+        traceback_string = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+        escaped = '`\u200b' * 3
         if ctx.guild:
             command_data = (
                 f"by: {ctx.author.name} ({ctx.author.id})"
-                f"\ncommand: {ctx.message.content[0:1700]}"
-                f"\nguild_id: {ctx.guild.id} - channel_id: {ctx.channel.id}"
-                f"\nowner: {ctx.guild.owner} ({getattr(ctx.guild.owner, 'id', None)})"
-                f"\nbot admin: {ctx.default_tick(ctx.me.guild_permissions.administrator)} "
+                f"\ncommand: {ctx.message.content[0:1700].replace('```', escaped)}"
+                f"\nguild: {ctx.guild.id} - channel: {ctx.channel.id} - owner: {ctx.guild.owner_id}"
+                f"\nbot admin: {ctx.default_tick(ctx.bot_permissions.administrator)} ({ctx.bot_permissions.value})"
                 f"- role pos: {ctx.me.top_role.position}"
             )
         else:
-            command_data = f"command: {ctx.message.content[0:1700]}" f"\nCommand executed in DMs"
+            command_data = f"by: {ctx.author.name} ({ctx.author.id}) (DM) \ncommand: {ctx.message.content[0:1700].replace('```', escaped)}"
 
-        to_send = f"```yaml\n{command_data}``````py\n{ctx.command} " f"command raised an error:\n{traceback_string}\n```"
-        if len(to_send) < 2000:
-            try:
-                sent_error = await error_channel.send(to_send)
-
-            except (discord.Forbidden, discord.HTTPException):
-                sent_error = await error_channel.send(
-                    f"```yaml\n{command_data}``````py Command: {ctx.command}" f"Raised the following error:\n```",
-                    file=discord.File(io.BytesIO(traceback_string.encode()), filename='traceback.py'),
-                )
+        to_send = f"```\n{command_data}``````py\n{traceback_string}\n```"
+        if len(to_send) <= 2000:
+            sent_error = await error_channel.send(to_send)
         else:
             sent_error = await error_channel.send(
-                f"```yaml\n{command_data}``````py Command: {ctx.command}" f"Raised the following error:\n```",
+                f"```\n{command_data}``````py\nCommand: {ctx.command}" f"Raised the following error:\n```",
                 file=discord.File(io.BytesIO(traceback_string.encode()), filename='traceback.py'),
             )
         try:
             await sent_error.add_reaction('🗑')
         except (discord.HTTPException, discord.Forbidden):
             pass
-        logging.error('Unhandled Exception in command %s', ctx.command, exc_info=error)  # type: ignore
+        logging.error('Unhandled Exception in command %s', ctx.command, exc_info=error)
