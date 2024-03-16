@@ -139,6 +139,7 @@ class CustomContext(commands.Context):
     bot: DuckBot
     guild: discord.Guild
     me: discord.Member
+    author: discord.Member
 
     @property
     def clean_prefix(self) -> str:
@@ -326,9 +327,11 @@ class CustomContext(commands.Context):
         return (
             self.me.color
             if self.me.color not in (discord.Color.default(), None, None)
-            else self.author.color
-            if self.author.color not in (discord.Color.default(), None, None)
-            else discord.Color.blurple()
+            else (
+                self.author.color
+                if self.author.color not in (discord.Color.default(), None, None)
+                else discord.Color.blurple()
+            )
         )
 
     @property

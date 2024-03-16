@@ -1,3 +1,4 @@
+from dis import disco
 import re
 import re
 import typing
@@ -8,7 +9,6 @@ from typing import Optional
 import discord
 from discord.ext import commands, menus
 
-import errors
 from bot import CustomContext
 from helpers import paginator
 from ._base import UtilityBase
@@ -34,74 +34,47 @@ class MessageUtils(UtilityBase):
         )
         await menu.start(ctx)
 
-    @commands.command(aliases=['s', 'send'], help="Speak as if you were me. # URLs/Invites not allowed!")
-    @commands.check_any(commands.bot_has_guild_permissions(send_messages=True), commands.is_owner())
+    @commands.command(aliases=['s', 'send'])
+    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
     async def say(self, ctx: CustomContext, *, msg: str) -> Optional[discord.Message]:
+        """Relays the given content to the current channel."""
+        if ctx.channel.permissions_for(ctx.me).manage_messages:
+            await ctx.message.delete(delay=0)  # passing delay schedules it as a task.
 
-        results = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|)+", msg)  # HTTP/HTTPS URL regex
-        results2 = re.findall(
-            r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?", msg
-        )  # Discord invite regex
-        if results or results2:
-            await ctx.send(f"hey, {ctx.author.mention}. Urls or invites aren't allowed!", delete_after=10)
-            return await ctx.message.delete(delay=10)
-
-        await ctx.message.delete(delay=0)
-        if ctx.channel.permissions_for(ctx.author).manage_messages:
-            allowed = True
-        else:
-            allowed = False
-
-        return await ctx.send(
+        await ctx.send(
             msg[0:2000],
-            allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=allowed),
-            reference=ctx.message.reference,
+            allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True, replied_user=True),
+            reference=ctx.message.reference,  # type: ignore
             reply=False,
             reminders=False,
         )
 
-    @commands.command(aliases=['a', 'an', 'announce'], usage="<channel> <message_or_reply>")
+    @commands.command(aliases=['a', 'an', 'announce'])
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
     async def echo(
-        self, ctx: CustomContext, channel: typing.Union[discord.TextChannel, int], *, message_or_reply: str = None
+        self, ctx: CustomContext, channel: discord.abc.GuildChannel, *, content: Optional[str]
     ) -> discord.Message:
-        """ "
-        Echoes a message to another channel
-        # If a message is quoted, it will echo the quoted message's content.
-        """
-        if isinstance(channel, int) and self.bot.is_owner(ctx.author):
-            channel = self.bot.get_channel(channel)
-        if not channel:
-            raise commands.MissingRequiredArgument(
-                commands.Parameter(name='channel', kind=Parameter.POSITIONAL_ONLY)
-            )
-        if not ctx.message.reference and not message_or_reply:
-            raise commands.MissingRequiredArgument(
-                commands.Parameter(name='message_or_reply', kind=Parameter.POSITIONAL_ONLY)
-            )
-        elif ctx.message.reference:
-            message_or_reply = ctx.message.reference.resolved.content
-        return await channel.send(
-            message_or_reply[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True)
-        )
+        """Echoes the given content to the other channel.
 
-    @commands.command(aliases=['e', 'edit'], name='edit-message', usage="[new message] [--d|--s]")
-    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    @commands.check_any(commands.bot_has_permissions(send_messages=True, manage_messages=True), commands.is_owner())
-    async def edit_message(self, ctx: CustomContext, *, new: typing.Optional[str] = '--d'):
-        """Quote a bot message to edit it.
-        # Append --s at the end to suppress embeds and --d to delete the message
+        You must have both Send Messages and Manage Messages in the other channel.
+        You can also reply to another message to echo its content instead.
         """
-        if ctx.reference:
-            if ctx.reference.author != self.bot.user:
-                return
-            if new.endswith("--s"):
-                await ctx.reference.edit(content=f"{new[:-3]}", suppress=True)
-            elif new.endswith('--d'):
-                await ctx.reference.delete()
+        required = discord.Permissions(send_messages=True, manage_messages=True)
+        check = channel.guild == ctx.guild and channel.permissions_for(ctx.author).is_superset(required)
+        check = check or await self.bot.is_owner(ctx.author)
+
+        if not check:
+            await ctx.send("You cannot send messages in that channel.")
+
+        if not isinstance(channel, discord.abc.Messageable) or not channel.permissions_for(ctx.me).send_messages:
+            raise commands.BadArgument("I cannot message that channel.")
+
+        if content is None:
+            if ctx.message.reference and isinstance(ctx.message.reference.resolved, discord.Message):
+                content = ctx.message.reference.resolved.content
             else:
-                await ctx.reference.edit(content=new, suppress=False)
-            await ctx.message.delete(delay=0.1)
-        else:
-            raise errors.NoQuotedMessage
+                raise commands.MissingRequiredArgument(commands.Parameter(name='message', kind=Parameter.POSITIONAL_ONLY))
+
+        return await channel.send(
+            content[0:2000], allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True)
+        )
