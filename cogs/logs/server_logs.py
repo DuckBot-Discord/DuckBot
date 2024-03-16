@@ -314,9 +314,9 @@ class ServerLogs(LoggingBase):
             before_emoji = discord.utils.get(before, id=emoji.id)
             after_emoji = emoji
             if before_emoji and after_emoji:
-                self.emoji_update(guild, before_emoji, after_emoji)
+                await self.emoji_update(guild, before_emoji, after_emoji)
 
-    def emoji_update(self, guild: discord.Guild, before: discord.Emoji, after: discord.Emoji):
+    async def emoji_update(self, guild: discord.Guild, before: discord.Emoji, after: discord.Emoji):
         if before.name == after.name and before.roles == after.roles:
             return
         if not self.bot.guild_loggings[guild.id].emoji_update:
@@ -385,9 +385,9 @@ class ServerLogs(LoggingBase):
             before_sticker = discord.utils.get(before, id=sticker.id)
             after_sticker = sticker
             if before_sticker and after_sticker:
-                self.sticker_update(guild, before_sticker, after_sticker)
+                await self.sticker_update(guild, before_sticker, after_sticker)
 
-    def sticker_update(self, guild: discord.Guild, before: discord.Sticker, after: discord.Sticker):
+    async def sticker_update(self, guild: discord.Guild, before: discord.Sticker, after: discord.Sticker):
         if before.description == after.description and before.name == after.name:
             return
         if not self.bot.guild_loggings[guild.id].sticker_update:
