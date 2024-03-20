@@ -6,7 +6,6 @@ import inspect
 import io
 import itertools
 import math
-import os
 import random
 import re
 import textwrap
@@ -22,9 +21,7 @@ import tabulate
 from discord.ext import commands
 from jishaku.codeblocks import Codeblock, codeblock_converter
 from jishaku.features.baseclass import Feature
-from jishaku.paginators import WrappedPaginator
-from jishaku.shim.paginator_200 import PaginatorInterface
-
+from jishaku.paginators import WrappedPaginator, PaginatorInterface
 from bot import DuckBot, CustomContext
 from helpers import paginator, constants
 
@@ -538,9 +535,9 @@ class Management(commands.Cog, name="Bot Management"):
             lines = table.split("\n")
             lines, headers = lines[2:], "\n".join(lines[0:2])
             header = f"DuckBot blacklist".center(len(lines[0]))
-            pages = jishaku.paginators.WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
+            pages = WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
             [pages.add_line(line) for line in lines]
-            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            interface = PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
 
         @dev.command(name="user-history", aliases=["uh", "mh", "member-history", "ucmds"])
@@ -564,9 +561,9 @@ class Management(commands.Cog, name="Bot Management"):
             lines = table.split("\n")
             lines, headers = lines[2:], "\n".join(lines[0:2])
             header = f"Commands by {user}".center(len(lines[0]))
-            pages = jishaku.paginators.WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
+            pages = WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
             [pages.add_line(line) for line in lines]
-            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            interface = PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
 
         @dev.command(
@@ -593,9 +590,9 @@ class Management(commands.Cog, name="Bot Management"):
             lines = table.split("\n")
             lines, headers = lines[2:], "\n".join(lines[0:2])
             header = f"Latest commands in {guild}".center(len(lines[0]))
-            pages = jishaku.paginators.WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
+            pages = WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
             [pages.add_line(line) for line in lines]
-            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            interface = PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
 
         @dev.group(name="command-history", aliases=["ch", "cmds"], invoke_without_command=True)
@@ -632,9 +629,9 @@ class Management(commands.Cog, name="Bot Management"):
             lines = table.split("\n")
             lines, headers = lines[2:], "\n".join(lines[0:2])
             header = f"Latest executed commands".center(len(lines[0]))
-            pages = jishaku.paginators.WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
+            pages = WrappedPaginator(prefix=f"```\n{header}\n{headers}", max_size=1950)
             [pages.add_line(line) for line in lines]
-            interface = jishaku.paginators.PaginatorInterface(self.bot, pages)
+            interface = PaginatorInterface(self.bot, pages)
             await interface.send_to(ctx)
 
         @dev_all_history.command(name="clear")
