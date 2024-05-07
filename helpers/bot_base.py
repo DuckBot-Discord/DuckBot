@@ -44,10 +44,10 @@ extensions = [
     "cogs.info",
     "cogs.management",
     "cogs.modmail",
-    "cogs.test",
     "cogs.utility",
     "cogs.moderation",
     "cogs.private",
+    "cogs.dpy_help",
 ]
 load_dotenv(override=True)
 if os.getenv('DAGPI_TOKEN'):
