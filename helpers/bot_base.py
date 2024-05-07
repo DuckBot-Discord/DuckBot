@@ -100,8 +100,6 @@ class BaseDuck(commands.AutoShardedBot):
 
     def __init__(self, pool: asyncpg.Pool, session: aiohttp.ClientSession) -> None:
         intents = discord.Intents.all()
-        # noinspection PyDunderSlots,PyUnresolvedReferences
-        intents.typing = False
 
         super().__init__(
             intents=intents,
