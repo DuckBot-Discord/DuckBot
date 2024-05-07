@@ -17,7 +17,7 @@ class HelpWatcher(commands.Cog):
     async def emit_warning(self, user_id: int, thread_id: int, owner_id: int):
         """Emits a warning to the webserver that the GlobalNotes bot is running.
 
-        https://github.com/LeoCx1000/GlobalNotes
+        https://github.com/DuckBot-Discord/GlobalNotes
         """
         payload = {
             'user_id': user_id,
