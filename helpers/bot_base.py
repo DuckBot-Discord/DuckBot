@@ -50,8 +50,6 @@ extensions = [
     "cogs.dpy_help",
 ]
 load_dotenv(override=True)
-if os.getenv('DAGPI_TOKEN'):
-    extensions.append("cogs.image_manipulation")
 
 
 def col(color=None, /, *, fmt=0, bg=False):
