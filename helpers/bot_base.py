@@ -205,6 +205,8 @@ class BaseDuck(commands.AutoShardedBot):
         elif not message.guild.get_member(788278464474120202):
             should_noprefix = True
 
+        prefix = sorted(prefix, key=lambda p: len(p), reverse=True)
+
         if await bot.is_owner(message.author) and (bot.noprefix is True or should_noprefix):
             return commands.when_mentioned_or(*prefix, "")(bot, message) if not raw_prefix else prefix
         return commands.when_mentioned_or(*prefix)(bot, message) if not raw_prefix else prefix
