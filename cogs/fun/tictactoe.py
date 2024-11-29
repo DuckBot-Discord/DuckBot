@@ -133,6 +133,12 @@ class TicTacToeCommand(FunBase):
     async def tictactoe(self, ctx: CustomContext, to_invite: discord.Member = None):
         """Starts a tic-tac-toe game."""
         player1 = ctx.author
+        
+        if to_invite and to_invite.id == player1.id:
+            raise commands.BadArgument('You cannot play against yourself.')
+        if to_invite and to_invite.bot:
+            raise commands.BadArgument('You cannot play against a bot.')
+        
         if not to_invite:
             embed = discord.Embed(
                 description=f'🔎 | **{ctx.author.display_name}**' f'\n👀 | User is looking for someone to play **Tic-Tac-Toe**'

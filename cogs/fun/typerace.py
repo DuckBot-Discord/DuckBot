@@ -37,8 +37,12 @@ class TypeRace(FunBase):
         """
         messages = []
 
-        if 0 > amount > 25:
-            raise commands.BadArgument('Amount must be between 1 and 25 words.')
+        if amount <= 0:
+            raise commands.BadArgument('Amount must be greater than 0.')
+        if amount > 25:
+            raise commands.BadArgument('Amount must be less than 25.')
+        
+        
         res = random.sample(constants.COMMON_WORDS, k=amount)
         words = ' '.join(res)
 
