@@ -34,6 +34,7 @@ import asyncpg
 import cachetools
 import discord
 from discord import app_commands
+from discord.backoff import ExponentialBackoff
 from discord.ext import commands
 
 from utils import (
@@ -101,10 +102,12 @@ def _wrap_extension(func: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[An
         except:
             logger = logging
 
+        logger.info(f"Running {func.__name__} {fmt_args}")
+
         try:
             result = await func(*args, **kwargs)
         except Exception as exc:
-            logger.warning(f"Failed to load extension in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}", exc_info=exc)
+            logger.warning(f"Failed to {func.__name__} in {(time.monotonic() - start)*1000:.2f}ms {fmt_args}", exc_info=exc)
             raise
 
         fmt = f"{func.__name__} took {(time.monotonic() - start)*1000:.2f}ms {fmt_args}"
@@ -145,7 +148,7 @@ class DbTempContextManager(Generic[DBT]):
 
     async def __aexit__(self, *args) -> None:
         if self._pool:
-            await self._pool.close()
+            await asyncio.wait_for(self._pool.close(), timeout=30)
 
 
 class DbContextManager(Generic[DBT]):
@@ -383,7 +386,19 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         Registers listeners for database events.
         """
-        self.listener_connection = await self.pool.acquire()  # type: ignore
+        def reregister(con):
+            self.loop.create_task(self.create_db_listeners())
+
+        backoff = ExponentialBackoff()
+        while True:
+            try:
+                self.listener_connection = conn = await self.pool.acquire()  # type: ignore
+                self.listener_connection.add_termination_listener(reregister)
+                break
+            except Exception as e:
+                delay = backoff.delay()
+                self.logger.error(f"Failed to set up listener connection, retrying in {delay:.2f}s", exc_info=e)
+                await asyncio.sleep(delay)
 
         async def _delete_prefixes_event(conn, pid, channel, payload):
             payload = discord.utils._from_json(payload)
@@ -394,8 +409,8 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             payload = discord.utils._from_json(payload)
             self.prefix_cache[payload["guild_id"]] = set(payload["prefixes"])
 
-        await self.listener_connection.add_listener("delete_prefixes", _delete_prefixes_event)
-        await self.listener_connection.add_listener("update_prefixes", _create_or_update_event)
+        await conn.add_listener("delete_prefixes", _delete_prefixes_event)
+        await conn.add_listener("update_prefixes", _create_or_update_event)
 
     @property
     def start_time(self) -> datetime.datetime:
