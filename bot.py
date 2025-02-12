@@ -390,27 +390,28 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             self.loop.create_task(self.create_db_listeners())
 
         backoff = ExponentialBackoff()
-        while True:
+        while not self.pool.is_closing():
             try:
                 self.listener_connection = conn = await self.pool.acquire()  # type: ignore
                 self.listener_connection.add_termination_listener(reregister)
                 break
-            except Exception as e:
+
+            async def delete_prefixes_event(conn, pid, channel, payload):
+                payload = discord.utils._from_json(payload)
+                with contextlib.suppress(Exception):
+                    del self.prefix_cache[payload["guild_id"]]
+
+            async def _create_or_update_event(conn, pid, channel, payload):
+                payload = discord.utils._from_json(payload)
+                self.prefix_cache[payload["guild_id"]] = set(payload["prefixes"])
+
+            await conn.add_listener("delete_prefixes", _delete_prefixes_event)
+            await conn.add_listener("update_prefixes", _create_or_update_event)
+
+        except Exception as e:
                 delay = backoff.delay()
                 self.logger.error(f"Failed to set up listener connection, retrying in {delay:.2f}s", exc_info=e)
                 await asyncio.sleep(delay)
-
-        async def _delete_prefixes_event(conn, pid, channel, payload):
-            payload = discord.utils._from_json(payload)
-            with contextlib.suppress(Exception):
-                del self.prefix_cache[payload["guild_id"]]
-
-        async def _create_or_update_event(conn, pid, channel, payload):
-            payload = discord.utils._from_json(payload)
-            self.prefix_cache[payload["guild_id"]] = set(payload["prefixes"])
-
-        await conn.add_listener("delete_prefixes", _delete_prefixes_event)
-        await conn.add_listener("update_prefixes", _create_or_update_event)
 
     @property
     def start_time(self) -> datetime.datetime:
