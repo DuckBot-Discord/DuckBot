@@ -36,13 +36,11 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
         errors.SilentCommandError,
         errors.EntityBlacklisted,
     )
+    children_not_ignored = (commands.BotMissingPermissions,)
 
-    if isinstance(error, ignored):
+    if isinstance(error, ignored) and not isinstance(error, children_not_ignored):
         return
-    elif isinstance(error, commands.BadUnionArgument):
-        es = str(error) + '\n\n' + '\n'.join(str(e) for e in error.errors)
-        await ctx.send(es)
-    elif isinstance(error, (commands.UserInputError, errors.DuckBotException)):
+    elif isinstance(error, (commands.UserInputError, errors.DuckBotException, commands.BotMissingPermissions)):
         await ctx.send(str(error))
     elif isinstance(error, commands.CommandInvokeError):
         return await on_command_error(ctx, error.original)

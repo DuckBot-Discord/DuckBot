@@ -4,15 +4,25 @@ import asyncio
 import contextlib
 import logging
 import math
-from typing import (
-    Optional,
-)
+from typing import Optional, TypeAlias
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import DuckContext, DuckCog, ActionNotExecutable, HandleHTTPException, mdr, FutureTime, command, VerifiedMember
+from utils import (
+    DuckContext,
+    DuckCog,
+    ActionNotExecutable,
+    HandleHTTPException,
+    mdr,
+    FutureTime,
+    command,
+    VerifiedMember,
+    VerifiedRole,
+    DefaultRole,
+    require,
+)
 
 from utils.interactions import (
     HandleHTTPException as InterHandleHTTPException,
@@ -26,8 +36,10 @@ from bot import DuckBot
 
 log = logging.getLogger('DuckBot.moderation.block')
 
+LockableChannel: TypeAlias = discord.TextChannel | discord.VoiceChannel | discord.ForumChannel
 
-class Block(DuckCog):
+
+class ChannelModeration(DuckCog):
     async def toggle_block(
         self,
         channel: discord.abc.MessageableChannel,
@@ -125,7 +137,7 @@ class Block(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def block(self, ctx: DuckContext, *, member: discord.Member = VerifiedMember):
+    async def block(self, ctx: DuckContext, *, member: VerifiedMember):
         """|coro|
 
         Blocks a user from your channel.
@@ -150,7 +162,7 @@ class Block(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
-    async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: discord.Member = VerifiedMember):
+    async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: VerifiedMember):
         """|coro|
 
         Temporarily blocks a user from your channel.
@@ -176,7 +188,7 @@ class Block(DuckCog):
     @command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def unblock(self, ctx: DuckContext, *, member: discord.Member = VerifiedMember):
+    async def unblock(self, ctx: DuckContext, *, member: VerifiedMember):
         """|coro|
 
         Unblocks a user from your channel.
@@ -422,3 +434,86 @@ class Block(DuckCog):
             await self.toggle_block(interaction.channel, user, blocked=False, reason=reason)  # type: ignore
 
         await interaction.followup.send(f'✅ **|** Unblocked **{mdr(user)}**')
+
+    @commands.command(aliases=['lock', 'ld'])
+    @commands.guild_only()
+    async def lockdown(
+        self,
+        ctx: DuckContext,
+        channel: LockableChannel = require(manage_roles=True, bot_manage_roles=True),
+        role: VerifiedRole = DefaultRole,
+    ):
+        """
+        Locks down a channel.
+
+        Parameters
+        ----------
+        channel: LockableChannel
+            The channel to lock. Defaults to your current channel.
+        role: discord.Role
+            The role to lock for. Defaults to @everyone.
+        """
+        role = role or ctx.guild.default_role
+
+        me_perms = channel.overwrites_for(ctx.me)
+        me_perms.update(send_messages=True, add_reactions=True, create_public_threads=True, create_private_threads=True)
+
+        role_perms = channel.overwrites_for(role)
+        role_perms.update(
+            send_messages=False,
+            add_reactions=False,
+            create_public_threads=False,
+            create_private_threads=False,
+            use_application_commands=False,
+            connect=False,
+        )
+
+        overwrites = {
+            **channel.overwrites,
+            role: role_perms,
+        }
+        if not isinstance(ctx.me, discord.ClientUser):
+            overwrites[ctx.me] = me_perms
+
+        await channel.edit(
+            overwrites=overwrites, reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})'
+        )
+
+        await ctx.send(f"Locked down **{channel.name}** for **{role.name}**")
+
+    @commands.command(aliases=['unlockdown', 'uld'])
+    @commands.guild_only()
+    async def unlock(
+        self,
+        ctx,
+        channel: LockableChannel = require(manage_roles=True, bot_manage_roles=True),
+        role: VerifiedRole = DefaultRole,
+    ):
+        """
+        Unlocks the current channel.
+
+        Parameters
+        ----------
+        channel: LockableChannel
+            The channel to unlock. Defaults to your current channel.
+        role: discord.Role
+            The role to unlock for. Defaults to @everyone.
+        """
+
+        perms = channel.overwrites_for(ctx.guild.default_role)
+        perms.update(
+            send_messages=None,
+            add_reactions=None,
+            create_public_threads=None,
+            create_private_threads=None,
+            use_application_commands=False,
+            connect=False,
+        )
+        if perms.is_empty():
+            perms = None
+
+        await channel.set_permissions(
+            role, overwrite=perms, reason=f'Channel lockdown for {role.name} by {ctx.author} ({ctx.author.id})'
+        )
+
+        await ctx.send(f"Unlocked **{channel.name}** for **{role.name}**")

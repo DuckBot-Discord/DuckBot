@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from numpydoc.docscrape import NumpyDocString as process_doc, Parameter
+from numpydoc.docscrape import NumpyDocString, Parameter
 from typing import (
     Awaitable,
     Callable,
@@ -38,12 +38,25 @@ AutocompleteCallbackType = Union[
 ]
 
 NUMPY_ITEM_REGEX = re.compile(r'(?P<type>\:[a-z]{1,}\:)\`(?P<name>[a-z\.]{1,})\`', flags=re.IGNORECASE)
-DOC_HEADER_REGEX = re.compile(r'\|[a-z]{1,}\|', flags=re.IGNORECASE)
+DOC_HEADER_REGEX = re.compile(r'\|coro\|', flags=re.IGNORECASE)
 
 
 def _subber(match: re.Match) -> str:
     _, name = match.groups()
     return name
+
+
+class CustomDocString(NumpyDocString):
+    sections = {
+        "Signature": "",
+        "Summary": [""],
+        "Extended Summary": [],
+        "Parameters": [],
+        "Notes": "",
+        "Flags": [],
+        "References": "",
+        "Examples": "",
+    }
 
 
 @discord.utils.copy_doc(commands.Command)
@@ -89,15 +102,15 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
         help_doc = NUMPY_ITEM_REGEX.sub(_subber, help_doc)
         help_doc = DOC_HEADER_REGEX.sub('', help_doc).lstrip()
 
-        processed = process_doc(help_doc)
-        for name, value in processed._parsed_data.items():
+        processed = CustomDocString(help_doc)
+        for name, value in processed.items():
             if not value or (isinstance(value, list) and not value[0]) or value == '':
                 continue
 
             if isinstance(value, list) and isinstance(value[0], Parameter):
                 fmt = []
                 for item in value:
-                    fmt.append('- `{0}`: {1}'.format(item.name, ' '.join(item.desc)))  # type: ignore
+                    fmt.append('- `{0}`: {1}'.format(item.name, ' '.join(item.desc)))
 
                 value = '\n'.join(fmt)
             elif isinstance(value, list):
@@ -105,7 +118,16 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
 
             mapping[name.lower()] = value
 
-        return mapping
+        def getter(pair):
+            key = pair[0].lower()
+            if key == 'summary':
+                return 0
+            elif key == 'extended summary':
+                return 1
+            else:
+                return help_doc.lower().index(key)
+
+        return dict(sorted(mapping.items(), key=getter))
 
     @property
     def help_embed(self) -> discord.Embed:

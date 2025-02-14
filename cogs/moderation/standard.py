@@ -17,6 +17,10 @@ from utils import (
     safe_reason,
     mdr,
     command,
+    UserFriendlyTime,
+    human_timedelta,
+    Timer,
+    format_date,
 )
 from utils.helpers import can_execute_action
 
@@ -30,9 +34,7 @@ class StandardModeration(DuckCog):
     @commands.bot_has_guild_permissions(kick_members=True)
     @commands.has_guild_permissions(kick_members=True)
     @commands.guild_only()
-    async def kick(
-        self, ctx: DuckContext, member: discord.Member = VerifiedMember, *, reason: str = '...'
-    ) -> Optional[discord.Message]:
+    async def kick(self, ctx: DuckContext, member: VerifiedMember, *, reason: str = '...') -> Optional[discord.Message]:
         """
         Kick a member from the server.
 
@@ -59,7 +61,7 @@ class StandardModeration(DuckCog):
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(
-        self, ctx: DuckContext, user: discord.User = VerifiedUser, *, delete_days: Optional[int], reason: str = '...'
+        self, ctx: DuckContext, user: VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
     ) -> Optional[discord.Message]:
         """|coro|
 
@@ -72,11 +74,38 @@ class StandardModeration(DuckCog):
         delete_days: Optional[:class:`int`]
             The number of days worth of messages to delete.
         reason: Optional[:class:`str`]
-            The reason for banning the member. Defaults to 'being a jerk!'.
+            The reason for banning the member. Defaults to '...'.
         """
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
             await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))
+
+        return await ctx.send(f'Banned **{user}** for: {reason}')
+
+    @command(name='softban')
+    @commands.bot_has_guild_permissions(ban_members=True)
+    @commands.has_guild_permissions(ban_members=True)
+    @commands.guild_only()
+    async def softban(
+        self, ctx: DuckContext, user: VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
+    ) -> Optional[discord.Message]:
+        """|coro|
+
+        Ban a member from the server, then immediately unbans them, deleting all their messages in the process.
+
+        Parameters
+        ----------
+        user: :class:`discord.Member`
+            The member to softban.
+        delete_days: Optional[:class:`int`]
+            The number of days worth of messages to delete.
+        reason: Optional[:class:`str`]
+            The reason for softbanning the member. Defaults to '...'.
+        """
+
+        async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
+            await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))
+            await ctx.guild.unban(user, reason=safe_reason(ctx.author, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
 
@@ -137,3 +166,73 @@ class StandardModeration(DuckCog):
 
         message = 'Changed nickname of **{user}** to **{nick}**.' if nickname else 'Removed nickname of **{user}**.'
         return await ctx.send(message.format(user=mdr(member), nick=mdr(nickname)))
+
+    @command(name='tempban', aliases=['tban'])
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def tempban(
+        self,
+        ctx: DuckContext,
+        member: VerifiedUser,
+        *,
+        when: UserFriendlyTime(commands.clean_content, default='...'),  # type: ignore
+    ) -> None:
+        """|coro|
+
+        Temporarily ban a user from the server.
+
+        This command temporarily bans a user from the server. The user will be able to rejoin the server, but will be
+        unable to send messages.
+
+        The user will be banned for 24 hours by default. If you wish to ban for a longer period of time, use the
+        `ban` command instead.
+
+        Parameters
+        ----------
+        member : discord.Member
+            The member to ban.
+        when : UserFriendlyTime
+            The reason and time of the ban, for example, "?ban @LeoCx1000 for 5 hours for being a bad"
+        """
+
+        async with HandleHTTPException(ctx):
+            await ctx.guild.ban(member, reason=safe_reason(ctx.author, when.arg))
+
+        await self.bot.pool.execute(
+            """
+            DELETE FROM timers
+            WHERE event = 'ban'
+            AND (extra->'args'->0) = $1
+            AND (extra->'args'->1) = $2
+        """,
+            member.id,
+            ctx.guild.id,
+        )
+
+        await self.bot.create_timer(when.dt, 'ban', member.id, ctx.guild.id, ctx.author.id, precise=False)
+
+        await ctx.send(f"Banned **{mdr(member)}** for {human_timedelta(when.dt)}.")
+
+    @commands.Cog.listener('on_ban_timer_complete')
+    async def on_ban_timer_complete(self, timer: Timer):
+        """Automatic unban handling."""
+        member_id, guild_id, moderator_id = timer.args
+
+        guild = self.bot.get_guild(guild_id)
+        if guild is None:
+            self.logger.info('Guild %s not found, discarding...', guild_id)
+            return  # F
+
+        moderator = await self.bot.get_or_fetch_user(moderator_id)
+        if moderator is None:
+            mod = f"@Unknown User ({moderator_id})"
+        else:
+            mod = f"@{moderator} ({moderator_id})"
+
+        try:
+            await guild.unban(
+                discord.Object(id=member_id),
+                reason=f"Automatic unban for temp-ban by {mod} " f"on {format_date(timer.created_at)}.",
+            )
+        except discord.HTTPException as e:
+            self.logger.debug(f"Failed to unban {member_id} in {guild_id}.", exc_info=e)

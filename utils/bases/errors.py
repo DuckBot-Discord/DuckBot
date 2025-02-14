@@ -23,6 +23,7 @@ __all__: Tuple[str, ...] = (
     'MuteException',
     'MemberNotMuted',
     'MemberAlreadyMuted',
+    'NoMutedRole',
     'SilentCommandError',
     'EntityBlacklisted',
 )
@@ -60,17 +61,23 @@ class HierarchyException(DuckBotCommandError):
     """
 
     __slots__: Tuple[str, ...] = (
-        'member',
+        'target',
         'author_error',
     )
 
-    def __init__(self, member: discord.Member, *, author_error: bool = False) -> None:
-        self.member: discord.Member = member
+    def __init__(self, target: discord.Member | discord.Role, *, author_error: bool = False) -> None:
+        self.target: discord.Member | discord.Role = target
         self.author_error: bool = author_error
-        if author_error is False:
-            super().__init__(f'**{member}**\'s top role is higher than mine. I can\'t do that!')
+        if isinstance(target, discord.Member):
+            if author_error is False:
+                super().__init__(f'**{target}**\'s top role is higher than mine. I can\'t do that!')
+            else:
+                super().__init__(f'**{target}**\'s top role is higher than your top role. You can\'t do that!')
         else:
-            super().__init__(f'**{member}**\'s top role is higher than your top role. You can\'t do that!')
+            if author_error:
+                super().__init__(f'Role **{target}** is higher than your top role. You can\'t do that!')
+            else:
+                super().__init__(f'Role **{target}** is higher than your my role. I can\'t do that!')
 
 
 class ActionNotExecutable(DuckBotCommandError):
@@ -120,6 +127,15 @@ class MemberAlreadyMuted(MuteException):
     def __init__(self, member: discord.Member) -> None:
         self.member: discord.Member = member
         super().__init__(f'{member} is already muted.')
+
+
+class NoMutedRole(MuteException):
+    """Raised when a guild does not have a muted role."""
+
+    __slots__: Tuple[str, ...] = tuple()
+
+    def __init__(self) -> None:
+        super().__init__('This server doesn\'t have a mute role configured. Run `db.muterole` for more info.')
 
 
 class SilentCommandError(DuckBotCommandError):

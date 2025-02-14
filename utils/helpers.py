@@ -220,7 +220,7 @@ def add_logging(func: Callable[P, Union[Awaitable[T], T]]) -> Callable[P, Union[
 
 async def can_execute_action(
     ctx: DuckContext,
-    target: Union[discord.Member, discord.User],
+    target: Union[discord.Member, discord.User, discord.Role],
     *,
     fail_if_not_upgrade: bool = True,
     should_upgrade: bool = True,
@@ -233,7 +233,7 @@ async def can_execute_action(
     ----------
     ctx: :class:`commands.Context`
         The context of the command.
-    target: Union[:class:`discord.Member`, :class:`discord.User`]
+    target: Union[:class:`discord.Member`, :class:`discord.User`, :class:`discord.Role`]
         The target of the action.
     fail_if_not_upgrade: :class:`bool`
         Whether to fail if the user can't be upgraded to a Member.
@@ -256,27 +256,36 @@ async def can_execute_action(
     if guild is None or not isinstance(ctx.author, discord.Member):
         raise commands.NoPrivateMessage('This command cannot be used in private messages.')
 
-    if should_upgrade:
-        if isinstance(target, discord.User):
-            upgraded = await ctx.bot.get_or_fetch_member(guild, target)
-            if upgraded is None:
-                if fail_if_not_upgrade:
-                    raise ActionNotExecutable('That user is not a member of this server.')
-            else:
-                target = upgraded
+    if isinstance(target, discord.abc.User):
+        if should_upgrade:
+            if isinstance(target, discord.User):
+                upgraded = await ctx.bot.get_or_fetch_member(guild, target)
+                if upgraded is None:
+                    if fail_if_not_upgrade:
+                        raise ActionNotExecutable('That user is not a member of this server.')
+                else:
+                    target = upgraded
 
-    if ctx.author == target:
-        raise ActionNotExecutable('You cannot execute this action on yourself!')
-    if guild.owner == target:
-        raise ActionNotExecutable('I cannot execute any action on the server owner!')
+        if ctx.author == target:
+            raise ActionNotExecutable('You cannot execute this action on yourself!')
+        if guild.owner == target:
+            raise ActionNotExecutable('I cannot execute any action on the server owner!')
 
-    if isinstance(target, discord.Member):
-        if guild.me.top_role <= target.top_role:
+        if isinstance(target, discord.Member):
+            if guild.me.top_role <= target.top_role:
+                raise HierarchyException(target)
+            if guild.owner_id == ctx.author.id:
+                return True
+            if ctx.author.top_role <= target.top_role:
+                raise HierarchyException(target, author_error=True)
+    elif isinstance(target, discord.Role):
+        if guild.me.top_role <= target:
             raise HierarchyException(target)
         if guild.owner_id == ctx.author.id:
-            return
-        if ctx.author.top_role <= target.top_role:
+            return True
+        if ctx.author.top_role <= target:
             raise HierarchyException(target, author_error=True)
+    return True
 
 
 class DeleteButtonCallback(discord.ui.Button['DeleteButton']):
