@@ -386,6 +386,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         Registers listeners for database events.
         """
+
         def reregister(con):
             self.loop.create_task(self.create_db_listeners())
 
@@ -393,22 +394,23 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         while not self.pool.is_closing():
             try:
                 self.listener_connection = conn = await self.pool.acquire()  # type: ignore
-                self.listener_connection.add_termination_listener(reregister)
+                assert conn
+                conn.add_termination_listener(reregister)
+
+                async def _delete_prefixes_event(conn, pid, channel, payload):
+                    payload = discord.utils._from_json(payload)
+                    with contextlib.suppress(Exception):
+                        del self.prefix_cache[payload["guild_id"]]
+
+                async def _create_or_update_event(conn, pid, channel, payload):
+                    payload = discord.utils._from_json(payload)
+                    self.prefix_cache[payload["guild_id"]] = set(payload["prefixes"])
+
+                await conn.add_listener("delete_prefixes", _delete_prefixes_event)
+                await conn.add_listener("update_prefixes", _create_or_update_event)
                 break
 
-            async def delete_prefixes_event(conn, pid, channel, payload):
-                payload = discord.utils._from_json(payload)
-                with contextlib.suppress(Exception):
-                    del self.prefix_cache[payload["guild_id"]]
-
-            async def _create_or_update_event(conn, pid, channel, payload):
-                payload = discord.utils._from_json(payload)
-                self.prefix_cache[payload["guild_id"]] = set(payload["prefixes"])
-
-            await conn.add_listener("delete_prefixes", _delete_prefixes_event)
-            await conn.add_listener("update_prefixes", _create_or_update_event)
-
-        except Exception as e:
+            except Exception as e:
                 delay = backoff.delay()
                 self.logger.error(f"Failed to set up listener connection, retrying in {delay:.2f}s", exc_info=e)
                 await asyncio.sleep(delay)
@@ -563,7 +565,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         return meth(*base)(self, message)
 
     async def get_context(
-        self, message: discord.Message | discord.Interaction[DuckBot], *, cls: Type[DCT] = None
+        self, message: discord.Message | discord.Interaction[DuckBot], *, cls: Type[DCT] | None = None
     ) -> DuckContext | commands.Context[DuckBot]:
         """|coro|
 
@@ -1010,7 +1012,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         guild_id = guild.id if guild else 0
         all_cmds = self.bot.tree._get_all_commands(guild=guild)  # private method kekw.
-        payloads = [(guild_id, cmd.to_dict()) for cmd in all_cmds]
+        payloads = [(guild_id, cmd.to_dict(self.tree)) for cmd in all_cmds]
 
         databased = await self.pool.fetch("SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id)
         saved_payloads = [d["payload"] for d in databased]
@@ -1028,5 +1030,6 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         else:
             return SyncResult(commands=[], synced=False)
+
 
 # Leo is a bitch -Hadock
