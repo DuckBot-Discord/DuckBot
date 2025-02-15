@@ -148,7 +148,7 @@ class DbTempContextManager(Generic[DBT]):
 
     async def __aexit__(self, *args) -> None:
         if self._pool:
-            await asyncio.wait_for(self._pool.close(), timeout=30)
+            await asyncio.wait_for(self._pool.close(), timeout=5)
 
 
 class DbContextManager(Generic[DBT]):

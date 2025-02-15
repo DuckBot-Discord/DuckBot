@@ -34,12 +34,10 @@ CREATE TABLE IF NOT EXISTS blocks (
     PRIMARY KEY (guild_id, channel_id, user_id)
 );
 
--- Thanks chai :)
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'blacklist_type') THEN
-        CREATE TYPE blacklist_type AS ENUM ('guild', 'channel', 'user');
-    END IF;
+DO $$ BEGIN
+    CREATE TYPE blacklist_type AS ENUM ('guild', 'channel', 'user');
+EXCEPTION
+    WHEN duplicate_object THEN null;
 END$$;
 
 
@@ -51,20 +49,6 @@ CREATE TABLE IF NOT EXISTS blacklist (
     PRIMARY KEY (blacklist_type, entity_id, guild_id)
 );
 
--- not as important as roles. But still.
-CREATE TABLE IF NOT EXISTS disabled_entities (
-    guild_id BIGINT,
-    entity_id BIGINT,
-    PRIMARY KEY (guild_id, entity_id)
-);
-
-CREATE TABLE IF NOT EXISTS disabled_commands (
-    guild_id BIGINT,
-    entity_id BIGINT,
-    command_name TEXT,
-    whitelist BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY (guild_id, entity_id, command_name)
-);
 
 CREATE TABLE IF NOT EXISTS badges (
     badge_id BIGSERIAL PRIMARY KEY,
@@ -164,3 +148,24 @@ CREATE TABLE dm_flow (
     dm_channel BIGINT NULL,
     dm_webhook TEXT NULL
 );
+
+-- From https://github.com/Rapptz/RoboDanny/blob/rewrite/migrations/V1__Initial_migration.sql
+CREATE TABLE IF NOT EXISTS plonks (
+    id SERIAL PRIMARY KEY,
+    guild_id BIGINT,
+    entity_id BIGINT UNIQUE
+);
+
+CREATE INDEX IF NOT EXISTS plonks_guild_id_idx ON plonks (guild_id);
+CREATE INDEX IF NOT EXISTS plonks_entity_id_idx ON plonks (entity_id);
+
+CREATE TABLE IF NOT EXISTS command_config (
+    id SERIAL PRIMARY KEY,
+    guild_id BIGINT,
+    channel_id BIGINT,
+    name TEXT,
+    whitelist BOOLEAN
+);
+
+CREATE INDEX IF NOT EXISTS command_config_guild_id_idx ON command_config (guild_id);
+-- End

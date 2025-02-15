@@ -188,7 +188,7 @@ class ViewMenuPages(discord.ui.View):
             await interaction.response.send_message('An unknown error occurred, sorry', ephemeral=True)
         await self.ctx.bot.exceptions.add_error(error=error, ctx=self.ctx)
 
-    async def start(self) -> None:
+    async def start(self, *, message: discord.Message | None = None, content: str | None = None) -> None:
         if self.check_embeds and not self.ctx.channel.permissions_for(self.ctx.me).embed_links:  # type: ignore
             await self.ctx.send('Bot does not have embed links permission in this channel.')
             return
@@ -197,7 +197,12 @@ class ViewMenuPages(discord.ui.View):
         page = await self.source.get_page(0)
         kwargs = await self._get_kwargs_from_page(page)
         self._update_labels(0)
-        self.message = await self.ctx.send(**kwargs, view=self)
+        if content:
+            kwargs['content'] = content
+        if message:
+            self.message = await message.edit(**kwargs, view=self)
+        else:
+            self.message = await self.ctx.send(**kwargs, view=self)
         self.ctx.bot.views.add(self)
 
     async def start_ephemeral(self, interaction: discord.Interaction):
@@ -287,3 +292,24 @@ class ViewMenuPages(discord.ui.View):
         else:
             self._showing_info = True
             await interaction.response.edit_message(embed=self._info_embed)
+
+
+class SimplePageSource(menus.ListPageSource):
+    async def format_page(self, menu, entries):
+        pages = []
+        for index, entry in enumerate(entries, start=menu.current_page * self.per_page):
+            pages.append(f'{index + 1}. {entry}')
+
+        maximum = self.get_max_pages()
+        if maximum > 1:
+            footer = f'Page {menu.current_page + 1}/{maximum} ({len(self.entries)} entries)'
+            menu.embed.set_footer(text=footer)
+
+        menu.embed.description = '\n'.join(pages)
+        return menu.embed
+
+
+class SimplePages(ViewMenuPages):
+    def __init__(self, entries, *, ctx: DuckContext, per_page: int = 12):
+        super().__init__(SimplePageSource(entries, per_page=per_page), ctx=ctx)
+        self.embed = discord.Embed(colour=discord.Colour.blurple())
