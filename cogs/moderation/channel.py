@@ -397,7 +397,7 @@ class ChannelModeration(DuckCog):
         await interaction.followup.send(f'✅ **|** Blocked **{mdr(user)}**')
 
     @slash_block.command(name='revoke')
-    @app_commands.describe(user='The user you wish to block.')
+    @app_commands.describe(user='The user you wish to unblock.')
     async def app_unblock_user(
         self,
         interaction: discord.Interaction[DuckBot],
