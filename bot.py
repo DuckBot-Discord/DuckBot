@@ -266,7 +266,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         self.thread_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
         self.constants = constants
-        self.tree.error(self.on_tree_error)  # type: ignore
+        self.tree.error(self.on_tree_error)
 
         self.views: Set[discord.ui.View] = set()
         self._auto_spam_count: DefaultDict[int, int] = defaultdict(int)
