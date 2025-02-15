@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import typing
 from typing import Union
 
@@ -9,7 +8,6 @@ from discord import Permissions, PermissionOverwrite, Member, Role
 
 from utils import DuckContext, DuckCog, DeleteButton, command
 from utils.types import constants
-from discord.utils import as_chunks
 from bot import DuckBot
 
 # These are just for making it look nicer,
@@ -34,7 +32,7 @@ mod_perms_text = """```
 {ban_members} Ban Members
 {manage_roles} Manage Roles
 {manage_guild} Manage Server
-{manage_emojis} Manage Emojis
+{manage_expressions} Manage Expressions
 {manage_events} Manage Events
 {manage_threads} Manage Threads
 {manage_channels} Manage Channels
@@ -109,11 +107,22 @@ class SimpleOverwrite:
         return self.entity.id
 
     @property
+    def name(self):
+        return str(self.entity)
+
+    @property
+    def emoji(self):
+        if isinstance(self.entity, discord.Role):
+            return constants.ROLES_ICON
+        else:
+            return '\N{BUST IN SILHOUETTE}'
+
+    @property
     def color(self):
         return getattr(self.entity, 'color', discord.Color.default())
 
     def __str__(self):
-        return f"{self.entity}"
+        return self.name
 
     def __repr__(self):
         return f"<SimpleOverwrite id={self.id}>"
@@ -127,59 +136,27 @@ class GuildPermsViewer(discord.ui.View):
     def __init__(
         self,
         ctx: DuckContext,
-        message: discord.Message,
-        chunks: typing.List[typing.List[SimpleOverwrite]] | typing.List[typing.List[discord.Role]],
     ):
         super().__init__()
         self.ctx = ctx
         self.guild = ctx.guild
-        self.message = message
-        self.current_page = 0
-        self.chunks = chunks
-        self.max_pages = len(chunks) - 1
-        self.current_role: typing.Optional[typing.Union[discord.Role, SimpleOverwrite]] = None
+        self.message: discord.Message | None = None
 
-    def get_options_from_chunk(self, index: int):
-        roles = self.chunks[index]
-        return [discord.SelectOption(label=f"{r.position + 1}) {get_type(r).__name__} @{r}", value=str(r.id)) for r in roles]
-
-    @discord.ui.select()
-    async def select_role(self, interaction: discord.Interaction[DuckBot], select: discord.ui.Select):
-        role_id: int = int(select.values[0])
-        role = discord.utils.get(self.chunks[self.current_page], id=role_id)
-        if not role:
-            return await interaction.response.send_message('Entity not found...', ephemeral=True)
+    @discord.ui.select(cls=discord.ui.RoleSelect)
+    async def select_role(self, interaction: discord.Interaction[DuckBot], select: discord.ui.RoleSelect):
+        role = select.values[0]
         embed = PermsEmbed(role, role.permissions)
-        select.placeholder = f"Viewing @{role} (page {self.current_page + 1}/{self.max_pages + 1})"
-        self.current_role = role
         await interaction.response.edit_message(embed=embed, view=self)
-
-    @discord.ui.button(label='<')
-    async def previous_page(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
-        self.current_page = max(0, self.current_page - 1)
-        self.update_components()
-        await interaction.response.edit_message(view=self)
-
-    @discord.ui.button(label='>')
-    async def next_page(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
-        self.current_page = min(self.max_pages, self.current_page + 1)
-        self.update_components()
-        await interaction.response.edit_message(view=self)
 
     @discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
     async def exit(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         self.stop()
-        (await interaction.message.delete()) if interaction.message else None
-        with contextlib.suppress(discord.HTTPException):
+        await interaction.response.defer()
+        await interaction.delete_original_response()
+        try:
             await self.ctx.message.add_reaction(self.ctx.bot.done_emoji)
-
-    def update_components(self):
-        self.next_page.disabled = self.current_page >= self.max_pages
-        self.previous_page.disabled = self.current_page <= 0
-        self.select_role.options = self.get_options_from_chunk(self.current_page)
-        self.select_role.placeholder = (
-            f"Viewing @{self.current_role or 'no role'} " f"(page {self.current_page + 1}/{self.max_pages + 1})"
-        )
+        except:
+            pass
 
     @classmethod
     async def start(cls, ctx: DuckContext):
@@ -191,37 +168,9 @@ class GuildPermsViewer(discord.ui.View):
         ctx: DuckContext
             The context to use.
         """
-        message = await ctx.send('Loading...')
-        chunks = [chunk for chunk in as_chunks(ctx.guild.roles, 10)]
-        new = cls(ctx, message, chunks)
-        new.update_components()
-        await message.edit(content=None, view=new)
-        new.ctx.bot.views.add(new)
-
-    @classmethod
-    async def from_overwrites(
-        cls,
-        ctx: DuckContext,
-        overwrites: typing.Dict[typing.Union[discord.Member, discord.Role, discord.Object], discord.PermissionOverwrite],
-    ) -> None:
-        """|coro|
-
-        Starts a Permissions Viewer from a channel's overwrites.
-
-        Parameters
-        ----------
-        ctx: DuckContext
-            The context of the command.
-        overwrites: Dict[Union[discord.Member, discord.Role], discord.PermissionOverwrite]
-            The overwrites to view.
-        """
-        message = await ctx.send('Loading...')
-        chunks = [
-            [SimpleOverwrite(k, v, i) for i, (k, v) in enumerate(chunk)] for chunk in as_chunks(overwrites.items(), 10)
-        ]
-        new = cls(ctx, message, chunks)
-        new.update_components()
-        await message.edit(content=None, view=new)
+        new = cls(ctx)
+        message = await ctx.send(view=new)
+        new.message = message
         new.ctx.bot.views.add(new)
 
     async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
@@ -231,7 +180,81 @@ class GuildPermsViewer(discord.ui.View):
         self.ctx.bot.views.discard(self)
         for item in self.children:
             item.disabled = True  # type: ignore
-        await self.message.edit(view=self)
+        if self.message:
+            await self.message.edit(view=self)
+
+    def stop(self) -> None:
+        self.ctx.bot.views.discard(self)
+        super().stop()
+
+
+class OverwritesViewer(discord.ui.View):
+    def __init__(self, ctx: DuckContext, overwrites: list[SimpleOverwrite]):
+        super().__init__()
+        self.ctx = ctx
+        self.overwrites = overwrites
+        self.message: discord.Message | None = None
+        self.current_page: int = 0
+        self.per_page = 10
+
+    def update_select_options(self):
+        range = self.overwrites[self.current_page * self.per_page : (self.current_page + 1) * self.per_page]
+        self.select_overwrite.options = [
+            discord.SelectOption(label=over.name, emoji=over.emoji, value=over.position) for over in range
+        ]
+
+    @discord.ui.select()
+    async def select_overwrite(self, interaction: discord.Interaction, select: discord.ui.Select):
+        overwrite = self.overwrites[int(select.values[0])]
+        embed = PermsEmbed(overwrite, overwrite.permissions)
+        await interaction.response.edit_message(embed=embed)
+
+    @discord.ui.button(label='<')
+    async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page = min(len(self.overwrites), max(0, self.current_page - 1))
+        self.update_select_options()
+        await interaction.response.edit_message(view=self)
+
+    @discord.ui.button(label='>')
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page = min(len(self.overwrites), max(0, self.current_page + 1))
+        self.update_select_options()
+        await interaction.response.edit_message(view=self)
+
+    @discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
+    async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.stop()
+        await interaction.response.defer()
+        await interaction.delete_original_response()
+        try:
+            await self.ctx.message.add_reaction(self.ctx.bot.done_emoji)
+        except:
+            pass
+
+    @classmethod
+    async def start(cls, ctx: DuckContext, channel: discord.abc.GuildChannel):
+        overwrites = [
+            SimpleOverwrite(entry, overwrite, pos)
+            for pos, (entry, overwrite) in enumerate(filter(lambda x: not x[1].is_empty(), channel.overwrites.items()))
+        ]
+        if not overwrites:
+            await ctx.send(f"No permission overwrites found in this channel.")
+            return
+
+        new = cls(ctx, overwrites)
+        new.update_select_options()
+        message = await ctx.send(view=new)
+        new.message = message
+
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
+        return interaction.user == self.ctx.author
+
+    async def on_timeout(self) -> None:
+        self.ctx.bot.views.discard(self)
+        for item in self.children:
+            item.disabled = True  # type: ignore
+        if self.message:
+            await self.message.edit(view=self)
 
     def stop(self) -> None:
         self.ctx.bot.views.discard(self)
@@ -251,8 +274,7 @@ class PermsViewer(DuckCog):
             await GuildPermsViewer.start(ctx)
         else:
             if isinstance(entity, discord.abc.GuildChannel):
-                await GuildPermsViewer.from_overwrites(ctx, entity.overwrites)
-                return
+                return await OverwritesViewer.start(ctx, entity)
 
             elif isinstance(entity, discord.Role):
                 perms = entity.permissions
