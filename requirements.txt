@@ -9,6 +9,7 @@ parsedatetime
 python-dateutil
 humanize
 asyncpg
+asyncpg-stubs
 lru-dict
 aiofile
 typing_extensions
