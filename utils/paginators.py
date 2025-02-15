@@ -248,7 +248,7 @@ class ViewMenuPages(discord.ui.View):
     async def go_to_last_page(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
         """go to the last page"""
         # The call here is safe because it's guarded by skip_if
-        await self.show_page(interaction, self.source.get_max_pages() or 0 - 1)
+        await self.show_page(interaction, (self.source.get_max_pages() or 0) - 1)
 
     @discord.ui.button(label='Skip to page...', style=discord.ButtonStyle.grey)
     async def numbered_page(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
