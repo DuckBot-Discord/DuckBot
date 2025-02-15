@@ -1,38 +1,16 @@
 import logging
 import typing
 
-import asyncio
 import discord
+import discord.http
 from discord.utils import format_dt
 
 from bot import DuckBot
-from utils import DuckContext, DuckCog, command
+from utils import DuckCog, DuckContext, command, PartiallyMatch
 from utils.types import constants
 
 from .perms import PermsEmbed
 
-pronoun_mapping = {
-    "unspecified": "Unspecified __[(set one)](https://pronoundb.org/)__",
-    "hh": "He/Him",
-    "hi": "He/It",
-    "hs": "He/She",
-    "ht": "He/They",
-    "ih": "It/Him",
-    "ii": "It/Its",
-    "is": "It/She",
-    "shh": "She/He",
-    "sh": "She/Her",
-    "si": "She/It",
-    "st": "She/They",
-    "th": "They/He",
-    "ti": "They/It",
-    "ts": "They/She",
-    "tt": "They/Them",
-    "any": "Any Pronouns",
-    "other": "Other Pronouns",
-    "ask": "Ask Me",
-    "avoid": "Avoid pronouns, use my name!",
-}
 
 type_mapping = {
     discord.ActivityType.unknown: "Playing",
@@ -87,7 +65,7 @@ def deltaconv(s):
 async def get_user_badges(
     user: typing.Union[discord.Member, discord.User],
     bot: DuckBot,
-    fetched_user: discord.User | typing.Literal[False] | None = None,
+    fetched_user: discord.User | None = None,
 ):
     flags = dict(user.public_flags)
 
@@ -106,10 +84,7 @@ async def get_user_badges(
         user_flags.append(f'{constants.NITRO} Nitro')
 
     elif isinstance(user, discord.Member) and user.premium_since:
-        user_flags.append(f'{constants.NITRO} Nitro [guess: Boosting]')
-
-    elif user.discriminator in constants.COMMON_DISCRIMINATORS:
-        user_flags.append(f'{constants.NITRO} Nitro [guess: Rare #tag]')
+        user_flags.append(f'{constants.NITRO} Nitro')
 
     if isinstance(user, discord.Member):
         if user.id == user.guild.owner_id:
@@ -155,9 +130,15 @@ class UserInfoViewer(discord.ui.View):
         self.author = author
         self.color = color or bot.color
         self.message: typing.Optional[discord.Message] = None
-        self.fetched: typing.Optional[discord.User | bool] = None
+        self.fetched: typing.Optional[discord.User] = None
         self._main_embed: typing.Optional[typing.List[BaseEmbed]] = None
         self._perms_embed: typing.Optional[typing.List[PermsEmbed]] = None
+        self._assets_embeds: typing.Optional[typing.List[discord.Embed]] = None
+
+    async def fetch_user(self):
+        if not self.fetched:
+            self.fetched = await self.bot.fetch_user(self.user.id)
+        return self.fetched
 
     async def make_main_embed(self) -> typing.List[BaseEmbed]:
         if self._main_embed is not None:
@@ -167,40 +148,16 @@ class UserInfoViewer(discord.ui.View):
         embed = BaseEmbed(title='\N{SCROLL} User Info Main Page', color=self.color, user=user)
         is_member = isinstance(user, discord.Member)
 
-        if not user.bot and self.fetched is None:
-            try:
-                self.fetched = await self.bot.fetch_user(user.id)
-            except discord.HTTPException:
-                self.fetched = None
-        else:
-            self.fetched = False
-
         general = [f"**ID:** {user.id}", f"**Username:** {user.name}"]
 
         if is_member and user.nick:
             general.append(f"╰ **Nick:** {user.nick}")
 
-        try:
-            _pr_resp = await self.bot.session.get(
-                'https://pronoundb.org/api/v1/lookup', timeout=1.5, params=dict(platform='discord', id=user.id)
-            )
-            _prs = await _pr_resp.json()
-            pronouns = pronoun_mapping.get(_prs.get('pronouns', 'unspecified'), 'Unknown...')
-            general.append(f'**Pronouns:** {pronouns}')
-        except asyncio.TimeoutError:
-            pass
-        except Exception as e:
-            logging.debug(f'Failed to get pronouns for {user}, ignoring', exc_info=e)
-
-        if is_member:
-            top_role = user.top_role if not user.top_role.is_default() else None
-            if top_role:
-                general.append(f"**Top Role:** {top_role.mention}")
-
         embed.add_field(name=f'{constants.INFORMATION_SOURCE} General', value='\n'.join(general), inline=True)
 
         embed.add_field(
-            name=f'{constants.STORE_TAG} Badges / DuckBadges', value=await get_user_badges(user, self.bot, self.fetched)
+            name=f'{constants.STORE_TAG} Badges / DuckBadges',
+            value=await get_user_badges(user, self.bot, await self.fetch_user()),
         )
 
         embed.add_field(
@@ -223,33 +180,41 @@ class UserInfoViewer(discord.ui.View):
             )
 
         if is_member:
-            now = discord.utils.utcnow()
             custom_st = discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), user.activities)
             if custom_st and isinstance(custom_st, discord.CustomActivity):
                 emoji = f"{custom_st.emoji} " if custom_st.emoji and custom_st.emoji.is_unicode_emoji() else ''
-                extra = f"\n**Custom Status:**\n{emoji}`{discord.utils.remove_markdown(custom_st.name or '')}`"
+                extra = f"\n**Custom Status**\n{emoji}`{discord.utils.remove_markdown(custom_st.name or '')}`"
             else:
                 extra = ''
-            embed.add_field(name=f"{constants.STORE_TAG} Status:", value=f"{generate_user_statuses(user)}{extra}")
+            embed.add_field(name=f"{constants.STORE_TAG} Status", value=f"{generate_user_statuses(user)}{extra}")
 
             spotify = discord.utils.find(lambda a: isinstance(a, discord.Spotify), user.activities)
             if isinstance(spotify, discord.Spotify):
                 embed.add_field(
-                    name=f"{constants.FULL_SPOTIFY}\u200b",
+                    name=f"{constants.SPOTIFY} Spotify",
                     value=f"**[{spotify.title}]({spotify.track_url})**"
                     f"\n**By** {spotify.artist}"
-                    f"\n**On** {spotify.album}"
-                    f"\n**Time:** {deltaconv((now - spotify.start).total_seconds())}/"
-                    f"{deltaconv(spotify.duration.total_seconds())}",
+                    f"\n**On** {spotify.album}",
+                )
+
+            roles = [r.mention for r in user.roles if not r.is_default()]
+            roles.reverse()
+            if roles:
+                embed.add_field(
+                    name=f"{constants.ROLES_ICON} Roles",
+                    value=", ".join(roles) + f"\n**Top Role:** {user.top_role.mention} • "
+                    f"**Color:** {user.color if user.color is not discord.Color.default() else 'Default'}",
+                    inline=False,
                 )
 
         embeds = [embed]
         self._main_embed = embeds
         return embeds
 
-    async def make_perm_embeds(self) -> typing.List[PermsEmbed]:
+    async def make_perms_embed(self):
         if self._perms_embed:
             return self._perms_embed
+
         user = self.user
         if isinstance(user, discord.Member):
             embed = PermsEmbed(entity=user, permissions=user.guild_permissions)
@@ -261,7 +226,23 @@ class UserInfoViewer(discord.ui.View):
             self._perms_embed = embeds
             return embeds
         else:
-            return []
+            return [BaseEmbed(user=user, description="User is not a part of this server.")]
+
+    async def make_asset_embeds(self):
+        if self._assets_embeds:
+            return self._assets_embeds
+        embeds: list[discord.Embed] = []
+        fetched_user = await self.fetch_user()
+        user = self.user
+
+        if user.avatar:
+            embeds.append(discord.Embed(title="Avatar", color=self.bot.color).set_image(url=user.display_avatar.url))
+        if user.display_avatar != fetched_user.display_avatar:
+            embeds.append(discord.Embed(title="Server Avatar", color=self.bot.color).set_image(url=user.display_avatar.url))
+        if fetched_user.banner:
+            embeds.append(discord.Embed(title="Banner", color=self.bot.color).set_image(url=fetched_user.banner.url))
+        self._assets_embeds = embeds
+        return embeds
 
     @discord.ui.select(
         options=[
@@ -275,19 +256,19 @@ class UserInfoViewer(discord.ui.View):
                 label='Permissions',
                 value='perms',
                 emoji='\N{INFORMATION SOURCE}',
-                description='Global permissions for this user.',
+                description='The user\'s server permissions.',
             ),
             discord.SelectOption(
                 label='Assets',
                 value='assets',
                 emoji='🎨',
-                description="The user's assets, such as their profile picture, banner, etc.",
+                description="Profile pictures, and banner.",
             ),
             discord.SelectOption(
-                label='Roles',
-                value='roles',
-                emoji=constants.ROLES_ICON,
-                description="All information about this user's roles.",
+                label='Stop & Close',
+                value='stop',
+                emoji='\N{OCTAGONAL SIGN}',
+                description="Deletes this message.",
             ),
         ]
     )
@@ -295,10 +276,16 @@ class UserInfoViewer(discord.ui.View):
         value = select.values[0]
         if value == 'main':
             embeds = await self.make_main_embed()
-            await interaction.response.edit_message(embeds=embeds)
         elif value == 'perms':
-            embeds = await self.make_perm_embeds()
-            await interaction.response.edit_message(embeds=embeds)
+            embeds = await self.make_perms_embed()
+        elif value == 'stop':
+            self.stop()
+            await interaction.response.defer()
+            await interaction.delete_original_response()
+            return
+        else:
+            embeds = await self.make_asset_embeds()
+        await interaction.response.edit_message(embeds=embeds)
 
     async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         return interaction.user == self.author
@@ -310,7 +297,7 @@ class UserInfoViewer(discord.ui.View):
     async def on_timeout(self) -> None:
         self.bot.views.discard(self)
         if self.message:
-            await self.message.delete()
+            await self.message.edit(view=None)
 
     def stop(self) -> None:
         self.bot.views.discard(self)
@@ -319,7 +306,7 @@ class UserInfoViewer(discord.ui.View):
 
 class UserInfo(DuckCog):
     @command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
-    async def user_info(self, ctx: DuckContext, *, user: typing.Union[discord.Member, discord.User] = None):  # type: ignore
+    async def user_info(self, ctx: DuckContext, *, user: PartiallyMatch[discord.Member, discord.User] = None):  # type: ignore
         """|coro|
 
         Displays information about a user or member
@@ -333,46 +320,3 @@ class UserInfo(DuckCog):
         user = user or ctx.author
         await ctx.typing()
         await UserInfoViewer(user, bot=ctx.bot, author=ctx.author, color=ctx.color).start(ctx)
-
-
-"""
-            spotify = None
-            index = 0
-            formatted_activities = []
-            for activity in user.activities:
-                if isinstance(activity, discord.Spotify):
-                    # We don't increment index for spotify.
-                    spotify = activity
-                elif isinstance(activity, discord.Activity):
-                    index += 1
-
-                    formatted = f"`{index}.` {type_mapping.get(activity.type)} {activity.name}"
-                    formatted_activities.append(formatted)
-
-                elif isinstance(activity, discord.Game):
-                    index += 1
-
-                    formatted = f"`{index}.` Streaming **{activity.name}**"
-                    if activity.start:
-                        formatted += f" {format_dt(activity.start)}"
-                    formatted_activities.append(formatted)
-
-                elif isinstance(activity, discord.Streaming):
-                    index += 1
-
-                    formatted = f"`{index}.` Streaming **[{activity.name}]({activity.url})**"
-                    if activity.game:
-                        formatted += f"\n╰ Currently playing **{activity.game}**"
-                    formatted_activities.append(formatted)
-
-                elif isinstance(activity, discord.CustomActivity):
-                    index += 1
-                    emoji = activity.emoji if activity.emoji and activity.emoji.is_unicode_emoji() else ''
-                    formatted = f"`{index}.` **Custom Status**: {emoji} {activity.name}"
-                    formatted_activities.append(formatted)
-
-            formatted_activities.append(f"**Status:** {generate_user_statuses(user)}")
-
-            embed.add_field(name=f"{constants.STORE_TAG} Activities",
-                            value='\n'.join(formatted_activities))
-"""
