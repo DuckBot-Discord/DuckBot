@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from discord.ext import commands, menus
 from utils.paginators import ViewMenuPages, SimplePages
-import cache
+from . import cache
 
 from collections import defaultdict
 from typing import TYPE_CHECKING, AsyncIterator, Iterable, Optional, Union
