@@ -2,19 +2,35 @@ from __future__ import annotations
 
 import re
 from types import UnionType
-from typing import List, Optional, Type, Union, Tuple, Dict, TypeVar, TypeVarTuple, Generic, TypeAlias, Annotated, Any
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeAlias,
+    TypeVar,
+    TypeVarTuple,
+    Union,
+)
 
 import discord
 from discord.ext import commands
+from discord.ext.commands import Flag
+from discord.ext.commands import FlagConverter as DCFlagConverter
+from discord.ext.commands import MissingFlagArgument
 from discord.ext.commands.core import unwrap_function
-from discord.ext.commands import FlagConverter as DCFlagConverter, Flag, MissingFlagArgument
 
-
-from .helpers import can_execute_action
-from utils.types import DiscordMedium
 from utils.bases.context import DuckContext
-from .errorhandler import HandleHTTPException
 from utils.bases.errors import PartialMatchFailed
+from utils.types import DiscordMedium
+
+from .errorhandler import HandleHTTPException
+from .helpers import can_execute_action
 
 __all__: Tuple[str, ...] = (
     'TargetVerifier',
@@ -156,63 +172,67 @@ def require(*, default: bool = True, **perms: bool):
     return commands.parameter(converter=converter)
 
 
-class TargetVerifier(Generic[*TTuple]):
-    """Used to verify a target is permitted to perform
-    an action upon another target.
+if TYPE_CHECKING:
+    TargetVerifier = Union
+else:
 
-    In this use case, the target is being checked by
-    :attr:`DuckBot.author` for an operation.
+    class TargetVerifier(Generic[*TTuple]):
+        """Used to verify a target is permitted to perform
+        an action upon another target.
 
-    .. code-block:: python3
+        In this use case, the target is being checked by
+        :attr:`DuckBot.author` for an operation.
 
-        @commands.command()
-        async def ban(self, ctx: DuckContext, member: TargetVerifier[discord.Member, discord.User], *, reason: str = '...'):
-            await member.ban(reason=reason)
-    """
+        .. code-block:: python3
 
-    __slots__: Tuple[str, ...] = ('target', 'fail_if_not_upgrade', '_targets', '_converter')
-
-    def __class_getitem__(cls, types: Tuple[*TTuple]):
-        if isinstance(types, tuple):
-            return cls(*types)
-        else:
-            return cls(types)
-
-    def __init__(self, *targets: *TTuple) -> None:
-        self._targets = targets
-        if len(targets) > 2:
-            self._converter = targets[0]
-        else:
-            self._converter = Union[targets]  # type: ignore
-
-    async def convert(self, ctx: DuckContext, argument: str):
-        """|coro|
-
-        The main convert method of the converter. This will use the types given to transform the argument
-        to the given type, then verify that the target is permitted to perform the action.
-
-        Parameters
-        ----------
-        ctx: :class:`DuckContext`
-            The context of the command.
-        argument: :class:`str`
-            The argument to convert.
-
-        Returns
-        -------
-        Union[discord.Member, discord.User]
-            The converted target as specifying when defining the converter.
+            @commands.command()
+            async def ban(self, ctx: DuckContext, member: TargetVerifier[discord.Member, discord.User], *, reason: str = '...'):
+                await member.ban(reason=reason)
         """
 
-        if not ctx.current_parameter:
-            raise AttributeError(f'In {type(self).__name__}, something went very wrong! ctx.current_parameter was None')
+        __slots__: Tuple[str, ...] = ('target', 'fail_if_not_upgrade', '_targets', '_converter')
 
-        target = await commands.run_converters(
-            ctx, converter=self._converter, argument=argument, param=ctx.current_parameter
-        )
-        await can_execute_action(ctx, target, should_upgrade=self._converter is Union)
-        self.target = target
-        return target
+        def __class_getitem__(cls, types: Tuple[*TTuple]):
+            if isinstance(types, tuple):
+                return cls(*types)
+            else:
+                return cls(types)
+
+        def __init__(self, *targets: *TTuple) -> None:
+            self._targets = targets
+            if len(targets) > 2:
+                self._converter = targets[0]
+            else:
+                self._converter = Union[targets]
+
+        async def convert(self, ctx: DuckContext, argument: str):
+            """|coro|
+
+            The main convert method of the converter. This will use the types given to transform the argument
+            to the given type, then verify that the target is permitted to perform the action.
+
+            Parameters
+            ----------
+            ctx: :class:`DuckContext`
+                The context of the command.
+            argument: :class:`str`
+                The argument to convert.
+
+            Returns
+            -------
+            Union[discord.Member, discord.User]
+                The converted target as specifying when defining the converter.
+            """
+
+            if not ctx.current_parameter:
+                raise AttributeError(f'In {type(self).__name__}, something went very wrong! ctx.current_parameter was None')
+
+            target = await commands.run_converters(
+                ctx, converter=self._converter, argument=argument, param=ctx.current_parameter
+            )
+            await can_execute_action(ctx, target, should_upgrade=self._converter is Union)
+            self.target = target
+            return target
 
 
 # Including `commands.Converter` is faster on discord backend iirc
@@ -233,7 +253,7 @@ class BanEntryConverter(discord.guild.BanEntry):
     """
 
     @classmethod
-    async def convert(cls: Type[BanEntryConverter], ctx: DuckContext, argument: str) -> discord.guild.BanEntry:
+    async def convert(cls: Type[BanEntryConverter], ctx: DuckContext, argument: str):
         """|coro|
 
         The main convert method of the converter. This will use the types given to transform the argument
@@ -319,12 +339,12 @@ class UntilFlag(Generic[T, FCT]):
             converter = converter.__metadata__[0]  # type: ignore
 
         self._converter = converter
-        self._regex: re.Pattern[str] = self.flags.__commands_flag_regex__  # type: ignore
-        self._start: str = (self.flags.__commands_flag_prefix__)  # type: ignore
+        self._regex: re.Pattern[str] = self.flags.__commands_flag_regex__
+        self._start: str = (self.flags.__commands_flag_prefix__)
 
     def __class_getitem__(cls, item: Tuple[Type[T], Type[commands.FlagConverter]]) -> UntilFlag[T, FCT]:
         converter, flags = item
-        return cls(value='...', flags=flags(), converter=converter)
+        return cls(value='...', flags=flags(), converter=converter)  # type: ignore
 
     def validate_value(self, argument: str) -> bool:
         """Used to validate the parsed value without flags.
@@ -443,100 +463,104 @@ class FlagConverter(DCFlagConverter):
         return result
 
 
-class PartiallyMatch(commands.Converter, Generic[*TTuple]):
-    def __init__(self, *types: *TTuple):
-        super().__init__()
+if TYPE_CHECKING:
+    PartiallyMatch = Union
+else:
 
-        self.types = types
-        self.converter: type | UnionType | None = None
+    class PartiallyMatch(commands.Converter, Generic[*TTuple]):
+        def __init__(self, *types: *TTuple):
+            super().__init__()
 
-        if len(types) == 1:
-            self.converter = types[0]  # type: ignore
-        elif len(types) > 1:
-            self.converter = Union[types]  # type: ignore
+            self.types = types
+            self.converter: type | UnionType | None = None
 
-    def __class_getitem__(cls, types: Tuple[*TTuple]):
-        if isinstance(types, tuple):
-            return cls(*types)
+            if len(types) == 1:
+                self.converter = types[0]  # type: ignore
+            elif len(types) > 1:
+                self.converter = Union[types]
 
-        return cls(types)
+        def __class_getitem__(cls, types: Tuple[*TTuple]):
+            if isinstance(types, tuple):
+                return cls(*types)
 
-    def retrieve_media_container(self, ctx: DuckContext, _type: type):
-        match _type:
-            case discord.User:
-                return ctx.bot.users
-            case 'Member':
-                return ctx.guild.members
-            case 'Role':
-                return ctx.guild.roles
-            case 'TextChannel':
-                return ctx.guild.text_channels
-            case 'VoiceChannel':
-                return ctx.guild.voice_channels
-            case 'CategoryChannel':
-                return ctx.guild.categories
-            case 'Thread':
-                return ctx.guild.threads
-            case 'GuildChannel':
-                return ctx.guild.channels
-            case 'ForumChannel':
-                return ctx.guild.forums
-            case 'StageChannel':
-                return ctx.guild.stage_channels
-            case _:
-                return None
+            return cls(types)
 
-    def partially_match_medium(self, media_container: list[DiscordMedium], argument: str) -> DiscordMedium | None:
-        case_insensitive_argument = argument.lower()
+        def retrieve_media_container(self, ctx: DuckContext, _type: type):
+            match _type:
+                case discord.User:
+                    return ctx.bot.users
+                case discord.Member:
+                    return ctx.guild.members
+                case discord.Role:
+                    return ctx.guild.roles
+                case discord.TextChannel:
+                    return ctx.guild.text_channels
+                case discord.VoiceChannel:
+                    return ctx.guild.voice_channels
+                case discord.CategoryChannel:
+                    return ctx.guild.categories
+                case discord.Thread:
+                    return ctx.guild.threads
+                case discord.abc.GuildChannel:
+                    return ctx.guild.channels
+                case discord.ForumChannel:
+                    return ctx.guild.forums
+                case discord.StageChannel:
+                    return ctx.guild.stage_channels
+                case _:
+                    return None
 
-        for medium in media_container:
-            case_insensitive_nickname: str = ''
-            case_insensitive_name = medium.name.lower()
-            argument_in_name = (
-                case_insensitive_name.startswith(case_insensitive_argument)
-                or case_insensitive_argument in case_insensitive_name
-            )
-            try:
-                nickname_found = medium.nick  # type: ignore
-            except AttributeError:
-                nickname_found = False
+        def partially_match_medium(self, media_container: list[DiscordMedium], argument: str) -> DiscordMedium | None:
+            case_insensitive_argument = argument.lower()
 
-            if nickname_found:
-                case_insensitive_nickname = nickname_found.lower()
+            for medium in media_container:
+                case_insensitive_nickname: str = ''
+                case_insensitive_name = medium.name.lower()
+                argument_in_name = (
+                    case_insensitive_name.startswith(case_insensitive_argument)
+                    or case_insensitive_argument in case_insensitive_name
+                )
+                try:
+                    nickname_found = medium.nick  # type: ignore
+                except AttributeError:
+                    nickname_found = False
 
-            argument_in_nickname = nickname_found and (
-                case_insensitive_nickname.startswith(case_insensitive_argument)
-                or case_insensitive_argument in case_insensitive_nickname
-            )
+                if nickname_found:
+                    case_insensitive_nickname = nickname_found.lower()
 
-            if not (argument_in_name or argument_in_nickname):
-                continue
+                argument_in_nickname = nickname_found and (
+                    case_insensitive_nickname.startswith(case_insensitive_argument)
+                    or case_insensitive_argument in case_insensitive_nickname
+                )
 
-            return medium
-
-        return None
-
-    async def convert(self, ctx: DuckContext, argument: str) -> DiscordMedium:
-        try:
-            assert ctx.current_parameter
-            converted_argument = await commands.run_converters(ctx, self.converter, argument, ctx.current_parameter)
-
-            return converted_argument
-        except (commands.BadArgument, commands.BadUnionArgument) as error:
-            for _type in self.types:
-                media_container_found = self.retrieve_media_container(ctx, _type)  # type: ignore
-
-                if not media_container_found:
+                if not (argument_in_name or argument_in_nickname):
                     continue
 
-                partial_match_found = self.partially_match_medium(media_container_found, argument)  # type: ignore
+                return medium
 
-                if partial_match_found:
-                    return partial_match_found
+            return None
 
-            new_error = PartialMatchFailed(argument, self.types)  # type: ignore
+        async def convert(self, ctx: DuckContext, argument: str) -> DiscordMedium:
+            try:
+                assert ctx.current_parameter
+                converted_argument = await commands.run_converters(ctx, self.converter, argument, ctx.current_parameter)
 
-            raise new_error from error
+                return converted_argument
+            except (commands.BadArgument, commands.BadUnionArgument) as error:
+                for _type in self.types:
+                    media_container_found = self.retrieve_media_container(ctx, _type)  # type: ignore
+
+                    if not media_container_found:
+                        continue
+
+                    partial_match_found = self.partially_match_medium(media_container_found, argument)  # type: ignore
+
+                    if partial_match_found:
+                        return partial_match_found
+
+                new_error = PartialMatchFailed(argument, self.types)  # type: ignore
+
+                raise new_error from error
 
 
 def _default_role(ctx: DuckContext):
