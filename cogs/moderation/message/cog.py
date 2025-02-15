@@ -49,7 +49,7 @@ class MessagePurge(DuckCog):
     ):
         """Removes messages that meet a criteria.
 
-        This command uses syntax similar to Discord's search bar, except that things can also be separated with `and` and `or` for a more granular search. You can also use parentheses to narrow down your search.
+        This command uses syntax similar to Discord's search bar. Arguments can be separated with `and` and `or` for a more granular search. You can also use parentheses to narrow down your search.
 
         Flags
         -----
@@ -57,14 +57,16 @@ class MessagePurge(DuckCog):
         `user: <@someone>` Removes messages from the given user.
         `has: [link|embed|file|video|image|sound|sticker|reaction|emoji]` Checks if the message has one one of these things, just like in the discord search feature.
         `is: [bot|human|webhook]` Checks the type of user. \\*`bot` does not match webhooks.
-        `before: <Message ID>` Messages before the given message ID.
-        `after: <Message ID>` Messages after the given message ID.
-        `around: <Message ID>` Messages around the given message ID. (or `during:`)
-        \\*Note that the above three date delimiters must __not__ be within parentheses, and __cannot__ be separated with `or` from other search terms.
         `contains: <text>` Messages that contain a substring.
         `prefix: <text>` Messages that start with a string.
         `suffix: <text>` Messages that end with a string.
-        `pinned: [yes|no]` Whether a message is pinned.
+        `pinned: [yes|no]` Whether a message is pinned. (default: no)
+
+        To narrow down *when* to search, you can use these arguments:
+        These three date arguments must __not__ be within parentheses, and __cannot__ be separated with `or` from other search terms.
+        `before: <Message ID>` Messages before the given message ID.
+        `after: <Message ID>` Messages after the given message ID.
+        `around: <Message ID>` Messages around the given message ID. (or `during:`)
 
         Notes
         -----
