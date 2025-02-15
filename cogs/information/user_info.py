@@ -3,14 +3,14 @@ import typing
 
 import discord
 import discord.http
+from discord.ext import commands
 from discord.utils import format_dt
 
 from bot import DuckBot
-from utils import DuckCog, DuckContext, command, PartiallyMatch
+from utils import DuckCog, DuckContext, PartiallyMatch, command
 from utils.types import constants
 
 from .perms import PermsEmbed
-
 
 type_mapping = {
     discord.ActivityType.unknown: "Playing",
@@ -278,13 +278,14 @@ class UserInfoViewer(discord.ui.View):
             embeds = await self.make_main_embed()
         elif value == 'perms':
             embeds = await self.make_perms_embed()
-        elif value == 'stop':
+        elif value == 'assets':
+            embeds = await self.make_asset_embeds()
+        else:
             self.stop()
             await interaction.response.defer()
             await interaction.delete_original_response()
             return
-        else:
-            embeds = await self.make_asset_embeds()
+
         await interaction.response.edit_message(embeds=embeds)
 
     async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
@@ -306,7 +307,7 @@ class UserInfoViewer(discord.ui.View):
 
 class UserInfo(DuckCog):
     @command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
-    async def user_info(self, ctx: DuckContext, *, user: PartiallyMatch[discord.Member, discord.User] = None):  # type: ignore
+    async def user_info(self, ctx: DuckContext, *, user: PartiallyMatch[discord.Member, discord.User] = commands.Author):
         """|coro|
 
         Displays information about a user or member
@@ -317,6 +318,5 @@ class UserInfo(DuckCog):
             The user or member you want to get info about.
             If None is passed, it will get info about you.
         """
-        user = user or ctx.author
         await ctx.typing()
         await UserInfoViewer(user, bot=ctx.bot, author=ctx.author, color=ctx.color).start(ctx)
