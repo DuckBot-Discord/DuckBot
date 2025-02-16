@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from utils import DuckContext, DuckCog
-from utils.time import ShortTime, human_timedelta
+from utils.time import ShorterTime, human_timedelta
 
 log = logging.getLogger('auto-ban')
 
@@ -15,14 +15,16 @@ class NewAccountGate(DuckCog):
     @commands.has_permissions(administrator=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
-    async def min_age(self, ctx: DuckContext, *, time: ShortTime | None = None):
+    async def min_age(self, ctx: DuckContext, *, time: ShorterTime | None = None):
         """Sets up or un-sets the minimum account age for the server.
 
-        Joining members who's account age is smaller will be automatically kicked.
+        Joining members who's account age is smaller will be automatically kicked. Run with no argument to un-set the minimum account age.
 
-        Run with no argument to un-set the minimum account age.
-        Example usage: `db.min-age 1month2weeks1day`
-        Valid time identifiers: months/mo; weeks/w; days/d; hours/h; minutes/m; seconds/s (can be singular or plural)
+        Valid time identifiers: weeks/w; days/d; hours/h; minutes/m; seconds/s (can be singular or plural). Months and years are not supported.
+
+        Example
+        `db.min-age 2weeks`
+        `db.min-age 3weeks5days12h`
         """
         if not time:
             await self.bot.pool.execute('UPDATE GUILDS SET min_join_age = NULL WHERE guild_id = $1', ctx.guild.id)
@@ -40,6 +42,9 @@ class NewAccountGate(DuckCog):
     @commands.Cog.listener('on_member_join')
     async def kick_new_members(self, member: discord.Member):
         """kicks joining members, as per the user-defined settings."""
+        if member.bot:
+            return
+
         if not member.guild.me.guild_permissions.kick_members:
             return
 

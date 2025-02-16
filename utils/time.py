@@ -17,6 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
 from __future__ import annotations
 
 import re
@@ -82,6 +83,19 @@ class ShortTime:
     @classmethod
     async def convert(cls: Type[STT], ctx: DuckContext, argument: str) -> STT:
         return cls(argument, now=ctx.message.created_at)
+
+
+class ShorterTime(ShortTime):
+    compiled = re.compile(
+        """
+        (?:(?P<weeks>[0-9]{1,4})(?:weeks?|w))?        # e.g. 10w
+        (?:(?P<days>[0-9]{1,5})(?:days?|d))?          # e.g. 14d
+        (?:(?P<hours>[0-9]{1,5})(?:hours?|h))?        # e.g. 12h
+        (?:(?P<minutes>[0-9]{1,5})(?:minutes?|m))?    # e.g. 10m
+        (?:(?P<seconds>[0-9]{1,5})(?:seconds?|s))?    # e.g. 15s
+        """,
+        re.VERBOSE,
+    )
 
 
 class HumanTime:
