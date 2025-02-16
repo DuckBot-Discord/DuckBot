@@ -19,18 +19,22 @@ from typing import (
 )
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Flag
 from discord.ext.commands import FlagConverter as DCFlagConverter
 from discord.ext.commands import MissingFlagArgument
 from discord.ext.commands.core import unwrap_function
 
-from utils.bases.context import DuckContext
 from utils.bases.errors import PartialMatchFailed
 from utils.types import DiscordMedium
 
 from .errorhandler import HandleHTTPException
 from .helpers import can_execute_action
+
+if TYPE_CHECKING:
+    from bot import DuckBot
+    from utils.bases.context import DuckContext
 
 __all__: Tuple[str, ...] = (
     'TargetVerifier',
@@ -176,12 +180,16 @@ if TYPE_CHECKING:
     TargetVerifier = Union
 else:
 
-    class TargetVerifier(Generic[*TTuple]):
-        """Used to verify a target is permitted to perform
-        an action upon another target.
+    class TargetVerifier(app_commands.Transformer, Generic[*TTuple]):
+        """Used to verify a target (either Role, Member or User)
+        is manageable/actionable by the command invoker.
 
-        In this use case, the target is being checked by
-        :attr:`DuckBot.author` for an operation.
+        Behaviour
+        ---------
+        - If the given generic is discord.Role, a hierarchy check
+        will be executed against ctx.author and ctx.me.
+        - If the given generic is discord.Member, it will do role
+        hierarchy checks
 
         .. code-block:: python3
 
@@ -190,7 +198,7 @@ else:
                 await member.ban(reason=reason)
         """
 
-        __slots__: Tuple[str, ...] = ('target', 'fail_if_not_upgrade', '_targets', '_converter')
+        __slots__: Tuple[str, ...] = ('target', '_targets', '_converter')
 
         def __class_getitem__(cls, types: Tuple[*TTuple]):
             if isinstance(types, tuple):
@@ -198,12 +206,29 @@ else:
             else:
                 return cls(types)
 
+        @discord.utils.cached_property
+        def type(self):
+            if set(self._targets).issubset({discord.User, discord.Member, discord.abc.User}):
+                return discord.AppCommandOptionType.user
+            elif set(self._targets).issubset({discord.Role}):
+                return discord.AppCommandOptionType.role
+            elif set(self._targets).issubset({discord.Role, discord.User, discord.Member, discord.abc.User}):
+                return discord.AppCommandOptionType.mentionable
+            else:
+                raise RuntimeError("TargetVerifier[] can only take User, Member and Role")
+
         def __init__(self, *targets: *TTuple) -> None:
             self._targets = targets
             if len(targets) > 2:
                 self._converter = targets[0]
             else:
                 self._converter = Union[targets]
+            self.type  # access this to validate params.
+
+        async def transform(self, interaction: discord.Interaction[DuckBot], value: Any) -> Any:
+            await can_execute_action(interaction, value, should_upgrade=self._converter is Union)
+            self.target = value
+            return value
 
         async def convert(self, ctx: DuckContext, argument: str):
             """|coro|
@@ -220,7 +245,7 @@ else:
 
             Returns
             -------
-            Union[discord.Member, discord.User]
+            Union[discord.Member, discord.User, discord.Role]
                 The converted target as specifying when defining the converter.
             """
 
@@ -230,6 +255,7 @@ else:
             target = await commands.run_converters(
                 ctx, converter=self._converter, argument=argument, param=ctx.current_parameter
             )
+
             await can_execute_action(ctx, target, should_upgrade=self._converter is Union)
             self.target = target
             return target
