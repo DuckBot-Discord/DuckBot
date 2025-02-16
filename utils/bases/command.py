@@ -81,6 +81,7 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
         **kwargs: Any,
     ) -> None:
         super().__init__(func, **kwargs)  # type: ignore
+        self.ignored_exceptions: tuple[type[Exception]] = kwargs.get('ignored_exceptions', tuple())
         self.autocompletes: Dict[str, AutoComplete] = {}
 
     @property
@@ -450,15 +451,10 @@ class DuckHybridGroup(commands.HybridGroup, DuckGroup):
             return DuckGroup.autocomplete(self, name)
 
     def command(self, *args: Any, hybrid: bool = True, **kwargs: Any) -> Callable[..., DuckHybridCommand]:
-        print(f'func was called with {args} {kwargs}')
-
         def wrapped(func) -> DuckHybridCommand:
-            print(f'wrapped was called with {args} {kwargs}')
             kwargs.setdefault('parent', self)
             result = command(*args, hybrid=True, with_app_command=hybrid, **kwargs)(func)
-            print('result', result)
             self.add_command(result)  # type: ignore
-            print('added command')
             return result  # type: ignore
 
         return wrapped

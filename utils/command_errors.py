@@ -37,8 +37,12 @@ async def on_command_error(ctx: DuckContext, error: Exception) -> None:
         errors.EntityBlacklisted,
     )
     children_not_ignored = (commands.BotMissingPermissions,)
+    try:
+        ignored_errors: tuple[type[Exception]] = ctx.command.ignored_exceptions  # type: ignore
+    except AttributeError:
+        ignored_errors: tuple[type[Exception]] = tuple()
 
-    if isinstance(error, ignored) and not isinstance(error, children_not_ignored):
+    if isinstance(error, ignored + ignored_errors) and not isinstance(error, children_not_ignored):
         return
     elif isinstance(error, (commands.UserInputError, errors.DuckBotException, commands.BotMissingPermissions)):
         await ctx.send(str(error))
