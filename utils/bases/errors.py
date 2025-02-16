@@ -70,14 +70,14 @@ class HierarchyException(DuckBotCommandError):
         self.author_error: bool = author_error
         if isinstance(target, discord.Member):
             if author_error is False:
-                super().__init__(f'**{target}**\'s top role is higher than mine. I can\'t do that!')
+                super().__init__(f'**{target}**\'s top role is higher than mine. I can\'t do that.')
             else:
-                super().__init__(f'**{target}**\'s top role is higher than your top role. You can\'t do that!')
+                super().__init__(f'**{target}**\'s top role is higher than your top role. You can\'t do that.')
         else:
             if author_error:
-                super().__init__(f'Role **{target}** is higher than your top role. You can\'t do that!')
+                super().__init__(f'Role **{target}** is higher than your top role. You can\'t do that.')
             else:
-                super().__init__(f'Role **{target}** is higher than your my role. I can\'t do that!')
+                super().__init__(f'Role **{target}** is higher than my top role. I can\'t do that.')
 
 
 class ActionNotExecutable(DuckBotCommandError):
