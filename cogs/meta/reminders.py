@@ -45,7 +45,7 @@ class Reminders(DuckCog):
         await ctx.send(f"Alright {ctx.author.mention}, {discord.utils.format_dt(when.dt, 'R')}: {when.arg}")
 
     # noinspection PyShadowingBuiltins
-    @remindme.command(name='delete')
+    @remindme.command(name='delete', alias=['remove'])
     async def remindme_delete(self, ctx: DuckContext, id: int) -> None:
         """|coro|
 
