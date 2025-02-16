@@ -306,19 +306,6 @@ class DuckGroup(commands.GroupMixin[CogT], DuckCommand[CogT, P, T]):
         self.invoke_without_command: bool = attrs.pop('invoke_without_command', False)
         super().__init__(*args, **attrs)
 
-    def copy(self) -> Self:
-        """Creates a copy of this :class:`Group`.
-
-        Returns
-        --------
-        :class:`Group`
-            A new instance of this group.
-        """
-        ret = super().copy()
-        for cmd in self.commands:
-            ret.add_command(cmd.copy())
-        return ret
-
     def command(self, *args: Any, **kwargs: Any) -> Callable[..., DuckCommand]:
         """
         Register a function as a :class:`DuckCommand`.
@@ -461,6 +448,30 @@ class DuckHybridGroup(commands.HybridGroup, DuckGroup):
             return commands.HybridGroup.autocomplete(self, name)
         elif message is True:
             return DuckGroup.autocomplete(self, name)
+
+    def command(self, *args: Any, hybrid: bool = True, **kwargs: Any) -> Callable[..., DuckHybridCommand]:
+        print(f'func was called with {args} {kwargs}')
+
+        def wrapped(func) -> DuckHybridCommand:
+            print(f'wrapped was called with {args} {kwargs}')
+            kwargs.setdefault('parent', self)
+            result = command(*args, hybrid=True, with_app_command=hybrid, **kwargs)(func)
+            print('result', result)
+            self.add_command(result)  # type: ignore
+            print('added command')
+            return result  # type: ignore
+
+        return wrapped
+
+    def group(self, *args: Any, hybrid: bool = True, **kwargs: Any) -> Callable[..., DuckHybridGroup]:
+
+        def wrapped(func) -> DuckHybridGroup:
+            kwargs.setdefault('parent', self)
+            result = group(*args, hybrid=True, with_app_command=hybrid, **kwargs)(func)
+            self.add_command(result)  # type: ignore
+            return result  # type: ignore
+
+        return wrapped
 
 
 def command(
