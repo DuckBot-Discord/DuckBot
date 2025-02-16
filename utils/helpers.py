@@ -98,13 +98,11 @@ async def async_enumerate(asequence, start=0):
 
 
 @overload
-def mdr(entity: Any, escape: bool = False, ctx: Literal[None] = None) -> str:
-    ...
+def mdr(entity: Any, escape: bool = False, ctx: Literal[None] = None) -> str: ...
 
 
 @overload
-def mdr(entity: Any, escape: bool = False, ctx: commands.Context = ...) -> Coroutine[None, None, str]:
-    ...
+def mdr(entity: Any, escape: bool = False, ctx: commands.Context = ...) -> Coroutine[None, None, str]: ...
 
 
 def mdr(entity: Any, escape: bool = False, ctx: Optional[commands.Context] = None) -> str | Coroutine[None, None, str]:
@@ -219,7 +217,7 @@ def add_logging(func: Callable[P, Union[Awaitable[T], T]]) -> Callable[P, Union[
 
 
 async def can_execute_action(
-    ctx: DuckContext,
+    ctx: DuckContext | discord.Interaction[DuckBot],
     target: Union[discord.Member, discord.User, discord.Role],
     *,
     fail_if_not_upgrade: bool = True,
@@ -253,20 +251,22 @@ async def can_execute_action(
         This command cannot be used in private messages.
     """
     guild = ctx.guild
-    if guild is None or not isinstance(ctx.author, discord.Member):
+    author = ctx.user if isinstance(ctx, discord.Interaction) else ctx.author
+    bot = ctx.client
+    if guild is None or not isinstance(author, discord.Member):
         raise commands.NoPrivateMessage('This command cannot be used in private messages.')
 
     if isinstance(target, discord.abc.User):
         if should_upgrade:
             if isinstance(target, discord.User):
-                upgraded = await ctx.bot.get_or_fetch_member(guild, target)
+                upgraded = await bot.get_or_fetch_member(guild, target)
                 if upgraded is None:
                     if fail_if_not_upgrade:
                         raise ActionNotExecutable('That user is not a member of this server.')
                 else:
                     target = upgraded
 
-        if ctx.author == target:
+        if author == target:
             raise ActionNotExecutable('You cannot execute this action on yourself!')
         if guild.owner == target:
             raise ActionNotExecutable('I cannot execute any action on the server owner!')
@@ -274,16 +274,16 @@ async def can_execute_action(
         if isinstance(target, discord.Member):
             if guild.me.top_role <= target.top_role:
                 raise HierarchyException(target)
-            if guild.owner_id == ctx.author.id:
+            if guild.owner_id == author.id:
                 return True
-            if ctx.author.top_role <= target.top_role:
+            if author.top_role <= target.top_role:
                 raise HierarchyException(target, author_error=True)
     elif isinstance(target, discord.Role):
         if guild.me.top_role <= target:
             raise HierarchyException(target)
-        if guild.owner_id == ctx.author.id:
+        if guild.owner_id == author.id:
             return True
-        if ctx.author.top_role <= target:
+        if author.top_role <= target:
             raise HierarchyException(target, author_error=True)
     return True
 
@@ -398,13 +398,11 @@ class DeleteButton(discord.ui.View):
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
         suppress_embeds: bool = False,
-    ) -> Self:
-        ...
+    ) -> Self: ...
 
     @overload
     @classmethod
-    async def to_destination(cls, *args, **kwargs) -> Self:
-        ...
+    async def to_destination(cls, *args, **kwargs) -> Self: ...
 
     @classmethod
     async def to_destination(cls, *args, **kwargs) -> Self:

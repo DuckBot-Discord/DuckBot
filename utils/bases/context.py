@@ -111,6 +111,7 @@ class DuckContext(commands.Context['DuckBot']):
         self.is_error_handled = False
         self._message_count: int = 0
         self.user = None
+        self.client = self.bot
 
     @staticmethod
     @discord.utils.copy_doc(tick)
@@ -203,12 +204,10 @@ class DuckContext(commands.Context['DuckBot']):
     @overload
     async def confirm(
         self, content=None, /, *, timeout: int = 30, silent_on_timeout: Literal[False] = False, **kwargs
-    ) -> bool | None:
-        ...
+    ) -> bool | None: ...
 
     @overload
-    async def confirm(self, content=None, /, *, timeout: int = 30, silent_on_timeout: Literal[True], **kwargs) -> bool:
-        ...
+    async def confirm(self, content=None, /, *, timeout: int = 30, silent_on_timeout: Literal[True], **kwargs) -> bool: ...
 
     async def confirm(
         self,
