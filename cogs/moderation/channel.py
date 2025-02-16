@@ -34,7 +34,7 @@ from utils.interactions import (
 from utils import TimerNotFound, Timer
 from bot import DuckBot
 
-log = logging.getLogger('DuckBot.moderation.block')
+log = logging.getLogger('DuckBot.moderation.channel')
 
 LockableChannel: TypeAlias = discord.TextChannel | discord.VoiceChannel | discord.ForumChannel
 
@@ -274,7 +274,7 @@ class ChannelModeration(DuckCog):
         count = await self.bot.pool.fetchval(count_query, *args)
         max_pages = math.ceil(count / 10)
 
-        blocks: str = '\n'.join([await self.format_block(guild=guild, **block) for block in fetched_blocks])  # type: ignore
+        blocks: str = '\n'.join([await self.format_block(guild=guild, **block) for block in fetched_blocks])
 
         if max_pages > 1:
             ch_m = f' {channel.mention}' if channel else ''
@@ -369,7 +369,9 @@ class ChannelModeration(DuckCog):
                 'DELETE FROM blocks WHERE guild_id = $1 AND channel_id = $2 AND user_id = $3', guild_id, channel_id, user_id
             )
 
-    slash_block = app_commands.Group(name='block', description='Blocks users from channels')
+    slash_block = app_commands.Group(
+        name='block', description='Blocks users from channels', default_permissions=discord.Permissions(manage_messages=True)
+    )
 
     @slash_block.command(name='user')
     @app_commands.describe(user='The user you wish to block.')
@@ -379,7 +381,6 @@ class ChannelModeration(DuckCog):
         user: discord.Member,
     ):
         """Blocks a user from your channel."""
-        await has_permissions(interaction, manage_messages=True)
         await bot_has_permissions(interaction, ban_members=True)
         await can_execute_action(interaction, user)
 
