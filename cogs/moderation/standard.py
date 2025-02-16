@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import (
-    Optional,
-)
+from typing import Optional
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from utils import (
@@ -22,6 +21,7 @@ from utils import (
     Timer,
     format_date,
 )
+from utils.hybrid import hybrid_permissions_check
 from utils.helpers import can_execute_action
 
 
@@ -31,9 +31,7 @@ class StandardModeration(DuckCog):
     """
 
     @command(name='kick', aliases=['boot'], hybrid=True)
-    @commands.bot_has_guild_permissions(kick_members=True)
-    @commands.has_guild_permissions(kick_members=True)
-    @commands.guild_only()
+    @hybrid_permissions_check(kick_members=True, bot_kick_members=True)
     async def kick(self, ctx: DuckContext, member: VerifiedMember, *, reason: str = '...') -> Optional[discord.Message]:
         """
         Kick a member from the server.
@@ -56,16 +54,19 @@ class StandardModeration(DuckCog):
 
         return await ctx.send(f'Kicked **{member}** for: {reason}')
 
-    @command(name='ban')
-    @commands.bot_has_guild_permissions(ban_members=True)
-    @commands.has_guild_permissions(ban_members=True)
-    @commands.guild_only()
+    @command(name='ban', hybrid=True)
+    @hybrid_permissions_check(ban_members=True, bot_ban_members=True)
+    @app_commands.rename(delete_days='delete-days')
     async def ban(
-        self, ctx: DuckContext, user: VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
+        self,
+        ctx: DuckContext,
+        user: VerifiedUser,
+        *,
+        delete_days: Optional[commands.Range[int, 0, 7]] = 1,
+        reason: str = '...',
     ) -> Optional[discord.Message]:
-        """|coro|
-
-        Ban a member from the server.
+        """
+        Bans a member from the server.
 
         Parameters
         ----------
@@ -78,20 +79,23 @@ class StandardModeration(DuckCog):
         """
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
-            await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))
+            seconds = (delete_days or 0) * 86400
+            await ctx.guild.ban(user, delete_message_seconds=seconds, reason=safe_reason(ctx.author, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
 
     @command(name='softban')
-    @commands.bot_has_guild_permissions(ban_members=True)
-    @commands.has_guild_permissions(ban_members=True)
-    @commands.guild_only()
+    @hybrid_permissions_check(ban_members=True, bot_ban_members=True)
+    @app_commands.rename(delete_days='delete-days')
     async def softban(
-        self, ctx: DuckContext, user: VerifiedUser, *, delete_days: Optional[int] = 7, reason: str = '...'
+        self,
+        ctx: DuckContext,
+        user: VerifiedUser,
+        *,
+        delete_days: Optional[commands.Range[int, 0, 7]] = 1,
+        reason: str = '...',
     ) -> Optional[discord.Message]:
-        """|coro|
-
-        Ban a member from the server, then immediately unbans them, deleting all their messages in the process.
+        """Ban a member from the server, then immediately unbans them, deleting all their messages in the process.
 
         Parameters
         ----------
@@ -104,18 +108,17 @@ class StandardModeration(DuckCog):
         """
 
         async with HandleHTTPException(ctx, title=f'Failed to ban {user}'):
-            await ctx.guild.ban(user, reason=safe_reason(ctx.author, reason))
+            seconds = (delete_days or 0) * 86400
+
+            await ctx.guild.ban(user, delete_message_seconds=seconds, reason=safe_reason(ctx.author, reason))
             await ctx.guild.unban(user, reason=safe_reason(ctx.author, reason))
 
         return await ctx.send(f'Banned **{user}** for: {reason}')
 
-    @command()
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(send_messages=True, ban_members=True)
-    @commands.cooldown(1, 3.0, commands.BucketType.user)
+    @command(hybrid=True)
+    @hybrid_permissions_check(ban_members=True, bot_ban_members=True)
     async def unban(self, ctx: DuckContext, *, user: BanEntryConverter):
-        """|coro|
-        Unbans a user from this server. You can search for this by:
+        """Unbans a user from this server. You can search for this by:
 
         The lookup strategy for the ``user`` parameter is as follows (in order):
 
@@ -140,10 +143,8 @@ class StandardModeration(DuckCog):
         return await ctx.send(f"Unbanned **{user}**\n{extra}")
 
     @command(name='nick', hybrid=True)
-    @commands.bot_has_guild_permissions(manage_nicknames=True)
-    @commands.has_guild_permissions(manage_nicknames=True)
-    @commands.guild_only()
-    async def nick(self, ctx: DuckContext, member: discord.Member, *, nickname: Optional[str] = None):
+    @hybrid_permissions_check(manage_nicknames=True, bot_manage_nicknames=True)
+    async def nick(self, ctx: DuckContext, member: VerifiedMember, *, nickname: Optional[str] = None):
         """Change a member's nickname.
 
         Parameters
@@ -168,8 +169,7 @@ class StandardModeration(DuckCog):
         return await ctx.send(message.format(user=mdr(member), nick=mdr(nickname)))
 
     @command(name='tempban', aliases=['tban'])
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
+    @hybrid_permissions_check(ban_members=True, bot_ban_members=True)
     async def tempban(
         self,
         ctx: DuckContext,
@@ -177,7 +177,7 @@ class StandardModeration(DuckCog):
         *,
         when: UserFriendlyTime(commands.clean_content, default='...'),  # type: ignore
     ) -> None:
-        """|coro|
+        """
 
         Temporarily ban a user from the server.
 
@@ -187,12 +187,16 @@ class StandardModeration(DuckCog):
         The user will be banned for 24 hours by default. If you wish to ban for a longer period of time, use the
         `ban` command instead.
 
+        Examples
+        --------
+        `db.tempban @DuckBot 3 hours being too good.`
+
         Parameters
         ----------
         member : discord.Member
             The member to ban.
         when : UserFriendlyTime
-            The reason and time of the ban, for example, "?ban @LeoCx1000 for 5 hours for being a bad"
+            The reason and time of the ban, for example, "hours for being a bad"
         """
 
         async with HandleHTTPException(ctx):
