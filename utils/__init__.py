@@ -5,7 +5,7 @@ from utils.bases.context import *
 from utils.bases.errors import *
 from utils.bases.ipc_base import *
 from utils.bases.timer import *
-from utils.types.constants import *
+from utils.types import constants as constants
 
 from . import interactions as interactions
 from .cache import *
