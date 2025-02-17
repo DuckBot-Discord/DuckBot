@@ -251,7 +251,7 @@ async def can_execute_action(
         This command cannot be used in private messages.
     """
     guild = ctx.guild
-    author = ctx.user if isinstance(ctx, discord.Interaction) else ctx.author
+    author = ctx.user
     bot = ctx.client
     if guild is None or not isinstance(author, discord.Member):
         raise commands.NoPrivateMessage('This command cannot be used in private messages.')
@@ -316,13 +316,15 @@ class DeleteButton(discord.ui.View):
         The label of the button. Defaults to 'Delete'.
     emoji: :class:`str`
         The emoji of the button. Defaults to None.
+    delete_on_timeout: :class:`bool`
+        Should the message be deleted on timeout. Default `False`.
     """
 
     def __init__(self, *args, **kwargs):
         self.bot: Optional[DuckBot] = None
         self._message = kwargs.pop('message', None)
         self.author = kwargs.pop('author')
-        self.delete_on_timeout = kwargs.pop('delete_on_timeout', True)
+        self.delete_on_timeout = kwargs.pop('delete_on_timeout', False)
 
         super().__init__(timeout=kwargs.pop('timeout', 180))
 
@@ -375,10 +377,10 @@ class DeleteButton(discord.ui.View):
 
     @overload
     @classmethod
-    async def to_destination(
+    async def to_destination(  # type: ignore
         cls,
         destination: discord.abc.Messageable,
-        content: str,
+        content: str = ...,
         *,
         author: discord.abc.User,
         label: str = 'Delete',
@@ -398,11 +400,8 @@ class DeleteButton(discord.ui.View):
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
         suppress_embeds: bool = False,
+        delete_on_timeout: bool = True,
     ) -> Self: ...
-
-    @overload
-    @classmethod
-    async def to_destination(cls, *args, **kwargs) -> Self: ...
 
     @classmethod
     async def to_destination(cls, *args, **kwargs) -> Self:

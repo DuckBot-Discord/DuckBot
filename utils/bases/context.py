@@ -110,7 +110,7 @@ class DuckContext(commands.Context['DuckBot']):
         super().__init__(*args, **kwargs)
         self.is_error_handled = False
         self._message_count: int = 0
-        self.user = None
+        self.user = self.author
         self.client = self.bot
 
     @staticmethod
