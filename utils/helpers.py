@@ -64,6 +64,9 @@ __all__: Tuple[str, ...] = (
     'URLObject',
     'Shell',
     'View',
+    'encode_3y3',
+    'decode_3y3',
+    'has_3y3',
 )
 
 
@@ -377,7 +380,7 @@ class DeleteButton(discord.ui.View):
 
     @overload
     @classmethod
-    async def to_destination(  # type: ignore
+    async def send_to(  # type: ignore
         cls,
         destination: discord.abc.Messageable,
         content: str = ...,
@@ -404,9 +407,9 @@ class DeleteButton(discord.ui.View):
     ) -> Self: ...
 
     @classmethod
-    async def to_destination(cls, *args, **kwargs) -> Self:
+    async def send_to(cls, *args, **kwargs) -> Self:
         if kwargs.get('view', None):
-            raise TypeError('Cannot pass a view to to_destination')
+            raise TypeError('Cannot pass a view to DeleteButton.send_to')
 
         view = cls(
             style=kwargs.pop('style', discord.ButtonStyle.red),
@@ -615,11 +618,29 @@ class Shell:
 
 
 class View(discord.ui.View):
-    def __init__(self, *, timeout: Optional[float] = 180, bot: Optional[DuckBot] = None):
+    def __init__(
+        self,
+        *,
+        timeout: Optional[float] = 180,
+        bot: Optional[DuckBot] = None,
+        author: Optional[discord.abc.User] = None,
+        bypass_permissions: Optional[discord.Permissions] = None,
+    ):
         super().__init__(timeout=timeout)
+        self._view_owner = author
+        self._view_permissions_bypass = bypass_permissions
         self.bot: Optional[DuckBot] = bot
         if bot:
             bot.views.add(self)
+
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
+        perms = self._view_permissions_bypass
+        check = perms is not None and interaction.permissions.is_superset(perms)
+
+        if not self._view_owner:
+            return check if perms else True
+
+        return check or interaction.user == self._view_owner
 
     async def on_error(
         self, interaction: discord.Interaction[DuckBot], error: Exception, item: discord.ui.Item[Any]
@@ -644,3 +665,19 @@ class View(discord.ui.View):
     def __del__(self) -> None:
         if self.bot:
             self.bot.views.discard(self)
+
+
+# Why? Idk tbh. I doubt I will actually ever use this.
+def encode_3y3(text: str) -> str:
+    """Encodes a string using invisible 3y3 encoding."""
+    return ''.join([chr((val := ord(c)) + (0xE0000 if 0x00 < val < 0x7F else 0)) for c in text])
+
+
+def decode_3y3(text: str) -> str:
+    """Converts all 3y3 text within the string into normal text."""
+    return ''.join([chr((val := ord(c)) - (0xE0000 if 0xE0000 < val < 0xE007F else 0)) for c in text])
+
+
+def has_3y3(text: str) -> bool:
+    """Detects if a string contains 3y3 encoded text."""
+    return any(0xE0000 < ord(c) < 0xE007F for c in text)
