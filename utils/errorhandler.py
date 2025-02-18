@@ -84,7 +84,7 @@ class DuckExceptionManager:
         packet: :class:`dict`
             The additional information about the error.
         """
-        log.error('Releasing error to log', exc_info=packet['exception'])
+        log.error('Releasing error to log', exc_info=None)
 
         if self.error_webhook.is_partial():
             self.error_webhook = await self.error_webhook.fetch()
@@ -122,8 +122,10 @@ class DuckExceptionManager:
         if command := packet.get('command'):
             fmt['command'] = command.qualified_name
             display = f'in command "{command.qualified_name}"'
+        elif display := packet.get('display'):
+            ...
         else:
-            display = f'in no command (in DuckBot)'
+            display = f'no command (in DuckBot)'
 
         embed = discord.Embed(title=f'An error has occured in {display}', timestamp=packet['time'])
         embed.add_field(
@@ -162,7 +164,7 @@ class DuckExceptionManager:
         if embeds:
             await webhook.send(embeds=embeds, **kwargs)
 
-    async def add_error(self, *, error: BaseException, ctx: Optional[DuckContext] = None) -> None:
+    async def add_error(self, *, error: Exception, ctx: Optional[DuckContext] = None, display: Optional[str] = None) -> None:
         """|coro|
 
         Add an error to the error manager. This will handle all cooldowns and internal cache management
@@ -174,10 +176,12 @@ class DuckExceptionManager:
             The error to add.
         ctx: Optional[:class:`DuckContext`]
             The invocation context of the error, if any.
+        display: Optional[:class:`str`]
+            Overwritten display text. Defaults to the command name, or "no command"
         """
         log.info('Adding error "%s" to log.', str(error))
 
-        packet: DuckTraceback = {'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(), 'exception': error}  # type: ignore
+        packet: DuckTraceback = {'time': (ctx and ctx.message.created_at) or discord.utils.utcnow(), 'exception': error}
 
         if ctx is not None:
             addons: _DuckTracebackOptional = {
@@ -186,6 +190,8 @@ class DuckExceptionManager:
                 'guild': (ctx.guild and ctx.guild.id) or None,
                 'channel': ctx.channel.id,
             }
+            if display:
+                addons['display'] = display
             packet.update(addons)  # type: ignore
 
         traceback_string = ''.join(traceback.format_exception(type(error), error, error.__traceback__)).replace(

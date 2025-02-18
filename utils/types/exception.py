@@ -16,6 +16,7 @@ class _DuckTracebackOptional(TypedDict, total=False):
     guild: Optional[int]
     channel: int
     command: Optional[commands.Command]
+    display: str
 
 
 class DuckTraceback(_DuckTracebackOptional):
