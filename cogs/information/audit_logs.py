@@ -25,8 +25,7 @@ class MockInteraction:
 
 class LoadingView(View):
     @discord.ui.button(disabled=True, label='loading results... please wait.', style=discord.ButtonStyle.green)
-    async def mock(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
-        ...
+    async def mock(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button): ...
 
 
 class _DiffWrapper(AuditLogDiff):
@@ -329,7 +328,9 @@ class AuditLogViewer(DuckCog):
                                 )
                             )
 
-                # Thread Actions
+                        # Mute
+                        # Deaf
+
                 elif action in (AA.thread_create, AA.thread_delete, AA.thread_update):
                     thread_diff = ThreadDiff(entry.after)
                     if action in (AA.thread_create, AA.thread_delete):
@@ -373,6 +374,53 @@ class AuditLogViewer(DuckCog):
                                 value='\n'.join(fmt),
                             )
                         )
+
+                # TODO:
+                # guild_update
+
+                # channel_create
+                # channel_update
+                # channel_delete
+
+                # overwrite_create
+                # overwrite_update
+                # overwrite_delete
+
+                # member_move
+                # member_disconnect
+
+                # role_create
+                # role_update
+                # role_delete
+
+                # invite_create
+                # invite_update
+                # invite_delete
+
+                # webhook_create
+                # webhook_update
+                # webhook_delete
+
+                # emoji_create
+                # emoji_update
+                # emoji_delete
+
+                # message_delete
+                # message_bulk_delete
+                # message_pin
+                # message_unpin
+
+                # sticker_create
+                # sticker_update
+                # sticker_delete
+
+                # soundboard_sound_create
+                # soundboard_sound_update
+                # soundboard_sound_delete
+
+                # automod_block_message
+                # automod_flag_message
+                # automod_timeout_member
 
                 else:
                     continue
