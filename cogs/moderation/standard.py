@@ -21,7 +21,7 @@ from utils import (
     Timer,
     format_date,
 )
-from utils.hybrid import hybrid_permissions_check
+from utils.checks import hybrid_permissions_check
 from utils.helpers import can_execute_action
 
 

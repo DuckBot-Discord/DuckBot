@@ -188,4 +188,4 @@ class Eval(DuckCog):
             result = await self.eval(body.value, env, wrap=body.flags.wrap, reactor=reactor)
 
         if result:
-            await DeleteButton.to_destination(**result, destination=ctx, author=ctx.author)
+            await DeleteButton.send_to(**result, destination=ctx, author=ctx.author)
