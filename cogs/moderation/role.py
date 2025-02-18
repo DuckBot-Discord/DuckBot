@@ -21,14 +21,6 @@ from utils import (
 from utils.checks import hybrid_permissions_check
 from utils.types import constants
 
-"""
-op-id
-author
-target-users
-roles-to-add
-cancellation-view
-"""
-
 
 class TaskCancelView(View):
     def __init__(self, owner: discord.abc.User, bot: DuckBot):
@@ -72,7 +64,7 @@ class TaskCancelView(View):
                 if len(job.targets) == 1:
                     target = job.targets[0].display_name
                 else:
-                    target = format(plural(len(job.targets) - job.failures), 'user')
+                    target = format(plural(job.successes), 'user')
                 message = f"{'Removed' if job.remove else 'Added'} {roles} {'from' if job.remove else 'to'} {target}"
                 if job.failures:
                     message += f"\n-# Failed to assign roles to {plural(job.failures):user}."
@@ -99,10 +91,11 @@ class RoleActionJob:
     author: discord.abc.User
     targets: Sequence[discord.Member]
     roles: Sequence[discord.Role]
-    view: TaskCancelView
+    view: TaskCancelView | None
     active: bool = True
     remove: bool = False
     failures: int = 0
+    successes: int = 0
 
 
 class Roles(DuckCog):
@@ -120,7 +113,8 @@ class Roles(DuckCog):
             job = jobs.popleft()
             for member in job.targets:
                 if not job.active:
-                    await job.view.cancelled()
+                    if job.view:
+                        await job.view.cancelled()
                     break
 
                 try:
@@ -128,20 +122,25 @@ class Roles(DuckCog):
                     if all((role not in member.roles) == job.remove for role in job.roles):
                         return
                     await (member.remove_roles if job.remove else member.add_roles)(*job.roles, reason=reason)
+                    job.successes += 1
                 except discord.NotFound as error:
                     if error.code == 10011:
-                        await job.view.errored("Tried assigning a role that does not exists.")
+                        if job.view:
+                            await job.view.errored("Tried assigning a role that does not exists.")
                         break
                     elif error.code == 10007:
                         job.failures += 1
                 except discord.Forbidden:
-                    await job.view.errored("Could not add a role due to missing permissions, or role hierarchy.")
+                    if job.view:
+                        await job.view.errored("Could not add a role due to missing permissions, or role hierarchy.")
                     break
                 except Exception as error:
-                    await job.view.errored(error)
+                    if job.view:
+                        await job.view.errored(error)
                     break
             else:
-                await job.view.done()
+                if job.view:
+                    await job.view.done()
         except Exception as e:
             await self.bot.exceptions.add_error(error=e, display=f"Bulk role task for guild {guild_id}")
 
@@ -166,7 +165,14 @@ class Roles(DuckCog):
         view = TaskCancelView(owner=ctx.author, bot=self.bot)
         job = RoleActionJob(author=ctx.author, targets=targets, roles=roles, view=view, remove=remove)
         view.job = job
-        self.jobs[guild_id].append(job)
+
+        if jobs := self.jobs[guild_id]:
+            count = sum([(len(job.targets) - job.failures - job.successes) for job in jobs])
+            extra = f"\n-# There are {plural(count):user} to be processed before this."
+        else:
+            extra = ""
+
+        jobs.append(job)
 
         if len(roles) == 1:
             roles_text = roles[0].name
@@ -178,32 +184,18 @@ class Roles(DuckCog):
         else:
             target = format(plural(len(targets)), 'user')
 
-        message = f"{'Removing' if job.remove else 'Adding'} {roles_text} {'from' if job.remove else 'to'} {target}"
+        message = f"{'Removing' if job.remove else 'Adding'} {roles_text} {'from' if job.remove else 'to'} {target}.{extra}"
 
         view.message = await ctx.send(message, view=view)
         self.ensure_task(guild_id)
 
-    @group(name='role', hybrid=True)
+    @group(name='role', hybrid=True, fallback='add')
     @hybrid_permissions_check(manage_roles=True, bot_manage_roles=True)
     async def role(self, ctx: DuckContext, user: discord.Member, role: VerifiedRole):
         """Commands to manage roles."""
-        if not ctx.invoked_subcommand:
-            await self.enqueue_role_job(ctx, [user], [role])
-
-    @role.group(name='add', fallback='user')
-    async def role_add(self, ctx: DuckContext, user: discord.Member, role: VerifiedRole):
-        """Add a role to a user.
-
-        Parameters
-        ----------
-        user: discord.Member
-            The user to target.
-        role: discord.Role
-            The role to add to user.
-        """
         await self.enqueue_role_job(ctx, [user], [role])
 
-    @role_add.command(name='all')
+    @role.command(name='all')
     @ensure_chunked()
     async def role_add_all(self, ctx: DuckContext, role: VerifiedRole):
         """Adds a role to all users.
@@ -215,7 +207,8 @@ class Roles(DuckCog):
         """
         await self.enqueue_role_job(ctx, ctx.guild.members, [role])
 
-    @role_add.command(name='humans')
+    @role.command(name='humans')
+    @ensure_chunked()
     async def role_add_humans(self, ctx: DuckContext, role: VerifiedRole):
         """Adds a role to all non-bot users.
 
@@ -226,7 +219,8 @@ class Roles(DuckCog):
         """
         await self.enqueue_role_job(ctx, [m for m in ctx.guild.members if not m.bot], [role])
 
-    @role_add.command(name='bots')
+    @role.command(name='bots')
+    @ensure_chunked()
     async def role_add_bots(self, ctx: DuckContext, role: VerifiedRole):
         """Adds a role to all bots.
 
@@ -237,8 +231,9 @@ class Roles(DuckCog):
         """
         await self.enqueue_role_job(ctx, [m for m in ctx.guild.members if m.bot], [role])
 
-    @role_add.command(name='in')
+    @role.command(name='in')
     @app_commands.rename(to_add='to-add')
+    @ensure_chunked()
     async def role_add_in(self, ctx: DuckContext, base: discord.Role, to_add: VerifiedRole):
         """Adds a role to all users with <base> role.
 
@@ -304,6 +299,7 @@ class Roles(DuckCog):
         await self.enqueue_role_job(ctx, [user], [role], remove=True)
 
     @role_remove.command(name='all')
+    @ensure_chunked()
     async def role_remove_all(self, ctx: DuckContext, role: VerifiedRole):
         """Removes a role from all users.
 
@@ -315,6 +311,7 @@ class Roles(DuckCog):
         await self.enqueue_role_job(ctx, ctx.guild.members, [role], remove=True)
 
     @role_remove.command(name='humans')
+    @ensure_chunked()
     async def role_remove_humans(self, ctx: DuckContext, role: VerifiedRole):
         """Removes a role from all non-bot users.
 
@@ -326,6 +323,7 @@ class Roles(DuckCog):
         await self.enqueue_role_job(ctx, [m for m in ctx.guild.members if not m.bot], [role], remove=True)
 
     @role_remove.command(name='bots')
+    @ensure_chunked()
     async def role_remove_bots(self, ctx: DuckContext, role: VerifiedRole):
         """Removes a role from all bots.
 
@@ -338,6 +336,7 @@ class Roles(DuckCog):
 
     @role_remove.command(name='in')
     @app_commands.rename(to_remove='to-remove')
+    @ensure_chunked()
     async def role_remove_in(self, ctx: DuckContext, base: discord.Role, to_remove: VerifiedRole):
         """Removes a role from all users with <base> role.
 
@@ -351,6 +350,7 @@ class Roles(DuckCog):
         await self.enqueue_role_job(ctx, base.members, [to_remove], remove=True)
 
     @role.command(name='info')
+    @ensure_chunked()
     async def role_info(self, ctx: DuckContext, role: discord.Role):
         """Provides information on a role.
 
@@ -359,9 +359,6 @@ class Roles(DuckCog):
         role: discord.Role
             The role which information you need.
         """
-        if not ctx.guild.chunked:
-            await ctx.typing()
-            await ctx.guild.chunk()
 
         embed = discord.Embed(
             color=role.color,

@@ -23,10 +23,11 @@ def hybrid_permissions_check(guild: bool = False, **perms: bool):
     return decorator
 
 
-def ensure_chunked():
+def ensure_chunked(ephemeral: bool = False):
     async def decorator(ctx: commands.Context):
         if ctx.guild and not ctx.guild.chunked:
-            await ctx.guild.chunk(cache=True)
+            await ctx.defer(ephemeral=ephemeral)
+            await ctx.guild.chunk()
         return True
 
     return commands.check(decorator)
