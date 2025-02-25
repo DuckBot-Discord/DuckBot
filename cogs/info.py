@@ -815,6 +815,12 @@ class About(commands.Cog):
         """Tells you information about the bot itself."""
         await ctx.defer()
         information = await self.bot.application_info()
+
+        if information.team:
+            owner = information.team.owner or information.team.members[0]
+        else:
+            owner = information.owner
+
         embed = discord.Embed(
             description=f"{constants.GITHUB} [source]({self.bot.repo}) | "
             f"{constants.INVITE} [invite me]({self.bot.invite_url}) | "
@@ -825,8 +831,8 @@ class About(commands.Cog):
         embed.add_field(name="Latest updates:", value=get_latest_commits(limit=5), inline=False)
 
         embed.set_author(
-            name=f"Made by {information.owner}",
-            icon_url=information.owner.display_avatar.url,
+            name=f"Made by {owner}",
+            icon_url=owner.display_avatar.url,
         )
         # statistics
         total_members = 0
