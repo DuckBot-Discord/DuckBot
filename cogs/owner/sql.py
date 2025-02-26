@@ -38,9 +38,7 @@ class SqlCommandFlags(FlagConverter, prefix="--", delimiter=" ", case_insensitiv
 class SQLCommands(DuckCog):
     @command()
     async def sql(self, ctx: DuckContext, *, query: UntilFlag[Annotated[str, cleanup_code], SqlCommandFlags]):
-        """|coro|
-
-        Executes an SQL query
+        """Executes an SQL query
 
         Parameters
         ----------

@@ -274,9 +274,7 @@ class DuckBotJishaku(
     @discord.utils.copy_doc(PythonFeature.jsk_python)
     @Feature.Command(parent="jsk", name="py", aliases=["python"])
     async def jsk_python(self, ctx: DuckContext, *, argument: Annotated[Codeblock, codeblock_converter]) -> None:
-        """|coro|
-
-        The subclassed jsk python command to implement some more functionality and features.
+        """The subclassed jsk python command to implement some more functionality and features.
 
         Added
         -----

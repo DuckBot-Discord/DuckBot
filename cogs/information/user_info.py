@@ -245,6 +245,7 @@ class UserInfoViewer(discord.ui.View):
         return embeds
 
     @discord.ui.select(
+        cls=discord.ui.Select,
         options=[
             discord.SelectOption(
                 label='Main Page',
@@ -270,7 +271,7 @@ class UserInfoViewer(discord.ui.View):
                 emoji='\N{OCTAGONAL SIGN}',
                 description="Deletes this message.",
             ),
-        ]
+        ],
     )
     async def select(self, interaction: discord.Interaction[DuckBot], select: discord.ui.Select):
         value = select.values[0]
@@ -308,9 +309,7 @@ class UserInfoViewer(discord.ui.View):
 class UserInfo(DuckCog):
     @command(name='userinfo', aliases=['info', 'ui', 'user-info', 'whois'])
     async def user_info(self, ctx: DuckContext, *, user: PartiallyMatch[discord.Member, discord.User] = commands.Author):
-        """|coro|
-
-        Displays information about a user or member
+        """Displays information about a user or member
 
         Parameters
         ----------

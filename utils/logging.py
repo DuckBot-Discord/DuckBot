@@ -6,7 +6,6 @@ __all__: Tuple[str, ...] = ('ColourFormatter',)
 
 
 class ColourFormatter(logging.Formatter):
-
     # ANSI codes are a bit weird to decipher if you're unfamiliar with them, so here's a refresher
     # It starts off with a format like \x1b[XXXm where XXX is a semicolon separated list of commands
     # The important ones here relate to colour.

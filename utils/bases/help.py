@@ -130,7 +130,7 @@ def _find_author_from_parent(
     return author
 
 
-async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction[DuckBot]) -> Optional[bool]:
+async def _interaction_check(view: discord.ui.View, interaction: discord.Interaction[DuckBot]) -> bool:
     """An internal helper used to check if the interaction is valid."""
     # Let's find the original author of the help command
     author = _find_author_from_parent(view)
@@ -138,9 +138,8 @@ async def _interaction_check(view: discord.ui.View, interaction: discord.Interac
         raise ValueError("Could not find author from parentable.")
 
     if interaction.user != author:
-        return await interaction.response.send_message(
-            "You do not have permission to use this help command!", ephemeral=True
-        )
+        await interaction.response.send_message("You do not have permission to use this help command!", ephemeral=True)
+        return False
 
     return True
 
@@ -164,10 +163,8 @@ class Stop(discord.ui.Button):
         )
 
     async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
-        """|coro|
-
-        When called, will respond to the interaction by editing the message
-        with the diabled view.
+        """When called, will respond to the interaction by editing the message
+        with the disabled view.
 
         Parameters
         ----------
@@ -178,7 +175,7 @@ class Stop(discord.ui.Button):
             child.disabled = True  # type: ignore
 
         self.parent.stop()
-        return await interaction.response.edit_message(view=self.parent)
+        await interaction.response.edit_message(view=self.parent)
 
 
 class GoHome(discord.ui.Button):
@@ -219,9 +216,7 @@ class GoHome(discord.ui.Button):
         return HelpView(parent=self.parent, cogs=clean_mapping.keys(), author=_find_author_from_parent(self.parent))  # type: ignore
 
     async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
-        """|coro|
-
-        When called, will respond to the interaction by finding the root
+        """When called, will respond to the interaction by finding the root
         within the parent tree and editing the message with the highest
         parent.
 
@@ -244,7 +239,7 @@ class GoHome(discord.ui.Button):
                 # No parent in parents history, we need to create one
                 view = await self._get_help_from_parent()
 
-        return await interaction.response.edit_message(embed=view.embed, view=view)
+        await interaction.response.edit_message(embed=view.embed, view=view)
 
 
 class GoBack(discord.ui.Button):
@@ -263,9 +258,7 @@ class GoBack(discord.ui.Button):
         self.parent: discord.ui.View = parent
 
     async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
-        """|coro|
-
-        When called, will respond to the interaction by editing the message with the previous parent.
+        """When called, will respond to the interaction by editing the message with the previous parent.
 
         Parameters
         ----------
@@ -275,7 +268,7 @@ class GoBack(discord.ui.Button):
         return await interaction.response.edit_message(embed=self.parent.embed, view=self.parent)  # type: ignore
 
 
-class CommandSelecter(discord.ui.Select):
+class CommandSelector(discord.ui.Select):
     """A select used to have the user select a command
     from a list of commands.
 
@@ -307,9 +300,7 @@ class CommandSelecter(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
-        """|coro|
-
-        When called, will respond to the interaction by editing th emessage with
+        """When called, will respond to the interaction by editing the message with
         a new view representing the selected command.
 
         Parameters
@@ -327,7 +318,7 @@ class CommandSelecter(discord.ui.Select):
         else:
             view = HelpCommand(parent=self.parent, command=command)
 
-        return await interaction.response.edit_message(embed=view.embed, view=view)
+        await interaction.response.edit_message(embed=view.embed, view=view)
 
 
 class HelpGroup(discord.ui.View):
@@ -336,7 +327,7 @@ class HelpGroup(discord.ui.View):
     Attributes
     ----------
     parent: ParentType
-        The parent thaty created this view.
+        The parent that created this view.
     group: :class:`DuckGroup`
         The group that this view represents.
     author: Optional[Union[:class:`discord.Member`, :class:`discord.User`]]
@@ -373,7 +364,7 @@ class HelpGroup(discord.ui.View):
                 group_commands.extend(command.commands)  # type: ignore
 
         for chunk in discord.utils.as_chunks(group_commands, max_size=20):
-            self.add_item(CommandSelecter(parent=self, cmds=chunk))
+            self.add_item(CommandSelector(parent=self, cmds=chunk))
 
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
@@ -396,7 +387,7 @@ class HelpCommand(discord.ui.View):
     Attributes
     ----------
     parent: ParentType
-        The parent thaty created this view.
+        The parent that created this view.
     command: :class:`DuckCommand`
         The group that this view represents.
     author: Optional[Union[:class:`discord.Member`, :class:`discord.User`]]
@@ -451,7 +442,7 @@ class HelpCog(discord.ui.View):
     Attributes
     ----------
     parent: ParentType
-        The parent thaty created this view.
+        The parent that created this view.
     cog: :class:`DuckCog`
         The group that this view represents.
     author: Optional[Union[:class:`discord.Member`, :class:`discord.User`]]
@@ -486,7 +477,7 @@ class HelpCog(discord.ui.View):
         self.interaction_check: InteractionCheckCallback = partial(_interaction_check, self)  # type: ignore
 
         for item in discord.utils.as_chunks(cog.get_commands(), max_size=20):
-            self.add_item(CommandSelecter(parent=self, cmds=list(item)))
+            self.add_item(CommandSelector(parent=self, cmds=list(item)))
 
         self.add_item(GoHome(self))
         if isinstance(self.parent, discord.ui.View):
@@ -520,7 +511,7 @@ class HelpSelect(discord.ui.Select):
     Attributes
     ----------
     parent: ParentType
-        The parent thaty created this view.
+        The parent that created this view.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -546,9 +537,7 @@ class HelpSelect(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction[DuckBot]) -> None:
-        """|coro|
-
-        When called, this will create a new view representing the selected cog.
+        """When called, this will create a new view representing the selected cog.
 
         Parameters
         ----------
@@ -565,7 +554,7 @@ class HelpSelect(discord.ui.Select):
             cog=current_cog,
             author=_find_author_from_parent(self.parent),
         )
-        return await interaction.response.edit_message(embed=view.embed, view=view)
+        await interaction.response.edit_message(embed=view.embed, view=view)
 
 
 class HelpView(discord.ui.View):
@@ -632,7 +621,7 @@ class HelpView(discord.ui.View):
         embed.add_field(name="Getting Support", value="\n".join(getting_support), inline=False)
         embed.add_field(
             name="Who am I?",
-            value=f"I'm DuckBot, a multipurpose bot created and maintained by {GITHUB}[LeoCx1000](https://github.com/LeoCx1000)."
+            value=f"I'm DuckBot, a multi-purpose bot created and maintained by {GITHUB}[LeoCx1000](https://github.com/LeoCx1000)."
             "and assisted by [NextChai](https://github.com/NextChai). You can use me to play games, moderate your server, mess with some images and more! "
             "Check out all my features using the dropdown below.\n\n"
             f"I've been online since {self.bot.uptime_timestamp}.\n"
@@ -651,7 +640,7 @@ class HelpView(discord.ui.View):
 class DuckHelp(commands.HelpCommand):
     """The main Help Command for the DuckBot.
 
-    This help command works on a parential basis. This means there is a parent hierarchy
+    This help command works on a parental basis. This means there is a parent hierarchy
     that can be tracked per invoke by going up the parent chain.
     """
 
@@ -694,9 +683,7 @@ class DuckHelp(commands.HelpCommand):
         return cogs
 
     async def send_bot_help(self, mapping: Mapping[Optional[DuckCog], List[DuckCommand]]) -> discord.Message:
-        """|coro|
-
-        A method used to send the bot's main help message.
+        """A method used to send the bot's main help message.
 
         Parameters
         ----------
@@ -718,9 +705,7 @@ class DuckHelp(commands.HelpCommand):
         return await self.context.send(embed=view.embed, view=view)
 
     async def send_cog_help(self, cog: DuckCog, /) -> discord.Message:
-        """|coro|
-
-        A method used to send the cog help message for the given cog.
+        """A method used to send the cog help message for the given cog.
 
         Parameters
         ----------
@@ -736,9 +721,7 @@ class DuckHelp(commands.HelpCommand):
         return await self.context.send(embed=view.embed, view=view)
 
     async def send_group_help(self, group: DuckGroup[Any, ..., Any], /) -> discord.Message:
-        """|coro|
-
-        A method used to display the help message for the given group.
+        """A method used to display the help message for the given group.
 
         Parameters
         ----------
@@ -754,9 +737,7 @@ class DuckHelp(commands.HelpCommand):
         return await self.context.send(embed=view.embed, view=view)
 
     async def send_command_help(self, command: DuckCommand[Any, ..., Any], /) -> discord.Message:
-        """|coro|
-
-        A method used to display the help message for the given command.
+        """A method used to display the help message for the given command.
 
         Parameters
         ----------
@@ -774,9 +755,7 @@ class DuckHelp(commands.HelpCommand):
         return await self.context.send(embed=view.embed, view=view)
 
     async def command_not_found(self, string: str, /) -> str:
-        """|coro|
-
-        A coroutine called when a command is not found. This will return any matches that are similar
+        """A coroutine called when a command is not found. This will return any matches that are similar
         to what was searched for.
 
         Parameters
@@ -796,9 +775,7 @@ class DuckHelp(commands.HelpCommand):
         return f'The command / group called "{string}" was not found. Maybe you meant `{self.context.prefix}{maybe_found and maybe_found[0] or "..."}`?'
 
     async def subcommand_not_found(self, command: DuckCommand[Any, ..., Any], string: str, /) -> str:
-        """|coro|
-
-        A coroutine called when a subcommand is not found. This will return any matches that are similar
+        """A coroutine called when a subcommand is not found. This will return any matches that are similar
         to what was searched for.
 
         Parameters
@@ -822,9 +799,7 @@ class DuckHelp(commands.HelpCommand):
         return "".join(fmt)
 
     async def on_help_command_error(self, ctx: DuckContext, error: commands.CommandError, /) -> discord.Message:
-        """|coro|
-
-        A coroutine called when an error occurs while displaying the help command.
+        """A coroutine called when an error occurs while displaying the help command.
 
         Parameters
         ----------

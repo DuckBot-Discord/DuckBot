@@ -32,9 +32,7 @@ async def can_execute_action(
     target: Union[Member, User],
     fail_if_not_upgrade: bool = False,
 ) -> None:
-    """|coro|
-
-    Checks if the user can execute the action.
+    """Checks if the user can execute the action.
 
     Parameters
     ----------
@@ -91,11 +89,7 @@ async def has_permissions(
     interaction: discord.Interaction[DuckBot],
     **perms: bool,
 ) -> None:
-    """|coro|
-
-    Checks permissions of the invoking interaction user.
-
-    """
+    """Checks permissions of the invoking interaction user."""
     if interaction.channel and isinstance(interaction.user, discord.Member):
         permissions = interaction.channel.permissions_for(interaction.user)
     elif isinstance(interaction.user, discord.Member):
@@ -115,11 +109,7 @@ async def bot_has_permissions(
     interaction: discord.Interaction[DuckBot],
     **perms: bool,
 ) -> None:
-    """|coro|
-
-    Checks permissions of the invoking interaction user.
-
-    """
+    """Checks permissions of the invoking interaction user."""
     if interaction.channel and interaction.guild:
         permissions = interaction.channel.permissions_for(interaction.guild.me)
     elif interaction.guild:

@@ -21,10 +21,7 @@ class News(DuckCog):
 
     @group(invoke_without_command=True)
     async def news(self, ctx: DuckContext):
-        """|coro|
-
-        Opens the bot's news feed.
-        """
+        """Opens the bot's news feed."""
         news = await ctx.bot.pool.fetch("SELECT * FROM news ORDER BY news_id DESC")
         if not news:
             return await ctx.send("No news has been posted yet.")
@@ -33,9 +30,7 @@ class News(DuckCog):
 
     @news.command(hidden=True)
     async def add(self, ctx: DuckContext, title: Optional[str] = None, *, content: Optional[str] = None):
-        """|coro|
-
-        Adds a news item to the news feed
+        """Adds a news item to the news feed
 
         Parameters
         ----------
@@ -64,9 +59,7 @@ class News(DuckCog):
 
     @news.command(hidden=True)
     async def remove(self, ctx: DuckContext, news_id: int):
-        """|coro|
-
-        Removes a news item from the news feed
+        """Removes a news item from the news feed
 
         Parameters
         ----------

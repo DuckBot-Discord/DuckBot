@@ -6,10 +6,7 @@ from utils import DuckCog, group
 class BadgeManagement(DuckCog):
     @group(name='badges', aliases=['badge'], invoke_without_command=True)
     async def badges(self, ctx):
-        """|coro|
-
-        Displays all available badges.
-        """
+        """Displays all available badges."""
         badges = await self.bot.pool.fetch("SELECT badge_id, name, emoji FROM badges")
         to_send = []
         for badge_id, name, emoji in badges:
@@ -19,9 +16,7 @@ class BadgeManagement(DuckCog):
 
     @badges.command(name='add', aliases=['create'])
     async def badges_add(self, ctx, emoji: str, *, name: str):
-        """|coro|
-
-        Adds a badge to the database.
+        """Adds a badge to the database.
 
         Parameters
         ----------
@@ -37,9 +32,7 @@ class BadgeManagement(DuckCog):
 
     @badges.command(name='delete')
     async def badges_delete(self, ctx, badge_id: int):
-        """|coro|
-
-        Removes a badge from the database.
+        """Removes a badge from the database.
 
         Parameters
         ----------
@@ -54,9 +47,7 @@ class BadgeManagement(DuckCog):
 
     @badges.command(name='grant', aliases=['give'])
     async def badges_grant(self, ctx, user: discord.User, badge_id: int):
-        """|coro|
-
-        Adds a badge to a user.
+        """Adds a badge to a user.
 
         Parameters
         ----------
@@ -78,9 +69,7 @@ class BadgeManagement(DuckCog):
 
     @badges.command(name='revoke', aliases=['remove'])
     async def badges_revoke(self, ctx, user: discord.User, badge_id: int):
-        """|coro|
-
-        Revokes a badge from a user
+        """Revokes a badge from a user
 
         Parameters
         ----------

@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from discord.ext import commands, menus
-from utils.paginators import ViewMenuPages, SimplePages
+from utils import group, ViewMenuPages, SimplePages
 from . import cache
 
 from collections import defaultdict
@@ -284,7 +284,7 @@ class CommandConfig(DuckCog):
         if isinstance(error, commands.BadArgument):
             await ctx.send(str(error))
 
-    @commands.group()
+    @group()
     async def config(self, ctx: DuckContext):
         """Handles the server or channel permission configuration for the bot."""
         if ctx.invoked_subcommand is None:

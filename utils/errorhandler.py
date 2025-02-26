@@ -25,7 +25,7 @@ class DuckExceptionManager:
     """A simple exception handler that sends all exceptions to a error
     Webhook and then logs them to the console.
 
-    This class handles cooldowns with a simple lock, so you dont have to worry about
+    This class handles cooldowns with a simple lock, so you don't have to worry about
     rate limiting your webhook and getting banned :).
 
     .. note::
@@ -40,7 +40,7 @@ class DuckExceptionManager:
     cooldown: :class:`datetime.timedelta`
         The cooldown between sending errors. This defaults to 5 seconds.
     errors: Dict[str, Dict[str, Any]]
-        A mapping of tracbacks to their error information.
+        A mapping of tracebacks to their error information.
     code_blocker: :class:`str`
         The code blocker used to format Discord codeblocks.
     error_webhook: :class:`discord.Webhook`
@@ -51,7 +51,7 @@ class DuckExceptionManager:
 
     def __init__(self, bot: DuckBot, *, cooldown: datetime.timedelta = datetime.timedelta(seconds=5)) -> None:
         if not bot.error_webhook_url:
-            raise DuckBotException('No error webhokk set in .env!')
+            raise DuckBotException('No error webhook set in .env!')
 
         self.bot: DuckBot = bot
         self.cooldown: datetime.timedelta = cooldown
@@ -72,9 +72,7 @@ class DuckExceptionManager:
             yield self.code_blocker.format(iterable[i : i + chunksize - cbs])
 
     async def release_error(self, traceback: str, packet: DuckTraceback) -> None:
-        """|coro|
-
-        Releases an error to the webhook and logs it to the console. It is not recommended
+        """Releases an error to the webhook and logs it to the console. It is not recommended
         to call this yourself, call :meth:`add_error` instead.
 
         Parameters
@@ -127,7 +125,7 @@ class DuckExceptionManager:
         else:
             display = f'no command (in DuckBot)'
 
-        embed = discord.Embed(title=f'An error has occured in {display}', timestamp=packet['time'])
+        embed = discord.Embed(title=f'An error has occurred in {display}', timestamp=packet['time'])
         embed.add_field(
             name='Metadata',
             value='\n'.join([f'**{k.title()}**: {v}' for k, v in fmt.items()]),
@@ -164,15 +162,15 @@ class DuckExceptionManager:
         if embeds:
             await webhook.send(embeds=embeds, **kwargs)
 
-    async def add_error(self, *, error: Exception, ctx: Optional[DuckContext] = None, display: Optional[str] = None) -> None:
-        """|coro|
-
-        Add an error to the error manager. This will handle all cooldowns and internal cache management
+    async def add_error(
+        self, *, error: BaseException, ctx: Optional[DuckContext] = None, display: Optional[str] = None
+    ) -> None:
+        """Add an error to the error manager. This will handle all cooldowns and internal cache management
         for you. This is the recommended way to add errors.
 
         Parameters
         ----------
-        error: :class:`Exception`
+        error: :class:`BaseException`
             The error to add.
         ctx: Optional[:class:`DuckContext`]
             The invocation context of the error, if any.
@@ -207,7 +205,7 @@ class DuckExceptionManager:
         async with self._lock:
             # I want all other errors to be released after this one, which is why
             # lock is here. If you have code that calls MANY errors VERY fast,
-            # this will ratelimit the webhook. We dont want that lmfao.
+            # this will ratelimit the webhook. We don't want that lmfao.
 
             if not self._most_recent:
                 self._most_recent = discord.utils.utcnow()

@@ -1,5 +1,4 @@
 from utils import DuckCog
 
 
-class TestingShit(DuckCog):
-    ...
+class TestingShit(DuckCog): ...

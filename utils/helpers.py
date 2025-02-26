@@ -226,9 +226,7 @@ async def can_execute_action(
     fail_if_not_upgrade: bool = True,
     should_upgrade: bool = True,
 ) -> Optional[bool]:
-    """|coro|
-
-    A wrapped predicate to check if the action can be executed.
+    """A wrapped predicate to check if the action can be executed.
 
     Parameters
     ----------
@@ -473,9 +471,7 @@ class URLObject:
             self.message_id = None
 
     async def read(self, *, session: Optional[aiohttp.ClientSession] = None) -> bytes:
-        """|coro|
-
-        Retrieves the contents of the URL.
+        """Retrieves the contents of the URL.
 
         Parameters
         ----------
@@ -506,9 +502,7 @@ class URLObject:
         seek_begin: bool = True,
         session: Optional[aiohttp.ClientSession] = None,
     ) -> int:
-        """|coro|
-
-        Saves the contents of the URL to a file-like
+        """Saves the contents of the URL to a file-like
          object, or a buffer-like object.
 
         Parameters
@@ -544,9 +538,7 @@ class URLObject:
         return self.name.startswith("SPOILER_")
 
     async def to_file(self, *, session: aiohttp.ClientSession):
-        """|coro|
-
-        Returns a discord.File object from the URL.
+        """Returns a discord.File object from the URL.
 
         Parameters
         ----------

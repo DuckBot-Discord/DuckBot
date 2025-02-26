@@ -203,7 +203,7 @@ class OverwritesViewer(discord.ui.View):
             discord.SelectOption(label=over.name, emoji=over.emoji, value=over.position) for over in range
         ]
 
-    @discord.ui.select()
+    @discord.ui.select(cls=discord.ui.Select)
     async def select_overwrite(self, interaction: discord.Interaction, select: discord.ui.Select):
         overwrite = self.overwrites[int(select.values[0])]
         embed = PermsEmbed(overwrite, overwrite.permissions)
@@ -266,10 +266,7 @@ class PermsViewer(DuckCog):
     async def perms(
         self, ctx: DuckContext, *, entity: discord.abc.GuildChannel | discord.Role | discord.Member | None = None
     ) -> None:
-        """|coro|
-
-        Shows the permissions of a channel or user.
-        """
+        """Shows the permissions of a channel or user."""
         if entity is None:
             await GuildPermsViewer.start(ctx)
         else:

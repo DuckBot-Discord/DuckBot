@@ -138,6 +138,7 @@ class RoleModeView(View):
             ),
             discord.SelectOption(label='Strict', value='1', description='Users will be denied view channel.'),
         ],
+        cls=discord.ui.Select,  # This suppresses the stupid "Untyped function decorator" error. WHY does it even happen!?
     )
     async def view_mode_select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
         self.value = RoleMode(int(select.values[0]))
@@ -276,8 +277,7 @@ class TempMute(DuckCog):
         *,
         conn: Optional[Connection] = None,
         fail_if_no_role: Literal[False],
-    ) -> Optional[discord.Role]:
-        ...
+    ) -> Optional[discord.Role]: ...
 
     @overload
     async def _get_muted_role(
@@ -286,8 +286,7 @@ class TempMute(DuckCog):
         *,
         conn: Optional[Connection] = None,
         fail_if_no_role: Literal[True] = ...,
-    ) -> discord.Role:
-        ...
+    ) -> discord.Role: ...
 
     async def _get_muted_role(
         self,

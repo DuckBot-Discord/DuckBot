@@ -15,7 +15,10 @@ if TYPE_CHECKING:
 
 from utils.bases.context import DuckContext
 
-__all__: Tuple[str, ...] = ("ViewMenuPages",)
+__all__: Tuple[str, ...] = (
+    "ViewMenuPages",
+    "SimplePages",
+)
 
 
 log = logging.getLogger('DuckBot.paginators')

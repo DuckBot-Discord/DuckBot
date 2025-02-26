@@ -79,9 +79,7 @@ class Tag:
         content: Union[str, commands.clean_content],
         embed: Optional[discord.Embed] = discord.utils.MISSING,
     ) -> None:
-        """|coro|
-
-        Edits the tag's content and embed.
+        """Edits the tag's content and embed.
 
         Parameters
         ----------
@@ -99,7 +97,7 @@ class Tag:
             args = (content, embed, self.id)
 
             def update():
-                self.content = content
+                self.content = str(content)
                 self.embed = embed
 
         else:
@@ -107,15 +105,13 @@ class Tag:
             args = (content, self.id)
 
             def update():
-                self.content = content
+                self.content = str(content)
 
         await connection.execute(query, *args)
         update()
 
     async def transfer(self, connection: typing.Union[asyncpg.Connection, asyncpg.Pool], user: discord.Member):
-        """|coro|
-
-        Transfers the tag to another user.
+        """Transfers the tag to another user.
 
         Parameters
         ----------
@@ -129,9 +125,7 @@ class Tag:
         self.owner_id = user.id
 
     async def delete(self, connection: typing.Union[asyncpg.Connection, asyncpg.Pool]):
-        """|coro|
-
-        Deletes the tag.
+        """Deletes the tag.
 
         Parameters
         ----------
@@ -142,9 +136,7 @@ class Tag:
         await connection.execute(query, self.id)
 
     async def use(self, connection: typing.Union[asyncpg.Connection, asyncpg.Pool]):
-        """|coro|
-
-        Adds one to the tag's usage count.
+        """Adds one to the tag's usage count.
 
         Parameters
         ----------
@@ -160,9 +152,7 @@ class Tag:
         alias: typing.Union[str, TagName],
         user: discord.User | discord.Member,
     ):
-        """|coro|
-
-        Adds an alias to the tag.
+        """Adds an alias to the tag.
 
         Parameters
         ----------
@@ -326,9 +316,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         find_global: bool = False,
         connection: Optional[Union[asyncpg.Connection, asyncpg.Pool]] = None,
     ) -> Tag:
-        """|coro|
-
-        Gets a tag
+        """Gets a tag
 
         Parameters
         ----------
@@ -424,9 +412,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         tag: Union[str, commands.clean_content],
         content: Union[str, commands.clean_content],
     ) -> Tag:
-        """|coro|
-
-        Creates a tag.
+        """Creates a tag.
 
         Parameters
         ----------
@@ -479,9 +465,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         converter: CO_T | Type[CO_T] | None = None,
         ctx: DuckContext | None = None,
     ) -> Union[str, CO_T]:
-        """|coro|
-
-        Waits for a message to be sent in a channel.
+        """Waits for a message to be sent in a channel.
 
         Parameters
         ----------
@@ -505,21 +489,27 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
             message: discord.Message = await self.bot.wait_for('message', timeout=timeout, check=check)
 
             if converter is not None:
-                # pyright: reportGeneralTypeIssues=false
                 try:
                     if inspect.isclass(converter) and issubclass(converter, commands.Converter):
                         if inspect.ismethod(converter.convert):
                             content = await converter.convert(ctx, message.content)
                         else:
-                            content = await converter().convert(ctx, message.content)
+                            converter = converter()
+                            content = await converter.convert(
+                                ctx, message.content  # pyright: ignore[reportArgumentType]  # We subclass context.
+                            )
                     elif isinstance(converter, commands.Converter):
-                        content = await converter.convert(ctx, message.content)
+                        content = await converter.convert(
+                            ctx, message.content  # pyright: ignore[reportArgumentType]  # We subclass context.
+                        )
                     else:
                         content = message.content
                 except commands.CommandError:
                     raise
                 except Exception as exc:
-                    raise commands.ConversionError(converter, exc) from exc
+                    raise commands.ConversionError(
+                        converter, exc  # pyright: ignore[reportArgumentType]  # This *should* be fine.
+                    ) from exc
             else:
                 content = message.content
 
@@ -532,9 +522,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
             raise commands.BadArgument(f'Timed out waiting for message from {str(author)}...')
 
     async def __tag(self, ctx: commands.Context, name: TagName, *, guild: discord.Guild | None):
-        """|coro|
-
-        Base tags command. Also shows a tag.
+        """Base tags command. Also shows a tag.
 
         Parameters
         ----------
@@ -542,7 +530,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
             The tag to show
         """
         tag = await self.get_tag(name, guild.id if guild else None, find_global=True)
-        if tag.embed and ctx.channel.permissions_for(ctx.me).embed_links:
+        if tag.embed:
             await ctx.channel.send(tag.content, embed=tag.embed)
         else:
             await ctx.channel.send(tag.content)
@@ -561,9 +549,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
     async def __tag_create(
         self, ctx: DuckContext, tag: TagName, content: commands.clean_content, guild: discord.Guild | None
     ):
-        """|coro|
-
-        Creates a tag
+        """Creates a tag
 
         Parameters
         ----------
@@ -579,19 +565,28 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
 
     @tag.command(name='create', aliases=['new', 'add'])
     @copy_doc(__tag_create)
-    async def tag_create(self, ctx: DuckContext, tag: TagName(lower=False), *, content: commands.clean_content):
+    async def tag_create(
+        self,
+        ctx: DuckContext,
+        tag: TagName(lower=False),  # pyright: ignore[reportInvalidTypeForm]  # This is supposed to be this way.
+        *,
+        content: commands.clean_content,
+    ):
         await self.__tag_create(ctx, tag, content, guild=ctx.guild)
 
     @tag_global.command(name='create', aliases=['new', 'add'])
     @copy_doc(__tag_create)
-    async def tag_global_create(self, ctx: DuckContext, tag: TagName(lower=False), *, content: commands.clean_content):
+    async def tag_global_create(
+        self,
+        ctx: DuckContext,
+        tag: TagName(lower=False),  # pyright: ignore[reportInvalidTypeForm]  # This is supposed to be this way.
+        *,
+        content: commands.clean_content,
+    ):
         await self.__tag_create(ctx, tag, content, guild=None)
 
     async def __tag_make(self, ctx: DuckContext, guild: discord.Guild | None):
-        """|coro|
-
-        Interactive prompt to make a tag.
-        """
+        """Interactive prompt to make a tag."""
         await ctx.send('Hello, what name would you like to give this tag?')
         try:
             name = await self.wait_for(ctx.channel, ctx.author, converter=TagName(lower=False), ctx=ctx)
@@ -634,9 +629,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
 
     @tag.command(name='claim')  # no global for you! :P
     async def tag_claim(self, ctx: DuckContext, name: TagName):
-        """|coro|
-
-        Claims a tag from a user that isn't
+        """Claims a tag from a user that isn't
         in this server anymore.
 
         Parameters
@@ -656,9 +649,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
     async def __tag_edit(
         self, ctx: DuckContext, tag_name: TagName, content: commands.clean_content, guild: discord.Guild | None
     ):
-        """|coro|
-
-        Edits a tag
+        """Edits a tag
 
         Parameters
         ----------
@@ -687,9 +678,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
     async def __tag_append(
         self, ctx: DuckContext, tag: TagName, content: commands.clean_content, guild: discord.Guild | None
     ):
-        """|coro|
-
-        Appends content to a tag.
+        """Appends content to a tag.
         This will add a new line before the content being appended.
 
         Parameters
@@ -713,7 +702,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
             """
             confirm = await conn.fetchval(query, content, tag, guild.id if guild else 0, ctx.author.id)
             if confirm:
-                await ctx.send(f'Succesfully edited tag!')
+                await ctx.send(f'Successfully edited tag!')
             else:
                 await ctx.send('Could not edit tag. Are you sure it exists and you own it?')
 
@@ -728,9 +717,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_append(ctx, tag, content, ctx.guild)
 
     async def __tag_delete(self, ctx: DuckContext, tag: TagName, guild: discord.Guild | None):
-        """|coro|
-
-        Deletes one of your tags.
+        """Deletes one of your tags.
 
         Parameters
         ----------
@@ -781,9 +768,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_delete(ctx, tag, None)
 
     async def __tag_delete_id(self, ctx: DuckContext, tag_id: int, guild: discord.Guild | None):
-        """|coro|
-
-        Deletes a tag by ID.
+        """Deletes a tag by ID.
 
         Parameters
         ----------
@@ -834,9 +819,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_delete_id(ctx, tag_id, None)
 
     async def __tag_purge(self, ctx: DuckContext, member: discord.Member | discord.User, guild: discord.Guild | None):
-        """|coro|
-
-        Purges all tags from a user.
+        """Purges all tags from a user.
 
         Parameters
         ----------
@@ -861,7 +844,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         """
         args = (guild.id if guild else 0, member.id)
 
-        amount: int | None = self.bot.pool.fetchval(query, *args)
+        amount: int | None = await self.bot.pool.fetchval(query, *args)
 
         if amount == 0 or amount is None:
             await ctx.send(f"{member} has no tags!")
@@ -880,7 +863,8 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
             return
 
         if not is_owner:
-            if not ctx.guild or not (ctx.guild.get_member(ctx.author.id) or ctx.author).guild_permissions.manage_messages:
+            user = ctx.guild.get_member(ctx.author.id) or ctx.author
+            if not ctx.guild or not isinstance(user, discord.Member) or not user.guild_permissions.manage_messages:
                 return await ctx.send('You no longer have the required permissions to purge tags!')
 
         async with self.bot.safe_connection() as conn:
@@ -910,9 +894,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_purge(ctx, member, None)
 
     async def __tag_alias(self, ctx: DuckContext, alias: TagName, points_to: TagName, guild: discord.Guild | None):
-        """|coro|
-
-        Creates an alias for a tag.
+        """Creates an alias for a tag.
 
         Parameters
         ----------
@@ -946,9 +928,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_alias(ctx, alias, points_to, None)
 
     async def __tag_info(self, ctx: DuckContext, tag: TagName, guild: discord.Guild | None):
-        """|coro|
-
-        Gets information about a tag
+        """Gets information about a tag
 
         Parameters
         ----------
@@ -1003,9 +983,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_info(ctx, tag, None)
 
     async def __tag_list(self, ctx: DuckContext, member: discord.Member | discord.User | None, guild: discord.Guild | None):
-        """|coro|
-
-        Lists all tags owned by a member.
+        """Lists all tags owned by a member.
 
         Parameters
         ----------
@@ -1044,9 +1022,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_list(ctx, user, None)
 
     async def __tag_search(self, ctx: DuckContext, query: str, guild: discord.Guild | None):
-        """|coro|
-
-        Searches for tags.
+        """Searches for tags.
 
         Parameters
         ----------
@@ -1079,9 +1055,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_search(ctx, query, None)
 
     async def __tag_raw(self, ctx: DuckContext, tag_name: TagName, guild: discord.Guild | None):
-        """|coro|
-
-        Sends a raw tag.
+        """Sends a raw tag.
 
         Parameters
         ----------
@@ -1102,9 +1076,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await self.__tag_raw(ctx, tag, None)
 
     async def get_guild_or_global_stats(self, ctx: DuckContext, guild: discord.Guild | None, embed: discord.Embed):
-        """|coro|
-
-        Gets the tag stats of a guild.
+        """Gets the tag stats of a guild.
 
         Parameters
         ----------
@@ -1183,9 +1155,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         await ctx.send(embed=embed)
 
     async def user_tag_stats(self, ctx: DuckContext, member: discord.Member | discord.User, guild: discord.Guild | None):
-        """|coro|
-
-        Gets the tag stats of a member.
+        """Gets the tag stats of a member.
 
         Parameters
         ----------
@@ -1253,9 +1223,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
 
     @tag.command(name='stats')
     async def tag_stats(self, ctx: DuckContext, member: Optional[discord.Member] = None):
-        """|coro|
-
-        Gets the tag stats of a member or this server.
+        """Gets the tag stats of a member or this server.
 
         Parameters
         ----------
@@ -1273,9 +1241,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
 
     @tag_global.command(name='stats')
     async def tag_global_stats(self, ctx: DuckContext, user: Optional[discord.User] = None):
-        """|coro|
-
-        Gets the tag stats of a user or global.
+        """Gets the tag stats of a user or global.
 
         Parameters
         ----------
@@ -1292,9 +1258,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
             await self.user_tag_stats(ctx, user, None)
 
     async def __tag_remove_embed(self, ctx: DuckContext, tag: TagName, guild: discord.Guild | None = None):
-        """|coro|
-
-        Removes an embed from a tag. To add an embed, use the ``embed``. Example:
+        """Removes an embed from a tag. To add an embed, use the ``embed``. Example:
          ``[prefix] embed <flags> --save <tag name>`` where flags are the embed flags.
          See ``[prefix]embed --help`` for more information about the flags.
 
@@ -1363,7 +1327,7 @@ class Tags(DuckCog, emoji='🏷️', brief='Tags: A way to store information for
         else:
             kwargs = {'content': tag.content, 'embed': tag.embed, 'ephemeral': False if ephemeral is None else ephemeral}
 
-        await interaction.response.send_message(**kwargs)
+        await interaction.response.send_message(**kwargs)  # pyright: ignore[reportArgumentType]
 
         try:
             query = "INSERT INTO commands (guild_id, user_id, command) VALUES ($1, $2, 'tag')"

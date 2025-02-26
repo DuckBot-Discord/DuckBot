@@ -23,9 +23,7 @@ class Reminders(DuckCog):
 
     @group(name='remind', aliases=['remindme', 'reminder'], invoke_without_command=True)
     async def remindme(self, ctx: DuckContext, *, when: UserFriendlyTime(commands.clean_content, default='...')) -> None:  # type: ignore
-        """|coro|
-
-        Reminds you of something in the future.
+        """Reminds you of something in the future.
 
         Parameters
         ----------
@@ -47,9 +45,7 @@ class Reminders(DuckCog):
     # noinspection PyShadowingBuiltins
     @remindme.command(name='delete', alias=['remove'])
     async def remindme_delete(self, ctx: DuckContext, id: int) -> None:
-        """|coro|
-
-        Deletes a reminder.
+        """Deletes a reminder.
 
         Parameters
         ----------
@@ -69,10 +65,7 @@ class Reminders(DuckCog):
 
     @remindme.command(name='list')
     async def remindme_list(self, ctx: DuckContext) -> None:
-        """|coro|
-
-        Lists all your upcoming reminders.
-        """
+        """Lists all your upcoming reminders."""
 
         timers = await self.bot.pool.fetch(
             """

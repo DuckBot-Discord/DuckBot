@@ -112,8 +112,7 @@ class ExtensionsManager(DuckCog):
 
     @group(invoke_without_command=True)
     async def reload(self, ctx: DuckContext, *extensions: str):
-        '''|coro|
-        It reloads extensions
+        '''It reloads extensions
 
         Parameters
         ----------
@@ -128,9 +127,7 @@ class ExtensionsManager(DuckCog):
 
     @reload.command(name='git')
     async def reload_git(self, ctx: DuckContext):
-        '''|coro|
-
-        Updates the bot.
+        '''Updates the bot.
 
         This command will pull from github, and then reload the modules of the bot that have changed.
         '''

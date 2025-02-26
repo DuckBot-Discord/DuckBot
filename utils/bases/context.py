@@ -138,9 +138,7 @@ class DuckContext(commands.Context['DuckBot']):
         return result
 
     async def send(self, content: str | None = None, *args: Any, **kwargs: Any) -> Message:
-        """|coro|
-
-        Sends a message to the invoking context's channel.
+        """Sends a message to the invoking context's channel.
 
         View :meth:`~discord.ext.commands.Context.send` for more information of parameters.
 
@@ -219,9 +217,7 @@ class DuckContext(commands.Context['DuckBot']):
         labels: tuple[str, str] = ('Confirm', 'Cancel'),
         **kwargs,
     ) -> bool | None:
-        """|coro|
-
-        Prompts a confirmation message that users can confirm or deny.
+        """Prompts a confirmation message that users can confirm or deny.
 
         Parameters
         ----------

@@ -370,9 +370,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         return pool
 
     async def populate_cache(self) -> None:
-        """|coro|
-
-        Populates all cache that comes from the database. Please note if commands are
+        """Populates all cache that comes from the database. Please note if commands are
         processed before this data is complete, some guilds may not have custom prefixes.
         """
         async with self.safe_connection() as conn:
@@ -382,10 +380,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             await self.blacklist.build_cache(conn)
 
     async def create_db_listeners(self) -> None:
-        """|coro|
-
-        Registers listeners for database events.
-        """
+        """Registers listeners for database events."""
 
         def reregister(con):
             self.loop.create_task(self.create_db_listeners())
@@ -533,9 +528,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         return DbContextManager(self, timeout=timeout)
 
     async def get_prefix(self, message: discord.Message, raw: bool = False) -> List[str]:
-        """|coro|
-
-        Returns the prefixes for the given message.
+        """Returns the prefixes for the given message.
         if raw is True, returns the prefixes without the bots mention.
 
         Parameters
@@ -567,9 +560,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
     async def get_context(
         self, message: discord.Message | discord.Interaction[DuckBot], *, cls: Type[DCT] | None = None
     ) -> DuckContext | commands.Context[DuckBot]:
-        """|coro|
-
-        Used to get the invocation context from the message.
+        """Used to get the invocation context from the message.
 
         Parameters
         ----------
@@ -582,39 +573,27 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         return await super().get_context(message, cls=new_cls)
 
     async def on_connect(self):
-        """|coro|
-
-        Called when the bot connects to the gateway.
-        """
+        """Called when the bot connects to the gateway."""
         self.logger.info(f"{col(2)}Logged in as {self.user}! ({self.user.id})")
 
     async def on_shard_connect(self, shard_id: int):
-        """|coro|
-
-        Called when one of the shards connects to the gateway.
-        """
+        """Called when one of the shards connects to the gateway."""
         self.logger.info(f"{col(2)}Shard ID {shard_id} connected!")
 
     async def on_disconnect(self):
-        """|coro|
-
-        Called when the client has disconnected from Discord,
+        """Called when the client has disconnected from Discord,
         or a connection attempt to Discord has failed.
         """
-        self.logger.info(f"{col(2)}Unexpectedly lost conection to Discord!")
+        self.logger.info(f"{col(2)}Unexpectedly lost connection to Discord!")
 
     async def on_shard_disconnect(self, shard_id: int):
-        """|coro|
-
-        Called when the a shard has disconnected from Discord,
+        """Called when the a shard has disconnected from Discord,
         or a connection attempt to Discord has failed.
         """
-        self.logger.info(f"{col(2)}Shard ID {shard_id} unexpectedly lost conection to Discord!")
+        self.logger.info(f"{col(2)}Shard ID {shard_id} unexpectedly lost connection to Discord!")
 
     async def on_ready(self):
-        """|coro|
-
-        Called when the internal cache of the bot is ready, and the bot is
+        """Called when the internal cache of the bot is ready, and the bot is
         connected to the gateway.
         """
         self.logger.info(f"{col(2)}All guilds are chunked and ready to go!")
@@ -622,30 +601,19 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             self._start_time = discord.utils.utcnow()
 
     async def on_shard_ready(self, shard_id: int):
-        """|coro|
-
-        Called when one of the bot's shards is ready.
-        """
+        """Called when one of the bot's shards is ready."""
         self.logger.info(f"{col(2)}Shard ID {shard_id} is now ready!")
 
     async def on_resumed(self):
-        """|coro|
-
-        Called when the gateway resumed it's connection to discord.
-        """
+        """Called when the gateway resumed it's connection to discord."""
         self.logger.info(f"{col(2)}Resumed connection to the gateway.")
 
     async def on_shard_resumed(self, shard_id: int):
-        """|coro|
-
-        Called when one of the bot's shards resumed it's connection to discord.
-        """
+        """Called when one of the bot's shards resumed it's connection to discord."""
         self.logger.info(f"{col(2)}Shard ID {shard_id} resumed connection to the gateway.")
 
     async def on_message(self, message: discord.Message) -> Optional[discord.Message]:
-        """|coro|
-
-        Called every time a message is received by the bot. Used to check if the message
+        """Called every time a message is received by the bot. Used to check if the message
         has mentioned the bot, and if it has return a simple response.
 
         Returns
@@ -663,9 +631,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         await self.process_commands(message)
 
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
-        """|coro|
-
-        Called every time a message is edited.
+        """Called every time a message is edited.
 
         Parameters
         ----------
@@ -678,9 +644,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             await self.process_commands(after)
 
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
-        """|coro|
-
-        Called every time a message is deleted.
+        """Called every time a message is deleted.
 
         Parameters
         ----------
@@ -701,9 +665,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
                 pass
 
     async def on_error(self, event: str, *args: Any, **kwargs: Any) -> None:
-        """|coro|
-
-        Called when an error is raised, and it's not from a command.
+        """Called when an error is raised, and it's not from a command.
 
         Parameters
         ----------
@@ -778,9 +740,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         return await super().is_owner(user)
 
     async def start(self, token: str, *, reconnect: bool = True, verbose: bool = True) -> None:
-        """|coro|
-
-        Starts the bot.
+        """Starts the bot.
 
         Parameters
         ----------
@@ -814,11 +774,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         await super().start(token, reconnect=reconnect)
 
     async def close(self) -> None:
-        """|coro|
-
-        Closes the websocket connection and stops the event loop.
-
-        """
+        """Closes the websocket connection and stops the event loop."""
         try:
             try:
                 await self.cleanup_views()
@@ -842,9 +798,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
     @staticmethod
     async def get_or_fetch_member(guild: discord.Guild, user: Union[discord.User, int]) -> Optional[discord.Member]:
-        """|coro|
-
-        Used to get a member from a guild. If the member was not found, the function
+        """Used to get a member from a guild. If the member was not found, the function
         will return nothing.
 
         Parameters
@@ -866,9 +820,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             return None
 
     async def get_or_fetch_user(self, user_id: int) -> Optional[discord.User]:
-        """|coro|
-
-        Used to get a member from a guild. If the member was not found, the function
+        """Used to get a member from a guild. If the member was not found, the function
         will return nothing.
 
         Parameters
@@ -887,9 +839,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             return None
 
     async def on_command(self, ctx: DuckContext):
-        """|coro|
-
-        Called when a command is invoked.
+        """Called when a command is invoked.
         Handles automatic blacklisting of users that are abusing the bot.
 
         Parameters
@@ -928,9 +878,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             )
 
     async def _log_rl_excess(self, ctx, message, retry_after, *, auto_block=False):
-        """|coro|
-
-        Logs a rate limit excess
+        """Logs a rate limit excess
 
         Parameters
         ----------
@@ -974,9 +922,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             await self.exceptions.add_error(error=e)
 
     async def _auto_blacklist_add(self, user: Union[discord.User, discord.Member]):
-        """|coro|
-
-        Adds a user to the auto-blacklist.
+        """Adds a user to the auto-blacklist.
 
         Parameters
         ----------
@@ -998,9 +944,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
             await self.blacklist.add_user(user)
 
     async def try_syncing(self, *, guild: discord.abc.Snowflake | None = None) -> SyncResult:
-        """|coro|
-
-        Tries to sync the command tree.
+        """Tries to sync the command tree.
 
         Parameters
         ----------
@@ -1011,7 +955,7 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
         await self.wait_until_ready()
 
         guild_id = guild.id if guild else 0
-        all_cmds = self.bot.tree._get_all_commands(guild=guild)  # private method kekw.
+        all_cmds = self.bot.tree._get_all_commands(guild=guild)
         payloads = [(guild_id, cmd.to_dict(self.tree)) for cmd in all_cmds]
 
         databased = await self.pool.fetch("SELECT payload FROM auto_sync WHERE guild_id = $1", guild_id)
@@ -1030,6 +974,3 @@ class DuckBot(commands.AutoShardedBot, DuckHelper):
 
         else:
             return SyncResult(commands=[], synced=False)
-
-
-# Leo is a bitch -Hadock

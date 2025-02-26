@@ -222,9 +222,7 @@ class DuckCommand(commands.Command, Generic[CogT, P, T]):
         return decorator
 
     async def invoke(self, ctx: DuckContext, /) -> None:
-        """|coro|
-
-        An internal helper used to invoke the command under a given context. This should
+        """An internal helper used to invoke the command under a given context. This should
         not be called by the user, but can be used if needed.
 
         Parameters
@@ -460,7 +458,6 @@ class DuckHybridGroup(commands.HybridGroup, DuckGroup):
         return wrapped
 
     def group(self, *args: Any, hybrid: bool = True, **kwargs: Any) -> Callable[..., DuckHybridGroup]:
-
         def wrapped(func) -> DuckHybridGroup:
             kwargs.setdefault('parent', self)
             result = group(*args, hybrid=True, with_app_command=hybrid, **kwargs)(func)

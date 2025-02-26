@@ -48,9 +48,7 @@ class ChannelModeration(DuckCog):
         update_db: bool = True,
         reason: Optional[str] = None,
     ) -> None:
-        """|coro|
-
-        Toggle the block status of a member in a channel.
+        """Toggle the block status of a member in a channel.
 
         Parameters
         ----------
@@ -104,9 +102,7 @@ class ChannelModeration(DuckCog):
                     await conn.execute(query, _channel.guild.id, _channel.id, member.id)
 
     async def format_block(self, guild: discord.Guild, user_id: int, channel_id: Optional[int] = None):
-        """|coro|
-
-        Format a block entry from the database into a human-readable string.
+        """Format a block entry from the database into a human-readable string.
 
         Parameters
         ----------
@@ -138,9 +134,7 @@ class ChannelModeration(DuckCog):
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
     async def block(self, ctx: DuckContext, *, member: VerifiedMember):
-        """|coro|
-
-        Blocks a user from your channel.
+        """Blocks a user from your channel.
 
         Parameters
         ----------
@@ -163,9 +157,7 @@ class ChannelModeration(DuckCog):
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_permissions=True)
     async def tempblock(self, ctx: DuckContext, time: FutureTime, *, member: VerifiedMember):
-        """|coro|
-
-        Temporarily blocks a user from your channel.
+        """Temporarily blocks a user from your channel.
 
         Parameters
         ----------
@@ -189,9 +181,7 @@ class ChannelModeration(DuckCog):
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def unblock(self, ctx: DuckContext, *, member: VerifiedMember):
-        """|coro|
-
-        Unblocks a user from your channel.
+        """Unblocks a user from your channel.
 
         Parameters
         ----------
@@ -236,10 +226,9 @@ class ChannelModeration(DuckCog):
     @command(aliases=['blocks'])
     @commands.has_permissions(manage_guild=True)
     async def blocked(self, ctx: DuckContext, page: int = 1, *, channel: Optional[discord.TextChannel] = None):
-        """|coro|
-        Gets a list of all blocked users in a channel.
+        """Gets a list of all blocked users in a channel.
         If no channel is specified, it will show the
-        blocked users for all the chnannels in the server.
+        blocked users for all the channels in the server.
 
         Parameters
         ----------
@@ -436,7 +425,7 @@ class ChannelModeration(DuckCog):
 
         await interaction.followup.send(f'✅ **|** Unblocked **{mdr(user)}**')
 
-    @commands.command(aliases=['lock', 'ld'])
+    @command(aliases=['lock', 'ld'])
     @commands.guild_only()
     async def lockdown(
         self,
@@ -482,7 +471,7 @@ class ChannelModeration(DuckCog):
 
         await ctx.send(f"Locked down **{channel.name}** for **{role.name}**")
 
-    @commands.command(aliases=['unlockdown', 'uld'])
+    @command(aliases=['unlockdown', 'uld'])
     @commands.guild_only()
     async def unlock(
         self,

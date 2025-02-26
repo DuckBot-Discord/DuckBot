@@ -18,9 +18,7 @@ class PrefixChanges(DuckCog):
     @group(name='prefix', aliases=['prefixes', 'pre'], invoke_without_command=True)
     @commands.guild_only()
     async def prefix(self, ctx: DuckGuildContext, *, prefix: Optional[str] = None) -> Optional[discord.Message]:
-        """|coro|
-
-        Adds a prefix for this server (you can have up to 25 prefixes).
+        """Adds a prefix for this server (you can have up to 25 prefixes).
 
         Parameters
         ----------
@@ -60,10 +58,7 @@ class PrefixChanges(DuckCog):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def prefix_clear(self, ctx: DuckGuildContext) -> Optional[discord.Message]:
-        """|coro|
-
-        Clears all prefixes from this server, restting them to default.
-        """
+        """Clears all prefixes from this server, restting them to default."""
         await self.bot.pool.execute("UPDATE guilds SET prefixes = ARRAY[]::TEXT[] WHERE guild_id = $1", ctx.guild.id)
         await ctx.send('✅ Reset prefixes to the default.')
 
@@ -78,9 +73,7 @@ class PrefixChanges(DuckCog):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def prefix_remove(self, ctx: DuckGuildContext, *, prefix: str) -> Optional[discord.Message]:
-        """|coro|
-
-        Removes a prefix from the bots prefixes.
+        """Removes a prefix from the bots prefixes.
 
         Parameters
         ----------

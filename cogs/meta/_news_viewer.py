@@ -45,7 +45,7 @@ class NewsFeed:
     )
 
     def __init__(self, news: List[asyncpg.Record]) -> None:
-        self.news: List[Page] = [Page(**n) for n in news]  # type: ignore
+        self.news: List[Page] = [Page(**n) for n in news]
         self.max_pages = len(news)
         self._current_page = 0
 
@@ -112,10 +112,8 @@ class NewsViewer(discord.ui.View):
             self.bot: DuckBot = obj.client
         self.news = NewsFeed(news)
 
-    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> Optional[bool]:
-        """|coro|
-
-        Used to check if the interaction is valid. If it isn't the user that selected
+    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
+        """Used to check if the interaction is valid. If it isn't the user that selected
         the button won't be allowed to interact with the menu.
 
         Parameters
@@ -130,8 +128,7 @@ class NewsViewer(discord.ui.View):
         """
         val = interaction.user == self.author
         if not val:
-            return await interaction.response.send_message(content='Hey! You can\'t do that!', ephemeral=True)
-
+            await interaction.response.send_message(content='Hey! You can\'t do that!', ephemeral=True)
         return val
 
     @cachetools.cached(cachetools.LRUCache(maxsize=10))
@@ -156,9 +153,7 @@ class NewsViewer(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, label='\u226a')
     async def previous(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
-        """|coro|
-
-        Used to go back to the previous page.
+        """Used to go back to the previous page.
 
         Parameters
         ----------
@@ -170,13 +165,11 @@ class NewsViewer(discord.ui.View):
         self.news.advance()
         page = self.news.current
         self.update_labels()
-        return await interaction.response.edit_message(embed=self.get_embed(page), view=self)
+        await interaction.response.edit_message(embed=self.get_embed(page), view=self)
 
     @discord.ui.button(style=discord.ButtonStyle.red)
     async def current(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button) -> None:
-        """|coro|
-
-        Used to stop the news viewer.
+        """Used to stop the news viewer.
 
         Parameters
         ----------
@@ -194,9 +187,7 @@ class NewsViewer(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, label='\u226b')
     async def next(self, interaction: discord.Interaction[DuckBot], button: discord.ui.Button):
-        """|coro|
-
-        Used to go to the next page.
+        """Used to go to the next page.
 
         Parameters
         ----------
@@ -222,9 +213,7 @@ class NewsViewer(discord.ui.View):
 
     @classmethod
     async def start(cls: Type[NVT], ctx: DuckContext, news: List[asyncpg.Record]) -> NVT:
-        """|coro|
-
-        Used to start the view and build internal cache.
+        """Used to start the view and build internal cache.
 
         Parameters
         ----------

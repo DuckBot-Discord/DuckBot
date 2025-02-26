@@ -77,13 +77,13 @@ def cache(maxsize=128, strategy=Strategy.lru, ignore_kwargs=False):
         elif strategy is Strategy.raw:
             _internal_cache = {}
 
-            def _stats():
+            def _stats() -> Tuple[int, int]:
                 return 0, 0
 
         elif strategy is Strategy.timed:
             _internal_cache = ExpiringCache(maxsize)
 
-            def _stats():
+            def _stats() -> Tuple[int, int]:
                 return 0, 0
 
         else:

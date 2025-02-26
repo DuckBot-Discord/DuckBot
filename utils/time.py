@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from bot import DuckBot
 
 # Monkey patch mins and secs into the units
-units = pdt.pdtLocales['en_US'].units  # type: ignore
+units = pdt.pdtLocales['en_US'].units
 units['minutes'].append('mins')
 units['seconds'].append('secs')
 
@@ -78,7 +78,7 @@ class ShortTime:
 
         data = {k: int(v) for k, v in match.groupdict(default=0).items()}
         now = now or datetime.datetime.now(datetime.timezone.utc)
-        self.dt = now + relativedelta(**data)
+        self.dt = now + relativedelta(**data)  # type: ignore
 
     @classmethod
     async def convert(cls: Type[STT], ctx: DuckContext, argument: str) -> STT:
@@ -106,7 +106,7 @@ class HumanTime:
     def __init__(self, argument: str, *, now: Optional[datetime.datetime] = None) -> None:
         now = now or datetime.datetime.utcnow()
         dt, status = self.calendar.parseDT(argument, sourceTime=now)
-        if not status.hasDateOrTime:
+        if isinstance(status, int) or not status.hasDateOrTime:
             raise commands.BadArgument('invalid time provided, try e.g. "tomorrow" or "3 days"')
 
         if not status.hasTime:
@@ -212,7 +212,7 @@ class UserFriendlyTime(commands.Converter, app_commands.Transformer):
             if match is not None and match.group(0):
                 data = {k: int(v) for k, v in match.groupdict(default=0).items()}
                 remaining = argument[match.end() :].strip()
-                result.dt = now + relativedelta(**data)
+                result.dt = now + relativedelta(**data)  # pyright: ignore[reportArgumentType]
                 return await result.check_constraints(ctx, now, remaining)
 
             # apparently nlp does not like "from now"
@@ -255,7 +255,7 @@ class UserFriendlyTime(commands.Converter, app_commands.Transformer):
                 dt = dt.replace(hour=now.hour, minute=now.minute, second=now.second, microsecond=now.microsecond)
 
             # if midnight is provided, just default to next day
-            if status.accuracy == pdt.pdtContext.ACU_HALFDAY:  # type: ignore
+            if status.accuracy == pdt.pdtContext.ACU_HALFDAY:
                 dt = dt.replace(day=now.day + 1)
 
             result.dt = dt.replace(tzinfo=datetime.timezone.utc)
@@ -275,7 +275,7 @@ class UserFriendlyTime(commands.Converter, app_commands.Transformer):
             elif len(argument) == end:
                 remaining = argument[:begin].strip()
 
-            return await result.check_constraints(ctx, now, remaining)  # type: ignore
+            return await result.check_constraints(ctx, now, remaining)
         except:
             import traceback
 

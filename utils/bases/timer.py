@@ -113,9 +113,7 @@ class Timer:
         return f'{self.event}_timer_complete'
 
     async def delete(self, bot: DuckBot):
-        """|coro|
-
-        Deletes this timer.
+        """Deletes this timer.
 
         Parameters
         ----------
@@ -156,9 +154,7 @@ class TimerManager:
         self._task.cancel()
 
     async def cog_command_error(self, ctx: DuckContext, error: Exception) -> discord.Message:
-        """|coro|
-
-        Called when the cog encounters an error. This will only be called if the class is
+        """Called when the cog encounters an error. This will only be called if the class is
         inherited in a cog. Otherwise, it will do nothing.
 
         Parameters
@@ -189,9 +185,7 @@ class TimerManager:
         return await ctx.send(embed=embed)
 
     async def get_active_timer(self, *, connection: Optional[Connection] = None, days: int = 7) -> Optional[Timer]:
-        """|coro|
-
-        Called to get the most current active timer in the database. This timer is expired and should be dispatched.
+        """Called to get the most current active timer in the database. This timer is expired and should be dispatched.
 
         Parameters
         ----------
@@ -212,9 +206,7 @@ class TimerManager:
         return Timer(record=record) if record else None
 
     async def wait_for_active_timers(self, *, days: int = 7) -> Optional[Timer]:
-        """|coro|
-
-        Waity for a timer that has expired. This will wait until a timer is expired and should be dispatched.
+        """Waity for a timer that has expired. This will wait until a timer is expired and should be dispatched.
 
         Parameters
         ----------
@@ -260,9 +252,7 @@ class TimerManager:
             self.bot.dispatch(timer.event_name, timer)
 
     async def dispatch_timers(self):
-        """|coro|
-
-        The main dispatch loop. This will wait for a timer to expire and dispatch it.
+        """The main dispatch loop. This will wait for a timer to expire and dispatch it.
         Please note if you use this class, you need to cancel the task when you're done
         with it.
         """
@@ -297,9 +287,7 @@ class TimerManager:
         precise: bool = True,
         **kwargs: JSONType,
     ) -> Timer:
-        """|coro|
-
-        Used to create a timer in the database and dispatch it.
+        """Used to create a timer in the database and dispatch it.
 
         Parameters
         ----------
@@ -349,9 +337,7 @@ class TimerManager:
         return timer
 
     async def get_timer(self, id: int) -> Timer:
-        """|coro|
-
-        Used to get a timer from it's ID.
+        """Used to get a timer from it's ID.
 
         Parameters
         ----------
@@ -377,9 +363,7 @@ class TimerManager:
         return Timer(record=data)
 
     async def delete_timer(self, id: int) -> None:
-        """|coro|
-
-        Delete a timer using it's ID.
+        """Delete a timer using it's ID.
 
         Parameters
         ----------
@@ -401,9 +385,7 @@ class TimerManager:
             await conn.execute(f'DELETE FROM timers WHERE id = $1', id)
 
     async def fetch_timers(self) -> List[Timer]:
-        """|coro|
-
-        Used to fetch all timers from the database.
+        """Used to fetch all timers from the database.
 
         Returns
         -------

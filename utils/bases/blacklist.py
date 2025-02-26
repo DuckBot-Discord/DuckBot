@@ -93,8 +93,7 @@ class DuckBlacklistManager:
         self.bot.remove_check(self.check_context, call_once=True)
 
     async def build_cache(self, conn: asyncpg.Connection) -> None:
-        """|coro|
-        Builds the blacklist cache
+        """Builds the blacklist cache
 
         Parameters
         ----------
@@ -116,8 +115,7 @@ class DuckBlacklistManager:
     async def _temp_blacklist_end_event(
         self, *, blacklist_type: Literal['user', 'guild', 'channel'], entity_id: int, guild_id: Optional[int] = None
     ) -> None:
-        """|coro|
-        The event that is called when a temporary blacklist ends.
+        """The event that is called when a temporary blacklist ends.
         This will be added to the bot when this call is instantiated.
         It will be registered under `on_blacklist_timer_complete`.
 
@@ -169,9 +167,7 @@ class DuckBlacklistManager:
         guild: Optional[discord.Guild] = None,
         end_time: Optional[datetime] = None,
     ) -> bool:
-        """|coro|
-
-        Adds a user to the blacklist.
+        """Adds a user to the blacklist.
 
         Parameters
         ----------
@@ -226,9 +222,7 @@ class DuckBlacklistManager:
             return await self.try_query(query, user.id, guild.id if guild else 0)
 
     async def remove_user(self, user: discord.User, guild: typing.Optional[discord.Guild] = None) -> bool:
-        """|coro|
-
-        Removes a user from the blacklist.
+        """Removes a user from the blacklist.
 
         Parameters
         ----------
@@ -298,9 +292,7 @@ class DuckBlacklistManager:
         return False
 
     async def add_channel(self, channel: discord.abc.GuildChannel, end_time: Optional[datetime] = None) -> bool:
-        """|coro|
-
-        Adds a channel to the blacklist.
+        """Adds a channel to the blacklist.
 
         Parameters
         ----------
@@ -353,9 +345,7 @@ class DuckBlacklistManager:
             return await self.try_query(query, channel.id, channel.guild.id)
 
     async def remove_channel(self, channel: discord.abc.GuildChannel) -> bool:
-        """|coro|
-
-        Removes a channel from the blacklist.
+        """Removes a channel from the blacklist.
 
         Parameters
         ----------
@@ -417,9 +407,7 @@ class DuckBlacklistManager:
         return False
 
     async def add_guild(self, guild: discord.Guild, end_time: Optional[datetime] = None) -> bool:
-        """|coro|
-
-        Adds a guild to the blacklist.
+        """Adds a guild to the blacklist.
 
         Parameters
         ----------
@@ -466,9 +454,7 @@ class DuckBlacklistManager:
             return await self.try_query(query, guild.id)
 
     async def remove_guild(self, guild: discord.Guild) -> bool:
-        """|coro|
-
-        Removes a guild from the blacklist.
+        """Removes a guild from the blacklist.
 
         Parameters
         ----------

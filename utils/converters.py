@@ -127,9 +127,7 @@ class ChannelVerifier:
         return ann
 
     async def convert(self, ctx: DuckContext, argument: str) -> discord.abc.GuildChannel | discord.Thread:
-        """|coro|
-
-        This takes the annotation of the command, and then converts and verifies the channel.
+        """This takes the annotation of the command, and then converts and verifies the channel.
 
         Parameters
         ----------
@@ -231,9 +229,7 @@ else:
             return value
 
         async def convert(self, ctx: DuckContext, argument: str):
-            """|coro|
-
-            The main convert method of the converter. This will use the types given to transform the argument
+            """The main convert method of the converter. This will use the types given to transform the argument
             to the given type, then verify that the target is permitted to perform the action.
 
             Parameters
@@ -280,9 +276,7 @@ class BanEntryConverter(discord.guild.BanEntry):
 
     @classmethod
     async def convert(cls: Type[BanEntryConverter], ctx: DuckContext, argument: str):
-        """|coro|
-
-        The main convert method of the converter. This will use the types given to transform the argument
+        """The main convert method of the converter. This will use the types given to transform the argument
         to a :class:`~disord.guild.BanEntry`.
 
         Parameters
@@ -396,8 +390,7 @@ class UntilFlag(Generic[T, FCT]):
         return True
 
     async def convert(self, ctx: DuckContext, argument: str) -> UntilFlag[T, FCT]:
-        """|coro|
-        The main convert method of the converter. This will take the given flag converter and
+        """The main convert method of the converter. This will take the given flag converter and
         use it to delimit the flags from the value.
         Parameters
         ----------

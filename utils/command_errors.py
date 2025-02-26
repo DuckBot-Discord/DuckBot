@@ -14,9 +14,7 @@ __all__: Tuple[str, ...] = ()
 
 
 async def on_command_error(ctx: DuckContext, error: Exception) -> None:
-    """|coro|
-
-    A handler called when an error is raised while invoking a command.
+    """A handler called when an error is raised while invoking a command.
 
     Parameters
     ----------

@@ -59,9 +59,7 @@ class BlackListManagement(DuckCog):
         entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel],
         when: Optional[ShortTime] = None,
     ) -> None:
-        """|coro|
-
-        Base command for blacklist management.
+        """Base command for blacklist management.
         Also adds an entity to the bot globally.
 
         Parameters
@@ -94,9 +92,7 @@ class BlackListManagement(DuckCog):
         entity: Union[discord.Guild, discord.User, discord.abc.GuildChannel],
         guild: discord.Guild = commands.param(default=None),
     ) -> None:
-        """|coro|
-
-        Removes an entity from the global blacklist.
+        """Removes an entity from the global blacklist.
 
         Parameters
         ----------
@@ -121,9 +117,7 @@ class BlackListManagement(DuckCog):
         user: Union[discord.Member, discord.User],
         when: Optional[ShortTime] = None,
     ) -> None:
-        """|coro|
-
-        Adds an entity to the local blacklist.
+        """Adds an entity to the local blacklist.
 
         Parameters
         ----------
@@ -151,8 +145,7 @@ class BlackListManagement(DuckCog):
 
     @blacklist.command(name='list', aliases=['ls'])
     async def blacklist_list(self, ctx: DuckContext, page: int = 1) -> None:
-        """|coro|
-        Gets a list of all blocked users in a channel.
+        """Gets a list of all blocked users in a channel.
         If no channel is specified, it will show the
         blocked users for all the chnannels in the server.
 
