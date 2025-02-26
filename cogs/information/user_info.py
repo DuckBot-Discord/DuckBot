@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.utils import format_dt
 
 from bot import DuckBot
-from utils import DuckCog, DuckContext, PartiallyMatch, command
+from utils import DuckCog, DuckContext, PartiallyMatch, command, View
 from utils.types import constants
 
 from .perms import PermsEmbed
@@ -114,7 +114,7 @@ class BaseEmbed(discord.Embed):
         self.set_author(name=str(user), icon_url=(user.avatar or user.display_avatar).url)
 
 
-class UserInfoViewer(discord.ui.View):
+class UserInfoViewer(View):
     def __init__(
         self,
         user: typing.Union[discord.Member, discord.User],
@@ -124,7 +124,7 @@ class UserInfoViewer(discord.ui.View):
         author: typing.Union[discord.Member, discord.User],
         color: discord.Colour | None = None,
     ):
-        super().__init__()
+        super().__init__(bot=bot, author=author)
         self.user = user
         self.bot = bot
         self.author = author

@@ -6,7 +6,7 @@ from typing import Union
 import discord
 from discord import Permissions, PermissionOverwrite, Member, Role
 
-from utils import DuckContext, DuckCog, DeleteButton, command
+from utils import DuckContext, DuckCog, DeleteButton, command, View
 from utils.types import constants
 from bot import DuckBot
 
@@ -128,7 +128,7 @@ class SimpleOverwrite:
         return f"<SimpleOverwrite id={self.id}>"
 
 
-class GuildPermsViewer(discord.ui.View):
+class GuildPermsViewer(View):
     """
     A view that shows the permissions for an object.
     """
@@ -137,10 +137,8 @@ class GuildPermsViewer(discord.ui.View):
         self,
         ctx: DuckContext,
     ):
-        super().__init__()
+        super().__init__(bot=ctx.bot, author=ctx.author, disable_on_timeout=True)
         self.ctx = ctx
-        self.guild = ctx.guild
-        self.message: discord.Message | None = None
 
     @discord.ui.select(cls=discord.ui.RoleSelect)
     async def select_role(self, interaction: discord.Interaction[DuckBot], select: discord.ui.RoleSelect):
@@ -173,27 +171,12 @@ class GuildPermsViewer(discord.ui.View):
         new.message = message
         new.ctx.bot.views.add(new)
 
-    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
-        return interaction.user == self.ctx.author
 
-    async def on_timeout(self) -> None:
-        self.ctx.bot.views.discard(self)
-        for item in self.children:
-            item.disabled = True  # type: ignore
-        if self.message:
-            await self.message.edit(view=self)
-
-    def stop(self) -> None:
-        self.ctx.bot.views.discard(self)
-        super().stop()
-
-
-class OverwritesViewer(discord.ui.View):
+class OverwritesViewer(View):
     def __init__(self, ctx: DuckContext, overwrites: list[SimpleOverwrite]):
-        super().__init__()
+        super().__init__(bot=ctx.bot, author=ctx.author, disable_on_timeout=True)
         self.ctx = ctx
         self.overwrites = overwrites
-        self.message: discord.Message | None = None
         self.current_page: int = 0
         self.per_page = 10
 
@@ -245,20 +228,6 @@ class OverwritesViewer(discord.ui.View):
         new.update_select_options()
         message = await ctx.send(view=new)
         new.message = message
-
-    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
-        return interaction.user == self.ctx.author
-
-    async def on_timeout(self) -> None:
-        self.ctx.bot.views.discard(self)
-        for item in self.children:
-            item.disabled = True  # type: ignore
-        if self.message:
-            await self.message.edit(view=self)
-
-    def stop(self) -> None:
-        self.ctx.bot.views.discard(self)
-        super().stop()
 
 
 class PermsViewer(DuckCog):

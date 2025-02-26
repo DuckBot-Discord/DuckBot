@@ -25,6 +25,7 @@ from utils.types import constants
 class TaskCancelView(View):
     def __init__(self, owner: discord.abc.User, bot: DuckBot):
         super().__init__(bot=bot, author=owner, bypass_permissions=discord.Permissions(manage_roles=True))
+        self.bot = bot
         self.job: Optional[RoleActionJob] = None
         self.message: Optional[discord.Message] = None
 
@@ -82,7 +83,7 @@ class TaskCancelView(View):
             await self.message.edit(
                 content=f"Job assignment unexpectedly failed.\n-#{error}. Our developers have been notified.", view=None
             )
-        if self.bot and isinstance(error, Exception):
+        if isinstance(error, Exception):
             await self.bot.exceptions.add_error(error=error, display=f"bulk role task")
 
 

@@ -22,6 +22,8 @@ from typing import (
     TypeVar,
     Union,
     overload,
+    Protocol,
+    runtime_checkable,
 )
 from typing_extensions import Self
 
@@ -44,6 +46,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 P = ParamSpec('P')
 BET = TypeVar('BET', bound='discord.guild.BanEntry')
+DuckBotT = TypeVar('DuckBotT', bound='Optional[DuckBot]')
 
 CDN_REGEX = re.compile(
     r'(https?://)?(media|cdn)\.discord(app)?\.(com|net)/attachments/'
@@ -609,6 +612,11 @@ class Shell:
         self._output.stderr = ""
 
 
+@runtime_checkable
+class Disableable(Protocol):
+    disabled: bool
+
+
 class View(discord.ui.View):
     def __init__(
         self,
@@ -617,13 +625,27 @@ class View(discord.ui.View):
         bot: Optional[DuckBot] = None,
         author: Optional[discord.abc.User] = None,
         bypass_permissions: Optional[discord.Permissions] = None,
+        disable_on_timeout: bool = False,
+        remove_view_on_timeout: bool = False,
+        delete_on_timeout: bool = False,
     ):
         super().__init__(timeout=timeout)
         self._view_owner = author
         self._view_permissions_bypass = bypass_permissions
-        self.bot: Optional[DuckBot] = bot
+        self._duckbot: Optional[DuckBot] = bot
         if bot:
             bot.views.add(self)
+
+        if sum((disable_on_timeout, delete_on_timeout, remove_view_on_timeout)) > 1:
+            raise TypeError("Can only enable one of [disable_on_timeout, remove_view_on_timeout, delete_on_timeout]")
+        if disable_on_timeout:
+            self._disable_on_timeout = True
+        elif remove_view_on_timeout:
+            self._disable_on_timeout = False
+        else:
+            self._disable_on_timeout = None
+        self._delete_on_timeout = delete_on_timeout
+        self.message: Optional[discord.Message] = None
 
     async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
         perms = self._view_permissions_bypass
@@ -645,18 +667,34 @@ class View(discord.ui.View):
             await interaction.response.send_message(f"Sorry! something went wrong....", ephemeral=True)
 
     def stop(self) -> None:
-        if self.bot:
-            self.bot.views.discard(self)
+        if self._duckbot:
+            self._duckbot.views.discard(self)
         return super().stop()
 
     async def on_timeout(self) -> None:
-        if self.bot:
-            self.bot.views.discard(self)
+        if self._duckbot:
+            self._duckbot.views.discard(self)
+
+        if self.message:
+            try:
+                if self._disable_on_timeout is True:
+                    for item in self.children:
+                        if isinstance(item, Disableable):
+                            item.disabled = True
+                    await self.message.edit(view=self)
+
+                elif self._disable_on_timeout is False:
+                    await self.message.edit(view=None)
+                elif self._delete_on_timeout:
+                    await self.message.delete()
+            except discord.HTTPException:
+                pass
+
         return await super().on_timeout()
 
     def __del__(self) -> None:
-        if self.bot:
-            self.bot.views.discard(self)
+        if self._duckbot:
+            self._duckbot.views.discard(self)
 
 
 # Why? Idk tbh. I doubt I will actually ever use this.

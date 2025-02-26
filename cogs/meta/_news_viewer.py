@@ -9,8 +9,7 @@ import discord
 from discord.ext import commands
 
 from bot import DuckBot
-from utils import format_date
-from utils import DuckContext
+from utils import format_date, DuckContext, View
 
 NVT = TypeVar('NVT', bound='NewsViewer')
 
@@ -84,7 +83,7 @@ class NewsFeed:
         return self._current_page
 
 
-class NewsViewer(discord.ui.View):
+class NewsViewer(View):
     """The news viewer View.
 
     This class implements the functionality of the news viewer,
@@ -101,35 +100,18 @@ class NewsViewer(discord.ui.View):
         ctx: Optional[DuckContext]
 
     def __init__(self, obj: typing.Union[DuckContext, discord.Interaction[DuckBot]], news: List[asyncpg.Record]):
-        super().__init__()
         if isinstance(obj, DuckContext):
             self.author = obj.author
             self.bot: DuckBot = obj.bot
             self.ctx = obj
+
         else:
             self.ctx = None
             self.author = obj.user
             self.bot: DuckBot = obj.client
+
+        super().__init__(bot=self.bot, author=self.author)
         self.news = NewsFeed(news)
-
-    async def interaction_check(self, interaction: discord.Interaction[DuckBot]) -> bool:
-        """Used to check if the interaction is valid. If it isn't the user that selected
-        the button won't be allowed to interact with the menu.
-
-        Parameters
-        ----------
-        interaction: :class:`discord.Interaction`
-            The interaction to check.
-
-        Returns
-        -------
-        Optional[:class:`bool`]
-            Whether the interaction is valid.
-        """
-        val = interaction.user == self.author
-        if not val:
-            await interaction.response.send_message(content='Hey! You can\'t do that!', ephemeral=True)
-        return val
 
     @cachetools.cached(cachetools.LRUCache(maxsize=10))
     def get_embed(self, page: Page) -> discord.Embed:
@@ -243,12 +225,3 @@ class NewsViewer(discord.ui.View):
         new.bot.views.add(new)
         await new.wait()
         return new
-
-    async def on_timeout(self) -> None:
-        self.bot.views.discard(self)
-        if self.message:
-            await self.message.edit(view=None)
-
-    def stop(self) -> None:
-        self.bot.views.discard(self)
-        super().stop()
