@@ -8,7 +8,6 @@ import asyncpg
 import discord
 from asyncdagpi.image_features import ImageFeatures
 from discord.ext import commands
-import sentry_sdk
 
 import errors
 from cogs.economy.helper_classes import Wallet
@@ -124,12 +123,6 @@ class DuckBot(BaseDuck):
 
 
 if __name__ == "__main__":
-    if os.getenv('SENTRY_URL'):
-        sentry_sdk.init(
-            get_or_fail("SENTRY_URL"),
-            traces_sample_rate=1.0,
-            environment=os.getenv("SENTRY_ENV") or 'development',
-        )
 
     async def user_blacklisted(ctx: CustomContext):
         if not ctx.bot.blacklist.get(ctx.author.id, None) or await ctx.bot.is_owner(ctx.author):
