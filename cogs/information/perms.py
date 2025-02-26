@@ -6,7 +6,7 @@ from typing import Union
 import discord
 from discord import Permissions, PermissionOverwrite, Member, Role
 
-from utils import DuckContext, DuckCog, DeleteButton, command, View
+from utils import DuckContext, DuckCog, DeleteButton, group, View
 from utils.types import constants
 from bot import DuckBot
 
@@ -76,11 +76,16 @@ class PermsEmbed(discord.Embed):
         self,
         entity: Union[Member, Role, SimpleOverwrite],
         permissions: Union[Permissions, PermissionOverwrite],
+        channel: discord.abc.GuildChannel | None = None,
     ):
-        sym = '@' if isinstance(entity, (discord.Role, discord.abc.User)) else '#'
-        word = 'Permissions' if isinstance(permissions, discord.Permissions) else 'Overwrites'
+        descriptor = 'Permissions' if isinstance(permissions, discord.Permissions) else 'Overwrites'
+
+        extra = ""
+        if channel:
+            extra = f" in {channel.mention}"
+
         super().__init__(
-            title=f"{word} for {sym}{entity}",
+            description=f"{descriptor} for {entity.mention} {extra}",
             color=entity.color,
         )
         formatted = {p: constants.SQUARE_TICKS.get(v) for p, v in permissions}
@@ -97,6 +102,13 @@ class SimpleOverwrite:
         self.entity = entity
         self.overwrite = overwrite
         self.position = pos
+
+    @property
+    def mention(self):
+        entity = self.entity
+        if isinstance(entity, discord.Object):
+            return f"unknown {entity.id}"
+        return entity.mention
 
     @property
     def permissions(self):
@@ -231,21 +243,53 @@ class OverwritesViewer(View):
 
 
 class PermsViewer(DuckCog):
-    @command()
-    async def perms(
-        self, ctx: DuckContext, *, entity: discord.abc.GuildChannel | discord.Role | discord.Member | None = None
-    ) -> None:
-        """Shows the permissions of a channel or user."""
-        if entity is None:
-            await GuildPermsViewer.start(ctx)
+    @group(hybrid=True, fallback='for', invoke_without_command=True)
+    async def permissions(self, ctx: DuckContext, *, entity: discord.Role | discord.Member) -> None:
+        """Shows the global permissions of a user or role.
+
+        Parameters
+        ----------
+        entity: Role | Member
+            The user or role that will be checked.
+        """
+
+        if isinstance(entity, discord.Role):
+            perms = entity.permissions
         else:
-            if isinstance(entity, discord.abc.GuildChannel):
-                return await OverwritesViewer.start(ctx, entity)
+            perms = entity.guild_permissions
 
-            elif isinstance(entity, discord.Role):
-                perms = entity.permissions
-            else:
-                perms = entity.guild_permissions
+        embed = PermsEmbed(entity=entity, permissions=perms)
+        await DeleteButton.send_to(ctx, embed=embed, author=ctx.author)
 
-            embed = PermsEmbed(entity=entity, permissions=perms)
-            await DeleteButton.send_to(ctx, embed=embed, author=ctx.author)
+    @permissions.command(name='in')
+    async def permissions_in(
+        self, ctx: DuckContext, channel: discord.abc.GuildChannel, entity: discord.Role | discord.Member
+    ):
+        """Shows a role or user's permissions for a channel.
+
+        This shows the effective permissions of a user in a channel, which take into consideration both channel-specific (user/role) and global (role) permissions for all roles the user has.
+
+        Parameters
+        ----------
+        channel: GuildChannel
+            The channel to get permission information from.
+        entity:
+            The user or role that will be checked.
+        """
+        perms = channel.permissions_for(entity)
+        embed = PermsEmbed(entity=entity, permissions=perms, channel=channel)
+        await DeleteButton.send_to(ctx, embed=embed, author=ctx.author)
+
+    @permissions.command(name='all')
+    async def permissions_all(self, ctx: DuckContext, *, entity: discord.abc.GuildChannel | None):
+        """Shows all the server or a channel's permissions and overwrites.
+
+        Parameters
+        ----------
+        channel: GuildChannel
+            The channel to get permission information from.
+        """
+        if entity:
+            return await OverwritesViewer.start(ctx, entity)
+
+        await GuildPermsViewer.start(ctx)
