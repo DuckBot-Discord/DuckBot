@@ -184,6 +184,7 @@ class Eval(DuckCog):
             '_r': getattr(ctx.message.reference, 'resolved', None),
         }
 
+        result = None
         async with react(ctx.message) as reactor:
             result = await self.eval(body.value, env, wrap=body.flags.wrap, reactor=reactor)
 

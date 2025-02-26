@@ -169,9 +169,7 @@ class UserFriendlyTime(commands.Converter, app_commands.Transformer):
         if converter is not None and not isinstance(converter, commands.Converter):
             raise TypeError('commands.Converter subclass necessary.')
 
-        self.converter = (
-            converter
-        )  # type: Optional[Union[Callable[[DuckContext, str], Any], Type[commands.Converter], commands.Converter]] # Fuck you im commenting it
+        self.converter = converter
         self.default: Optional[str] = default
 
     async def check_constraints(
@@ -274,6 +272,8 @@ class UserFriendlyTime(commands.Converter, app_commands.Transformer):
                     remaining = argument[end:].lstrip(' ,.!')
             elif len(argument) == end:
                 remaining = argument[:begin].strip()
+            else:
+                remaining = ""
 
             return await result.check_constraints(ctx, now, remaining)
         except:

@@ -17,6 +17,7 @@ reportDuplicateImport = "error"
 reportUntypedFunctionDecorator = "error"
 reportUnnecessaryTypeIgnoreComment = "warning"
 reportShadowedImports = "none"
+reportPossiblyUnboundVariable = "error"
 
 [tool.black]
 line-length = 125
