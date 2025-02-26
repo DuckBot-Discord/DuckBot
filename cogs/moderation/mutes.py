@@ -6,7 +6,7 @@ import datetime
 import itertools
 import collections
 from enum import Enum
-from typing import TYPE_CHECKING, Optional, List, Tuple, NamedTuple, TypeVar, Literal, Callable, Awaitable, overload
+from typing import TYPE_CHECKING, Optional, List, NamedTuple, TypeVar, Literal, Callable, Awaitable, overload
 
 import discord
 from discord.ext import commands, menus
@@ -37,10 +37,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-__all__: Tuple[str, ...] = (
-    'ToLower',
-    'TempMute',
-)
 
 GuildChannelT_co = TypeVar('GuildChannelT_co', bound='discord.abc.GuildChannel', covariant=True)
 
@@ -101,17 +97,6 @@ class ShowWarnings(View):
     async def view_warnings(self, interaction: discord.Interaction, button: discord.ui.Button):
         menu = ViewMenuPages(self.page_source, ctx=self.context)
         await menu.start_ephemeral(interaction)
-
-
-# I understand this can be a simple function,
-# but the UserFriendlyTime class is a bit of a mess
-# and needs it to work. Thanks danny.
-class ToLower(commands.Converter):
-    __slots__: Tuple[str, ...] = ()
-
-    # noinspection PyProtocol
-    async def convert(self, ctx: DuckContext, argument: str) -> str:
-        return argument.lower()
 
 
 class MutedRole(NamedTuple):
@@ -460,11 +445,7 @@ class TempMute(DuckCog):
     @commands.has_guild_permissions(moderate_members=True)
     @commands.bot_has_guild_permissions(manage_roles=True)
     async def tempmute(
-        self,
-        ctx: DuckContext,
-        member: VerifiedMember,
-        *,
-        time: UserFriendlyTime(converter=ToLower, default='being a jerk!'),  # type: ignore
+        self, ctx: DuckContext, member: VerifiedMember, *, time: UserFriendlyTime
     ) -> Optional[discord.Message]:
         """Temporarily mute a member from speaking or connecting to channel(s) in the Discord. This is done through
         a role, which can be configured through the `db.muterole` command.
@@ -882,8 +863,9 @@ class TempMute(DuckCog):
             if not await ctx.confirm(
                 "**Are you sure you want to unbind the muted role?**"
                 "\nThis will cancel all timers for currently-muted members, but it will **not** remove the muted role from them. "
-                "\nIt will not delete the role either, or change it's permissions in the channels."
+                "\nIt will not delete the role either, or change its permissions in the channels."
                 f"\n:warning: this cannot be undone! (There {spec:is|are} {len(timers)} active {spec:timer})",
+                timeout=60,
                 silent_on_timeout=True,
             ):
                 return await ctx.send('Cancelled.')

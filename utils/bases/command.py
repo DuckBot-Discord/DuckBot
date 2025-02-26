@@ -40,6 +40,8 @@ AutocompleteCallbackType = Union[
 NUMPY_ITEM_REGEX = re.compile(r'(?P<type>\:[a-z]{1,}\:)\`(?P<name>[a-z\.]{1,})\`', flags=re.IGNORECASE)
 DOC_HEADER_REGEX = re.compile(r'\|coro\|', flags=re.IGNORECASE)
 
+__all__ = ("DuckCommand", "DuckGroup", "DuckHybridCommand", "DuckHybridGroup", "command", "group")
+
 
 def _subber(match: re.Match) -> str:
     _, name = match.groups()
