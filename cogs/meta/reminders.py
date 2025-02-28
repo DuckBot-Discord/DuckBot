@@ -7,7 +7,7 @@ from typing import Optional, Union
 import discord
 from discord.ext import commands
 
-from utils import DuckCog, group, DuckContext, UserFriendlyTime, TimerNotFound, Timer
+from utils import DuckCog, group, DuckContext, UserFriendlyTime, TimerNotFound, Timer, shorten
 
 log = logging.getLogger('DuckBot.cogs.meta.reminders')
 
@@ -59,7 +59,8 @@ class Reminders(DuckCog):
             if timer.args[0] != ctx.author.id:
                 raise TimerNotFound(timer.id)
             await timer.delete(self.bot)
-            await ctx.send(f'{self.bot.done_emoji} Okay, I deleted that reminder.')
+            await ctx.send(shorten(f'{self.bot.done_emoji} Okay, I deleted reminder with ID {timer.id}: {timer.args[2]}'))
+
         except TimerNotFound as error:
             await ctx.send(f"I couldn't find a reminder with ID {error.id}.")
 

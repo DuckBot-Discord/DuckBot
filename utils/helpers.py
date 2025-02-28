@@ -59,6 +59,7 @@ __all__: Tuple[str, ...] = (
     'async_enumerate',
     'mdr',
     'cb',
+    'shorten',
     'safe_reason',
     'add_logging',
     'format_date',
@@ -157,14 +158,15 @@ def cb(text: str, /, *, lang: str = 'py'):
     return f'```{lang}\n{text}\n```'
 
 
+def shorten(string: str, /, *, length: int = 2000, end: str = "..."):
+    if len(string) > length:
+        string = string[: length - len(end)] + end
+    return string
+
+
 def safe_reason(author: Union[discord.Member, discord.User], reason: str, *, length: int = 512) -> str:
-    base = f'Action by {author} ({author.id}) for: '
-
-    length_limit = length - len(base)
-    if len(reason) > length_limit:
-        reason = reason[: length_limit - 3] + '...'
-
-    return base + reason
+    base = f'Action by {author} ({author.id}) for: {reason}'
+    return shorten(base, length=length)
 
 
 def format_date(date: datetime) -> str:
