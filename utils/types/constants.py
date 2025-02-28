@@ -199,6 +199,7 @@ USER_FLAGS = {
     'team_user': '\N{INFORMATION SOURCE} Team User',
     'verified_bot': '<:verified_bot:897876151219912754> Verified Bot',
     'verified_bot_developer': '<:earlybotdev:895392298895032364> Early Verified Bot Developer',
+    'active_developer': "<:active_developer:1345038215060390032> Active Developer",
 }
 
 CONTENT_FILTER = {

@@ -1,6 +1,6 @@
 from utils import DuckContext, HandleHTTPException
 from discord.ext.commands import NotOwner
-from utils import command
+from utils import command, group
 
 from .blacklist import BlackListManagement
 from .test_shit import TestingShit
@@ -8,6 +8,7 @@ from .badges import BadgeManagement
 from .eval import Eval
 from .sql import SQLCommands
 from .update import ExtensionsManager
+from .news import NewsManagement
 
 
 class Owner(
@@ -17,11 +18,25 @@ class Owner(
     Eval,
     SQLCommands,
     ExtensionsManager,
+    NewsManagement,
     command_attrs=dict(hidden=True),
     emoji="<:blushycat:913554213555028069>",
     brief="Restricted! hah.",
 ):
     """The Cog for All owner commands."""
+
+    @group()
+    async def dev(self, ctx: DuckContext):
+        """Developer-only commands."""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(ctx.command)
+
+    async def cog_load(self) -> None:
+        for command in self.get_commands():
+            if command == self.dev:
+                continue
+            self.bot.remove_command(command.name)
+            self.dev.add_command(command)
 
     async def cog_check(self, ctx: DuckContext) -> bool:
         """Check if the user is a bot owner."""

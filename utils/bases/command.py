@@ -2,17 +2,7 @@ from __future__ import annotations
 
 import re
 from numpydoc.docscrape import NumpyDocString, Parameter
-from typing import (
-    Awaitable,
-    Callable,
-    Dict,
-    Iterable,
-    Mapping,
-    TypeVar,
-    Any,
-    Generic,
-    Union,
-)
+from typing import Awaitable, Callable, Dict, Iterable, Mapping, TypeVar, Any, Generic, Union, overload, Literal
 from typing_extensions import ParamSpec, Self, Concatenate
 
 import discord
@@ -454,8 +444,8 @@ class DuckHybridGroup(commands.HybridGroup, DuckGroup):
         def wrapped(func) -> DuckHybridCommand:
             kwargs.setdefault('parent', self)
             result = command(*args, hybrid=True, with_app_command=hybrid, **kwargs)(func)
-            self.add_command(result)  # type: ignore
-            return result  # type: ignore
+            self.add_command(result)
+            return result
 
         return wrapped
 
@@ -463,10 +453,32 @@ class DuckHybridGroup(commands.HybridGroup, DuckGroup):
         def wrapped(func) -> DuckHybridGroup:
             kwargs.setdefault('parent', self)
             result = group(*args, hybrid=True, with_app_command=hybrid, **kwargs)(func)
-            self.add_command(result)  # type: ignore
-            return result  # type: ignore
+            self.add_command(result)
+            return result
 
         return wrapped
+
+
+@overload
+def command(
+    name: str = ...,
+    description: str = ...,
+    brief: str = ...,
+    aliases: Iterable[str] = ...,
+    hybrid: Literal[False] = ...,
+    **attrs: Any,
+) -> Callable[..., DuckCommand]: ...
+
+
+@overload
+def command(
+    name: str = ...,
+    description: str = ...,
+    brief: str = ...,
+    aliases: Iterable[str] = ...,
+    hybrid: Literal[True] = ...,
+    **attrs: Any,
+) -> Callable[..., DuckHybridCommand]: ...
 
 
 def command(
@@ -513,6 +525,32 @@ def command(
         return cls(func, **kwargs)
 
     return decorator
+
+
+@overload
+def group(
+    name: str = ...,
+    description: str = ...,
+    brief: str = ...,
+    aliases: Iterable[str] = ...,
+    hybrid: Literal[False] = ...,
+    fallback: str | None = None,
+    invoke_without_command: bool = True,
+    **attrs: Any,
+) -> Callable[..., DuckGroup]: ...
+
+
+@overload
+def group(
+    name: str = ...,
+    description: str = ...,
+    brief: str = ...,
+    aliases: Iterable[str] = ...,
+    hybrid: Literal[True] = ...,
+    fallback: str | None = ...,
+    invoke_without_command: bool = ...,
+    **attrs: Any,
+) -> Callable[..., DuckHybridGroup]: ...
 
 
 def group(

@@ -156,7 +156,7 @@ class UserInfoViewer(View):
         embed.add_field(name=f'{constants.INFORMATION_SOURCE} General', value='\n'.join(general), inline=True)
 
         embed.add_field(
-            name=f'{constants.STORE_TAG} Badges / DuckBadges',
+            name=f'{constants.STORE_TAG} Badges',
             value=await get_user_badges(user, self.bot, await self.fetch_user()),
         )
 
