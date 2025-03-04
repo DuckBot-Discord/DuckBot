@@ -154,7 +154,9 @@ PERMISSIONS_TO_DENY = {
         send_messages_in_threads=True,
         create_public_threads=True,
         create_private_threads=True,
+        add_reactions=True,
         connect=True,
+        speak=True,
     ),
     RoleMode.no_view_channel: discord.Permissions(
         view_channel=True,
@@ -163,7 +165,9 @@ PERMISSIONS_TO_DENY = {
         send_messages_in_threads=True,
         create_public_threads=True,
         create_private_threads=True,
+        add_reactions=True,
         connect=True,
+        speak=True,
     ),
 }
 
