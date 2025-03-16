@@ -338,7 +338,7 @@ class Hideout(commands.Cog, name="DuckBot Hideout"):
                 data = await self.bot.http.get_message(message.channel.id, message.id)
             except discord.HTTPException:
                 raise commands.BadArgument("There was an error retrieving that message.")
-            pretty_data = json.dumps(data, indent=4)
+            pretty_data = json.dumps(data, indent=4).replace('`', '\\u0060')
             return await ctx.send(f"```json\n{pretty_data}\n```", reference=ctx.message, gist=True, extension='json')
 
     @commands.Cog.listener()
