@@ -32,12 +32,12 @@ async def setup(bot):
 
 def format_commit(commit):
     short, _, _ = commit.message.partition("\n")
-    short = short[0:40] + "..." if len(short) > 40 else short
-    short_sha2 = commit.hex[0:6]
+    short = discord.utils.escape_markdown(short[0:40] + "..." if len(short) > 40 else short)
+    short_sha2 = commit.short_id
     commit_tz = datetime.timezone(datetime.timedelta(minutes=commit.commit_time_offset))
     commit_time = datetime.datetime.fromtimestamp(commit.commit_time).astimezone(commit_tz)
     offset = discord.utils.format_dt(commit_time, style="R")
-    return f"[`{short_sha2}`](https://github.com/DuckBot-Discord/DuckBot/commit/{commit.hex}) {short} ({offset})"
+    return f"[`{short_sha2}`](https://github.com/DuckBot-Discord/DuckBot/commit/{commit.id}) {short} ({offset})"
 
 
 def get_latest_commits(limit: int = 5):
