@@ -413,26 +413,25 @@ class CustomContext(commands.Context):
             raise commands.BadArgument("Prompt timed out.")
         except Exception as e:
             logging.error(f"Failed to prompt user for input", exc_info=e)
-            message = None
         else:
-            if message and message.content.lower() == "cancel":
+            if message.content.lower() == "cancel":
                 raise commands.BadArgument("✅ Cancelled!")
 
             if message and not return_message:
                 return message.content
             else:
                 return message
+
         finally:
-            if delete_after is None:
-                to_do = []
-                if isinstance(usermessage, discord.Message):
-                    if delete_after:
-                        to_do.append(bot_message.delete())
-                        if message and self.channel.permissions_for(self.me).manage_messages:
-                            to_do.append(usermessage.delete())
-                        else:
-                            to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
+            to_do = []
+            if isinstance(usermessage, discord.Message):
+                if delete_after:
+                    to_do.append(bot_message.delete())
+                    if message and self.channel.permissions_for(self.me).manage_messages:
+                        to_do.append(usermessage.delete())
                     else:
                         to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
+                else:
+                    to_do.append(usermessage.add_reaction(random.choice(self.bot.constants.DONE)))
 
-                    [self.bot.loop.create_task(to_do_item) for to_do_item in to_do]
+                [self.bot.loop.create_task(to_do_item) for to_do_item in to_do]
