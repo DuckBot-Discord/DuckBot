@@ -881,19 +881,6 @@ class About(commands.Cog):
         except (FileNotFoundError, UnicodeDecodeError):
             pass
 
-        if ctx.guild.id == 336642139381301249 and ctx.message.content.lower() in (
-            "db.about banner",
-            "dbb.about banner",
-        ):
-            embed.add_field(
-                name="Full avatar and banner:",
-                inline=False,
-                value=f"Very dirty minded of you... but anyways here you go <:thinkuwu:912482477841461258>"
-                f"\n> banner: https://cdn.waifu.im/02d78d675fc8f2f0.jpg"
-                f"\n> avatar: https://www.pixiv.net/en/artworks/86527954",
-            )
-            embed.colour = discord.Colour(0x2EA0F1)
-
         version = pkg_resources.get_distribution("discord.py").version
         embed.set_footer(
             text=f"Made with discord.py v{version} 💖",
