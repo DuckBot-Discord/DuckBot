@@ -7,21 +7,6 @@ from ._base import EventsBase
 
 
 class PrivateEvents(EventsBase):
-    @commands.Cog.listener('on_message')
-    async def emoji_sender(self, message: discord.Message):
-        if not await self.bot.is_owner(message.author) or self.bot.user.id != 788278464474120202:
-            return
-        ic = '\u200b'
-        content = message.content
-        emojis = re.findall(r';(?P<name>[a-zA-Z0-9]{1,32}?);', message.content)
-        for em_name in emojis:
-            emoji = discord.utils.find(lambda em: em.name.lower() == em_name.lower(), self.bot.emojis)
-            if not emoji or not emoji.is_usable():
-                emoji = None
-            content = content.replace(f';{em_name};', f'{str(emoji or f";{ic}{em_name}{ic};")}', 1)
-        if content.replace(ic, '') != message.content:
-            await message.channel.send(content)
-
     @commands.Cog.listener('on_guild_join')
     async def server_join_message(self, guild: discord.Guild):
         channel = self.bot.get_channel(904797860841812050)
