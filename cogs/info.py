@@ -881,9 +881,8 @@ class About(commands.Cog):
         except (FileNotFoundError, UnicodeDecodeError):
             pass
 
-        version = pkg_resources.get_distribution("discord.py").version
         embed.set_footer(
-            text=f"Made with discord.py v{version} 💖",
+            text=f"Made with discord.py 💖",
             icon_url="https://i.imgur.com/5BFecvA.png",
         )
         embed.timestamp = discord.utils.utcnow()
